@@ -9,12 +9,15 @@ export const json = (env, data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...corsHeaders(env) } });
 export const err = (env, msg, status = 400) => json(env, { error: msg }, status);
 
+export const sbKeyHeaders = (env) => {
+  const k = String(env.SUPABASE_SERVICE_KEY || '');
+  return k.startsWith('sb_') ? { apikey: k } : { apikey: k, Authorization: `Bearer ${k}` };
+};
 export const sb = (env, path, opts = {}) =>
   fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
     ...opts,
     headers: {
-      apikey: env.SUPABASE_SERVICE_KEY,
-      Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      ...sbKeyHeaders(env),
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
       ...(opts.headers || {}),

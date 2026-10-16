@@ -1,8 +1,9 @@
 // File storage on Supabase Storage (free plan, no card). Replaces Cloudflare R2.
 // Two buckets, created by supabase/schema.sql: a PUBLIC one (clips, listing photos) and a PRIVATE one (ID photos).
 // The Worker uses the service key; browsers only ever get a one-time signed upload URL.
+import { sbKeyHeaders } from './lib.js';
 const base = (env) => String(env.SUPABASE_URL || '').replace(/\/$/, '') + '/storage/v1';
-const hdr = (env, extra = {}) => ({ Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`, apikey: env.SUPABASE_SERVICE_KEY, ...extra });
+const hdr = (env, extra = {}) => ({ ...sbKeyHeaders(env), ...extra });
 const encPath = (key) => String(key).split('/').map(encodeURIComponent).join('/');
 
 export const MEDIA_BUCKET = (env) => env.MEDIA_BUCKET || 'cc-media';

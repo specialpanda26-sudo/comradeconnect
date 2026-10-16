@@ -1,0 +1,98 @@
+import { json, sb, rows, ago, isAdmin, hasContact, standingBlock, audit } from './lib.js';
+
+// ---------- Feed ----------
+const CAT_OK = /^[A-Za-z0-9]{2,22}$/;
+const fmtPost = (r) => ({
+  _id: r.id, content: r.content, category: r.category, zone: r.zone || '', verified: !!r.verified, aid: r.aid,
+  campus: 'Kirinyaga University', likes: r.likes || 0, views: r.views || 0,
+  boosted: !!(r.boosted_until && new Date(r.boosted_until) > new Date()),
+  comments: (r.comments || []).sort((a, b) => a.created_at < b.created_at ? -1 : 1).map((c) => ({ text: c.text, createdAt: Date.parse(c.created_at) })),
+  createdAt: Date.parse(r.created_at),
+});
+const SEL = 'select=*,comments(text,created_at)';
+
+export async function feedRoutes(req, env, url, ip) {
+  const path = url.pathname;
+  // List
+  if (path === '/api/posts' && req.method === 'GET') {
+    const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
+    const limit = Math.min(20, Math.max(1, parseInt(url.searchParams.get('limit')) || 5));
+    let q = `posts?${SEL}&hidden=eq.false&order=created_at.desc&limit=${limit + 1}&offset=${(page - 1) * limit}`;
+    const cat = url.searchParams.get('category'), zone = url.searchParams.get('zone');
+    if (cat && cat !== 'All' && CAT_OK.test(cat)) q += `&category=eq.${cat}`;
+    if (zone && zone !== 'All') q += `&zone=eq.${encodeURIComponent(zone.slice(0, 30))}`;
+    const r = await rows(await sb(env, q));
+    const posts = r.slice(0, limit).map(fmtPost).sort((a, b) => (b.boosted ? 1 : 0) - (a.boosted ? 1 : 0));
+    return json(env, { posts, hasMore: r.length > limit });
+  }
+  // Create
+  if (path === '/api/posts' && req.method === 'POST') {
+    const b = await req.json().catch(() => ({}));
+    const aid = String(b.aid || '').slice(0, 64), content = String(b.content || '').trim().slice(0, 500);
+    const category = CAT_OK.test(String(b.category || '')) ? b.category : 'General';
+    const zone = String(b.zone || '').slice(0, 30);
+    if (!aid || content.length < 2) return json(env, { error: 'Write something first' }, 400);
+    { const blk = await standingBlock(env, aid); if (blk) return blk; }
+    if (category === 'Notices' && !isAdmin(req, env)) return json(env, { error: 'Only admins post notices' }, 403);
+    if (hasContact(content)) return json(env, { error: 'Remove phone numbers, handles and links' }, 400);
+    const byAid = await rows(await sb(env, `posts?select=id&aid=eq.${encodeURIComponent(aid)}&created_at=gte.${ago(3600e3)}&limit=10`));
+    const byIp = await rows(await sb(env, `posts?select=id&ip=eq.${encodeURIComponent(ip)}&created_at=gte.${ago(3600e3)}&limit=20`));
+    if (byAid.length >= 10 || byIp.length >= 20) return json(env, { error: 'Too many posts. Try again later.' }, 429);
+    const [row] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid, content, category, zone, ip, verified: category === 'Notices' }) }));
+    return json(env, fmtPost({ ...row, comments: [] }), 201);
+  }
+  const m = path.match(/^\/api\/posts\/([0-9a-f-]{36})\/(like|view|comments|report)$/);
+  if (m && req.method === 'POST') {
+    const id = m[1], act = m[2];
+    const b = await req.json().catch(() => ({}));
+    const aid = String(b.aid || '').slice(0, 64);
+    const [post] = await rows(await sb(env, `posts?${SEL}&id=eq.${id}&hidden=eq.false`));
+    if (!post) return json(env, { error: 'Not found' }, 404);
+    if (act === 'view') {
+      const [u] = await rows(await sb(env, 'rpc/inc_post', { method: 'POST', body: JSON.stringify({ p: id, col: 'views' }) }));
+      return json(env, fmtPost({ ...post, views: u?.views ?? post.views }));
+    }
+    if (!aid) return json(env, { error: 'Missing account' }, 400);
+    if (act === 'comments') { const blk = await standingBlock(env, aid); if (blk) return blk; }
+    if (act === 'like') {
+      const ins = await rows(await sb(env, 'post_likes', { method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates,return=representation' }, body: JSON.stringify({ post_id: id, aid }) }));
+      if (!ins.length) return json(env, fmtPost(post));                        // already liked
+      const [u] = await rows(await sb(env, 'rpc/inc_post', { method: 'POST', body: JSON.stringify({ p: id, col: 'likes' }) }));
+      return json(env, fmtPost({ ...post, likes: u?.likes ?? post.likes + 1 }));
+    }
+    if (act === 'comments') {
+      const text = String(b.text || '').trim().slice(0, 200);
+      if (text.length < 1) return json(env, { error: 'Write a comment' }, 400);
+      if (hasContact(text)) return json(env, { error: 'Remove phone numbers, handles and links' }, 400);
+      const recent = await rows(await sb(env, `comments?select=id&aid=eq.${encodeURIComponent(aid)}&created_at=gte.${ago(3600e3)}&limit=30`));
+      if (recent.length >= 30) return json(env, { error: 'Too many comments. Try again later.' }, 429);
+      const [c] = await rows(await sb(env, 'comments', { method: 'POST', body: JSON.stringify({ post_id: id, aid, text }) }));
+      return json(env, fmtPost({ ...post, comments: [...(post.comments || []), c || { text, created_at: new Date().toISOString() }] }));
+    }
+    if (act === 'report') {
+      await sb(env, 'reports', { method: 'POST', body: JSON.stringify({ post_id: id, aid, reason: String(b.reason || '').slice(0, 200) }) });
+      const reps = await rows(await sb(env, `reports?select=aid&post_id=eq.${id}`));
+      if (new Set(reps.map((x) => x.aid)).size >= 3)                           // auto-hide after 3 different reporters
+        await sb(env, `posts?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ hidden: true }) });
+      return json(env, { ok: true });
+    }
+  }
+  // Admin: verify / hide / unhide / delete / boost
+  const a = path.match(/^\/api\/admin\/posts\/([0-9a-f-]{36})$/);
+  if (a && req.method === 'POST') {
+    if (!isAdmin(req, env)) return json(env, { error: 'Not allowed' }, 403);
+    const b = await req.json().catch(() => ({}));
+    await audit(env, 'post.' + String(b.action), 'post', a[1], null, ip);
+    if (b.action === 'delete') { await sb(env, `posts?id=eq.${a[1]}`, { method: 'DELETE' }); return json(env, { ok: true }); }
+    const patch = {};
+    if (b.action === 'verify') patch.verified = true;
+    if (b.action === 'hide') patch.hidden = true;
+    if (b.action === 'unhide') patch.hidden = false;
+    if (b.action === 'boost') patch.boosted_until = new Date(Date.now() + (Number(b.hours) || 24) * 3600e3).toISOString();
+    if (!Object.keys(patch).length) return json(env, { error: 'Unknown action' }, 400);
+    await sb(env, `posts?id=eq.${a[1]}`, { method: 'PATCH', body: JSON.stringify(patch) });
+    return json(env, { ok: true });
+  }
+  return null;
+}
+

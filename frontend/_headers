@@ -1,0 +1,11 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+/*.png
+  Cache-Control: public, max-age=604800
+/favicon.ico
+  Cache-Control: public, max-age=604800
+/admin.html
+  Cache-Control: no-store
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src https: blob: data:; connect-src https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'

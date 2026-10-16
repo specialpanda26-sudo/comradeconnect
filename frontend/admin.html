@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Comrade Connect admin</title>
+<style>
+:root{--bg:#0b0b10;--card:#16161f;--line:#2a2a38;--tx:#f3f3f7;--mut:#9a9ab0;--ok:#22c55e;--bad:#ef4444;--acc:#8b5cf6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif;padding:14px 14px 90px;max-width:720px;margin:0 auto}
+h1{font-size:18px;margin:6px 0 12px}h3{margin:0 0 4px;font-size:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+.sub{color:var(--mut);font-size:13px;overflow-wrap:anywhere}
+input,textarea,select{width:100%;background:#0f0f16;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;margin-top:8px}
+button{background:#23233a;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer}
+button.p{background:var(--acc);border-color:var(--acc)}button.ok{background:#14532d;border-color:#166534}button.bad{background:#7f1d1d;border-color:#991b1b}
+button:disabled{opacity:.5}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.row>*{flex:1 1 auto}
+nav{display:flex;gap:6px;overflow-x:auto;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5}
+nav button{white-space:nowrap;flex:0 0 auto}nav button.on{background:var(--acc);border-color:var(--acc)}
+.b{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:99px;background:var(--bad);font-size:12px;text-align:center}
+.photos{display:flex;gap:6px;overflow-x:auto;margin:8px 0}.photos img{height:110px;border-radius:10px}
+.err{color:#f87171;min-height:20px;font-size:13px}#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#000;border:1px solid var(--line);padding:10px 16px;border-radius:99px;display:none}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;border-bottom:1px solid var(--line);padding:4px 0}.kv b{overflow-wrap:anywhere;text-align:right}
+</style>
+</head>
+<body>
+<div id="app"></div><div id="toast" role="status"></div>
+<script>
+/* Set this to your Worker URL (same value as CC_API in index.html). If you leave it, the login screen asks for it once. */
+const CC_API = 'https://comrade-connect-api.YOUR-SUBDOMAIN.workers.dev';
+
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const kes = (n) => 'KSh ' + Number(n || 0).toLocaleString('en-KE');
+const when = (t) => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleString('en-KE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
+const toast = (m) => { const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => (t.style.display = 'none'), 2600); };
+// The key lives in sessionStorage only: closing the tab signs you out.
+const store = { get: (k) => { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) {} }, del: (k) => { try { sessionStorage.removeItem(k); } catch (e) {} } };
+const base = () => (CC_API.indexOf('YOUR-SUBDOMAIN') < 0 ? CC_API : (localStorage.getItem('cc_admin_api') || '')).replace(/\/$/, '');
+let Q = null, tab = 'listings';
+
+async function api(path, body) {
+  const b = base(); if (!b) throw new Error('Enter the Worker URL first');
+  let r;
+  try { r = await fetch(b + path, { method: body ? 'POST' : 'GET', headers: Object.assign({ 'X-Admin-Key': store.get('k') }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined }); }
+  catch (e) { throw new Error('No connection to the Worker. Check the URL and your internet.'); }
+  if (r.status === 403 && path !== '/api/admin/login') { store.del('k'); render(); throw new Error('Signed out. Enter the admin key again.'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'Something went wrong (' + r.status + ')');
+  return d;
+}
+
+function login(msg) {
+  const needUrl = CC_API.indexOf('YOUR-SUBDOMAIN') > -1;
+  $('#app').innerHTML = '<h1>Comrade Connect admin</h1><div class="card"><p class="sub">Enter your ADMIN_KEY. It stays in this tab only.</p>'
+    + (needUrl ? '<input id="u" placeholder="Worker URL, https://...workers.dev" value="' + esc(localStorage.getItem('cc_admin_api') || '') + '" autocomplete="off">' : '')
+    + '<input id="k" type="password" placeholder="Admin key" autocomplete="off"><p class="err" id="e">' + esc(msg || '') + '</p><button class="p" id="go" style="width:100%">Sign in</button></div>';
+  $('#go').onclick = async () => {
+    const k = $('#k').value.trim(); if (!k) return;
+    if (needUrl) localStorage.setItem('cc_admin_api', ($('#u').value || '').trim());
+    store.set('k', k); $('#go').disabled = true;
+    try { await api('/api/admin/login', {}); await load(); }
+    catch (e) { store.del('k'); login(e.message); }
+  };
+}
+
+let X = { events: [], products: [], orders: [], notices: [], sponsors: [] };
+async function loadExtra() {                                   // events, shop and orders to collect; a failure here never blocks the queue
+  const g = async (path) => { try { return await api(path); } catch (e) { return {}; } };
+  const [ev, pr, od, nt, sp] = await Promise.all([g('/api/events'), g('/api/club/products'), g('/api/admin/club/orders?status=paid'), g('/api/notices'), g('/api/sponsors')]);
+  X = { events: ev.events || [], products: pr.products || [], orders: od.orders || [], notices: nt.notices || [], sponsors: sp.sponsors || [] };
+}
+async function load() { Q = await api('/api/admin/queue'); await loadExtra(); render(); }
+
+const kv = (a) => a.filter((x) => x[1] !== undefined && x[1] !== null && x[1] !== '').map((x) => '<div class="kv"><span class="sub">' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>').join('');
+async function act(btn, fn, okMsg) {
+  btn.disabled = true;
+  try { await fn(); toast(okMsg); await load(); } catch (e) { toast(e.message); btn.disabled = false; }
+}
+function ask(msg, def) { const v = prompt(msg, def || ''); return v == null ? null : v.trim(); }
+
+const SECTIONS = {
+  listings: () => Q.listings.map((l) => '<div class="card" data-id="' + esc(l.id) + '"><h3>' + esc(l.title) + '</h3><b>' + kes(l.price) + '</b> <span class="sub">' + esc(l.category || '') + '</span>'
+    + (l.photos && l.photos.length ? '<div class="photos">' + l.photos.map((u) => '<img src="' + esc(u) + '" alt="" loading="lazy">').join('') + '</div>' : '<p class="sub">No photos</p>')
+    + '<p style="overflow-wrap:anywhere">' + esc(l.description) + '</p><p class="sub">Seller ' + esc(l.seller) + ', ' + when(l.createdAt) + '</p>'
+    + '<div class="row"><button class="ok" data-do="approve">Approve</button><button class="bad" data-do="reject">Reject</button></div></div>'),
+  withdrawals: () => Q.withdrawals.map((w) => '<div class="card" data-id="' + esc(w.id) + '"><h3>' + kes(w.amount) + '</h3>' + kv([['Send to', w.phone], ['Account', w.aid], ['Requested', when(w.created_at)]])
+    + '<p class="sub">Send the M-Pesa first, then mark it paid with the M-Pesa code.</p><div class="row"><button data-do="copy" data-v="' + esc(w.phone) + '">Copy number</button><button class="ok" data-do="paid">I sent it</button><button class="bad" data-do="wreject">Reject and refund wallet</button></div></div>'),
+  disputes: () => Q.disputes.map((o) => '<div class="card" data-id="' + esc(o.id) + '"><h3>' + esc(o.title || 'Order') + '</h3><b>' + kes(o.amount) + '</b>' + kv([['Status', o.status], ['Opened by', o.opened_by], ['Reason', o.reason], ['Buyer', o.buyer], ['Seller', o.seller]])
+    + '<div class="row"><button class="ok" data-do="orelease">Pay the seller</button><button class="bad" data-do="orefund">Refund the buyer</button></div></div>'),
+  verifications: () => Q.verifications.map((v) => {
+    const off = v.claimed_role && v.claimed_role !== 'Student', link = /^https?:\/\/\S+$/.test(v.group_link || '') ? v.group_link : '';
+    const BC = { match: 'Barcode matches the number', mismatch: 'Barcode does NOT match the number', unread: 'Barcode could not be read', unsupported: 'Barcode not checked (phone cannot)', none: '' };
+    return '<div class="card" data-id="' + esc(v.id) + '"><h3>' + esc(v.full_name) + '</h3>' + kv([['Account', v.aid], ['Role asked for', v.claimed_role || 'Student'], ['Admission or staff no.', v.id_number], ['Barcode', BC[v.barcode_check] || ''], ['Sent', when(v.created_at)]])
+      + (link ? '<div class="kv"><span class="sub">Group link</span><b><a href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">' + esc(link) + '</a></b></div>' : '')
+      + '<p class="sub">The photo shows the front of the ID on top and the back below it.</p>'
+      + '<div class="photos" data-img></div><div class="row"><button data-do="showid">Show ID photo</button><button class="ok" data-do="vapprove">' + (off ? 'Approve with ' + esc(v.claimed_role) + ' badge' : 'Approve') + '</button>'
+      + (off ? '<button data-do="vapprove_nb">Approve ID only</button>' : '') + '<button class="bad" data-do="vreject">Reject</button></div></div>';
+  }),
+  reports: () => Q.content_reports.map((r) => rep(r, 'content')).concat(Q.message_reports.map((r) => rep(r, 'message'))),
+  confirm: () => (Q.confirm || []).map((p) => '<div class="card" data-id="' + esc(p.id) + '"><h3>' + kes(p.amount) + ': check M-Pesa</h3>' + kv([['M-Pesa code', p.receipt], ['Buyer phone', p.phone], ['For', p.purpose], ['Sent', when(p.created_at)]])
+    + '<p class="sub">Open your M-Pesa messages. Approve only if a message shows this exact code and at least ' + esc(kes(p.amount)) + '.</p><div class="row"><button class="ok" data-do="payok">Money received</button><button class="bad" data-do="paybad">Not received</button></div></div>'),
+  payments: () => Q.underpaid.map((p) => '<div class="card"><h3>' + kes(p.amount) + ' underpaid</h3>' + kv([['Purpose', p.purpose], ['Account', p.aid], ['Receipt', p.receipt], ['Time', when(p.created_at)]]) + '<p class="sub">Handle by hand: contact the payer, refund or collect the balance.</p></div>'),
+  events: () => {
+    const form = '<div class="card"><h3>New event</h3><input id="ev_t" placeholder="Title, e.g. Fresher bash" maxlength="100"><input id="ev_d" placeholder="Date, YYYY-MM-DD" maxlength="10"><input id="ev_v" placeholder="Venue" maxlength="80"><input id="ev_p" placeholder="Ticket price in KSh (leave empty for no tickets)" inputmode="numeric" maxlength="5"><input id="ev_x" placeholder="Details" maxlength="400"><div class="row"><button class="p" id="evadd">Add event</button></div></div>';
+    const door = '<div class="card"><h3>Door check</h3><select id="dr_e">' + X.events.filter((e) => e.ticket_price).map((e) => '<option value="' + esc(e.id) + '">' + esc(e.title) + ', ' + esc(e.date) + '</option>').join('') + '</select><input id="dr_c" placeholder="8-digit code from the ticket" inputmode="numeric" maxlength="9" autocomplete="off"><p class="sub" id="dr_m"></p><div class="row"><button class="p" id="drgo">Check ticket</button></div></div>';
+    return [form, door].concat(X.events.map((e) => '<div class="card" data-id="' + esc(e.id) + '"><h3>' + esc(e.title) + '</h3>' + kv([['Date', e.date], ['Venue', e.venue], ['Tickets', e.ticket_price ? kes(e.ticket_price) : 'none']]) + '<div class="row"><button class="bad" data-do="evdel">Delete</button></div></div>'));
+  },
+  notices: () => {
+    const form = '<div class="card"><h3>New notice</h3><input id="nt_t" placeholder="Title, e.g. Exam timetable out" maxlength="100"><textarea id="nt_b" placeholder="Details students need to know" maxlength="600" style="height:90px"></textarea><input id="nt_x" placeholder="Hide after how many days? (empty = never)" inputmode="numeric" maxlength="3"><label class="sub" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="nt_p" style="width:auto;margin:0"> Pin to the top</label><div class="row"><button class="p" id="ntadd">Publish notice</button></div></div>';
+    return [form].concat(X.notices.map((n) => '<div class="card" data-id="' + esc(n.id) + '"><h3>' + esc(n.title) + (n.pinned ? ' (pinned)' : '') + '</h3><p class="sub" style="overflow-wrap:anywhere">' + esc(n.body || '') + '</p><p class="sub">' + when(new Date(n.createdAt).toISOString()) + '</p><div class="row"><button class="bad" data-do="ntdel">Delete</button></div></div>'));
+  },
+  sponsors: () => {
+    const form = '<div class="card"><h3>New sponsor</h3><input id="sp_n" placeholder="Sponsor name" maxlength="80"><input id="sp_b" placeholder="One line about them" maxlength="200"><input id="sp_l" placeholder="Link, must start with https://" maxlength="200"><div class="row"><button class="p" id="spadd">Add sponsor</button></div></div>';
+    return [form].concat(X.sponsors.map((x) => '<div class="card" data-id="' + esc(x.id) + '"><h3>' + esc(x.name) + '</h3>' + kv([['About', x.blurb], ['Link', x.link]]) + '<div class="row"><button class="bad" data-do="spdel">Delete</button></div></div>'));
+  },
+  club: () => {
+    const form = '<div class="card"><h3>New product</h3><input id="cp_n" placeholder="Name, e.g. Sugar 1kg" maxlength="80"><input id="cp_p" placeholder="Price in KSh" inputmode="numeric" maxlength="6"><input id="cp_q" placeholder="Stock to start with" inputmode="numeric" maxlength="6"><div class="row"><button class="p" id="cpadd">Add product</button></div></div>';
+    const name = (id) => (X.products.find((p) => p.id === id) || {}).name || 'Item';
+    return [form].concat(X.products.map((p) => '<div class="card" data-id="' + esc(p.id) + '"><h3>' + esc(p.name) + '</h3>' + kv([['Price', kes(p.price)], ['In stock', p.stock]]) + '<div class="row"><button data-do="cpstock">Set stock</button></div></div>'),
+      X.orders.map((o) => '<div class="card" data-id="' + esc(o.id) + '"><h3>Collect: ' + esc(name(o.product_id)) + ' x' + esc(o.qty) + '</h3>' + kv([['Ref', String(o.id).slice(0, 8).toUpperCase()], ['Amount', kes(o.amount)], ['Paid', when(o.created_at)]]) + '<div class="row"><button class="p" data-do="cocollect">Mark collected</button></div></div>'));
+  },
+  users: () => ['<div class="card"><h3>Account actions</h3><input id="ua" placeholder="Account ID, e.g. u_ab12cd34" autocomplete="off"><select id="uact"><option value="ban">Ban</option><option value="unban">Unban</option><option value="mute">Mute (hours)</option><option value="unmute">Unmute</option><option value="role">Set role</option></select><input id="uv" placeholder="Hours for mute, or role: user, seller, club_admin, admin" autocomplete="off"><div class="row"><button class="p" id="ugo">Apply</button></div></div>'],
+};
+function rep(r, kind) { return '<div class="card" data-id="' + esc(r.id) + '" data-kind="' + kind + '"><h3>' + (kind === 'content' ? 'Reported ' + esc(r.target_type || 'item') : 'Reported message') + '</h3>' + kv([['Reason', r.reason], ['Message', r.snapshot], ['Reported account', r.reported_aid], ['Target', r.target_id], ['Reported', when(r.created_at)]])
+  + '<div class="row">' + (kind === 'content' ? '<button class="bad" data-do="ractionhide">Take action and hide it</button>' : '') + '<button data-do="raction">Mark as actioned</button><button data-do="rdismiss">Dismiss</button></div></div>'; }
+const LABEL = { listings: 'Listings', withdrawals: 'Withdrawals', disputes: 'Disputes', verifications: 'ID checks', reports: 'Reports', confirm: 'Confirm M-Pesa', payments: 'Underpaid', users: 'Accounts', events: 'Events', club: 'Club', notices: 'Notices', sponsors: 'Sponsors' };
+const COUNT = () => ({ listings: Q.counts.listings, withdrawals: Q.counts.withdrawals, disputes: Q.counts.disputes, verifications: Q.counts.verifications, reports: Q.counts.reports, confirm: Q.counts.confirm, payments: Q.counts.underpaid, users: 0, events: 0, club: X.orders.length, notices: 0, sponsors: 0 });
+
+function render() {
+  if (!store.get('k')) return login();
+  if (!Q) return login();
+  const c = COUNT();
+  const items = SECTIONS[tab]();
+  $('#app').innerHTML = '<h1>Comrade Connect admin</h1><nav>' + Object.keys(LABEL).map((k) => '<button data-tab="' + k + '" class="' + (k === tab ? 'on' : '') + '">' + LABEL[k] + (c[k] ? '<span class="b">' + c[k] + '</span>' : '') + '</button>').join('') + '</nav>'
+    + '<div class="row"><button id="rf">Refresh</button><button id="out">Sign out</button></div>'
+    + (items.length ? items.join('') : '<div class="card"><p class="sub">Nothing waiting here.</p></div>');
+}
+
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; return render(); }
+  if (e.target.closest('#rf')) return load().catch((x) => toast(x.message));
+  if (e.target.closest('#out')) { store.del('k'); Q = null; return login(); }
+  if (e.target.closest('#ugo')) {
+    const aid = $('#ua').value.trim(), a = $('#uact').value, v = $('#uv').value.trim(); if (!aid) return toast('Enter the account ID');
+    const body = { action: a }; if (a === 'mute') body.hours = +v; if (a === 'role') body.role = v;
+    if (a === 'ban' && !confirm('Ban ' + aid + '?')) return;
+    return act(e.target, () => api('/api/admin/users/' + encodeURIComponent(aid), body), 'Done');
+  }
+  if (e.target.closest('#evadd')) {
+    const t = $('#ev_t').value.trim(), d = $('#ev_d').value.trim(), pr = $('#ev_p').value.trim();
+    if (t.length < 3 || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return toast('Add a title and a date like 2026-11-20');
+    const body = { title: t, date: d, venue: $('#ev_v').value.trim(), details: $('#ev_x').value.trim() }; if (pr) body.ticket_price = +pr;
+    return act(e.target, () => api('/api/admin/events', body), 'Event added');
+  }
+  if (e.target.closest('#drgo')) {
+    const ev = $('#dr_e').value, code = $('#dr_c').value.trim(), m = $('#dr_m'); if (!ev) return toast('Add an event with tickets first');
+    if (code.replace(/\D/g, '').length !== 8) return toast('Enter the 8-digit code');
+    e.target.disabled = true;
+    try { await api('/api/admin/tickets/validate', { event_id: ev, code }); m.textContent = 'VALID. Let them in.'; $('#dr_c').value = ''; }
+    catch (x) { m.textContent = 'NOT VALID: ' + x.message; }
+    e.target.disabled = false; return;
+  }
+  if (e.target.closest('#ntadd')) {
+    const t = $('#nt_t').value.trim(), x = $('#nt_x').value.trim(); if (t.length < 3) return toast('Add a title');
+    if (x && !/^\d+$/.test(x)) return toast('Days must be a number');
+    const body = { title: t, body: $('#nt_b').value.trim(), pinned: $('#nt_p').checked }; if (x) body.expires_days = +x;
+    return act(e.target, () => api('/api/admin/notices', body), 'Notice published');
+  }
+  if (e.target.closest('#spadd')) {
+    const n = $('#sp_n').value.trim(), l = $('#sp_l').value.trim(); if (n.length < 2) return toast('Add the sponsor name');
+    if (l && !/^https:\/\//.test(l)) return toast('The link must start with https://');
+    return act(e.target, () => api('/api/admin/sponsors', { name: n, blurb: $('#sp_b').value.trim(), link: l }), 'Sponsor added');
+  }
+  if (e.target.closest('#cpadd')) {
+    const n = $('#cp_n').value.trim(), pr = $('#cp_p').value.trim(), q = $('#cp_q').value.trim();
+    if (n.length < 2 || !/^\d+$/.test(pr)) return toast('Add a name and a price');
+    return act(e.target, () => api('/api/admin/club/products', { name: n, price: +pr, qty: /^\d+$/.test(q) ? +q : 0 }), 'Product added');
+  }
+  const b = e.target.closest('[data-do]'); if (!b) return;
+  const card = b.closest('.card'), id = card && card.dataset.id, d = b.dataset.do;
+  if (d === 'copy') { try { await navigator.clipboard.writeText(b.dataset.v); toast('Copied'); } catch (x) { toast(b.dataset.v); } return; }
+  if (d === 'ntdel') { if (!confirm('Delete this notice? Students will stop seeing it.')) return; return act(b, () => api('/api/admin/notices/' + id, { action: 'delete' }), 'Notice deleted'); }
+  if (d === 'spdel') { if (!confirm('Delete this sponsor?')) return; return act(b, () => api('/api/admin/sponsors/' + id, { action: 'delete' }), 'Sponsor deleted'); }
+  if (d === 'evdel') { if (!confirm('Delete this event? Tickets already sold stay valid in the database but the event disappears from the app.')) return; return act(b, () => api('/api/admin/events/' + id, { action: 'delete' }), 'Event deleted'); }
+  if (d === 'cpstock') { const v = ask('New stock quantity (the number on the shelf):'); if (v === null) return; if (!/^\d+$/.test(v)) return toast('Enter a number'); return act(b, () => api('/api/admin/club/stock', { product_id: id, qty: +v }), 'Stock updated'); }
+  if (d === 'payok') { if (!confirm('Approve? Only if your M-Pesa message shows this code and the full amount. This starts the order and cannot be undone.')) return; return act(b, () => api('/api/admin/payments/' + id, { action: 'approve' }), 'Payment confirmed'); }
+  if (d === 'paybad') { if (!confirm('Refuse this code? The buyer will see the payment as failed and must pay again.')) return; return act(b, () => api('/api/admin/payments/' + id, { action: 'reject' }), 'Payment refused'); }
+  if (d === 'cocollect') { if (!confirm('Mark as collected? Check the buyer\'s Ref first.')) return; return act(b, () => api('/api/admin/club/orders/' + id + '/collect', {}), 'Marked collected'); }
+  if (d === 'approve') return act(b, () => api('/api/admin/listings/' + id, { action: 'approve' }), 'Approved');
+  if (d === 'reject') { const r = ask('Reason for the seller (they will see it):'); if (!r) return; return act(b, () => api('/api/admin/listings/' + id, { action: 'reject', reason: r }), 'Rejected'); }
+  if (d === 'paid') { const r = ask('M-Pesa confirmation code you got when you sent it:'); if (!r) return; return act(b, () => api('/api/admin/withdrawals/' + id, { action: 'paid', payout_ref: r }), 'Marked paid'); }
+  if (d === 'wreject') { if (!confirm('Reject and return the money to the wallet?')) return; return act(b, () => api('/api/admin/withdrawals/' + id, { action: 'reject' }), 'Rejected, money returned'); }
+  if (d === 'orelease') { if (!confirm('Pay the seller? This cannot be undone.')) return; return act(b, () => api('/api/admin/orders/' + id, { action: 'release' }), 'Seller paid'); }
+  if (d === 'orefund') { if (!confirm('Refund the buyer? This cannot be undone.')) return; return act(b, () => api('/api/admin/orders/' + id, { action: 'refund' }), 'Buyer refunded'); }
+  if (d === 'vapprove_nb') { if (!confirm('Approve the ID but give no role badge? The photo is deleted after 7 days.')) return; return act(b, () => api('/api/admin/verifications/' + id, { action: 'approve', badge: false }), 'Verified, no badge'); }
+  if (d === 'vapprove') { if (!confirm('Approve this ID? The photo is deleted after 7 days.')) return; return act(b, () => api('/api/admin/verifications/' + id, { action: 'approve' }), 'Verified'); }
+  if (d === 'vreject') { const n = ask('Reason (optional, the user sees it):', ''); if (n === null) return; return act(b, () => api('/api/admin/verifications/' + id, { action: 'reject', note: n }), 'Rejected'); }
+  if (d === 'showid') {
+    b.disabled = true;
+    try {
+      const r = await fetch(base() + '/api/admin/verifications/' + id + '/image', { headers: { 'X-Admin-Key': store.get('k') } });
+      if (!r.ok) throw new Error('Image not available');
+      const u = URL.createObjectURL(await r.blob()); card.querySelector('[data-img]').innerHTML = '<img src="' + u + '" alt="ID photo" style="height:auto;max-width:100%">';
+    } catch (x) { toast(x.message); }
+    b.disabled = false; return;
+  }
+  if (d === 'raction' || d === 'ractionhide' || d === 'rdismiss') {
+    const kind = card.dataset.kind, body = { action: d === 'rdismiss' ? 'dismiss' : 'action' }; if (d === 'ractionhide') body.hide = true;
+    return act(b, () => api('/api/admin/reports/' + kind + '/' + id, body), 'Done');
+  }
+});
+window.addEventListener('pageshow', () => { if (store.get('k')) load().catch((e) => { Q = null; login(e.message); }); else login(); });
+</script>
+</body>
+</html>

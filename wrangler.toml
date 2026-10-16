@@ -1,0 +1,44 @@
+name = "comrade-connect-api"
+main = "backend/src/index.js"
+compatibility_date = "2025-09-01"
+
+[vars]
+# Set this to your real site (e.g. "https://comradeconnect.co.ke") once the domain is live.
+# "*" works while testing; the API uses no cookies.
+ALLOWED_ORIGINS = "*"   # after launch change to "https://comradeconnect.co.ke"
+# gemini-2.0-flash was shut down on 1 June 2026. gemini-3.1-flash-lite has a free tier (check https://ai.google.dev/gemini-api/docs/pricing before launch).
+AI_MODEL = "gemini-3.1-flash-lite"
+AI_DAILY_LIMIT = "20"
+AI_GLOBAL_LIMIT = "1000"
+# --- Payments (free by default) ---
+# "manual": buyers send money to YOUR number, till or paybill and enter the M-Pesa code; you confirm it in the admin panel. No sign-up, no API, no fees from us.
+# "tinypesa": automatic M-Pesa prompt through TinyPesa (needs TINYPESA_API_KEY and CALLBACK_SECRET; TinyPesa has its own fees).
+PAYMENT_MODE = "manual"
+MPESA_PAY_TYPE = "send"        # send (Send Money to a phone) | till (Buy Goods) | paybill
+MPESA_PAY_TO = ""              # your phone number, till number or paybill number
+MPESA_PAY_NAME = ""            # the name M-Pesa shows when buyers type the number (so they know it is you)
+# Escrow and referral rules (days / KES)
+REFERRAL_UNLOCK_DAYS = "7"
+REFERRAL_REWARD = "20"
+ESCROW_AUTO_RELEASE_DAYS = "3"
+PLATFORM_FEE_PERCENT = "3"
+# Google sign-in: the OAuth Web client ID from Google Cloud Console (public value, not a secret). Empty = Google button hidden.
+GOOGLE_CLIENT_ID = ""
+# Files live in Supabase Storage (free). Bucket names must match supabase/schema.sql.
+MEDIA_BUCKET = "cc-media"       # public: clips and listing photos
+PRIVATE_BUCKET = "cc-private"   # private: ID photos
+# MEDIA_PUBLIC_URL = ""          # optional: only if you later put a CDN in front of the public bucket
+
+BOOST_PRICE = "20"
+# Free Supabase Storage = 1 GB total, 50 MB max per file. Clips are capped at 25 MB; when all media passes MEDIA_BUDGET_MB the oldest clips are deleted automatically.
+CLIP_MAX_MB = "25"
+MEDIA_BUDGET_MB = "800"
+# "1" = sellers must be ID-verified before withdrawing
+WITHDRAW_REQUIRES_VERIFIED = "1"
+
+# Every 15 minutes: auto-release handed-over orders, unlock referral rewards, expire stale payments/stock, delete old ID photos, tidy storage
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Secrets are NEVER written here. Set each one with:  npx wrangler secret put NAME
+# Full list with descriptions: .env.example

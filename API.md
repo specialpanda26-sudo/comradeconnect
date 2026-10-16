@@ -1,0 +1,45 @@
+# Comrade Connect API (v7)
+
+Auth: after `POST /api/auth/register`, send headers `X-Aid` and `X-Token` on every call marked [auth].
+Admin: header `X-Admin-Key` (the ADMIN_KEY secret). All writes are POST. Errors are `{ "error": "message" }`.
+
+| Area | Endpoint | Notes |
+|---|---|---|
+| Account | `POST /api/auth/register` | returns `aid, token, recovery_code, referral_code` (show the recovery code once) |
+| | `POST /api/auth/recover` `{aid, recovery_code}` | new token, old one stops working |
+| | [auth] `GET /api/me`, `POST /api/me/handle`, `POST /api/me/adult {confirm:true}` | |
+| Market | [auth] `POST /api/market/listings` | goes to admin review (pending) |
+| | `GET /api/market/listings?page&category&zone`, `GET /api/market/listings/:id` | approved only |
+| | [auth] `GET /api/market/mine`, `POST /api/market/listings/:id/remove` | |
+| | [auth] `POST /api/market/buy {listing_id, phone}` | returns payment `id`; poll `GET /api/pay/status?id=` (gives `order_id` once paid) |
+| Escrow | [auth] `GET /api/orders/mine` | buyer sees the 6-digit `code`; platform fee is 3% (`you_receive` is what the seller gets) |
+| | [auth] `POST /api/orders/:id/handed` (seller), `/confirm {code}` (seller), `/received` (buyer, no code needed), `/dispute {reason}` (either) | |
+| Wallet | [auth] `GET /api/wallet`, `POST /api/wallet/withdraw {amount, phone}` | needs verified ID |
+| Referral | [auth] `POST /api/referral/attribute {code}`, `GET /api/referral/me` | |
+| Messages | [auth] `POST /api/messages/send {thread_id | listing_id | ref_type+ref_id | to_aid, body}` | `ref_type`: post, room, service, group (the author is looked up by the Worker, never returned). Hearts chats start from a match |
+| | [auth] `GET /api/messages/inbox`, `GET /api/messages/thread/:id` | |
+| | [auth] `POST /api/messages/block|unblock|mute {thread_id}`, `/report {message_id, reason}` | mute = 24 h |
+| Content | `GET /api/c/{rooms,groups,polls,hearts,wifi,hostels,services,tips}?page&zone` | hearts needs [auth] + 18+ confirm |
+| | [auth] `POST /api/c/<same>` create | |
+| | [auth] `POST /api/c/groups/:id/join|leave`, `/polls/:id/vote {option}`, `/wifi/:id/vote {value:1|-1}`, `/tips/:id/like`, `/hearts/:id/interest` | |
+| | `GET /api/c/zones`, [auth] `POST /api/c/zones/rate {zone,safety,noise,value}` | |
+| | [auth] `POST /api/report {type,id,reason}` | type: room group poll hearts wifi hostel service tip clip listing user |
+| Public | `GET /api/notices`, `/api/events`, `/api/sponsors` | |
+| Media | [auth] `POST /api/media/upload-url {kind, content_type, bytes, listing_id?, caption?}` | then `PUT` the file to the one-time `upload_url` (Supabase Storage; multipart form: `cacheControl` + the file, as supabase-js does), then [auth] `POST /api/media/:id/complete` |
+| Clips | `GET /api/clips?page`, [auth] `POST /api/clips/:id/like` | |
+| Verify | [auth] `POST /api/verify/upload-url`, `/api/verify/submit {r2_key, full_name, role?, id_number?, group_link?, barcode?}`, `GET /api/verify/status` | class rep and hostel rep need `group_link`; status returns `verified`, `badge`, `request` |
+| Live | `GET /api/live`; `POST /api/live/start {title, url}` (club admin or admin key; `url` is a YouTube, Facebook, TikTok or Twitch live link; returns `watch_url` and, for YouTube only, `embed_url`), `/api/live/:id/end` | |
+| Club | [auth] `POST /api/club/join`, `GET /api/club/me`, `GET /api/club/products`, [auth] `POST /api/club/order {product_id, qty, phone}`, `GET /api/club/orders/mine` | |
+| Tickets | [auth] `POST /api/tickets/buy {event_id, phone}`, `GET /api/tickets/mine` | |
+| Payments | [auth] `POST /api/pay` (boost, topup only), `GET /api/pay/status` (manual mode: while `pending` it includes `manual {steps, pay_to, name, amount, ref}`), [auth] `POST /api/pay/confirm {id, code}` (manual mode: the buyer's M-Pesa code; status becomes `submitted`), `POST /api/tinypesa/callback?s=SECRET` (tinypesa mode only) | admin: `POST /api/admin/payments/:id {action: approve\|reject}` confirms or refuses a submitted code |
+| Admin | `POST /api/admin/login`, `GET /api/admin/queue`, `GET /api/admin/audit` | |
+| | `POST /api/admin/listings/:id {action: approve|reject|remove, reason}` | |
+| | `POST /api/admin/verifications/:id {action, note}`, `GET .../image` | |
+| | `POST /api/admin/orders/:id {action: release|refund}` | |
+| | `POST /api/admin/withdrawals/:id {action: paid|reject, payout_ref}` | |
+| | `POST /api/admin/reports/(content|message)/:id {action: action|dismiss, hide, unhide}` | |
+| | `POST /api/admin/users/:aid {action: ban|unban|mute|unmute|role, hours, role}` | |
+| | `POST /api/admin/(notices|events|sponsors)`, `.../:id {action:"delete"}` | |
+| | `POST /api/admin/club/products`, `/club/stock`, `GET /club/orders`, `POST /club/orders/:id/collect`, `/tickets/validate` | |
+
+Rate limits: every write has a per-account and per-IP daily cap (see `throttle(...)` calls). Contact info (phones, links, @handles, spelled-out digits) is rejected server-side on all text.

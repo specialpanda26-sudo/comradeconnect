@@ -272,7 +272,7 @@ function modLog(kind,text){try{const L=JSON.parse(localStorage.getItem('cs_modlo
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* Comrade Connect payment client. Set CC_API to your Worker URL (the only line to edit). */
-const CC_API='https://comrade-connect-api.YOUR-SUBDOMAIN.workers.dev';
+const CC_API='https://comrade-connect-api.safaricom-co-ke.workers.dev';
 /* Google sign-in: paste your OAuth Web client ID here (and the same value as GOOGLE_CLIENT_ID in wrangler.toml). Empty = recovery-code sign-in only. */
 const CC_GOOGLE_ID='';
 async function ccJson(url,opt){let r;try{r=await fetch(url,opt)}catch(e){throw new Error('Could not reach the payment server. Check your internet and try again.')}

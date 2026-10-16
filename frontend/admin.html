@@ -27,7 +27,7 @@ nav button{white-space:nowrap;flex:0 0 auto}nav button.on{background:var(--acc);
 <div id="app"></div><div id="toast" role="status"></div>
 <script>
 /* Set this to your Worker URL (same value as CC_API in index.html). If you leave it, the login screen asks for it once. */
-const CC_API = 'https://comrade-connect-api.YOUR-SUBDOMAIN.workers.dev';
+const CC_API = 'https://comrade-connect-api.safaricom-co-ke.workers.dev';
 
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

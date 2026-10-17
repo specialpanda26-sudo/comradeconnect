@@ -1200,5 +1200,6 @@ function signOut() {
 window.ccSignOut = signOut;
 window.ccGoogle = { on: googleOn, mount: mountGoogle };
 
+window.ccMarketTerms = () => S.list.map((l) => l.title);
 window.CC = { ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid };      // used by the other sections
 })();

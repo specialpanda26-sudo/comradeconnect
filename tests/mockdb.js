@@ -27,7 +27,7 @@ export const SCHEMA = {
   withdrawals: T(['id'], { defaults: { status: 'requested' } }), verifications: T(['id'], { defaults: { status: 'pending' } }),
   club_members: T(['club', 'aid'], { defaults: { status: 'active' } }), club_products: T(['id'], { defaults: { active: true } }), club_stock: T(['product_id'], { defaults: { qty: 0 } }),
   club_orders: T(['id'], { defaults: { status: 'pending', stock_held: true } }), tickets: T(['id'], { defaults: { status: 'valid' }, uniques: [nn('payment_id')] }),
-  settings: T(['key']), sponsors: T(['id'], { defaults: { active: true } }), notices: T(['id'], { defaults: { pinned: false, expires_at: null } }), events: T(['id'], { defaults: { hidden: false } }),
+  settings: T(['key']), site_content: T(['key']), sponsors: T(['id'], { defaults: { active: true } }), notices: T(['id'], { defaults: { pinned: false, expires_at: null } }), events: T(['id'], { defaults: { hidden: false } }),
   admin_audit_log: T(['id']), live_streams: T(['id'], { defaults: { status: 'live' } }),
 };
 

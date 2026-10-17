@@ -614,3 +614,11 @@ alter table withdrawals add column if not exists net integer;
 alter table payments add column if not exists boost_hours integer;
 alter table sponsors add column if not exists amount integer not null default 0;
 create unique index if not exists withdrawals_payout_ref_uq on withdrawals(payout_ref) where payout_ref is not null;
+
+-- v10: Site editor (admin changes words, links, banner and switches without code). Safe to run again.
+create table if not exists site_content (
+  key text primary key,
+  value text not null default '',
+  updated_at timestamptz not null default now()
+);
+alter table site_content enable row level security;

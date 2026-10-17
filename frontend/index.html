@@ -259,6 +259,13 @@ html[data-lay="desktop"] #toast{bottom:28px;left:calc(50% + 52px)}
 html[data-lay="desktop"] #ck{bottom:28px;left:calc(50% + 52px)}
 html[data-lay="desktop"] #fab{right:28px;bottom:28px}
 #lay{display:grid}
+/* site editor: announcement banner and maintenance cover (cc-site.js) */
+#cc-banner{position:fixed;top:0;left:0;right:0;z-index:520;padding:calc(7px + env(safe-area-inset-top,0px)) 14px 7px;text-align:center;font:500 12px Poppins,sans-serif;background:var(--ink);color:var(--inkfg);letter-spacing:.01em}
+#cc-banner a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.cc-has-banner nav{top:calc(48px + env(safe-area-inset-top,0px))}
+#cc-maint{position:fixed;inset:0;z-index:900;display:grid;place-items:center;text-align:center;padding:30px;background:var(--bg);color:var(--fg)}
+#cc-maint h1{font:800 clamp(28px,8vw,48px) Unbounded,Poppins,sans-serif;text-transform:uppercase;letter-spacing:.02em;margin-bottom:14px}
+#cc-maint p{color:var(--mut);max-width:420px;line-height:1.8;font-size:14px}
 </style>
 <script>
 function wordHit(t){const M={zero:0,sifuri:0,nought:0,naught:0,one:1,moja:1,two:2,mbili:2,three:3,tatu:3,four:4,nne:4,five:5,tano:5,six:6,sita:6,seven:7,saba:7,eight:8,nane:8,nine:9,tisa:9},ks=Object.keys(M).sort((a,b)=>b.length-a.length).join('|');
@@ -373,10 +380,10 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
 
 <div class="view on" id="v-feed">
 <header class="hero">
-  <p class="gr">Niaje comrade,</p><h1>Spill it. Nobody will know it was you.</h1>
+  <p class="gr" data-cc="hero_greeting">Niaje comrade,</p><h1 data-cc="hero_title">Spill it. Nobody will know it was you.</h1>
   <h3 id="typed" aria-live="off"></h3>
-  <p>The anonymous campus feed for Kirinyaga University. No login, no name, no trace. Drop the tea, read what the hostels are saying, and share the juicy ones to WhatsApp.</p>
-  <div style="margin-top:28px"><button class="btn p" data-open>Drop Tea / Spill Secret</button> <button class="btn g" id="tpill" style="margin-top:10px">Take the 1-minute tour</button></div>
+  <p data-cc="hero_text">The anonymous campus feed for Kirinyaga University. No login, no name, no trace. Drop the tea, read what the hostels are saying, and share the juicy ones to WhatsApp.</p>
+  <div style="margin-top:28px"><button class="btn p" data-open data-cc="cta_primary">Drop Tea / Spill Secret</button> <button class="btn g" id="tpill" style="margin-top:10px" data-cc="cta_tour">Take the 1-minute tour</button></div>
   <div class="chips" id="cd" aria-label="Semester countdown"></div>
 </header>
 
@@ -405,7 +412,7 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
 
 <section class="view pg" id="v-live">
   <h2 class="ph">Live</h2>
-  <p class="sub">Go live from campus: matches, events, trips, strike updates. Stay safe and respect people's privacy.</p>
+  <p class="sub" data-cc="live_intro">Go live from campus: matches, events, trips, strike updates. Stay safe and respect people's privacy.</p>
   <div id="lvset" style="display:grid;gap:12px"><div class="fld"><input id="ltitle" maxlength="80" placeholder="What is happening? (title)" aria-label="Stream title"></div><button class="btn p" id="golive">Go live</button></div>
   <div class="vgrid" id="lvl"></div>
   <div id="room" class="box g" hidden>
@@ -502,7 +509,7 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
   <div class="box g"><h3>Restore an account</h3><div class="fld"><input id="raid" placeholder="Your account ID" autocomplete="off" aria-label="Account ID"></div><div class="fld" style="margin-top:8px"><input id="rcode" placeholder="Enter your recovery code" autocomplete="off" aria-label="Recovery code"></div><button class="btn g" id="rrs" style="width:100%;margin-top:14px">Restore</button><p class="sub" style="margin-top:10px">Use the account ID and recovery code you saved.</p></div>
 </section>
 
-<footer>Anonymous means anonymous, so keep it kind. No real names, no phone numbers, no hate.<br><button class="act" id="hlp" style="margin-top:14px">Need help? Safety and emergency contacts</button><div class="lg"><a href="#terms" data-legal="terms">Terms &amp; Conditions</a><a href="#privacy" data-legal="privacy">Privacy Policy</a><a href="#cookies" data-legal="cookies">Cookie Policy</a></div>
+<footer><span data-cc="footer_text">Anonymous means anonymous, so keep it kind. No real names, no phone numbers, no hate.</span><br><button class="act" id="hlp" style="margin-top:14px">Need help? Safety and emergency contacts</button><div class="lg"><a href="#terms" data-legal="terms">Terms &amp; Conditions</a><a href="#privacy" data-legal="privacy">Privacy Policy</a><a href="#cookies" data-legal="cookies">Cookie Policy</a><a href="/about.html">About</a></div>
 <p class="cp">&copy; <span id="yr">2026</span> Comrade Connect Kirinyaga Edition. All rights reserved.</p>
 <span class="pw g">Powered by <b id="pwn">Comrade Connect</b></span>
 </footer>
@@ -520,6 +527,7 @@ const oldDraw=drawX;
 const nt=()=>{const cs=['All','Fees','Exams','HELB','Strikes','General'];
  return '<p class="sub">Campus notices in one place. Nothing is posted here until an admin verifies it.</p><div class="tabs z" style="padding:0">'+cs.map(c=>`<button class="tab g${c===nc?' on':''}" data-nc="${c}">${c}</button>`).join('')+'</div>'+(NT.length?'':'<p class="sub" style="margin-top:14px">No notices yet.</p>')+NT.filter(n=>nc==='All'||n.c===nc).map(n=>`<article class="box g"><div class="flex items-center justify-between"><span><span class="badge">${n.p?'Pinned':'Verified'}</span><span class="badge" style="margin-left:6px">${n.c}</span></span></div><p style="margin:12px 0 4px;font-weight:600">${esc(n.t)}</p><p class="sub" style="margin:0 0 12px">${esc(n.b)}</p><div class="bar"><span class="views">${n.a<1?'Today':n.a+' day'+(n.a>1?'s':'')+' ago'}</span><button class="act${NS.has(n.id)?' liked':''}" data-n="${n.id}">${NS.has(n.id)?'Saved':'Save'}</button></div></article>`).join('')};
 const ev=()=>'<p class="sub">Upcoming campus events. Tap Going to keep a list, or add one to your phone calendar.</p>'+(EV.length?'':'<p class="sub" style="margin-top:14px">No events yet.</p>')+EV.map(e=>`<article class="box g"><div class="flex items-center justify-between"><span><span class="badge">${hd(e.d)}</span><span class="badge" style="margin-left:6px">${e.g}</span></span></div><p style="margin:12px 0 4px;font-weight:600">${esc(e.t)}</p><p class="sub" style="margin:0 0 12px">${ds(e.d)} at ${e.tm}<br>${esc(e.w)}<br>${(e.d*7+12)+(ER.has(e.id)?1:0)} comrades going</p><div class="bar"><button class="act${ER.has(e.id)?' liked':''}" data-e="${e.id}">${ER.has(e.id)?'Going. Tap to undo':'Going'}</button><button class="act" data-ics="${e.id}">Add to calendar</button></div></article>`).join('');
+window.ccSearchTerms=()=>[...NT.map(n=>n.t),...EV.map(e=>e.t),...db().filter(p=>!p.hidden).map(p=>p.category)];
 const res=q=>{q=q.trim().toLowerCase();if(q.length<2)return '<p class="sub">Type at least 2 letters to search stories, notices and events.</p>';
  const m=s=>s.toLowerCase().includes(q),ps=db().filter(p=>!p.hidden&&!HID.has('post:'+p._id)&&!BLK.has(p.aid)&&(m(p.content)||m(p.category)||m(p.zone||''))).slice(0,6),ns=NT.filter(n=>m(n.t+' '+n.b+' '+n.c)),es=EV.filter(e=>m(e.t+' '+e.w+' '+e.g));
  const sec=(t,a)=>a.length?`<h3 style="font-size:13px;margin:6px 0">${t}</h3>`+a.join(''):'';
@@ -638,12 +646,12 @@ const open=s=>{cur=s;s._cc.classList.add('on');P.querySelector('.tt').textConten
  const sel=P.querySelector('.op.on');if(sel)sel.scrollIntoView({block:'center'})};
 P.addEventListener('click',e=>{const b=e.target.closest('.op');if(b&&cur){const s=cur;s.selectedIndex=+b.dataset.i;s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new Event('change',{bubbles:true}));sync(s);close()}else if(e.target===P)close()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cur)close()});
-function enh(s){if(s.dataset.cc||s.multiple||s.size>1)return;s.dataset.cc=1;
+function enh(s){if(s.dataset.ccsel||s.multiple||s.size>1)return;s.dataset.ccsel=1;
  const w=document.createElement('span');w.className='ccw';const t=document.createElement('button');t.type='button';t.className='ccs';t.setAttribute('aria-haspopup','listbox');t.innerHTML='<span class="ccv"></span>'+CH;
  s.parentNode.insertBefore(w,s);w.append(t,s);s.classList.add('ccn');s.tabIndex=-1;s._cc=t;t.onclick=()=>open(s);sync(s);s.addEventListener('change',()=>sync(s))}
-const scan=()=>document.querySelectorAll('select:not([data-cc])').forEach(enh);
+const scan=()=>document.querySelectorAll('select:not([data-ccsel])').forEach(enh);
 let raf=0;new MutationObserver(()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(scan)}).observe(document.body,{childList:true,subtree:true});
-scan();setInterval(()=>document.querySelectorAll('select[data-cc]').forEach(sync),400);
+scan();setInterval(()=>document.querySelectorAll('select[data-ccsel]').forEach(sync),400);
 })();
 </script>
 <button id="tkr" aria-label="Tech, your guide"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M24 5v6"/><circle cx="24" cy="4.5" r="2" fill="currentColor"/><rect x="8" y="11" width="32" height="24" rx="9"/><path d="M4 21v6M44 21v6"/><ellipse class="tke" cx="18" cy="22" rx="2.6" ry="3.4" fill="currentColor" stroke="none"/><ellipse class="tke" cx="30" cy="22" rx="2.6" ry="3.4" fill="currentColor" stroke="none"/><path d="M18 29c3 2.4 9 2.4 12 0"/><path d="M16 35v5h16v-5"/></svg></button>
@@ -1456,7 +1464,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-core.js?v=7g"></script>
+<script src="cc-core.js?v=7h"></script><script src="cc-site.js?v=2" defer></script><script src="cc-suggest.js?v=1" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

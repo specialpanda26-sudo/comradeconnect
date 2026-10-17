@@ -110,3 +110,11 @@ Backup, if the panel is ever down: the same actions by curl. Replace `YOUR-WORKE
 | Domain | Already bought (Olitt) | Renews yearly, about KSh 1,200 | Cloudflare DNS and Pages are free; only the yearly renewal costs |
 | TinyPesa | Optional, paid | Its own fees | Off by default |
 Limits are the providers' current published ones and can change; check their pricing pages before launch.
+
+## SEO and HTTPS checklist (after the site is live on comradeconnect.co.ke)
+1. Cloudflare dashboard, your domain, SSL/TLS > Edge Certificates: turn on **Always Use HTTPS**. This is the HTTP to HTTPS redirect (a file cannot do it).
+2. Same page: turn on Automatic HTTPS Rewrites. `_headers` already sends HSTS, so browsers remember to use HTTPS.
+3. www to non-www: Rules > Redirect Rules > create a rule: if hostname equals www.comradeconnect.co.ke, redirect (301) to https://comradeconnect.co.ke with the path kept. (Skip if you do not use www.)
+4. Google Search Console (search.google.com/search-console) > Add property > **Domain** > comradeconnect.co.ke. Google shows a TXT record: add it as a DNS record in Cloudflare (DNS > Records > Add, type TXT, name @). Click Verify.
+5. Search Console > Sitemaps > add `sitemap.xml`. Then URL Inspection > paste https://comradeconnect.co.ke/ and https://comradeconnect.co.ke/about.html > Request indexing.
+6. Indexing takes days to weeks. Searching "comrades" alone will not put a new site on page one; searching "Comrade Connect" or "Comrade Connect Kirinyaga" is the realistic first target.

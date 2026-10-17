@@ -130,3 +130,11 @@ Privacy policy + Terms matching real data (needs a Kenyan lawyer check), moderat
 - Fixed: the boost screen showed KSh 30 / 70 but the server charged KSh 20. Both now come from the same setting. A boost now adds time to a boost that is still running.
 - Run the last block of `supabase/schema.sql` (v9) in Supabase after deploying. Until then the app keeps working with the env values, but saving settings and withdrawal fees will say to run the SQL.
 - Still not automatic: sending the M-Pesa money (needs Safaricom Daraja B2C approval). The admin sends it by hand and enters the code.
+
+## v10 follow-up: test fix, search suggestions, SEO (DONE, with the limits below)
+- Fixed the flaky Market sell-form test. Cause: the dropdown styler in index.html marked every select with `data-cc="1"`, the same attribute the Site editor uses for editable words. When the Site editor settings arrived, cc-site.js rewrote the select's contents and the Category options disappeared (whether it happened depended on timing). The styler now uses `data-ccsel`, and cc-site.js refuses to touch selects, inputs and anything whose key is not a real word key. Before the fix the test failed 4 of 5 runs (4 of 4 under CPU load); after it, it passes every run.
+- Search suggestions as you type: `frontend/cc-suggest.js`, on the Market search box and the Explore > Search box. Up to 5 suggestions from what is already on the phone (listing titles; story categories, notice and event titles). Text only, never HTML. Test: `python3 tests/browser_suggest.py`.
+- SEO: new `about.html` (real text, 3 app screenshots with alt text in `frontend/img/`), linked from the footer, added to sitemap.xml with image entries, JSON-LD AboutPage. `set-domain.py` now covers about.html.
+- Security headers: `_headers` adds HSTS, frame-ancestors 'self' and Permissions-Policy. The API (`server.js`) adds HSTS and Referrer-Policy.
+- Limits: the Google Search Console code is still yours to paste (index.html has the slot). HTTPS redirect and www to non-www are Cloudflare dashboard settings, not files (see DEPLOY.md, SEO section). Nothing here was tested on the live domain. Suggestions do not search the server, only what is loaded on the phone.
+- NOT DONE: Live (floating heart icons, viewer count, camera switch, live comments). Needs your choice of route first (see the chat).

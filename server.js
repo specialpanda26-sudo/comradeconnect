@@ -36,6 +36,8 @@ function cors(headers, reqOrigin) {
   headers.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   headers.set('Access-Control-Max-Age', '86400');
   headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  headers.set('Referrer-Policy', 'no-referrer');
   return headers;
 }
 

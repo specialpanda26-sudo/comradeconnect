@@ -77,15 +77,17 @@ function loadGsi() {
 async function googleSignIn(credential) {                    // the fetch shim sends the guest token too, so a guest account is linked, not lost
   const d = await rawPost('/api/auth/google', { credential });
   saveAuth({ aid: d.aid, token: d.token });
-  ME.aid = d.aid; saveMe();
+  ME.aid = d.aid; ME.google = 1;
+  try { const j = JSON.parse(atob(credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); if (j.email) { const [u, dom] = String(j.email).split('@'); ME.gmask = u.slice(0, 2) + '***@' + dom; } } catch (e) {}
+  saveMe();
   setTimeout(() => { attributeRef(); syncVer(); }, 0);
   return d;
 }
-async function mountGoogle(box, onDone, onErr) {
+async function mountGoogle(box, onDone, onErr, opts) {
   if (!googleOn()) return false;
   if (!(await loadGsi())) { box.innerHTML = '<p class="sub">Google sign-in could not load. Check your internet.</p>'; return false; }
   google.accounts.id.initialize({ client_id: CC_GOOGLE_ID, callback: async (resp) => { try { onDone(await googleSignIn(resp.credential)); } catch (e) { onErr(e.message); } } });
-  google.accounts.id.renderButton(box, { theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', width: 280 });
+  google.accounts.id.renderButton(box, Object.assign({ theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', width: 280 }, opts || {}));
   return true;
 }
 function chooseSignIn() {                                    // resolves 'google' or 'guest'; rejects on cancel
@@ -136,7 +138,7 @@ function promptRestore(msg) {
     + '<div class="two"><button class="btn g" id="ccrst-x">Cancel</button><button class="btn p" id="ccrst-go">Restore</button></div>');
   m.id = 'ccrst';
   m.querySelector('#ccrst-x').onclick = () => m.close();
-  if (googleOn()) mountGoogle(m.querySelector('#ccrg'), () => { m.close(); toast('Signed in'); refreshAll(); }, (e) => { m.querySelector('#ccrst-e').textContent = e; });
+  if (googleOn()) mountGoogle(m.querySelector('#ccrg'), () => { m.close(); toast('Signed in'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {} }, (e) => { m.querySelector('#ccrst-e').textContent = e; });
   m.querySelector('#ccrst-go').onclick = async () => {
     const b = m.querySelector('#ccrst-go'); b.disabled = true;
     try { await restoreAccount(m.querySelector('#ccrst-a').value, m.querySelector('#ccrst-c').value); m.close(); toast('Account restored'); refreshAll(); }
@@ -1157,6 +1159,46 @@ function initAlerts() {
 }
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 window.addEventListener('load', () => setTimeout(() => { try { initExplore(); } catch (err) { console.error('explore', err); } try { initClub(); } catch (err) { console.error('club', err); } try { initClips(); } catch (err) { console.error('clips', err); } try { initAlerts(); } catch (err) { console.error('alerts', err); } }, 0));
+
+/* ---------- welcome sheet Google button + sign out ---------- */
+window.ccMountSi = async function () {
+  const box = document.getElementById('siGb'), note = document.getElementById('siGn'); if (!box || !note) return;
+  const say = (t) => { note.textContent = t; note.hidden = !t; };
+  say('');
+  if (!googleOn()) { box.style.display = 'none'; say('Google sign-in is not set up on this site yet. Use an anonymous account for now.'); return; }
+  box.style.display = 'flex'; box.innerHTML = '<span class="note">Loading Google...</span>';
+  const w = Math.max(200, Math.min(360, Math.floor((box.parentElement && box.parentElement.clientWidth) || 300) - 4));
+  box.innerHTML = '';
+  const ok = await mountGoogle(box, () => { toast('Signed in with Google'); try { shut(); drawMe(); drawMe2(); } catch (e) {} refreshAll(); }, (msg) => say(msg || 'Google sign-in failed. Try again.'), { theme: 'outline', width: w });
+  if (!ok) say('Google sign-in could not load. Check your internet. If you opened this link inside WhatsApp, Instagram or Facebook, open it in Chrome instead.');
+};
+function signOut() {
+  const a = window.ccAuth && window.ccAuth(), linked = !!ME.google;
+  let body;
+  if (linked) body = '<p class="sub" style="margin-top:6px">You are signed in with Google. You can sign back in any time with the same Google account.</p>';
+  else if (a && a.aid) body = '<p class="sub" style="margin-top:6px">This is an anonymous account. After you sign out, the only way back in is your account ID and recovery code.</p>'
+    + '<div class="rw" style="margin-top:12px"><span>Account ID</span><b>' + esc(a.aid) + '</b></div><button class="btn g" id="sox-cp" style="width:100%;margin-top:10px">Copy account ID</button>'
+    + '<label class="sub" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="sox-ok"> I saved my account ID and recovery code</label>';
+  else body = '<p class="sub" style="margin-top:6px">This clears your handle, points and settings from this phone.</p>';
+  const m = sheet('<h3>Sign out?</h3>' + body + '<div class="two" style="margin-top:14px"><button class="btn g" id="sox-x">Cancel</button><button class="btn p" id="sox-go">Sign out</button></div>');
+  const go = m.querySelector('#sox-go'), ok = m.querySelector('#sox-ok');
+  if (ok) { go.disabled = true; ok.onchange = () => { go.disabled = !ok.checked; }; }
+  const cp = m.querySelector('#sox-cp'); if (cp) cp.onclick = () => copyText(a.aid);
+  m.querySelector('#sox-x').onclick = () => m.close();
+  go.onclick = async () => {
+    go.disabled = true;
+    try { if (connected() && a && a.token) await Promise.race([fetch(CC_API + '/api/auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }), sleep(3000)]); } catch (e) {}
+    try { if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect(); } catch (e) {}
+    try {
+      const aid = a && a.aid;
+      Object.keys(localStorage).forEach((k) => { if (k === 'cc_auth' || k === 'cc_pending' || k === 'cs_me' || k === 'cs_seen' || (aid && k.endsWith(':' + aid))) localStorage.removeItem(k); });
+    } catch (e) {}
+    toast('Signed out');
+    setTimeout(() => location.reload(), 400);
+  };
+}
+window.ccSignOut = signOut;
+window.ccGoogle = { on: googleOn, mount: mountGoogle };
 
 window.CC = { ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid };      // used by the other sections
 })();

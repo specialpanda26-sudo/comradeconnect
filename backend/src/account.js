@@ -87,6 +87,12 @@ export async function accountRoutes(req, env, url, ip) {
     if (!res.ok) return err(env, 'Could not create the account', 500);
     return json(env, { aid, token, referral_code: refcode, created: true }, 201);
   }
+  // Sign out: the token this phone was using stops working (a new one is made by Google sign-in or the recovery code).
+  if (path === '/api/auth/logout' && m === 'POST') {
+    const p = await authProfile(req, env);
+    if (p) await patch(env, `profiles?aid=eq.${enc(p.aid)}`, { token_hash: await H(env, 'tok:' + randHex(24)) });
+    return json(env, { ok: true });
+  }
   // Get a new token with the recovery code (also rotates the token, so a lost device is cut off).
   if (path === '/api/auth/recover' && m === 'POST') {
     const b = await body(); const aid = str(b.aid, 64), code = str(b.recovery_code, 40).toUpperCase();

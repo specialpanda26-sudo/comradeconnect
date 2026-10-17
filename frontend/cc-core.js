@@ -283,8 +283,8 @@ function draw() {
       let main = '', info = '';
       if (buy) {
         if (live) main = dbtn('received', S.armed === o.id + 'received' ? 'Tap again to release the money' : 'I received it', o.id) + dbtn('dispute', 'Report a problem', o.id);
-        info = live ? 'Your handover code is <b style="font-size:18px;letter-spacing:2px">' + esc(o.code || '') + '</b>. Check the item first. You can give the seller this code, or tap "I received it". Never do either before you have the item.'
-          : o.status === 'released' ? 'You confirmed. The seller was paid.' : o.status === 'refunded' ? 'The money is back in your wallet.' : '';
+        info = (o.seller_phone ? sellerBox(o.seller_phone) : (live || o.status === 'released' ? '<p class="sub" style="margin:0 0 8px">This seller did not add a number. Use "Message seller anonymously" on the item.</p>' : '')) + (live ? 'Your handover code is <b style="font-size:18px;letter-spacing:2px">' + esc(o.code || '') + '</b>. Check the item first. You can give the seller this code, or tap "I received it". Never do either before you have the item.'
+          : o.status === 'released' ? 'You confirmed. The seller was paid.' : o.status === 'refunded' ? 'The money is back in your wallet.' : '');
       } else {
         if (o.status === 'held') main = dbtn('handed', 'I handed it over', o.id) + dbtn('dispute', 'Report a problem', o.id);
         if (o.status === 'handed') main = '<div class="fld" style="width:100%"><input class="hc" inputmode="numeric" maxlength="6" placeholder="Buyer 6-digit code" aria-label="Handover code"></div>' + dbtn('code', 'Enter code to get paid', o.id) + dbtn('dispute', 'Report a problem', o.id);
@@ -358,6 +358,13 @@ $('#bpay').onclick = async () => {
 $('#bdone').onclick = () => { shut(); S.sub = 'orders'; draw(); loadOrders(); };
 ['dx5', 'dx6', 'dx7'].forEach((i) => { $('#' + i).onclick = shut; });
 
+/* ---------- seller number, shown to the buyer after payment ---------- */
+function sellerBox(p) {
+  const loc = '0' + String(p).replace(/^254/, ''), intl = String(p).replace(/\D/g, '');
+  return '<div style="padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);margin-bottom:10px"><span class="sub" style="display:block;margin:0">Seller phone number</span><b style="font-size:18px;letter-spacing:1px">' + esc(loc) + '</b>'
+    + '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><a class="btn g" style="text-decoration:none;padding:8px 14px" href="tel:+' + esc(intl) + '">Call</a><a class="btn g" style="text-decoration:none;padding:8px 14px" target="_blank" rel="noopener" href="https://wa.me/' + esc(intl) + '">WhatsApp</a></div>'
+    + '<span class="note" style="display:block;margin-top:6px">Use it only to arrange the handover. Keep the payment inside the app so you stay protected.</span></div>';
+}
 /* ---------- sell ---------- */
 async function toJpeg(file) {
   const bmp = await createImageBitmap(file), s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
@@ -376,6 +383,7 @@ window.resetSell = () => {
   S.photos.forEach((p) => URL.revokeObjectURL(p.url)); S.photos = []; S.sending = false; drawPrev();
   ['mti', 'mpr', 'mde'].forEach((i) => { $('#' + i).value = ''; });
   $('#mzo').innerHTML = ZONES.concat(['Other']).map((z) => '<option>' + esc(z) + '</option>').join('');
+  $('#mcp').value = ST.get('cc_sellphone', '') || ST.get('cc_phone', '');
   $('#msub').disabled = false; $('#msub').textContent = 'Submit for verification';
 };
 $('#mprev').onclick = (e) => { const b = e.target.closest('[data-rp]'); if (!b) return; const p = S.photos.splice(+b.dataset.rp, 1)[0]; if (p) URL.revokeObjectURL(p.url); drawPrev(); };
@@ -406,6 +414,8 @@ $('#msub').onclick = async () => {
   if (t.length < 3) return toast('Add a title for your item');
   if (!(p >= 100 && p <= 150000)) return toast('Enter a price between KSh 100 and KSh 150,000');
   if (!S.photos.length) return toast('Add at least one photo so the admin can verify it');
+  const cp = $('#mcp').value.replace(/[\s-]/g, '');
+  if (!/^(07|01)\d{8}$/.test(cp) && !/^\+?254[17]\d{8}$/.test(cp)) return toast('Add your phone number like 0712345678. Buyers see it only after they pay.');
   const wh = wordHit(t + ' ' + d); if (wh) modLog('listing', t + ' ' + d);
   if (wh || contactHit(t + ' ' + d)) return toast('Remove phone numbers, handles and links. Buyers can message you inside Comrade Connect.');
   const bot = BOT.on ? spillBot(t + ' ' + d, p) : { v: 'approve', why: '' };
@@ -414,8 +424,8 @@ $('#msub').onclick = async () => {
   S.sending = true; const btn = $('#msub'); btn.disabled = true; btn.textContent = 'Uploading...';
   let id = null;
   try {
-    const l = await call('/api/market/listings', { body: { title: t, description: d || 'No description.', price: p, zone: $('#mzo').value, condition: $('#mco').value, category: ($('#mcat') || {}).value || 'General' } });
-    id = l.id;
+    const l = await call('/api/market/listings', { body: { title: t, description: d || 'No description.', price: p, zone: $('#mzo').value, condition: $('#mco').value, contact_phone: cp, category: ($('#mcat') || {}).value || 'General' } });
+    id = l.id; ST.set('cc_sellphone', cp);
     for (let i = 0; i < S.photos.length; i++) { btn.textContent = 'Uploading photo ' + (i + 1) + ' of ' + S.photos.length + '...'; await uploadPhoto(id, S.photos[i].blob); }
     shut(); S.sub = 'mine'; draw(); loadMine(); toast('Sent for admin verification');
   } catch (e) {

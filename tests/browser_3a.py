@@ -122,7 +122,7 @@ def main():
         page.evaluate("document.querySelector('#msell').click()"); page.wait_for_timeout(300)
         page.set_input_files('#mgi', png_path); page.wait_for_timeout(500)
         check('photo preview appears', page.locator('#mprev img').count() == 1)
-        page.fill('#mti', 'Study desk'); page.fill('#mpr', '2500'); page.fill('#mde', 'Solid wood desk'); page.select_option('#mcat', 'Furniture')
+        page.fill('#mti', 'Study desk'); page.fill('#mpr', '2500'); page.fill('#mde', 'Solid wood desk'); page.fill('#mcp', '0711222333'); page.select_option('#mcat', 'Furniture')
         page.evaluate("document.querySelector('#msub').click()"); page.wait_for_timeout(1200)
         check('listing created with category and price', getattr(fake, 'last_listing', {}).get('category') == 'Furniture' and fake.last_listing.get('price') == 2500, getattr(fake, 'last_listing', None))
         check('photo asked for as image/jpeg with real size', getattr(fake, 'last_upload', {}).get('content_type') == 'image/jpeg' and fake.last_upload.get('bytes', 0) > 100, getattr(fake, 'last_upload', None))

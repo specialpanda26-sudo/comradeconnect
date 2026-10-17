@@ -1,5 +1,5 @@
 // Market listings and escrow orders.
-import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, deriveCode, codeHash, tsEqual, throttle, tooMany, user, authProfile, contactBlock, ahead, DAY } from './lib.js';
+import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, deriveCode, codeHash, tsEqual, throttle, tooMany, user, authProfile, contactBlock, ahead, DAY, normPhone } from './lib.js';
 import { initPayment, credit } from './pay.js';
 import { getSettings, feeOf } from './settings.js';
 
@@ -18,6 +18,7 @@ async function decorate(env, list, me) {          // photos + seller handle, nev
       status: l.status, reject_reason: me && me.aid === l.seller_aid ? l.reject_reason : undefined,
       photos: photos.filter((x) => x.listing_id === l.id).map((x) => mediaUrl(env, x.r2_key)),
       seller: { handle: p?.handle || 'Seller', verified: !!p?.verified },
+      contact_phone: me && me.aid === l.seller_aid ? l.contact_phone || undefined : undefined,
       mine: !!me && me.aid === l.seller_aid, createdAt: Date.parse(l.created_at),
     };
   });
@@ -73,9 +74,11 @@ export async function marketRoutes(req, env, url, ip) {
     const title = str(b.title, 80), description = str(b.description, 600), zone = str(b.zone, 30), condition = str(b.condition, 20);
     const category = CATS.includes(b.category) ? b.category : 'General', price = int(b.price, 1, 150000);
     if (title.length < 3 || !price) return err(env, 'Add a title and a price (KES 1 to 150,000)');
+    const contact_phone = normPhone(b.contact_phone);
+    if (!contact_phone) return err(env, 'Add your phone number (like 0712345678). The buyer sees it only after they pay.');
     const blk = contactBlock(env, title, description, zone, condition); if (blk) return blk;
     if (!(await throttle(env, ip, 'listing', u.aid, 5, 15))) return tooMany(env);
-    const l = await one(await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, ip }));
+    const l = await one(await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip }));
     if (!l) return err(env, 'Could not save the listing', 500);
     return json(env, (await decorate(env, [l], u))[0], 201);
   }
@@ -123,12 +126,13 @@ export async function marketRoutes(req, env, url, ip) {
     const u = await user(req, env); if (u instanceof Response) return u;
     const a = enc(u.aid);
     const all = [...await rows(await sb(env, `orders?buyer_aid=eq.${a}&order=created_at.desc&limit=50`)), ...await rows(await sb(env, `orders?seller_aid=eq.${a}&order=created_at.desc&limit=50`))];
-    const ls = all.length ? await rows(await sb(env, `listings?select=id,title&id=${inList(all.map((o) => o.listing_id))}`)) : [];
+    const ls = all.length ? await rows(await sb(env, `listings?select=id,title,contact_phone&id=${inList(all.map((o) => o.listing_id))}`)) : [];
     const out = [];
     for (const o of all.sort((x, y) => (x.created_at < y.created_at ? 1 : -1))) {
       const buyer = o.buyer_aid === u.aid;
       out.push({
-        id: o.id, role: buyer ? 'buyer' : 'seller', title: ls.find((l) => l.id === o.listing_id)?.title || 'Item', amount: o.amount,
+        id: o.id, role: buyer ? 'buyer' : 'seller', title: ls.find((l) => l.id === o.listing_id)?.title || 'Item',
+        seller_phone: buyer && ['held', 'handed', 'disputed', 'released'].includes(o.status) ? ls.find((l) => l.id === o.listing_id)?.contact_phone || null : undefined, amount: o.amount,
         you_receive: buyer ? undefined : o.seller_amount, status: o.status, dispute_status: o.dispute_status, dispute_reason: o.dispute_reason,
         // only the buyer can see the handover code; the seller must be given it in person
         code: buyer && ['held', 'handed', 'disputed'].includes(o.status) ? await deriveCode(env, 'order', o.id, 6) : undefined,

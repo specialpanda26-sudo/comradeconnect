@@ -39,7 +39,7 @@ test('listing flow: pending until admin approves; contact info blocked; admin ke
   const s = await w.user('s');
   const bad = await w.call('POST', '/api/market/listings', { as: s, body: { title: 'Phone', description: 'call 0712345678', price: 500 } });
   assert.equal(bad.status, 400);
-  const l = await w.call('POST', '/api/market/listings', { as: s, body: { title: 'Casio', description: 'ok', price: 800 } });
+  const l = await w.call('POST', '/api/market/listings', { as: s, body: { title: 'Casio', description: 'ok', price: 800, contact_phone: '0722000111' } });
   assert.equal(l.status, 201); assert.equal(l.data.status, 'pending');
   assert.equal((await w.call('GET', '/api/market/listings')).data.listings.length, 0, 'not public yet');
   assert.equal((await w.call('POST', `/api/admin/listings/${l.data.id}`, { body: { action: 'approve' } })).status, 403);
@@ -289,7 +289,7 @@ test('google sign-in: verifies the token, creates, links a guest, signs back in,
   assert.equal(l.status, 200); assert.equal(l.data.aid, guest.aid); assert.equal(l.data.linked, true);
   // a guest with a listing cannot be silently dropped when Google is already linked elsewhere
   const busy = await w.user('busy');
-  await w.call('POST', '/api/market/listings', { as: busy, body: { title: 'Calculator Casio', description: 'Good condition', price: 1000, category: 'Electronics', zone: 'Town' } });
+  await w.call('POST', '/api/market/listings', { as: busy, body: { title: 'Calculator Casio', description: 'Good condition', price: 1000, category: 'Electronics', zone: 'Town', contact_phone: '0722000111' } });
   const blocked = await g('good:sub1', busy);
   assert.equal(blocked.status, 409);
   // banned accounts cannot sign in

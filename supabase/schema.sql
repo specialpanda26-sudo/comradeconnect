@@ -651,3 +651,7 @@ begin
   update live_streams set hearts = hearts + least(greatest(n, 0), 10) where id = p and status = 'live' returning hearts into t;
   return t;
 end $$;
+
+
+-- v12: seller phone number, shown to the buyer only after payment. Safe to run again.
+alter table listings add column if not exists contact_phone text;

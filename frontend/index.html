@@ -878,6 +878,8 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
     <div class="fld"><select id="mcat" aria-label="Category"><option>General</option><option>Electronics</option><option>Books</option><option>Clothes</option><option>Furniture</option><option>Food</option><option>Services</option><option>Other</option></select></div>
     <div class="fld"><select id="mco" aria-label="Condition"><option>New</option><option>Like new</option><option selected>Used, good</option><option>Used, fair</option></select></div>
     <div class="fld"><select id="mzo" aria-label="Where is it"></select></div>
+    <div class="fld"><input id="mcp" type="tel" inputmode="tel" maxlength="13" placeholder="Your phone number, e.g. 0712345678" aria-label="Your phone number"></div>
+    <p class="note" style="margin-top:-4px">Buyers see this number only after they have paid. Until then it stays hidden.</p>
     <div class="fld"><textarea id="mde" maxlength="300" style="height:80px;resize:none" placeholder="Short description. No phone numbers." aria-label="Description"></textarea></div>
     <button class="btn p" id="msub" style="width:100%;margin-top:18px">Submit for verification</button>
   </section>

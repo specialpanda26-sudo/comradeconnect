@@ -8,7 +8,7 @@ Admin: header `X-Admin-Key` (the ADMIN_KEY secret). All writes are POST. Errors 
 | Account | `POST /api/auth/register` | returns `aid, token, recovery_code, referral_code` (show the recovery code once) |
 | | `POST /api/auth/recover` `{aid, recovery_code}` | new token, old one stops working |
 | | [auth] `GET /api/me`, `POST /api/me/handle`, `POST /api/me/adult {confirm:true}` | |
-| Market | [auth] `POST /api/market/listings` | goes to admin review (pending) |
+| Market | [auth] `POST /api/market/listings` | goes to admin review (pending). Needs `contact_phone`. The buyer gets it as `seller_phone` in `GET /api/orders/mine` only after paying |
 | | `GET /api/market/listings?page&category&zone`, `GET /api/market/listings/:id` | approved only |
 | | [auth] `GET /api/market/mine`, `POST /api/market/listings/:id/remove` | |
 | | [auth] `POST /api/market/buy {listing_id, phone}` | returns payment `id`; poll `GET /api/pay/status?id=` (gives `order_id` once paid) |

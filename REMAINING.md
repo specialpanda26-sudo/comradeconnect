@@ -148,3 +148,7 @@ Privacy policy + Terms matching real data (needs a Kenyan lawyer check), moderat
 - NOT possible on this route: front/back camera switch (the host's own streaming app does that). A switch inside Comrade Connect needs a paid streaming service.
 - Cost to know: each phone watching sends one request every 5 seconds. The free Cloudflare Worker allows 100,000 requests a day, so about 130 viewer-hours a day before the limit. Hearts and comments add little on top.
 - Limits: the viewer count is approximate (someone could inflate it by faking pings); hearts are not limited per person, only 10 per request; the host sees Remove buttons only in the session where they started the live.
+
+## v12: seller phone number after payment (DONE)
+- Sell form has a required phone number, stored in `listings.contact_phone` (run the v12 block at the end of schema.sql).
+- Hidden until the buyer pays; then Orders shows it with Call and WhatsApp buttons. Hidden again after a refund.

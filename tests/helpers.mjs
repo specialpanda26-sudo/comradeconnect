@@ -31,7 +31,7 @@ export function world(opts = {}) {
     },
     // seller lists, admin approves; returns listing id
     async approvedListing(seller, price = 1000, title = 'Calculator Casio') {
-      const l = await w.call('POST', '/api/market/listings', { as: seller, body: { title, description: 'Good condition', price, category: 'Electronics', zone: 'Town' } });
+      const l = await w.call('POST', '/api/market/listings', { as: seller, body: { title, description: 'Good condition', price, category: 'Electronics', zone: 'Town', contact_phone: '0722000111' } });
       const a = await w.call('POST', `/api/admin/listings/${l.data.id}`, { admin: true, body: { action: 'approve' } });
       if (a.status !== 200) throw new Error('approve failed ' + JSON.stringify(a.data));
       return l.data.id;

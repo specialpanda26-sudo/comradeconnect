@@ -59,7 +59,7 @@ test('media housekeeping: abandoned uploads are cleaned up and the oldest clips 
 test('listing photos: owner only, max 5, shown on approved listing', async (t) => {
   const w = await fresh(t);
   const s = await w.user('s'), x = await w.user('x');
-  const l = await w.call('POST', '/api/market/listings', { as: s, body: { title: 'Fridge small', price: 4000 } });
+  const l = await w.call('POST', '/api/market/listings', { as: s, body: { title: 'Fridge small', price: 4000, contact_phone: '0722000111' } });
   const body = { kind: 'listing_photo', content_type: 'image/jpeg', bytes: 1000, listing_id: l.data.id };
   assert.equal((await w.call('POST', '/api/media/upload-url', { as: x, body })).status, 404, 'not your listing');
   for (let i = 0; i < 5; i++) { const r = await w.call('POST', '/api/media/upload-url', { as: s, body }); assert.equal(r.status, 201); w.env.MEDIA.put(w.db.rows('media')[i].r2_key, 1000); await w.call('POST', `/api/media/${r.data.id}/complete`, { as: s }); }

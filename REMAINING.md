@@ -122,3 +122,11 @@ Privacy policy + Terms matching real data (needs a Kenyan lawyer check), moderat
 
 ## Icons and emoji (DONE)
 - No emoji anywhere in the project (code, docs, tests). The social link icons (WhatsApp, Instagram, TikTok, X, YouTube, Telegram, Facebook, website) are now outline SVGs in the same style as the bottom tabs. The WhatsApp share text no longer starts with an emoji. API.md marks signed-in endpoints with [auth] instead of a lock emoji.
+
+## v9: money controls (DONE)
+- `settings` table, edited in admin.html > **Money and fees**: marketplace fee %, advert boost prices (24 h and 3 days), smallest withdrawal, withdrawal fee (percent + flat), referral reward, auto-release days. Falls back to the env values if the table is empty or missing. Each order stores its own fee when it is created, so a change never touches orders already paid.
+- Company earnings card (market fees, boosts, withdrawal fees, owed to sellers, paid out). Payout history tab. Withdrawals show the exact amount to send (after the fee). The same M-Pesa code cannot be recorded on two payouts. Sellers can cancel a waiting withdrawal.
+- Sponsors have an agreed amount and an end date, can be paused, edited and listed even when paused. Notices and events can be edited.
+- Fixed: the boost screen showed KSh 30 / 70 but the server charged KSh 20. Both now come from the same setting. A boost now adds time to a boost that is still running.
+- Run the last block of `supabase/schema.sql` (v9) in Supabase after deploying. Until then the app keeps working with the env values, but saving settings and withdrawal fees will say to run the SQL.
+- Still not automatic: sending the M-Pesa money (needs Safaricom Daraja B2C approval). The admin sends it by hand and enters the code.

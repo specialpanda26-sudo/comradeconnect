@@ -601,3 +601,16 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
   ('cc-media',   'cc-media',   true,  26214400, array['image/jpeg','image/png','image/webp','video/mp4','video/webm']),
   ('cc-private', 'cc-private', false, 5242880,  array['image/jpeg','image/png'])
 on conflict (id) do update set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+-- v9: admin-editable fees and prices, payout fees, advert amounts (safe to run again)
+create table if not exists settings (
+  key text primary key,
+  value numeric not null,
+  updated_at timestamptz not null default now()
+);
+alter table settings enable row level security;
+alter table withdrawals add column if not exists fee integer not null default 0;
+alter table withdrawals add column if not exists net integer;
+alter table payments add column if not exists boost_hours integer;
+alter table sponsors add column if not exists amount integer not null default 0;
+create unique index if not exists withdrawals_payout_ref_uq on withdrawals(payout_ref) where payout_ref is not null;

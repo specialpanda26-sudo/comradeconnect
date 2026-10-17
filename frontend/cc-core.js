@@ -3,11 +3,24 @@
    The fetch shim in <head> adds X-Aid and X-Token to every call to CC_API. */
 (function () {
 'use strict';
-const FEE = 3;                                           // percent; keep equal to PLATFORM_FEE_PERCENT in wrangler.toml
+let FEE = 3;                                             // percent; replaced by the server's value (admin > Money and fees) as soon as it loads
+const CFG = { min: 50, wfp: 0, wff: 0 };
 const kes = (n) => 'KSh ' + Number(n).toLocaleString('en-KE');
 const net = (p) => p - Math.floor((p * FEE) / 100);      // same rounding as the Worker
 const connected = () => typeof CC_API === 'string' && CC_API.indexOf('YOUR-SUBDOMAIN') < 0;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function loadConfig() {                              // fee %, boost prices and payout rules, so the screens always match the server
+  try {
+    const r = await fetch(CC_API + '/api/config'); if (!r.ok) return;
+    const d = await r.json();
+    if (Number.isFinite(d.fee_percent)) FEE = d.fee_percent;
+    CFG.min = d.withdraw_min || 50; CFG.wfp = d.withdraw_fee_percent || 0; CFG.wff = d.withdraw_fee_flat || 0;
+    const bs = [...document.querySelectorAll('#dm .pl .act')];
+    (d.boost_plans || []).forEach((p, i) => { const b = bs[i]; if (!b) return; b.dataset.pr = p.price; b.dataset.du = p.hours === 24 ? '24 hours' : '3 days'; b.innerHTML = '<b>KSh ' + p.price + '</b>' + b.dataset.du; });
+    const on = bs.find((b) => b.classList.contains('sel')) || bs[0]; if (on) on.click();      // refreshes the price the boost screen will charge and show
+  } catch (e) { /* offline: the built-in values stay */ }
+}
+if (typeof CC_API === 'string' && CC_API.indexOf('YOUR-SUBDOMAIN') < 0) loadConfig();
 
 /* ---------- small popup sheet ---------- */
 function sheet(html) {
@@ -262,7 +275,7 @@ function draw() {
     $('#wb').textContent = S.wallet ? kes(bal) : '...'; $('#wd').disabled = !bal;
     let w = document.getElementById('wlg'); if (!w) { $('#mord .box').insertAdjacentHTML('afterend', '<div id="wlg"></div>'); w = document.getElementById('wlg'); }
     const wds = S.wallet ? S.wallet.withdrawals || [] : [];
-    w.innerHTML = wds.length ? '<div class="box g" style="margin-top:14px"><h3>Withdrawals</h3>' + wds.slice(0, 5).map((x) => '<div class="rw"><span>' + kes(x.amount) + '<small>' + ago(Date.parse(x.created_at)) + '</small></span><b>' + ({ requested: 'Waiting for admin', paid: 'Paid', rejected: 'Rejected, money returned' }[x.status] || esc(x.status)) + '</b></div>').join('') + '</div>' : '';
+    w.innerHTML = wds.length ? '<div class="box g" style="margin-top:14px"><h3>Withdrawals</h3>' + wds.slice(0, 5).map((x) => '<div class="rw"><span>' + kes(x.amount) + '<small>' + (x.fee ? 'Fee ' + kes(x.fee) + ', you get ' + kes(x.net) + '. ' : '') + ago(Date.parse(x.created_at)) + '</small></span><b>' + ({ requested: 'Waiting for admin', paid: 'Paid', rejected: 'Rejected, money returned' }[x.status] || esc(x.status)) + '</b>' + (x.status === 'requested' ? '<button class="act" data-wdc="' + esc(x.id) + '">Cancel</button>' : '') + '</div>').join('') + '</div>' : '';
     let h = S.orders.map((o) => {
       const buy = o.role === 'buyer', r = buy ? 0 : 1, live = o.status === 'held' || o.status === 'handed';
       let main = '', info = '';
@@ -446,12 +459,21 @@ $('#olist').onclick = async (e) => {
   loadOrders();
 };
 
+/* ---------- cancel a withdrawal the admin has not paid yet ---------- */
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-wdc]'); if (!b) return;
+  if (!confirm('Cancel this withdrawal? The money goes back to your wallet.')) return;
+  b.disabled = true;
+  try { await call('/api/wallet/withdraw/' + b.dataset.wdc + '/cancel', { body: {} }); toast('Cancelled. Money is back in your wallet.'); loadOrders(); }
+  catch (err) { toast(err.message); b.disabled = false; }
+});
+
 /* ---------- wallet withdrawal ---------- */
 $('#wd').onclick = async () => {
   const bal = S.wallet ? S.wallet.balance : 0; if (!bal) return;
   if (!idOK()) return needId();
   if (typeof bioGate === 'function' && !(await bioGate())) return toast('Fingerprint check failed');
-  const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. An admin sends the money to your M-Pesa and marks it paid. It is not instant.</p>'
+  const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. An admin sends the money to your M-Pesa and marks it paid. It is not instant. Smallest withdrawal: ' + kes(CFG.min) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
     + '<div class="fld" style="margin-top:10px"><input id="ccwa" type="number" inputmode="numeric" value="' + bal + '" aria-label="Amount in KSh"></div>'
     + '<div class="fld"><input id="ccwp" inputmode="numeric" maxlength="12" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'
     + '<p class="sub" id="ccw-e" style="color:#f87171;min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
@@ -459,7 +481,7 @@ $('#wd').onclick = async () => {
   m.querySelector('#ccwp').value = ST.get('cc_phone', '');
   m.querySelector('#ccw-go').onclick = async () => {
     const amount = Math.floor(+m.querySelector('#ccwa').value), phone = m.querySelector('#ccwp').value.replace(/\s/g, ''), er = m.querySelector('#ccw-e');
-    if (!(amount >= 50 && amount <= bal)) return (er.textContent = 'Enter an amount from KSh 50 up to ' + kes(bal));
+    if (!(amount >= CFG.min && amount <= bal)) return (er.textContent = 'Enter an amount from ' + kes(CFG.min) + ' up to ' + kes(bal));
     if (!/^(07|01)\d{8}$/.test(phone)) return (er.textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
     const g = m.querySelector('#ccw-go'); g.disabled = true;
     try { await call('/api/wallet/withdraw', { body: { amount, phone } }); ST.set('cc_phone', phone); m.close(); toast('Request sent. An admin will pay it out.'); loadOrders(); }

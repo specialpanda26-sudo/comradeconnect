@@ -1,6 +1,7 @@
 // Accounts, wallet, withdrawals and referrals.
 import { json, err, sb, rows, one, post, patch, enc, str, int, UUID, H, tsEqual, randHex, throttle, tooMany, user, authProfile, contactBlock, ahead, DAY } from './lib.js';
 import { credit } from './pay.js';
+import { getSettings, withdrawFee, publicConfig } from './settings.js';
 
 export async function balance(env, aid) {
   const r = await sb(env, 'rpc/wallet_balance', { method: 'POST', body: JSON.stringify({ p: aid }) });
@@ -122,19 +123,20 @@ export async function accountRoutes(req, env, url, ip) {
   if (path === '/api/wallet' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;
     const ledger = await rows(await sb(env, `wallet_ledger?select=delta,kind,status,note,created_at&aid=eq.${enc(u.aid)}&order=created_at.desc&limit=50`));
-    const wd = await rows(await sb(env, `withdrawals?select=id,amount,status,created_at&aid=eq.${enc(u.aid)}&order=created_at.desc&limit=20`));
-    return json(env, { balance: await balance(env, u.aid), ledger, withdrawals: wd });
+    const wd = await rows(await sb(env, `withdrawals?select=id,amount,fee,net,status,payout_ref,created_at&aid=eq.${enc(u.aid)}&order=created_at.desc&limit=20`));
+    return json(env, { balance: await balance(env, u.aid), ledger, withdrawals: wd, rules: publicConfig(await getSettings(env)) });
   }
   if (path === '/api/wallet/withdraw' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     if ((env.WITHDRAW_REQUIRES_VERIFIED ?? '1') === '1' && !u.verified) return err(env, 'Verify your ID before withdrawing', 403);
-    const b = await body(); const amount = int(b.amount, 50, 150000);
+    const b = await body(), S = await getSettings(env); const amount = int(b.amount, S.withdraw_min, 150000);
     const phone = String(b.phone || '').replace(/\D/g, '');
     const norm = /^0[17]\d{8}$/.test(phone) ? '254' + phone.slice(1) : /^254[17]\d{8}$/.test(phone) ? phone : null;
-    if (!amount || !norm) return err(env, 'Check the amount (min KES 50) and phone number');
+    if (!amount || !norm) return err(env, `Check the amount (minimum KES ${S.withdraw_min}) and phone number`);
     if (!(await throttle(env, ip, 'withdraw', u.aid, 3, 10))) return tooMany(env);
     if ((await balance(env, u.aid)) < amount) return err(env, 'Not enough available balance');
-    const w = await one(await post(env, 'withdrawals', { aid: u.aid, amount, phone: norm }));
+    const fee = withdrawFee(amount, S);
+    const w = await one(await post(env, 'withdrawals', { aid: u.aid, amount, phone: norm, fee, net: amount - fee }));
     if (!w) return err(env, 'Could not save the request', 500);
     await credit(env, u.aid, -amount, 'withdrawal', w.id, 'Withdrawal request');
     if ((await balance(env, u.aid)) < 0) {                      // two requests raced: undo this one
@@ -142,7 +144,16 @@ export async function accountRoutes(req, env, url, ip) {
       await patch(env, `withdrawals?id=eq.${w.id}`, { status: 'rejected' });
       return err(env, 'Not enough available balance');
     }
-    return json(env, { id: w.id, status: 'requested' }, 201);
+    return json(env, { id: w.id, status: 'requested', fee, net: amount - fee }, 201);
+  }
+  // The seller can take back a request the admin has not paid yet. One conditional UPDATE, so cancel and "paid" can never both win.
+  const wc = path.match(/^\/api\/wallet\/withdraw\/([0-9a-f-]{36})\/cancel$/);
+  if (wc && m === 'POST') {
+    const u = await user(req, env, true); if (u instanceof Response) return u;
+    const [w] = await rows(await patch(env, `withdrawals?id=eq.${wc[1]}&aid=eq.${enc(u.aid)}&status=eq.requested`, { status: 'rejected', decided_by: 'user', decided_at: new Date().toISOString() }));
+    if (!w) return err(env, 'This request was already handled', 409);
+    await credit(env, w.aid, w.amount, 'adjustment', 'wdrej:' + w.id, 'Withdrawal cancelled, money returned');
+    return json(env, { ok: true });
   }
 
   // ---------- referrals ----------
@@ -154,7 +165,7 @@ export async function accountRoutes(req, env, url, ip) {
     if (!ref || ref.aid === u.aid) return err(env, 'Invalid referral code', 404);
     const paid = await rows(await sb(env, `orders?select=id&buyer_aid=eq.${enc(u.aid)}&limit=1`));
     if (paid.length) return err(env, 'Referral codes only work before your first purchase', 400);
-    const res = await post(env, 'referrals', { referrer_aid: ref.aid, referred_aid: u.aid, reward: Number(env.REFERRAL_REWARD || 20) });
+    const res = await post(env, 'referrals', { referrer_aid: ref.aid, referred_aid: u.aid, reward: (await getSettings(env)).referral_reward });
     if (res.status === 409) return err(env, 'You already used a referral code', 409);
     return json(env, { ok: true }, 201);
   }

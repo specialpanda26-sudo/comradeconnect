@@ -9,6 +9,7 @@ import { contentRoutes } from './content.js';
 import { mediaRoutes } from './media.js';
 import { clubRoutes, clubPaid, ticketPaid, restoreClubOrder, expireClubOrders } from './club.js';
 import { adminRoutes } from './admin.js';
+import { settingsRoutes } from './settings.js';
 import { pruneMedia } from './media.js';
 import * as store from './storage.js';
 import { PRIVATE_BUCKET } from './storage.js';
@@ -18,11 +19,17 @@ hooks.onPaid = async (env, p) => {
   if (p.purpose === 'order') await createOrderFromPayment(env, p);
   else if (p.purpose === 'club') await clubPaid(env, p);
   else if (p.purpose === 'ticket') await ticketPaid(env, p);
-  else if (p.purpose === 'boost') await patch(env, `posts?id=eq.${p.ref_id}`, { boosted_until: new Date(Date.now() + 24 * 3600e3).toISOString() });
+  else if (p.purpose === 'boost') await boostPost(env, p);
 };
+// A boost adds time on top of any boost still running.
+async function boostPost(env, p) {
+  const [cur] = await rows(await sb(env, `posts?select=boosted_until&id=eq.${p.ref_id}`));
+  const start = Math.max(Date.now(), cur && cur.boosted_until ? Date.parse(cur.boosted_until) : 0);
+  await patch(env, `posts?id=eq.${p.ref_id}`, { boosted_until: new Date(start + (p.boost_hours || 24) * 3600e3).toISOString() });
+}
 hooks.onFailed = async (env, p) => { if (p.purpose === 'club') await restoreClubOrder(env, p.ref_id); };
 
-const ROUTES = [feedRoutes, payRoutes, accountRoutes, marketRoutes, messageRoutes, contentRoutes, mediaRoutes, clubRoutes, adminRoutes];
+const ROUTES = [settingsRoutes, feedRoutes, payRoutes, accountRoutes, marketRoutes, messageRoutes, contentRoutes, mediaRoutes, clubRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

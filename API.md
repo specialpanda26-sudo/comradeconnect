@@ -43,3 +43,16 @@ Admin: header `X-Admin-Key` (the ADMIN_KEY secret). All writes are POST. Errors 
 | | `POST /api/admin/club/products`, `/club/stock`, `GET /club/orders`, `POST /club/orders/:id/collect`, `/tickets/validate` | |
 
 Rate limits: every write has a per-account and per-IP daily cap (see `throttle(...)` calls). Contact info (phones, links, @handles, spelled-out digits) is rejected server-side on all text.
+
+## v9: money settings (admin-editable)
+| Area | Endpoint | Notes |
+|---|---|---|
+| Public | `GET /api/config` | `fee_percent`, `boost_plans` (`1d`, `3d` with price), `withdraw_min`, `withdraw_fee_percent`, `withdraw_fee_flat`. The app reads this so screens match the server |
+| Wallet | [auth] `POST /api/wallet/withdraw/:id/cancel` | only while the request is still waiting; money returns to the wallet |
+| | [auth] `GET /api/wallet` | now also returns `rules` and each withdrawal's `fee`, `net`, `payout_ref` |
+| Pay | [auth] `POST /api/pay {purpose:'boost', ref_id, plan:'1d'|'3d', phone}` | price and length are fixed by the server from the settings; the phone's amount is ignored |
+| Admin | `GET/POST /api/admin/settings {values:{key:number}}` | fee %, boost prices, withdrawal min and fees, referral reward, auto-release days. Applies to new orders/boosts/withdrawals only. Every change is in the audit log |
+| | `GET /api/admin/earnings` | market fees (total, last 30 days, in escrow), boosts, withdrawal fees, owed to sellers, paid out |
+| | `GET /api/admin/payouts?status=paid|rejected|requested` | payout history |
+| | `GET /api/admin/sponsors` | all sponsors incl. paused and ended, with `amount` |
+| | `POST /api/admin/(notices|events|sponsors)/:id {action:'update', ...fields}` | edit instead of delete and re-add |

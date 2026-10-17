@@ -1,6 +1,7 @@
 // M-Pesa payments. Other modules start payments with initPayment() and react through `hooks`.
 // Two modes (env PAYMENT_MODE): "manual" (default, free: the buyer sends money to YOUR number/till/paybill and enters the M-Pesa code,
 // you confirm it in the admin panel) and "tinypesa" (automatic STK push; TinyPesa has its own fees).
+import { getSettings } from './settings.js';
 import { json, err, sb, rows, one, post, patch, enc, normPhone, ago, tsEqual, user, UUID, throttle, tooMany } from './lib.js';
 const TINYPESA_URL = 'https://tinypesa.com/api/v1/express/initialize';
 export const manualMode = (env) => String(env.PAYMENT_MODE || 'manual') !== 'tinypesa';
@@ -14,7 +15,7 @@ export function manualInfo(env, p) {
 export const hooks = { onPaid: async () => {}, onFailed: async () => {} };   // filled in by index.js
 
 // Starts an STK push. Returns { id } or { res } (an error Response).
-export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone: rawPhone }) {
+export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone: rawPhone, boost_hours }) {
   const phone = normPhone(rawPhone);
   amount = Math.floor(Number(amount));
   if (manualMode(env) && !env.MPESA_PAY_TO) return { res: err(env, 'Payments are not set up yet', 503) };
@@ -23,7 +24,7 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   const byPhone = await rows(await sb(env, `payments?select=id&phone=eq.${phone}&created_at=gte.${ago(10 * 60e3)}&limit=10`));
   const byIp = await rows(await sb(env, `payments?select=id&ip=eq.${enc(ip)}&created_at=gte.${ago(60 * 60e3)}&limit=20`));
   if (byPhone.length >= 3 || byIp.length >= 8) return { res: err(env, 'Too many attempts. Wait a few minutes and try again.', 429) };
-  const row = await one(await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, 100) : null, amount, phone, ip }));
+  const row = await one(await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, 100) : null, amount, phone, ip, boost_hours: boost_hours || null }));
   if (!row) return { res: err(env, 'Server could not save the payment', 500) };
   if (manualMode(env)) return { id: row.id };       // no prompt is sent: the app shows manualInfo() and asks for the M-Pesa code
   const r = await fetch(TINYPESA_URL, {
@@ -54,14 +55,16 @@ export async function payRoutes(req, env, url, ip) {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const b = await req.json().catch(() => ({}));
     if (b.purpose !== 'boost' && b.purpose !== 'topup') return err(env, 'Use the order, club or ticket checkout for that', 400);
-    let amount = b.amount, ref_id = b.ref_id;
+    let amount = b.amount, ref_id = b.ref_id, boost_hours = null;
     if (b.purpose === 'boost') {
       if (!UUID.test(String(ref_id || ''))) return err(env, 'Pick a post to boost');
       const [pst] = await rows(await sb(env, `posts?select=id&id=eq.${ref_id}&hidden=eq.false`));
       if (!pst) return err(env, 'Post not found', 404);
-      amount = Number(env.BOOST_PRICE || 20);
+      const S = await getSettings(env);
+      const three = b.plan === '3d' || (b.plan === undefined && S.boost_price_3d !== S.boost_price && Number(b.amount) === S.boost_price_3d);
+      amount = three ? S.boost_price_3d : S.boost_price; boost_hours = three ? 72 : 24;   // the phone's price is never trusted
     }
-    const r = await initPayment(env, ip, { aid: u.aid, purpose: b.purpose, ref_id, amount, phone: b.phone });
+    const r = await initPayment(env, ip, { aid: u.aid, purpose: b.purpose, ref_id, amount, phone: b.phone, boost_hours });
     return r.res || json(env, { id: r.id });
   }
 

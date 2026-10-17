@@ -274,7 +274,7 @@ test('boost: amount is fixed by the server and marks the post boosted when paid'
   const id = (p.data.id || p.data.post?.id || w.db.rows('posts')[0].id);
   const r = await w.call('POST', '/api/pay', { as: a, body: { purpose: 'boost', ref_id: id, amount: 1, phone: '0712987654' } });
   assert.equal(r.status, 200);
-  assert.equal(w.row('payments', (x) => x.id === r.data.id).amount, 20, 'client amount ignored');
+  assert.equal(w.row('payments', (x) => x.id === r.data.id).amount, 30, 'client amount ignored');
   await w.callback(w.row('payments', (x) => x.id === r.data.id));
   assert.ok(Date.parse(w.row('posts', (x) => x.id === id).boosted_until) > Date.now());
   const st = await w.call('GET', `/api/pay/status?id=${r.data.id}`);

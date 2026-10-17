@@ -1,6 +1,7 @@
 // Market listings and escrow orders.
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, deriveCode, codeHash, tsEqual, throttle, tooMany, user, authProfile, contactBlock, ahead, DAY } from './lib.js';
 import { initPayment, credit } from './pay.js';
+import { getSettings, feeOf } from './settings.js';
 
 const CATS = ['General', 'Electronics', 'Books', 'Clothes', 'Furniture', 'Food', 'Services', 'Other'];
 import { mediaUrl } from './storage.js';
@@ -47,7 +48,7 @@ export async function refundOrder(env, id, by) {
 export async function createOrderFromPayment(env, p) {
   const [l] = await rows(await patch(env, `listings?id=eq.${p.ref_id}&status=eq.approved`, { status: 'sold' }));   // claim the listing atomically
   if (!l) { await credit(env, p.aid, p.amount, 'refund', 'pay:' + p.id, 'Item no longer available'); return null; }
-  const fee = Math.floor((p.amount * Number(env.PLATFORM_FEE_PERCENT ?? 3)) / 100);
+  const fee = feeOf(p.amount, (await getSettings(env)).platform_fee_percent);   // fixed on the order now: later fee changes never touch it
   const id = crypto.randomUUID();
   const o = await one(await post(env, 'orders', {
     id, payment_id: p.id, listing_id: l.id, buyer_aid: p.aid, seller_aid: l.seller_aid, amount: p.amount, fee, seller_amount: p.amount - fee,
@@ -147,7 +148,7 @@ export async function marketRoutes(req, env, url, ip) {
     if (act === 'handed') {                                    // seller: "I gave the item to the buyer"
       if (o.seller_aid !== u.aid) return err(env, 'Only the seller can do this', 403);
       const r = await rows(await patch(env, `orders?id=eq.${id}&status=eq.held&dispute_status=eq.none`, {
-        status: 'handed', handed_at: new Date().toISOString(), auto_release_at: ahead(Number(env.ESCROW_AUTO_RELEASE_DAYS || 3) * DAY),
+        status: 'handed', handed_at: new Date().toISOString(), auto_release_at: ahead((await getSettings(env)).escrow_auto_release_days * DAY),
       }));
       return r.length ? json(env, { status: 'handed' }) : err(env, 'This order cannot be marked as handed over', 409);
     }

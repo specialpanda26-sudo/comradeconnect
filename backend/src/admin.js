@@ -1,13 +1,41 @@
 // Admin API. Login is the ADMIN_KEY (sent as X-Admin-Key). Every action is written to admin_audit_log.
-import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, isAdmin, audit, bump, tooMany, corsHeaders, ahead, DAY } from './lib.js';
+import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, isAdmin, audit, bump, tooMany, corsHeaders, ahead, ago, DAY } from './lib.js';
 import { releaseOrder, refundOrder } from './market.js';
 import { credit, hooks } from './pay.js';
 import { HIDE } from './content.js';
 import { validateTicket } from './club.js';
+import { getSettings, saveSettings, DEFS, envDefault } from './settings.js';
 
 import * as store from './storage.js';
 import { mediaUrl, PRIVATE_BUCKET } from './storage.js';
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+const realDate = (d) => DATE.test(d) && !isNaN(Date.parse(d + 'T00:00:00Z')) && new Date(d + 'T00:00:00Z').toISOString().slice(0, 10) === d;   // an impossible date like 2099-13-45 must be refused, not crash
+const endsAt = (v) => { v = String(v || '').trim(); if (!v) return null; return realDate(v) ? v + 'T23:59:59Z' : false; };
+// Only the fields that were sent are changed. Returns { error } or the row to patch.
+function editFields(kind, b) {
+  const has = (k) => b[k] !== undefined, row = {};
+  if (kind === 'notices') {
+    if (has('title')) { const t = str(b.title, 100); if (t.length < 3) return { error: 'Add a title' }; row.title = t; }
+    if (has('body')) row.body = str(b.body, 600);
+    if (has('pinned')) row.pinned = !!b.pinned;
+    if (has('expires_days')) { if (b.expires_days === '' || b.expires_days === null) row.expires_at = null; else { const n = int(b.expires_days, 1, 365); if (!n) return { error: 'Days: 1 to 365' }; row.expires_at = ahead(n * DAY); } }
+  } else if (kind === 'events') {
+    if (has('title')) { const t = str(b.title, 100); if (t.length < 3) return { error: 'Add a title' }; row.title = t; }
+    if (has('date')) { const d = String(b.date || ''); if (!realDate(d)) return { error: 'Use a real date (YYYY-MM-DD)' }; row.starts_on = d; }
+    if (has('venue')) row.venue = str(b.venue, 80) || null;
+    if (has('details')) row.details = str(b.details, 400) || null;
+    if (has('ticket_price')) { if (b.ticket_price === '' || b.ticket_price === null) row.ticket_price = null; else { const n = int(b.ticket_price, 1, 20000); if (!n) return { error: 'Ticket price: KSh 1 to 20,000' }; row.ticket_price = n; } }
+  } else {
+    if (has('name')) { const n = str(b.name, 80); if (n.length < 2) return { error: 'Add the sponsor name' }; row.name = n; }
+    if (has('blurb')) row.blurb = str(b.blurb, 200) || null;
+    if (has('link')) { const l = str(b.link, 200); if (l && !/^https:\/\//.test(l)) return { error: 'Links must start with https://' }; row.link = l || null; }
+    if (has('amount')) { const n = b.amount === '' ? 0 : int(b.amount, 0, 1000000); if (n === null) return { error: 'Amount must be a number' }; row.amount = n; }
+    if (has('active')) row.active = !!b.active;
+    if (has('ends_on')) { const e = endsAt(b.ends_on); if (e === false) return { error: 'End date must look like 2026-12-31' }; row.ends_at = e; }
+  }
+  return row;
+}
 
 export async function adminRoutes(req, env, url, ip) {
   const path = url.pathname, m = req.method;
@@ -116,6 +144,7 @@ export async function adminRoutes(req, env, url, ip) {
     const b = await body(), act = b.action;
     if (act === 'paid') {
       const ref = str(b.payout_ref, 40); if (!ref) return err(env, 'Add the M-Pesa reference');
+      if ((await rows(await sb(env, `withdrawals?select=id&payout_ref=eq.${enc(ref)}&limit=1`))).length) return err(env, 'That M-Pesa code is already recorded on another payout', 409);
       const r = await rows(await patch(env, `withdrawals?id=eq.${mm[1]}&status=eq.requested`, { status: 'paid', payout_ref: ref, decided_by: 'admin', decided_at: new Date().toISOString() }));
       if (!r.length) return err(env, 'Already handled', 409);
     } else if (act === 'reject') {
@@ -165,12 +194,14 @@ export async function adminRoutes(req, env, url, ip) {
       row = { title, body: str(b.body, 600), pinned: !!b.pinned, expires_at: b.expires_days ? ahead(int(b.expires_days, 1, 365) * DAY) : null, created_by: 'admin' };
     } else if (kind === 'events') {
       const title = str(b.title, 100), date = String(b.date || '');
-      if (title.length < 3 || !DATE.test(date) || new Date(date + 'T00:00:00Z').toISOString().slice(0, 10) !== date) return err(env, 'Add a title and a real date (YYYY-MM-DD)');
+      if (title.length < 3 || !realDate(date)) return err(env, 'Add a title and a real date (YYYY-MM-DD)');
       row = { title, starts_on: date, venue: str(b.venue, 80) || null, details: str(b.details, 400) || null, ticket_price: int(b.ticket_price, 1, 20000) };
     } else {
       const name = str(b.name, 80); if (name.length < 2) return err(env, 'Add the sponsor name');
       const link = str(b.link, 200); if (link && !/^https:\/\//.test(link)) return err(env, 'Links must start with https://');
-      row = { name, blurb: str(b.blurb, 200) || null, link: link || null, active: b.active !== false };
+      const amount = b.amount === undefined || b.amount === '' ? 0 : int(b.amount, 0, 1000000); if (amount === null) return err(env, 'Amount must be a number');
+      const ends = endsAt(b.ends_on); if (ends === false) return err(env, 'End date must look like 2026-12-31');
+      row = { name, blurb: str(b.blurb, 200) || null, link: link || null, active: b.active !== false, amount, ends_at: ends };
     }
     const r = await one(await post(env, kind, row));
     if (!r) return err(env, 'Could not save', 500);
@@ -179,7 +210,16 @@ export async function adminRoutes(req, env, url, ip) {
   }
   mm = path.match(/^\/api\/admin\/(notices|events|sponsors)\/([0-9a-f-]{36})$/);
   if (mm && m === 'POST') {
-    if ((await body()).action !== 'delete') return err(env, 'Unknown action');
+    const b = await body();
+    if (b.action === 'update') {
+      const row = editFields(mm[1], b); if (row.error) return err(env, row.error);
+      if (!Object.keys(row).length) return err(env, 'Nothing to change');
+      const r = await rows(await patch(env, `${mm[1]}?id=eq.${mm[2]}`, row));
+      if (!r.length) return err(env, 'Not found', 404);
+      await A(mm[1] + '.update', mm[1], mm[2], row);
+      return json(env, { ok: true });
+    }
+    if (b.action !== 'delete') return err(env, 'Unknown action');
     await sb(env, `${mm[1]}?id=eq.${mm[2]}`, { method: 'DELETE' });
     await A(mm[1] + '.delete', mm[1], mm[2]);
     return json(env, { ok: true });
@@ -218,6 +258,42 @@ export async function adminRoutes(req, env, url, ip) {
     return json(env, r.ok ? r : { ...r, error: r.reason }, r.ok ? 200 : 409);
   }
 
+  // ---- money settings: fee %, advert prices, payout rules (apply to NEW orders, boosts and withdrawals) ----
+  if (path === '/api/admin/settings' && m === 'GET') {
+    const S = await getSettings(env);
+    return json(env, { settings: Object.entries(DEFS).map(([key, d]) => ({ key, label: d.label, help: d.help, unit: d.unit, min: d.min, max: d.max, value: S[key], default: envDefault(env, key) })) });
+  }
+  if (path === '/api/admin/settings' && m === 'POST') {
+    const r = await saveSettings(env, (await body()).values);
+    if (r.error) return err(env, r.error);
+    await A('settings.update', 'settings', null, r.changed);
+    return json(env, { ok: true, changed: Object.keys(r.changed).length });
+  }
+  // ---- what the company has earned ----
+  if (path === '/api/admin/earnings' && m === 'GET') {
+    const since = ago(30 * DAY), sum = (l, f) => l.reduce((s, x) => s + (Number(x[f]) || 0), 0), net = (l) => l.reduce((s, x) => s + (Number(x.net ?? x.amount) || 0), 0);
+    const [rel, held, boosts, paid, open, sp] = await Promise.all([
+      sb(env, 'orders?select=fee,released_at&status=eq.released&limit=20000'), sb(env, 'orders?select=fee&status=in.(held,handed,disputed)&limit=20000'),
+      sb(env, 'payments?select=amount,paid_at&purpose=eq.boost&status=eq.paid&limit=20000'), sb(env, 'withdrawals?select=fee,net,amount,decided_at&status=eq.paid&limit=20000'),
+      sb(env, 'withdrawals?select=net,amount&status=eq.requested&limit=2000'), sb(env, 'sponsors?select=amount&active=eq.true&limit=500'),
+    ].map((p) => p.then(rows)));
+    const recent = (l, f) => l.filter((x) => x[f] && x[f] >= since);
+    const out = {
+      market_fees: { total: sum(rel, 'fee'), last30: sum(recent(rel, 'released_at'), 'fee'), in_escrow: sum(held, 'fee') },
+      boosts: { total: sum(boosts, 'amount'), last30: sum(recent(boosts, 'paid_at'), 'amount') },
+      withdrawal_fees: { total: sum(paid, 'fee'), last30: sum(recent(paid, 'decided_at'), 'fee') },
+      owed_to_sellers: net(open), paid_out: net(paid), sponsors_active: sum(sp, 'amount'),
+    };
+    out.total_earned = out.market_fees.total + out.boosts.total + out.withdrawal_fees.total;
+    return json(env, out);
+  }
+  if (path === '/api/admin/payouts' && m === 'GET') {
+    const st = ['paid', 'rejected', 'requested'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'paid';
+    return json(env, { payouts: await rows(await sb(env, `withdrawals?status=eq.${st}&order=created_at.desc&limit=100`)) });
+  }
+  if (path === '/api/admin/sponsors' && m === 'GET') {          // all sponsors, paused and expired too (the public list hides them)
+    return json(env, { sponsors: await rows(await sb(env, 'sponsors?order=created_at.desc&limit=100')) });
+  }
   if (path === '/api/admin/audit' && m === 'GET') {
     return json(env, { log: await rows(await sb(env, `admin_audit_log?order=created_at.desc&limit=${Math.min(200, parseInt(url.searchParams.get('limit')) || 50)}`)) });
   }

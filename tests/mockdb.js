@@ -28,7 +28,8 @@ export const SCHEMA = {
   club_members: T(['club', 'aid'], { defaults: { status: 'active' } }), club_products: T(['id'], { defaults: { active: true } }), club_stock: T(['product_id'], { defaults: { qty: 0 } }),
   club_orders: T(['id'], { defaults: { status: 'pending', stock_held: true } }), tickets: T(['id'], { defaults: { status: 'valid' }, uniques: [nn('payment_id')] }),
   settings: T(['key']), site_content: T(['key']), sponsors: T(['id'], { defaults: { active: true } }), notices: T(['id'], { defaults: { pinned: false, expires_at: null } }), events: T(['id'], { defaults: { hidden: false } }),
-  admin_audit_log: T(['id']), live_streams: T(['id'], { defaults: { status: 'live' } }),
+  admin_audit_log: T(['id']), live_streams: T(['id'], { defaults: { status: 'live', hearts: 0 } }),
+  live_comments: T(['id'], { defaults: { hidden: false } }), live_viewers: T(['stream_id', 'viewer']),
 };
 
 export class MockDB {
@@ -123,6 +124,7 @@ export class MockDB {
     const find = (t, f) => this.t[t].find(f);
     if (fn === 'inc_post') { const r = find('posts', (x) => x.id === a.p); if (!r) return { status: 200, body: [] }; r[a.col]++; return { status: 200, body: [{ ...r }] }; }
     if (fn === 'inc_likes') { const r = find(a.t === 'media' ? 'media' : 'study_tips', (x) => x.id === a.p); if (r) r.likes++; return { status: 200, body: r ? r.likes : null }; }
+    if (fn === 'live_heart') { const r = find('live_streams', (x) => x.id === a.p); if (r && r.status === 'live') r.hearts = (r.hearts || 0) + a.n; return { status: 200, body: r ? r.hearts : null }; }
     if (fn === 'take_stock') { const r = find('club_stock', (x) => x.product_id === a.p); if (r && r.qty >= a.n) { r.qty -= a.n; return { status: 200, body: true }; } return { status: 200, body: false }; }
     if (fn === 'wallet_balance') return { status: 200, body: this.t.wallet_ledger.filter((x) => x.aid === a.p && x.status === 'available').reduce((s, x) => s + x.delta, 0) };
     throw new Error('mock: unknown rpc ' + fn);

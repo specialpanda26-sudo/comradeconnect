@@ -622,3 +622,32 @@ create table if not exists site_content (
   updated_at timestamptz not null default now()
 );
 alter table site_content enable row level security;
+
+
+-- v11: Live extras (viewer count, hearts, comments). Safe to run again.
+alter table live_streams add column if not exists hearts int not null default 0;
+create table if not exists live_comments (
+  id uuid primary key default gen_random_uuid(),
+  stream_id uuid not null references live_streams(id) on delete cascade,
+  aid text not null,
+  name text not null,
+  text text not null,
+  hidden boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists live_comments_stream_idx on live_comments(stream_id, created_at);
+create table if not exists live_viewers (
+  stream_id uuid not null references live_streams(id) on delete cascade,
+  viewer text not null,
+  seen_at timestamptz not null default now(),
+  primary key (stream_id, viewer)
+);
+create index if not exists live_viewers_seen_idx on live_viewers(stream_id, seen_at);
+alter table live_comments enable row level security;
+alter table live_viewers enable row level security;
+create or replace function live_heart(p uuid, n int) returns int language plpgsql as $$
+declare t int;
+begin
+  update live_streams set hearts = hearts + least(greatest(n, 0), 10) where id = p and status = 'live' returning hearts into t;
+  return t;
+end $$;

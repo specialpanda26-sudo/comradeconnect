@@ -7,6 +7,7 @@ import { marketRoutes, createOrderFromPayment, autoReleaseOrders } from './marke
 import { messageRoutes } from './messages.js';
 import { contentRoutes } from './content.js';
 import { mediaRoutes } from './media.js';
+import { liveRoutes } from './live.js';
 import { clubRoutes, clubPaid, ticketPaid, restoreClubOrder, expireClubOrders } from './club.js';
 import { adminRoutes } from './admin.js';
 import { settingsRoutes } from './settings.js';
@@ -30,7 +31,7 @@ async function boostPost(env, p) {
 }
 hooks.onFailed = async (env, p) => { if (p.purpose === 'club') await restoreClubOrder(env, p.ref_id); };
 
-const ROUTES = [settingsRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, marketRoutes, messageRoutes, contentRoutes, mediaRoutes, clubRoutes, adminRoutes];
+const ROUTES = [settingsRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, marketRoutes, messageRoutes, contentRoutes, liveRoutes, mediaRoutes, clubRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);
@@ -75,6 +76,8 @@ export async function runCron(env) {
   out.purged = purge.length;
   out.media = await pruneMedia(env);
   await patch(env, `live_streams?status=eq.live&created_at=lte.${ago(8 * 3600e3)}`, { status: 'ended', ended_at: new Date().toISOString() });
+  await sb(env, `live_viewers?seen_at=lt.${ago(3600e3)}`, { method: 'DELETE' });
+  await sb(env, `live_comments?created_at=lt.${ago(3 * 86400e3)}`, { method: 'DELETE' });
   await sb(env, `ai_usage?day=lt.${new Date(Date.now() - 3 * 86400e3).toISOString().slice(0, 10)}`, { method: 'DELETE' });
   return out;
 }

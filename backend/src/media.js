@@ -1,5 +1,6 @@
 // Media (clips, listing photos), ID verification uploads, and Live (a link to a stream hosted on YouTube, Facebook, TikTok or Twitch).
 import * as store from './storage.js';
+import { viewerCounts } from './live.js';
 import { mediaUrl, MEDIA_BUCKET, PRIVATE_BUCKET } from './storage.js';
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, randHex, throttle, tooMany, user, authProfile, isAdmin, ahead, DAY } from './lib.js';
 
@@ -115,7 +116,8 @@ export async function mediaRoutes(req, env, url, ip) {
   // ---- Live: the host streams on YouTube / Facebook / TikTok / Twitch (free) and pastes the live link here. Hosts: admin key, or a profile with role club_admin/admin ----
   if (path === '/api/live' && m === 'GET') {
     const r = await rows(await sb(env, 'live_streams?status=eq.live&order=created_at.desc&limit=10'));
-    return json(env, { streams: r.map((s) => ({ id: s.id, title: s.title, watch_url: s.input_uid, embed_url: liveEmbed(s.input_uid), startedAt: Date.parse(s.created_at) })) });
+    const vc = await viewerCounts(env, r.map((s) => s.id));
+    return json(env, { streams: r.map((s) => ({ id: s.id, title: s.title, watch_url: s.input_uid, embed_url: liveEmbed(s.input_uid), startedAt: Date.parse(s.created_at), viewers: vc[s.id] || 0, hearts: s.hearts || 0 })) });
   }
   if (path === '/api/live/start' && m === 'POST') {
     let hostAid = 'admin';

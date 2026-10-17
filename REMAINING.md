@@ -137,4 +137,14 @@ Privacy policy + Terms matching real data (needs a Kenyan lawyer check), moderat
 - SEO: new `about.html` (real text, 3 app screenshots with alt text in `frontend/img/`), linked from the footer, added to sitemap.xml with image entries, JSON-LD AboutPage. `set-domain.py` now covers about.html.
 - Security headers: `_headers` adds HSTS, frame-ancestors 'self' and Permissions-Policy. The API (`server.js`) adds HSTS and Referrer-Policy.
 - Limits: the Google Search Console code is still yours to paste (index.html has the slot). HTTPS redirect and www to non-www are Cloudflare dashboard settings, not files (see DEPLOY.md, SEO section). Nothing here was tested on the live domain. Suggestions do not search the server, only what is loaded on the phone.
-- NOT DONE: Live (floating heart icons, viewer count, camera switch, live comments). Needs your choice of route first (see the chat).
+- Live was done in v11 (below).
+
+## v11: Live (DONE, pasted-link route)
+- A club admin starts a live on YouTube, Facebook, TikTok or Twitch and pastes the link. Comrades watch inside the app (YouTube) or open it in the platform's own app (the others), and chat, send hearts and see the viewer count here.
+- Floating heart icons (SVG, no emoji), viewer count (phones that pinged in the last 40 seconds), live comments (account needed; no phone numbers, handles or links; cut at 140 characters), host can remove a comment, host can end the live.
+- Backend: `backend/src/live.js`, new tables and function in the last block of `supabase/schema.sql` ("v11"). Run that block in Supabase BEFORE deploying. The cron clears old viewers (1 hour) and comments (3 days).
+- Tests: `tests/live.test.mjs` (4) and `python3 tests/browser_live.py` (23 checks).
+- Replaced: the old fake camera preview (nobody else could watch it).
+- NOT possible on this route: front/back camera switch (the host's own streaming app does that). A switch inside Comrade Connect needs a paid streaming service.
+- Cost to know: each phone watching sends one request every 5 seconds. The free Cloudflare Worker allows 100,000 requests a day, so about 130 viewer-hours a day before the limit. Hearts and comments add little on top.
+- Limits: the viewer count is approximate (someone could inflate it by faking pings); hearts are not limited per person, only 10 per request; the host sees Remove buttons only in the session where they started the live.

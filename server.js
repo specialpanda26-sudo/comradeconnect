@@ -21,6 +21,8 @@ const missing = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'ADMIN_KEY', 'HASH_PEPP
 if (missing.length) { console.error('Missing required environment variables: ' + missing.join(', ')); process.exit(1); }
 if (env.ADMIN_KEY.length < 24) console.warn('WARNING: ADMIN_KEY is short. Use a long random value (openssl rand -hex 32).');
 if (!env.ALLOWED_ORIGINS || env.ALLOWED_ORIGINS === '*') console.warn('WARNING: ALLOWED_ORIGINS is open to every website. Set it to your site, e.g. https://comradeconnect.co.ke');
+if (env.PAYMENT_MODE === 'tinypesa' && !env.TINYPESA_API_KEY) console.warn('WARNING: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY is empty. Buyers will see "Payments are not set up yet".');
+if (env.PAYMENT_MODE === 'tinypesa' && !env.CALLBACK_SECRET) console.warn('WARNING: PAYMENT_MODE=tinypesa but CALLBACK_SECRET is empty. Every TinyPesa callback will be rejected and no payment will ever complete.');
 if (env.PAYMENT_MODE === 'manual' && !env.MPESA_PAY_TO) console.warn('WARNING: MPESA_PAY_TO is empty, buyers will not see where to send money.');
 
 const MAX_BODY = 30 * 1024 * 1024;

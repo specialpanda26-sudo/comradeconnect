@@ -304,6 +304,7 @@ window.addEventListener('load',async()=>{try{const p=JSON.parse(localStorage.get
 (function(){var f=window.fetch;window.ccAuth=function(){try{return JSON.parse(localStorage.getItem('cc_auth')||'null')}catch(e){return null}};
 /* One place that turns server answers into messages a student can act on. */
 window.ccErr=function(status,msg,fb){
+ if((status===502||status===503)&&msg)return msg;
  if(status>=500)return 'Something went wrong on our side. Please try again in a moment.';
  if(status===429)return /limit|many|busy/i.test(msg||'')?msg:'Too many attempts. Please wait a little and try again.';
  if(msg)return msg;

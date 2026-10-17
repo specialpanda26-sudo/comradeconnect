@@ -19,21 +19,25 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   const phone = normPhone(rawPhone);
   amount = Math.floor(Number(amount));
   if (manualMode(env) && !env.MPESA_PAY_TO) return { res: err(env, 'Payments are not set up yet', 503) };
+  if (!manualMode(env) && !env.TINYPESA_API_KEY) { console.error('payments: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (!phone || !(amount >= 1) || amount > 150000 || !aid) return { res: err(env, 'Check the phone number and amount') };
   // Rate limits so nobody can spam STK prompts to other people's phones through your account
   const byPhone = await rows(await sb(env, `payments?select=id&phone=eq.${phone}&created_at=gte.${ago(10 * 60e3)}&limit=10`));
   const byIp = await rows(await sb(env, `payments?select=id&ip=eq.${enc(ip)}&created_at=gte.${ago(60 * 60e3)}&limit=20`));
   if (byPhone.length >= 3 || byIp.length >= 8) return { res: err(env, 'Too many attempts. Wait a few minutes and try again.', 429) };
-  const row = await one(await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, 100) : null, amount, phone, ip, boost_hours: boost_hours || null }));
-  if (!row) return { res: err(env, 'Server could not save the payment', 500) };
+  const pr = await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, 100) : null, amount, phone, ip, boost_hours: boost_hours || null });
+  const pj = await pr.json().catch(() => null);
+  const row = Array.isArray(pj) ? pj[0] : null;
+  if (!row) { console.error('payments: could not save the payment row (is supabase/schema.sql fully run?)', pr.status, JSON.stringify(pj).slice(0, 300)); return { res: err(env, 'Server could not save the payment', 500) }; }
   if (manualMode(env)) return { id: row.id };       // no prompt is sent: the app shows manualInfo() and asks for the M-Pesa code
   const r = await fetch(TINYPESA_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', ApiKey: env.TINYPESA_API_KEY },
     body: new URLSearchParams({ amount: String(amount), msisdn: phone, account_no: 'CC' + row.id.slice(0, 8) }),
-  }).catch(() => null);
+  }).catch((e) => { console.error('tinypesa: request failed', e && e.message); return null; });
   const t = r ? await r.json().catch(() => ({})) : {};
   if (String(t.success) !== 'true') {
+    console.error('tinypesa: initialize refused', r ? r.status : 'no response', JSON.stringify(t).slice(0, 200));
     await patch(env, `payments?id=eq.${row.id}`, { status: 'failed' });
     return { res: err(env, 'Could not send the M-Pesa prompt. Try again.', 502) };
   }
@@ -88,6 +92,13 @@ export async function payRoutes(req, env, url, ip) {
     // Match by request id first; otherwise the newest pending payment with the same phone and amount.
     let [p] = checkout ? await rows(await sb(env, `payments?status=eq.pending&request_id=eq.${enc(checkout)}&limit=1`)) : [];
     if (!p && phone && amount) [p] = await rows(await sb(env, `payments?status=eq.pending&phone=eq.${phone}&amount=eq.${amount}&order=created_at.desc&limit=1`));
+    if (!p && receipt && amount > 0) {
+      // The money moved but we had already expired this payment (callback arrived late). Do not lose it:
+      // park it in the admin "Confirm M-Pesa" queue (status submitted) so a person can approve it.
+      let [late] = checkout ? await rows(await sb(env, `payments?status=eq.expired&request_id=eq.${enc(checkout)}&limit=1`)) : [];
+      if (!late && phone) [late] = await rows(await sb(env, `payments?status=eq.expired&phone=eq.${phone}&amount=eq.${amount}&created_at=gte.${ago(24 * 3600e3)}&order=created_at.desc&limit=1`));
+      if (late && amount >= late.amount) await patch(env, `payments?id=eq.${late.id}&status=eq.expired`, { status: 'submitted', receipt, checkout_id: checkout });
+    }
     if (p) {
       const good = amount >= p.amount && !!receipt;
       const upd = await rows(await patch(env, `payments?id=eq.${p.id}&status=eq.pending`,

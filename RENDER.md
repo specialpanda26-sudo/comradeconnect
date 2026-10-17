@@ -85,3 +85,12 @@ It releases handed-over orders, unlocks referral rewards, expires unpaid payment
 - Lawyer review of the Privacy Policy and Terms; escrow wording agreed with Safaricom.
 - Supabase backups (free plan: export weekly).
 - Keep `.env`, `.dev.vars` and `*.zip` out of Git (`.gitignore` already does).
+
+## 10. Automatic M-Pesa prompts with TinyPesa (optional, replaces manual mode)
+1. TinyPesa dashboard: copy the **account** API key (not the payment-link key).
+2. Render > Environment: `PAYMENT_MODE=tinypesa`, `TINYPESA_API_KEY=...`, `CALLBACK_SECRET=<openssl rand -hex 32>`. Keep the same values in `render.yaml` or the next Blueprint sync reverts them.
+3. TinyPesa callback URL: `https://YOUR-API-HOST/api/tinypesa/callback?s=YOUR_CALLBACK_SECRET` (the secret must match exactly).
+4. Check: the same URL with `?s=wrong` returns 403, with the real secret returns `{"ok":true}`.
+5. Buy a KSh 1 item, enter your PIN, confirm `payments.status = paid` in Supabase.
+6. If a callback arrives after a payment expired (30 min), the payment moves to admin > Confirm M-Pesa with its receipt. Compare it with your M-Pesa/TinyPesa records, then approve or reject.
+7. Roll back any time with `PAYMENT_MODE=manual`.

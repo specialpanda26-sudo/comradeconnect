@@ -46,6 +46,7 @@ def main():
             S['put'] = (req.method, req.headers.get('content-type'), len(req.post_data_buffer or b''))
             route.fulfill(status=200, headers={'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*'}, body='')
         page.route('http://app.test/**', app); page.route(API + '/**', worker); page.route('https://r2.test/**', r2)
+        page.route('http://app.test/config.js*', lambda r, q: r.fulfill(status=200, body="const CC_API='" + API + "';const CC_GOOGLE_ID='';", content_type='application/javascript'))
         page.route(lambda u: not (u.startswith('http://app.test') or u.startswith(API) or u.startswith('https://r2.test') or u.startswith('data:') or u.startswith('blob:')), lambda r, q: r.abort())
         def js(x): return page.evaluate(x)
         def fresh(url='http://app.test/index.html', auth=True):

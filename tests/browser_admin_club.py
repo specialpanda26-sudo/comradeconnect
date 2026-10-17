@@ -35,6 +35,7 @@ def main():
             if path.endswith('/collect'): st['orders'] = []; return ok({'ok': True})
             return ok({'ok': True})
         page.route('http://app.test/**', app); page.route(API + '/**', worker)
+        page.route('http://app.test/config.js*', lambda r, q: r.fulfill(status=200, body="const CC_API='" + API + "';const CC_GOOGLE_ID='';", content_type='application/javascript'))
         js = page.evaluate
         def click(sel, w=300): js("(s)=>document.querySelector(s).click()", sel); page.wait_for_timeout(w)
         def fill(sel, v): js("([s,v])=>{document.querySelector(s).value=v}", [sel, v])

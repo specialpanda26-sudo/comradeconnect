@@ -40,6 +40,7 @@ def main():
         def r2(route, req):
             S['puts'].append((req.method, req.headers.get('content-type'), len(req.post_data_buffer or b''))); route.fulfill(status=200, headers={'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*'}, body='')
         page.route('http://app.test/**', app); page.route(API + '/**', worker); page.route('https://r2.test/**', r2)
+        page.route('http://app.test/config.js*', lambda r, q: r.fulfill(status=200, body="const CC_API='" + API + "';const CC_GOOGLE_ID='';", content_type='application/javascript'))
         page.route(lambda u: not (u.startswith('http://app.test') or u.startswith(API) or u.startswith('https://r2.test') or u.startswith('data:') or u.startswith('blob:')), lambda r, q: r.abort())
         js = page.evaluate
         def click(sel, w=350): js("(s)=>document.querySelector(s).click()", sel); page.wait_for_timeout(w)

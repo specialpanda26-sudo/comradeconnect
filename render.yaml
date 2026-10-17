@@ -1,0 +1,25 @@
+# Render Blueprint for the API only (your static site stays as it is).
+# New > Blueprint > pick this repo. Fill the sync:false values when Render asks.
+services:
+  - type: web
+    name: comradeconnect-api
+    runtime: node
+    plan: starter            # free plan sleeps after 15 min idle and the first request waits ~50 s; starter ($7/mo) stays awake
+    region: frankfurt
+    buildCommand: "echo no build step"
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    envVars:
+      - { key: NODE_VERSION, value: "22" }
+      - { key: ALLOWED_ORIGINS, value: "https://comradeconnect.co.ke,https://www.comradeconnect.co.ke" }
+      - { key: PAYMENT_MODE, value: manual }
+      - { key: SUPABASE_URL, sync: false }
+      - { key: SUPABASE_SERVICE_KEY, sync: false }
+      - { key: ADMIN_KEY, sync: false }
+      - { key: HASH_PEPPER, sync: false }
+      - { key: CRON_SECRET, sync: false }
+      - { key: GEMINI_API_KEY, sync: false }
+      - { key: GOOGLE_CLIENT_ID, sync: false }
+      - { key: MPESA_PAY_TYPE, value: send }
+      - { key: MPESA_PAY_TO, sync: false }
+      - { key: MPESA_PAY_NAME, sync: false }

@@ -42,6 +42,7 @@ def main():
             if '/api/admin/orders/' in path: st['disputes'] = []; return ok({'ok': True})
             return ok({'ok': True})
         page.route('http://app.test/**', app); page.route(API + '/**', worker)
+        page.route('http://app.test/config.js*', lambda r, q: r.fulfill(status=200, body="const CC_API='" + API + "';const CC_GOOGLE_ID='';", content_type='application/javascript'))
         page.goto('http://app.test/admin.html'); page.wait_for_timeout(300)
         check('login screen first, asks for the Worker URL when not set', page.locator('#k').count() == 1 and page.locator('#u').count() == 0)
         page.fill('#k', 'wrong'); page.click('#go'); page.wait_for_timeout(400)

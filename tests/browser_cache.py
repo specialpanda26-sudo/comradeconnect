@@ -36,6 +36,7 @@ def main():
             if path == '/api/wallet': return ok({'balance': 0, 'ledger': [], 'withdrawals': []})
             return ok({'posts': [], 'hasMore': False})
         page.route('http://app.test/**', app); page.route(API + '/**', worker)
+        page.route('http://app.test/config.js*', lambda r, q: r.fulfill(status=200, body="const CC_API='" + API + "';const CC_GOOGLE_ID='';", content_type='application/javascript'))
         page.route(lambda u: not (u.startswith('http://app.test') or u.startswith(API) or u.startswith('data:') or u.startswith('blob:')), lambda r, q: r.abort())
         seed = {'cs_cookie': json.dumps('essential'), 'cc_auth': json.dumps({'aid': 'u_a', 'token': 't'}),
                 'cc_c_browse': json.dumps({'t': 4102444800000, 'd': {'listings': [L('Cached desk')], 'more': False}}),

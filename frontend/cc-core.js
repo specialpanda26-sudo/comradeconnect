@@ -28,9 +28,9 @@ const saveAuth = (a) => {
 async function rawPost(path, body) {
   let r;
   try { r = await fetch(CC_API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); }
-  catch (e) { throw new Error('No connection. Check your internet and try again.'); }
+  catch (e) { throw new Error('Could not reach the server. Check your internet and try again.'); }
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw Object.assign(new Error(d.error || 'Something went wrong'), { status: r.status });
+  if (!r.ok) throw Object.assign(new Error(ccErr(r.status, d.error)), { status: r.status });
   return d;
 }
 let regBusy = null;
@@ -89,7 +89,7 @@ function chooseSignIn() {                                    // resolves 'google
 }
 // Make sure this phone has a server account. New accounts get a fresh server-made ID (the old browser-only ID is public in the Feed).
 async function ensureAccount() {
-  if (!connected()) throw new Error('The Market is not connected yet. Set CC_API in index.html (see DEPLOY.md).');
+  if (!connected()) throw new Error('We cannot reach the service right now. Please try again in a moment.');
   const a = window.ccAuth && window.ccAuth();
   if (a && a.token && a.aid) { if (ME.aid !== a.aid) { ME.aid = a.aid; saveMe(); } return a; }
   if (regBusy) return regBusy;
@@ -152,15 +152,15 @@ function promptRestore(msg) {
 /* ---------- API helper ---------- */
 async function call(path, o) {
   o = o || {};
-  if (!connected()) throw new Error('The Market is not connected yet. Set CC_API in index.html (see DEPLOY.md).');
+  if (!connected()) throw new Error('We cannot reach the service right now. Please try again in a moment.');
   if (o.auth !== false) await ensureAccount();
   let r;
   try {
     r = await fetch(CC_API + path, { method: o.method || (o.body ? 'POST' : 'GET'), headers: o.body ? { 'Content-Type': 'application/json' } : undefined, body: o.body ? JSON.stringify(o.body) : undefined });
-  } catch (e) { throw new Error('No connection. Check your internet and try again.'); }
+  } catch (e) { throw new Error('Could not reach the server. Check your internet and try again.'); }
   const d = await r.json().catch(() => ({}));
   if (r.status === 401 && o.auth !== false) { promptRestore(); throw new Error('Please restore your account first'); }
-  if (!r.ok) throw Object.assign(new Error(d.error || 'Something went wrong (' + r.status + ')'), { status: r.status });
+  if (!r.ok) throw Object.assign(new Error(ccErr(r.status, d.error)), { status: r.status });
   return d;
 }
 // Wallet and referral pay-ins from older code (boost, top-up) need the account first.

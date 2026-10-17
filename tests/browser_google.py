@@ -36,6 +36,7 @@ def main():
             if path == '/api/market/buy': seen['buy_hdr'] = (req.headers.get('x-aid'), req.headers.get('x-token')); return ok({'error': 'stop here'}, 400)
             return ok({'error': 'unexpected ' + path}, 404)
         page.route('http://app.test/**', app); page.route(API + '/**', worker)
+        page.route('http://app.test/config.js*', lambda r, q: r.fulfill(status=200, body="const CC_API='" + API + "';const CC_GOOGLE_ID='1234567890-test.apps.googleusercontent.com';", content_type='application/javascript'))
         page.route('https://accounts.google.com/gsi/client', lambda r, q: r.fulfill(status=200, body=GSI, content_type='application/javascript'))
         page.route(lambda u: not (u.startswith('http://app.test') or u.startswith(API) or u.startswith('https://accounts.google.com') or u.startswith('data:') or u.startswith('blob:')), lambda r, q: r.abort())
         page.goto('http://app.test/index.html'); page.wait_for_timeout(700)

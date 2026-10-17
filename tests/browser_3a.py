@@ -69,6 +69,7 @@ def main():
             if f == 'index.html': data = data.decode().replace('https://comrade-connect-api.YOUR-SUBDOMAIN.workers.dev', API).encode()
             route.fulfill(status=200, body=data, content_type='text/html' if f.endswith('.html') else 'application/javascript' if f.endswith('.js') else 'application/octet-stream')
         page.route('http://app.test/**', app)
+        page.route('http://app.test/config.js*', lambda r, q: r.fulfill(status=200, body="const CC_API='" + API + "';const CC_GOOGLE_ID='';", content_type='application/javascript'))
         page.route(API + '/**', fake.handle)
         page.route('https://r2.test/**', lambda r, q: (setattr(fake, 'uploaded', fake.uploaded + 1), r.fulfill(status=200, headers={'Access-Control-Allow-Origin': '*'}, body=''))[1])
         page.route(lambda u: not (u.startswith('http://app.test') or u.startswith(API) or u.startswith('https://r2.test') or u.startswith('data:') or u.startswith('blob:')), lambda r, q: r.abort())

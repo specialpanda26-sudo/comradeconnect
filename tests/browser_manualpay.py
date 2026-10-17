@@ -46,6 +46,7 @@ def main():
             if f == 'index.html': data = data.decode().replace('https://comrade-connect-api.YOUR-SUBDOMAIN.workers.dev', API).encode()
             route.fulfill(status=200, body=data, content_type='text/html' if f.endswith('.html') else 'application/javascript')
         page.route('http://app.test/**', app); page.route(API + '/**', worker)
+        page.route('http://app.test/config.js*', lambda r, q: r.fulfill(status=200, body="const CC_API='" + API + "';const CC_GOOGLE_ID='';", content_type='application/javascript'))
         page.route(lambda u: not (u.startswith('http://app.test') or u.startswith(API) or u.startswith('data:') or u.startswith('blob:')), lambda r, q: r.abort())
         page.goto('http://app.test/index.html'); page.wait_for_timeout(800)
         page.evaluate("localStorage.setItem('cs_cookie','\"essential\"')")

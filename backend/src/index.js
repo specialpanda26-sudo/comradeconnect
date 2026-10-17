@@ -26,10 +26,11 @@ const ROUTES = [feedRoutes, payRoutes, accountRoutes, marketRoutes, messageRoute
 
 async function handle(req, env) {
   const url = new URL(req.url);
-  const ip = req.headers.get('CF-Connecting-IP') || 'unknown';
+  const ip = req.headers.get('CF-Connecting-IP') || req.headers.get('True-Client-IP') || (req.headers.get('X-Forwarded-For') || '').split(',')[0].trim() || 'unknown';
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders(env) });
   for (const r of ROUTES) { const res = await r(req, env, url, ip); if (res) return res; }
   if (url.pathname === '/api/ai' && req.method === 'POST') return aiRoute(req, env, ip);
+  if (url.pathname.startsWith('/api/')) return err(env, 'Not found', 404);
   return json(env, { ok: true, service: 'comrade-connect-api' });
 }
 
@@ -70,6 +71,7 @@ export async function runCron(env) {
   return out;
 }
 
+export { handle };
 export default {
   async fetch(req, env) {
     try { return await handle(req, env); }

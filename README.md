@@ -1,12 +1,13 @@
 # Comrade Connect (Kirinyaga Edition)
 
 A campus app for Kirinyaga students: Market with escrow, wallet, anonymous messages, roommates, study groups, Hearts, polls, Club shop, event tickets, clips and an admin panel.
-It runs entirely on free plans (no card needed). Start with **DEPLOY.md**.
+Production setup on Render: **RENDER.md** (backend `server.js` + static site). `DEPLOY.md` describes the older Cloudflare route.
 
 ## How it is built
 | Folder | What it is |
 |---|---|
-| `frontend/` | Static site (`index.html`, `cc-core.js`, `admin.html`) for Cloudflare Pages |
+| `frontend/` | Static site (`index.html`, `cc-core.js`, `admin.html`, `config.js` = the only settings file) |
+| `server.js` | Starts the API on Render (Node 20+); `render.yaml` is the Blueprint |
 | `backend/src/` | Cloudflare Worker API (endpoints listed in `API.md`) |
 | `supabase/schema.sql` | Database tables, security rules and the two Storage buckets (safe to run again) |
 | `tests/` | `npm test` (Worker, fake database, no keys) and `python3 tests/browser_*.py` (real page, fake Worker) |

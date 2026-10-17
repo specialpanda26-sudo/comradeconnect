@@ -270,13 +270,11 @@ function wordHit(t){const M={zero:0,sifuri:0,nought:0,naught:0,one:1,moja:1,two:
 function modLog(kind,text){try{const L=JSON.parse(localStorage.getItem('cs_modlog')||'[]');L.push({at:Date.now(),kind,aid:(typeof ME!=='undefined'&&ME.aid)||'',why:'number-words',text:String(text).slice(0,200)});localStorage.setItem('cs_modlog',JSON.stringify(L.slice(-200)))}catch(e){}}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="config.js?v=1"></script>
 <script>
-/* Comrade Connect payment client. Set CC_API to your Worker URL (the only line to edit). */
-const CC_API='https://comrade-connect-api.safaricom-co-ke.workers.dev';
-/* Google sign-in: paste your OAuth Web client ID here (and the same value as GOOGLE_CLIENT_ID in wrangler.toml). Empty = recovery-code sign-in only. */
-const CC_GOOGLE_ID='';
-async function ccJson(url,opt){let r;try{r=await fetch(url,opt)}catch(e){throw new Error('Could not reach the payment server. Check your internet and try again.')}
-  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Payment failed ('+r.status+')');return d}
+/* Comrade Connect payment client. CC_API and CC_GOOGLE_ID come from config.js. */
+async function ccJson(url,opt){let r;try{r=await fetch(url,opt)}catch(e){throw new Error('Could not reach the server. Check your internet and try again.')}
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(ccErr(r.status,d.error,'The payment did not go through. Please try again.'));return d}
 async function ccPay(o){
   const d=await ccJson(CC_API+'/api/pay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)});
   try{localStorage.setItem('cc_pending',JSON.stringify({id:d.id,amount:o.amount,t:Date.now()}))}catch(e){}
@@ -295,10 +293,25 @@ window.addEventListener('load',async()=>{try{const p=JSON.parse(localStorage.get
   else if(s.status!=='pending')localStorage.removeItem('cc_pending')}catch(e){}});
 </script><script>/* Adds the account token to every call to the Worker (X-Aid, X-Token). The token is made by /api/auth/register in cc-core.js. */
 (function(){var f=window.fetch;window.ccAuth=function(){try{return JSON.parse(localStorage.getItem('cc_auth')||'null')}catch(e){return null}};
-window.fetch=function(u,o){try{if(typeof u==='string'&&typeof CC_API!=='undefined'&&u.indexOf(CC_API)===0){var a=window.ccAuth();if(a&&a.token){o=Object.assign({},o);o.headers=Object.assign({},o.headers,{'X-Aid':a.aid,'X-Token':a.token})}}}catch(e){}return f.call(this,u,o)}})();
+/* One place that turns server answers into messages a student can act on. */
+window.ccErr=function(status,msg,fb){
+ if(status>=500)return 'Something went wrong on our side. Please try again in a moment.';
+ if(status===429)return /limit|many|busy/i.test(msg||'')?msg:'Too many attempts. Please wait a little and try again.';
+ if(msg)return msg;
+ if(status===401)return 'Please sign in again.';
+ if(status===403)return 'You are not allowed to do that.';
+ if(status===404)return 'We could not find that.';
+ if(status===413)return 'That file is too large.';
+ return fb||'Something went wrong. Please try again.'};
+window.fetch=function(u,o){try{if(typeof u==='string'&&typeof CC_API!=='undefined'&&u.indexOf(CC_API)===0){o=Object.assign({},o);var a=window.ccAuth();if(a&&a.token){o.headers=Object.assign({},o.headers,{'X-Aid':a.aid,'X-Token':a.token})}
+ if(!o.signal&&typeof AbortController!=='undefined'){var ac=new AbortController();o.signal=ac.signal;setTimeout(function(){ac.abort()},60000)}}}catch(e){}return f.call(this,u,o)}})();
+/* Safety net: anything unexpected shows a short message instead of a frozen screen. */
+(function(){var last=0;function say(m){var n=Date.now();if(n-last<4000)return;last=n;try{if(typeof toast==='function')toast(m)}catch(e){}}
+window.addEventListener('unhandledrejection',function(e){var r=e.reason;if(r&&r.pending)return;say((r&&r.message&&r.message.length<120&&!/^(TypeError|ReferenceError|SyntaxError)/.test(r.name||''))?r.message:'Something went wrong. Please try again.')});
+window.addEventListener('error',function(e){if(!e.filename&&e.message==='Script error.')return;say('Something went wrong. Please refresh the page if it keeps happening.')});
+window.addEventListener('offline',function(){say('You are offline. Check your internet connection.')});
+window.addEventListener('online',function(){last=0;say('Back online')})})();
 </script>
-<script>/* one-time clean-up of demo data saved by earlier test builds */
-try{if(!localStorage.getItem('cs_prod1')){['cs_posts2','cs_mk','cs_x','cs_ht','cc_wf','cc_hs','cc_sv','cc_sn','cc_b2v','cs_rt','cs_rated','cc_sponsors','cs_club','cc_ns','cc_er','cs_pv','cs_sgj'].forEach(function(k){localStorage.removeItem(k)});localStorage.setItem('cs_prod1','1')}}catch(e){}</script>
 </head>
 <body data-view="feed"><noscript><main style="padding:24px;font-family:sans-serif;color:#fff;background:#000"><h1>Comrade Connect: Kirinyaga University comrades</h1><p>The anonymous campus feed, safe marketplace with escrow, Hearts, roommates and study groups for Kirinyaga University comrades. Turn on JavaScript to use the app.</p></main></noscript>
 <div class="bg"><i></i><i></i><svg class="mt" viewBox="0 0 1200 320" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path class="f2" d="M0 320V230L90 215 200 190 300 150 380 110 440 80 500 40 540 12 565 30 600 6 640 45 690 85 760 125 850 150 960 190 1080 215 1200 225V320Z"/><path class="f" d="M0 320V262L150 244 300 226 450 206 600 214 760 226 920 232 1080 246 1200 252V320Z"/><path class="l" d="M0 282Q300 268 600 282T1200 282M0 296Q300 283 600 296T1200 296M0 309Q300 298 600 309T1200 309"/></svg><div class="bw a">SPILL</div><div class="bw b">THE TEA</div></div>
@@ -355,7 +368,7 @@ try{if(!localStorage.getItem('cs_prod1')){['cs_posts2','cs_mk','cs_x','cs_ht','c
     <form id="lf" class="flex gap-3" style="margin-top:12px"><input id="li" maxlength="120" placeholder="Say something" aria-label="Chat message"><button class="act" aria-label="Send"><svg class="i" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg></button></form>
     <button class="btn g" id="rend" style="width:100%;margin-top:14px">Leave stream</button>
   </div>
-  <p class="sub">Streaming to other comrades is coming soon. For now this opens your own camera only.</p>
+  <p class="sub">Go live from your own camera, then share the link with other comrades.</p>
 </section>
 
 <section class="view pg" id="v-club">
@@ -435,7 +448,7 @@ try{if(!localStorage.getItem('cs_prod1')){['cs_posts2','cs_mk','cs_x','cs_ht','c
   <div class="box g"><h3>Notifications</h3><div id="nl"></div><button class="act" id="nread" style="margin-top:10px">Mark all as read</button></div>
   <div class="box g"><h3>Secure my account</h3><p class="sub" id="sst"></p><button class="btn g" id="sgo" style="width:100%;margin-top:12px">Lock with fingerprint</button></div>
   <div class="box g"><h3>Verification</h3><p class="sub" id="vst"></p><button class="btn g" id="vgo" style="width:100%;margin-top:12px">Get verified</button></div>
-  <div class="box g"><h3>Club and admin</h3><div class="two"><button class="btn g" id="mclub">Open the Club</button><button class="btn g" id="madm">Admin preview</button></div><p class="sub" style="margin-top:10px">The admin preview shows what the dashboard will look like. On the live app it needs an admin login.</p></div>
+  <div class="box g"><h3>Club</h3><button class="btn g" id="mclub" style="width:100%">Open the Club</button><button id="madm" hidden style="display:none" aria-hidden="true" tabindex="-1"></button></div>
   <div class="box g"><h3>Restore an account</h3><div class="fld"><input id="raid" placeholder="Your account ID" autocomplete="off" aria-label="Account ID"></div><div class="fld" style="margin-top:8px"><input id="rcode" placeholder="Enter your recovery code" autocomplete="off" aria-label="Recovery code"></div><button class="btn g" id="rrs" style="width:100%;margin-top:14px">Restore</button><p class="sub" style="margin-top:10px">Use the account ID and recovery code you saved.</p></div>
 </section>
 
@@ -602,7 +615,7 @@ const DOCS=[
 ['9. Notifications and messages','Choose which alerts you want: verified notices and strike updates, replies and messages, and the daily poll. Allow alerts on your phone, then use Send a test to check that they work. Private messages from buyers, sellers and Hearts matches appear under Messages.'],
 ['10. Security: fingerprint lock and verification','Secure my account lets you lock Comrade Connect with your phone fingerprint so only you can open it, and withdrawals ask for your fingerprint too. Verification lets you apply for a verified badge, used for officials and trusted sellers.'],
 ['11. Safety and moderation','Report anything suspicious from the options button on a story or listing. You can block a poster or hide a story, and undo this under Safety on the Me page. An automatic moderator checks posts and listings for contact details, off-site payment requests and abuse. Emergency numbers and safety tips are under the shield icon at the top and the Need help link at the bottom.\nBe kind. No real names, no phone numbers, no hate.'],
-['12. Club and admin','The Club is for student clubs and societies to share events and updates. The admin preview shows the dashboard that campus administrators use to review reports, listings, disputes and verification requests.'],
+['12. Club and moderation','The Club is for student clubs and societies to share events and updates. Our moderators review reports, listings, disputes and verification requests.'],
 ['13. Frequently asked questions','I lost my phone. Install the app on your new phone, open Me, choose Restore an account and enter your recovery code.\nCan anyone see who I am? No. There is no name, email or phone number, and your handle is never shown on your posts.\nMy post was blocked. It probably contained a number, a handle, a link or an off-site payment request. Remove it and try again.\nIs my money safe in Market? Yes. It is held in escrow until you confirm the item with your 6-digit handover code.']
 ];
 const STEPS=[['feed','The Feed','This is home. Read stories, filter by zone or category, and tap the Spill button to post. Nobody will know it was you.'],['videos','Videos','Watch short campus clips here and share the good ones.'],['live','Live','See what is happening on campus right now.'],['market','Market','Buy and sell safely. Your money stays in escrow until you confirm the item with your 6-digit handover code.'],['explore','Explore','Find roommates and study groups, vote in polls, and meet people on Hearts (18+).'],['rewards','Rewards','Check in daily, spill, comment and share to earn points. Spend them on boosts and perks.'],['me','Me','Your anonymous account. Save your recovery code here. You will also find the full documentation, which you can download as a PDF.']];
@@ -680,7 +693,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
   <section data-v="dm" hidden>
     <div class="flex items-center justify-between"><h2>Anonymous message</h2><button class="ib xb" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <p class="note" id="dmq"></p>
-    <p class="note" id="dmnote">Neither of you sees the other's name. Numbers, handles and off-site payments are blocked. Messages are not delivered yet. Anonymous messaging is coming soon.</p>
+    <p class="note" id="dmnote">Neither of you sees the other's name. Numbers, handles and off-site payments are blocked.</p>
     <div id="dmlog" style="display:grid;gap:8px;margin:14px 0;max-height:34vh;overflow:auto"></div>
     <div id="dmact" class="flex gap-3" style="margin:8px 0" hidden><button type="button" class="act" data-m="mute">Mute 24 hours</button><button type="button" class="act" data-m="block">Block</button></div>
     <p class="note" id="dmhint" hidden>Tap a message from them to report it.</p>
@@ -904,8 +917,8 @@ const db=()=>{if(mem)return mem;let d=ST.get('cs_posts2',null);if(!d){const n=Da
 const save=()=>{if(mem)ST.set('cs_posts2',mem)};
 const find=id=>db().find(p=>p._id===id);
 const REMOTE=CC_API.indexOf('YOUR-SUBDOMAIN')<0;
-const rq=async(path,body)=>{let r;try{r=await fetch(CC_API+path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined)}catch(e){throw new Error('No connection. Check your internet and try again.')}
- const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Something went wrong');return d};
+const rq=async(path,body)=>{let r;try{r=await fetch(CC_API+path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined)}catch(e){throw new Error('Could not reach the server. Check your internet and try again.')}
+ const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(ccErr(r.status,d.error));return d};
 const apiLocal={
  async list({page=1,limit=5,category='All',zone='All'}={}){let d=[...db()].filter(p=>!p.hidden).sort((a,b)=>(b.boosted?1:0)-(a.boosted?1:0)||b.createdAt-a.createdAt);if(category!=='All')d=d.filter(p=>p.category===category);if(zone!=='All')d=d.filter(p=>p.zone===zone);d=d.filter(p=>!HID.has('post:'+p._id)&&!BLK.has(p.aid));return{posts:d.slice((page-1)*limit,page*limit),hasMore:d.length>page*limit}},
  async create({content,category,zone}){const p={_id:'p'+Date.now(),content,category:category||'General',zone:zone||'',aid:ME.aid,verified:isOff()&&category==='Notices',role:isOff()&&category==='Notices'?ME.ver.role:'',campus:'Kirinyaga University',likes:0,views:0,comments:[],createdAt:Date.now()};db().unshift(p);save();return p},
@@ -1080,7 +1093,7 @@ $('#lf').onsubmit=e=>{e.preventDefault();const i=$('#li'),t=i.value.trim();if(!t
 
 /* ---------- market: moved to cc-core.js (server-backed escrow, wallet and sell flow) ---------- */
 
-/* ---------- club: membership, wholesale shop, support, notifications, admin preview ---------- */
+/* ---------- club: membership, wholesale shop, support, notifications ---------- */
 const MEMB=100,REWARD=20,REFD=7,DELIV=50;
 const CPROD=[];
 ME.notes=ME.notes||[];ME.rl=ME.rl||[];ME.wal=ME.wal||0;ME.wreq=ME.wreq||[];
@@ -1424,10 +1437,10 @@ const L=get(K.l,[]),S=get(K.s,[]),Q=get(K.q,[]);const rev=S.filter(s=>s.on).redu
 b.innerHTML=`<div class="stats sm"><div class="box g"><div class="sub">Active sponsors</div><b>${S.filter(s=>s.on).length}</b></div><div class="box g"><div class="sub">Monthly sponsor income</div><b>KSh ${rev.toLocaleString()}</b></div><div class="box g"><div class="sub">Open enquiries</div><b>${Q.filter(q=>!q.done).length}</b></div></div>
 <div class="box g"><h3>Community links</h3><p class="sub">Shown to everyone under Me, Join our community.</p>${L.map((l,i)=>`<div class="rw"><span>${IC[l.p]} ${esc(l.n||PL[l.p])}<small>${esc(l.url)}</small></span><button class="act" data-ld="${i}">Remove</button></div>`).join('')||'<p class="sub">No links yet.</p>'}
 <div class="fld" style="margin-top:10px"><select id="lp" aria-label="Platform">${Object.keys(PL).map(k=>`<option value="${k}">${PL[k]}</option>`).join('')}</select></div><div class="fld" style="margin-top:8px"><input id="ln" maxlength="40" placeholder="Label (optional)" aria-label="Label"></div><div class="fld" style="margin-top:8px"><input id="lu" placeholder="https://..." aria-label="Link URL"></div><button class="btn g" id="la" style="width:100%;margin-top:10px">Add link</button></div>
-<div class="box g"><h3>Sponsors and ads</h3><p class="sub">Cards appear at the top of the Feed and Market. Clicks and views are counted.</p>${S.map((s,i)=>`<div class="rw"><span>${esc(s.brand)}${s.demo?' (example)':''}<small>${s.imp} views, ${s.clk} clicks, KSh ${(+s.fee||0).toLocaleString()}/month</small></span><span><input type="checkbox" class="sw" data-st2="${i}" ${s.on?'checked':''} aria-label="Active"> <button class="act" data-sd="${i}">Delete</button></span></div>`).join('')||'<p class="sub">No sponsors yet.</p>'}
+<div class="box g"><h3>Sponsors and ads</h3><p class="sub">Cards appear at the top of the Feed and Market. Clicks and views are counted.</p>${S.map((s,i)=>`<div class="rw"><span>${esc(s.brand)}<small>${s.imp} views, ${s.clk} clicks, KSh ${(+s.fee||0).toLocaleString()}/month</small></span><span><input type="checkbox" class="sw" data-st2="${i}" ${s.on?'checked':''} aria-label="Active"> <button class="act" data-sd="${i}">Delete</button></span></div>`).join('')||'<p class="sub">No sponsors yet.</p>'}
 <div class="fld" style="margin-top:10px"><input id="sb" maxlength="40" placeholder="Brand name" aria-label="Brand"></div><div class="fld" style="margin-top:8px"><input id="sh" maxlength="100" placeholder="Headline" aria-label="Headline"></div><div class="fld" style="margin-top:8px"><input id="su" placeholder="Their link https://..." aria-label="Sponsor link"></div><div class="fld" style="margin-top:8px"><input id="sf" inputmode="numeric" placeholder="Fee per month (KSh)" aria-label="Fee"></div><button class="btn g" id="sa" style="width:100%;margin-top:10px">Add sponsor</button></div>
 <div class="box g"><h3>Business enquiries</h3>${Q.map((q,i)=>`<div class="rw"><span>${esc(q.b)}, ${esc(q.k)}<small>${esc(q.m||'No note')} · ${esc(q.p)}</small></span><span><a class="act" ${A('https://wa.me/'+q.p.replace(/\D/g,'').replace(/^0/,'254'))}>WhatsApp</a> <button class="act" data-qd="${i}">${q.done?'Reopen':'Done'}</button></span></div>`).join('')||'<p class="sub">Nothing yet. Test it from Me, Advertise with us.</p>'}</div>
-<p class="sub">Admin access: Me tab, then Admin preview. A real login gate comes with the back end.</p>`;
+`;
 }
 document.addEventListener('click',e=>{const t=e.target;let L=get(K.l,[]),S=get(K.s,[]),Q=get(K.q,[]);
 if(t.id==='la'){const u=$('#lu').value.trim();if(!okUrl(u))return toast('Enter a full link starting with https://');L.push({p:$('#lp').value,n:$('#ln').value.trim(),url:u});set(K.l,L);adm();toast('Link added');const w=$('#ccpub');if(w)w.remove();meBoxes()}

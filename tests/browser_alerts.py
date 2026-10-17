@@ -28,6 +28,7 @@ def main():
             if path == '/api/messages/inbox': return ok({'threads': S['threads']})
             return ok({'ok': True})
         page.route('http://app.test/**', app); page.route(API + '/**', worker)
+        page.route('http://app.test/config.js*', lambda r, q: r.fulfill(status=200, body="const CC_API='" + API + "';const CC_GOOGLE_ID='';", content_type='application/javascript'))
         page.route(lambda u: not (u.startswith('http://app.test') or u.startswith(API) or u.startswith('data:') or u.startswith('blob:')), lambda r, q: r.abort())
         js = page.evaluate
         def poll(w=400): js("CC.pollAlerts()"); page.wait_for_timeout(w)

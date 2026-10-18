@@ -1,7 +1,7 @@
 // Comrade Connect API (Cloudflare Worker). All secrets live here, never in the HTML.
 import { json, err, corsHeaders, sb, rows, patch, ago } from './lib.js';
 import { feedRoutes } from './feed.js';
-import { payRoutes, hooks, manualMode } from './pay.js';
+import { payRoutes, hooks, manualMode, markFailed } from './pay.js';
 import { accountRoutes, unlockReferrals } from './account.js';
 import { marketRoutes, createOrderFromPayment, autoReleaseOrders } from './market.js';
 import { messageRoutes } from './messages.js';
@@ -68,7 +68,7 @@ export async function runCron(env) {
   out.released = await autoReleaseOrders(env);
   out.referrals = await unlockReferrals(env);
   out.clubExpired = await expireClubOrders(env);
-  const stale = await rows(await patch(env, `payments?status=eq.pending&created_at=lte.${ago(Number(env.PENDING_MINUTES || (manualMode(env) ? 90 : 30)) * 60e3)}`, { status: 'expired' }));
+  const stale = await markFailed(env, `payments?status=eq.pending&created_at=lte.${ago(Number(env.PENDING_MINUTES || (manualMode(env) ? 90 : 30)) * 60e3)}`, 'expired', 'no_response', null);
   for (const p of stale) await hooks.onFailed(env, p);
   out.expiredPayments = stale.length;
   const purge = await rows(await sb(env, `verifications?select=id,r2_key&r2_key=not.is.null&purge_after=lte.${new Date().toISOString()}&status=neq.pending&limit=50`));

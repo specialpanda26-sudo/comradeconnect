@@ -655,3 +655,7 @@ end $$;
 
 -- v12: seller phone number, shown to the buyer only after payment. Safe to run again.
 alter table listings add column if not exists contact_phone text;
+
+-- v13: why a payment failed (insufficient funds, cancelled, no PIN...). Safe to run again.
+alter table payments add column if not exists fail_reason text;
+alter table payments add column if not exists fail_code integer;

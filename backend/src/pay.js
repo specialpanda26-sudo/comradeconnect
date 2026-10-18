@@ -5,6 +5,16 @@ import { getSettings } from './settings.js';
 import { json, err, sb, rows, one, post, patch, enc, normPhone, ago, tsEqual, user, UUID, throttle, tooMany } from './lib.js';
 // TinyPesa's current API: api. host, trailing slash, the link username in the query string, JSON body.
 const TINYPESA_URL = 'https://api.tinypesa.com/api/v1/express/initialize/';
+// Why an M-Pesa prompt failed, from Safaricom's ResultCode (TinyPesa forwards it). Shown to the buyer and in the admin panel.
+const FAIL_BY_CODE = { 1: 'insufficient', 1032: 'cancelled', 1037: 'timeout', 2001: 'wrong_pin', 1001: 'busy', 1019: 'expired' };
+export const failReason = (code) => FAIL_BY_CODE[Number(code)] || 'other';
+// Mark payments failed/expired and record why. If the reason columns are not in the database yet, fall back to a plain status
+// change so a payment is never left pending. Returns the updated rows.
+export async function markFailed(env, filter, status, reason, code) {
+  let res = await patch(env, filter, { status, fail_reason: reason, fail_code: code ?? null });
+  if (!res.ok) res = await patch(env, filter, { status });
+  return rows(res);
+}
 export const manualMode = (env) => String(env.PAYMENT_MODE || 'manual') !== 'tinypesa';
 // What the buyer must do in manual mode. Shown in the app, never contains anything secret.
 export function manualInfo(env, p) {
@@ -39,7 +49,7 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   const t = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok || String(t.success) === 'false' || !(t.request_id || String(t.success) === 'true')) {
     console.error('tinypesa: initialize refused', r ? r.status : 'no response', JSON.stringify(t).slice(0, 200));
-    await patch(env, `payments?id=eq.${row.id}`, { status: 'failed' });
+    await markFailed(env, `payments?id=eq.${row.id}`, 'failed', 'not_sent', null);
     return { res: err(env, 'Could not send the M-Pesa prompt. Try again.', 502) };
   }
   await patch(env, `payments?id=eq.${row.id}`, { request_id: t.request_id || null });
@@ -84,10 +94,15 @@ export async function payRoutes(req, env, url, ip) {
     if (!cb) return json(env, { ok: true });
     const checkout = String(cb.CheckoutRequestID || '');
     if (cb.ResultCode !== 0) {
-      if (checkout) {
-        const failed = await rows(await patch(env, `payments?request_id=eq.${enc(checkout)}&status=eq.pending`, { status: 'failed' }));
-        for (const p of failed) await hooks.onFailed(env, p);
+      const reason = failReason(cb.ResultCode);
+      let failed = checkout ? await markFailed(env, `payments?request_id=eq.${enc(checkout)}&status=eq.pending`, 'failed', reason, cb.ResultCode) : [];
+      if (!failed.length) {
+        // A failure callback has no phone or amount, and TinyPesa's request id may differ from Safaricom's CheckoutRequestID.
+        // If exactly one payment is waiting and it started in the last 5 minutes, it is the one. Otherwise do nothing (the cron expires it).
+        const recent = await rows(await sb(env, `payments?select=id&status=eq.pending&created_at=gte.${ago(5 * 60e3)}&limit=2`));
+        if (recent.length === 1) failed = await markFailed(env, `payments?id=eq.${recent[0].id}&status=eq.pending`, 'failed', reason, cb.ResultCode);
       }
+      for (const p of failed) await hooks.onFailed(env, p);
       return json(env, { ok: true });
     }
     const items = cb.CallbackMetadata?.Item || [];
@@ -133,9 +148,12 @@ export async function payRoutes(req, env, url, ip) {
   if (path === '/api/pay/status' && req.method === 'GET') {
     const id = url.searchParams.get('id') || '';
     if (!UUID.test(id)) return err(env, 'bad id');
-    const [p] = await rows(await sb(env, `payments?id=eq.${id}&select=id,status,receipt,amount,purpose`));
+    let sr = await sb(env, `payments?id=eq.${id}&select=id,status,receipt,amount,purpose,fail_reason`);
+    if (!sr.ok) sr = await sb(env, `payments?id=eq.${id}&select=id,status,receipt,amount,purpose`);   // reason column not added yet
+    const [p] = await rows(sr);
     if (!p) return json(env, { status: 'unknown' });
     const out = { status: p.status, receipt: p.receipt, amount: p.amount };
+    if (p.fail_reason) out.reason = p.fail_reason;
     if (manualMode(env) && p.status === 'pending') out.manual = manualInfo(env, p);
     if (p.purpose === 'order' && p.status === 'paid') { const [o] = await rows(await sb(env, `orders?select=id&payment_id=eq.${id}`)); out.order_id = o?.id || null; }
     return json(env, out);

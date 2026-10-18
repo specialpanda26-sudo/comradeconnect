@@ -55,6 +55,14 @@ export async function adminRoutes(req, env, url, ip) {
 
   // ---- review queue ----
   if (path === '/api/admin/queue' && m === 'GET') {
+    // Recent payments that did not complete, with the reason when the database has the reason columns.
+    const failedList = async () => {
+      const base = `payments?status=in.(failed,expired)&created_at=gte.${ago(7 * 864e5)}&order=created_at.desc&limit=50&select=id,purpose,amount,phone,status,created_at`;
+      let r = await sb(env, base + ',fail_reason,fail_code');
+      if (!r.ok) r = await sb(env, base);
+      return rows(r);
+    };
+    const failed = await failedList();
     const [ls, vs, disputes, wds, creps, mreps, under, confirm] = await Promise.all([
       sb(env, 'listings?status=eq.pending&order=created_at.asc&limit=50'), sb(env, 'verifications?select=id,aid,full_name,claimed_role,id_number,group_link,barcode_check,created_at&status=eq.pending&order=created_at.asc&limit=50'),
       sb(env, 'orders?dispute_status=eq.open&order=disputed_at.asc&limit=50'), sb(env, 'withdrawals?status=eq.requested&order=created_at.asc&limit=50'),
@@ -65,9 +73,9 @@ export async function adminRoutes(req, env, url, ip) {
     const photos = ls.length ? await rows(await sb(env, `media?select=listing_id,r2_key&kind=eq.listing_photo&status=eq.ready&listing_id=${inList(ls.map((l) => l.id))}`)) : [];
     const titles = disputes.length ? await rows(await sb(env, `listings?select=id,title&id=${inList(disputes.map((o) => o.listing_id))}`)) : [];
     return json(env, {
-      counts: { listings: ls.length, verifications: vs.length, disputes: disputes.length, withdrawals: wds.length, reports: creps.length + mreps.length, underpaid: under.length, confirm: confirm.length },
+      counts: { listings: ls.length, verifications: vs.length, disputes: disputes.length, withdrawals: wds.length, reports: creps.length + mreps.length, underpaid: under.length, confirm: confirm.length, failed: failed.length },
       listings: ls.map((l) => ({ id: l.id, title: l.title, description: l.description, price: l.price, category: l.category, seller: l.seller_aid, createdAt: Date.parse(l.created_at), photos: photos.filter((p) => p.listing_id === l.id).map((p) => mediaUrl(env, p.r2_key)) })),
-      verifications: vs, withdrawals: wds, underpaid: under, confirm, content_reports: creps, message_reports: mreps,
+      verifications: vs, withdrawals: wds, underpaid: under, confirm, failed, content_reports: creps, message_reports: mreps,
       disputes: disputes.map((o) => ({ id: o.id, title: titles.find((t) => t.id === o.listing_id)?.title, amount: o.amount, status: o.status, reason: o.dispute_reason, opened_by: o.dispute_by === o.buyer_aid ? 'buyer' : 'seller', buyer: o.buyer_aid, seller: o.seller_aid, at: o.disputed_at })),
     });
   }

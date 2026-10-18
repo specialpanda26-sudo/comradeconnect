@@ -1,5 +1,5 @@
 // Accounts, wallet, withdrawals and referrals.
-import { json, err, sb, rows, one, post, patch, enc, str, int, UUID, H, tsEqual, randHex, throttle, tooMany, user, authProfile, contactBlock, ahead, DAY } from './lib.js';
+import { json, err, sb, rows, one, post, patch, enc, str, int, UUID, H, tsEqual, randHex, throttle, tooMany, user, authProfile, contactBlock, ahead, ago, DAY } from './lib.js';
 import { credit } from './pay.js';
 import { getSettings, withdrawFee, publicConfig } from './settings.js';
 import { trySendNow, reconcilePayouts } from './payouts.js';
@@ -131,7 +131,11 @@ export async function accountRoutes(req, env, url, ip) {
     const u = await user(req, env); if (u instanceof Response) return u;
     await reconcilePayouts(env, u.aid).catch(() => {});          // pick up the result of automatic payouts
     const ledger = await rows(await sb(env, `wallet_ledger?select=delta,kind,status,note,created_at&aid=eq.${enc(u.aid)}&order=created_at.desc&limit=50`));
-    const wd = await rows(await sb(env, `withdrawals?select=id,amount,fee,net,status,payout_ref,created_at&aid=eq.${enc(u.aid)}&order=created_at.desc&limit=20`));
+    // History = everything except rejected. A rejected one is sent only for 3 days so the phone can announce "money returned" once; the screen never lists it.
+    const cols = 'id,amount,fee,net,status,payout_ref,created_at', a = enc(u.aid);
+    const wd = [...await rows(await sb(env, `withdrawals?select=${cols}&aid=eq.${a}&status=neq.rejected&order=created_at.desc&limit=20`)),
+      ...await rows(await sb(env, `withdrawals?select=${cols}&aid=eq.${a}&status=eq.rejected&decided_at=gte.${ago(3 * DAY)}&order=created_at.desc&limit=5`))]
+      .sort((x, y) => (x.created_at < y.created_at ? 1 : -1));
     return json(env, { balance: await balance(env, u.aid), ledger, withdrawals: wd, rules: publicConfig(await getSettings(env)) });
   }
   if (path === '/api/wallet/withdraw' && m === 'POST') {

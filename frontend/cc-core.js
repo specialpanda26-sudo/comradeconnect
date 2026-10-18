@@ -296,7 +296,7 @@ function draw() {
     const bal = S.wallet ? S.wallet.balance : 0;
     $('#wb').textContent = S.wallet ? kes(bal) : '...'; $('#wd').disabled = !bal;
     let w = document.getElementById('wlg'); if (!w) { $('#mord .box').insertAdjacentHTML('afterend', '<div id="wlg"></div>'); w = document.getElementById('wlg'); }
-    const wds = S.wallet ? S.wallet.withdrawals || [] : [];
+    const wds = (S.wallet ? S.wallet.withdrawals || [] : []).filter((x) => x.status !== 'rejected');   // rejected ones are announced once, never listed
     w.innerHTML = wds.length ? '<div class="box g" style="margin-top:14px"><h3>Withdrawals</h3>' + wds.slice(0, 5).map((x) => '<div class="rw"><span>' + kes(x.amount) + '<small>' + (x.fee ? 'Fee ' + kes(x.fee) + ', you get ' + kes(x.net) + '. ' : '') + ago(Date.parse(x.created_at)) + '</small></span><b>' + ({ requested: 'Waiting for admin', sending: 'Sending to M-Pesa', paid: 'Paid', rejected: 'Rejected, money returned' }[x.status] || esc(x.status)) + '</b>' + (x.status === 'requested' ? '<button class="act" data-wdc="' + esc(x.id) + '">Cancel</button>' : '') + '</div>' + wdTrack(x)).join('') + '</div>' : '';
     let h = S.orders.map((o) => {
       const buy = o.role === 'buyer', r = buy ? 0 : 1, live = o.status === 'held' || o.status === 'handed';

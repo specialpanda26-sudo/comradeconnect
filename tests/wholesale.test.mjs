@@ -68,3 +68,18 @@ test('wallet purchase: money leaves the buyer wallet, order is held in escrow, n
   assert.equal((await w.call('POST', `/api/orders/${o.id}/received`, { as: buyer })).status, 200);
   assert.equal(await bal(w, seller), 101 - 3);
 });
+
+test('wallet history: rejected withdrawals are not listed after the announcement window; pending and paid stay', async (t) => {
+  const w = await fresh(t, { env: { WITHDRAW_REQUIRES_VERIFIED: '0' } }); const u = await w.user('u');
+  await deposit(w, u, 1000);
+  const ask = (n) => w.call('POST', '/api/wallet/withdraw', { as: u, body: { amount: n, phone: '0712345678' } });
+  const a = (await ask(100)).data, b = (await ask(200)).data, c = (await ask(300)).data;
+  await w.call('POST', `/api/admin/withdrawals/${b.id}`, { admin: true, body: { action: 'paid', payout_ref: 'ABC1234567' } });
+  await w.call('POST', `/api/admin/withdrawals/${c.id}`, { admin: true, body: { action: 'reject' } });
+  let wd = (await w.call('GET', '/api/wallet', { as: u })).data.withdrawals;
+  assert.deepEqual(wd.map((x) => x.status).sort(), ['paid', 'rejected', 'requested'], 'fresh rejection still sent once so the phone can announce it');
+  w.db.rows('withdrawals').find((x) => x.id === c.id).decided_at = new Date(Date.now() - 4 * 86400e3).toISOString();
+  wd = (await w.call('GET', '/api/wallet', { as: u })).data.withdrawals;
+  assert.deepEqual(wd.map((x) => x.status).sort(), ['paid', 'requested'], 'old rejection gone');
+  assert.equal(await bal(w, u), 1000 - 100 - 200 + 0, 'rejected 300 went back to the wallet');
+});

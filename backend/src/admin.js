@@ -301,6 +301,20 @@ export async function adminRoutes(req, env, url, ip) {
     out.total_earned = out.market_fees.total + out.boosts.total + out.withdrawal_fees.total;
     return json(env, out);
   }
+  // ---- grant money to someone's wallet (a gift, a prize, a goodwill refund). Safe to repeat: the same key can only pay once. Always in the audit log. ----
+  if (path === '/api/admin/wallet/grant' && m === 'POST') {
+    const b = await body(), who = str(b.to, 60).replace(/^@/, ''), amount = int(b.amount, 1, 100000), note = str(b.note, 80) || 'Gift from Comrade Connect';
+    if (!who) return err(env, 'Enter the account ID or the handle');
+    if (!amount) return err(env, 'Amount: KSh 1 to 100,000');
+    let p = await one(await sb(env, `profiles?select=aid,handle,banned&aid=eq.${enc(who)}`));
+    if (!p) p = await one(await sb(env, `profiles?select=aid,handle,banned&handle=eq.${enc(who)}`));
+    if (!p) return err(env, 'No account with that ID or handle', 404);
+    if (p.banned) return err(env, 'That account is suspended', 403);
+    const key = str(b.key, 40).replace(/[^A-Za-z0-9_-]/g, '') || crypto.randomUUID();
+    if (!(await credit(env, p.aid, amount, 'adjustment', 'grant:' + key, note))) return err(env, 'This grant was already sent', 409);
+    await A('wallet.grant', 'profile', p.aid, `KSh ${amount}: ${note}`);
+    return json(env, { ok: true, aid: p.aid, handle: p.handle || null, amount });
+  }
   if (path === '/api/admin/payouts' && m === 'GET') {
     const st = ['paid', 'rejected', 'requested'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'paid';
     return json(env, { payouts: await rows(await sb(env, `withdrawals?status=eq.${st}&order=created_at.desc&limit=100`)) });

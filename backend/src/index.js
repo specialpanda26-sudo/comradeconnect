@@ -14,6 +14,8 @@ import { adminRoutes } from './admin.js';
 import { settingsRoutes } from './settings.js';
 import { siteContentRoutes } from './sitecontent.js';
 import { trustRoutes } from './trust.js';
+import { pointsRoutes } from './points.js';
+import { giveBack } from './points.js';
 import { pruneMedia } from './media.js';
 import * as store from './storage.js';
 import { PRIVATE_BUCKET } from './storage.js';
@@ -31,9 +33,12 @@ async function boostPost(env, p) {
   const start = Math.max(Date.now(), cur && cur.boosted_until ? Date.parse(cur.boosted_until) : 0);
   await patch(env, `posts?id=eq.${p.ref_id}`, { boosted_until: new Date(start + (p.boost_hours || 24) * 3600e3).toISOString() });
 }
-hooks.onFailed = async (env, p) => { if (p.purpose === 'club') await restoreClubOrder(env, p.ref_id); };
+hooks.onFailed = async (env, p) => {
+  if (p.purpose === 'club') await restoreClubOrder(env, p.ref_id);
+  if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
+};
 
-const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, ratingRoutes, marketRoutes, messageRoutes, contentRoutes, liveRoutes, mediaRoutes, clubRoutes, adminRoutes];
+const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, ratingRoutes, marketRoutes, messageRoutes, contentRoutes, liveRoutes, mediaRoutes, clubRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

@@ -10,9 +10,9 @@ test('settings: admin only, validated, public config follows, every change audit
   const w = await fresh(t);
   assert.equal((await w.call('POST', '/api/admin/settings', { body: { values: { platform_fee_percent: 5 } } })).status, 403);
   assert.equal((await w.call('GET', '/api/config')).data.fee_percent, 3, 'falls back to env');
-  for (const bad of [{ platform_fee_percent: 90 }, { platform_fee_percent: '' }, { boost_price: 0 }, { boost_price: 12.5 }, { withdraw_min: 10 }, { nope: 1 }])
+  for (const bad of [{ platform_fee_percent: 90 }, { platform_fee_percent: '' }, { boost_price: 0 }, { boost_price: 12.5 }, { withdraw_min: 0 }, { nope: 1 }])
     assert.equal((await save(w, bad)).status, 400, JSON.stringify(bad));
-  assert.equal((await save(w, { platform_fee_percent: 7.5, boost_price: 40, boost_price_3d: 90, withdraw_fee_flat: 10 })).status, 200);
+  assert.equal((await save(w, { platform_fee_percent: 7.5, boost_price: 40, boost_price_3d: 90, withdraw_min: 50, withdraw_fee_flat: 10 })).status, 200);
   const c = (await w.call('GET', '/api/config')).data;
   assert.equal(c.fee_percent, 7.5); assert.equal(c.boost_plans[0].price, 40); assert.equal(c.boost_plans[1].price, 90); assert.equal(c.withdraw_fee_flat, 10);
   assert.ok(w.db.rows('admin_audit_log').some((r) => r.action === 'settings.update'));

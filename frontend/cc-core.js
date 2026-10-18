@@ -4,7 +4,7 @@
 (function () {
 'use strict';
 let FEE = 3;                                             // percent; replaced by the server's value (admin > Money and fees) as soon as it loads
-const CFG = { min: 50, max: 150000, wfp: 0, wff: 0, pmin: 1, pmax: 150000 };
+const CFG = { ppk: 10, min: 1, max: 150000, wfp: 0, wff: 0, pmin: 1, pmax: 150000 };
 const kes = (n) => 'KSh ' + Number(n).toLocaleString('en-KE');
 const net = (p) => p - Math.floor((p * FEE) / 100);      // same rounding as the Worker
 const connected = () => typeof CC_API === 'string' && CC_API.indexOf('YOUR-SUBDOMAIN') < 0;
@@ -16,7 +16,7 @@ async function loadConfig() {                              // fee %, boost price
     if (Number.isFinite(d.fee_percent)) FEE = d.fee_percent;
     CFG.pmin = d.price_min || 1; CFG.pmax = d.price_max || 150000;
     { const mp = document.getElementById('mpr'); if (mp) mp.placeholder = 'Price in KSh (' + CFG.pmin.toLocaleString('en-US') + ' to ' + CFG.pmax.toLocaleString('en-US') + ')'; }
-    CFG.min = d.withdraw_min || 50; CFG.max = d.withdraw_max || 150000; CFG.wfp = d.withdraw_fee_percent || 0; CFG.wff = d.withdraw_fee_flat || 0;
+    CFG.min = d.withdraw_min || 1; CFG.ppk = d.points_per_ksh || 10; CFG.max = d.withdraw_max || 150000; CFG.wfp = d.withdraw_fee_percent || 0; CFG.wff = d.withdraw_fee_flat || 0;
     const bs = [...document.querySelectorAll('#dm .pl .act')];
     (d.boost_plans || []).forEach((p, i) => { const b = bs[i]; if (!b) return; b.dataset.pr = p.price; b.dataset.du = p.hours === 24 ? '24 hours' : '3 days'; b.innerHTML = '<b>KSh ' + p.price + '</b>' + b.dataset.du; });
     const on = bs.find((b) => b.classList.contains('sel')) || bs[0]; if (on) on.click();      // refreshes the price the boost screen will charge and show
@@ -180,6 +180,7 @@ async function call(path, o) {
   if (!r.ok) throw Object.assign(new Error(ccErr(r.status, d.error)), { status: r.status });
   return d;
 }
+window.ccCall = call;
 // Wallet and referral pay-ins from older code (boost, top-up) need the account first.
 if (typeof window.ccRun === 'function') {
   const old = window.ccRun;
@@ -409,6 +410,15 @@ $('#mvbuy').onclick = () => {
   const l = S.list.find((x) => x.id === $('#mvbuy').dataset.id); if (!l) return; S.buyL = l;
   $('#bt').textContent = l.title; $('#bp').textContent = kes(l.price); $('#bh').textContent = kes(l.price);
   $('#bn').textContent = 'The seller receives ' + kes(net(l.price)) + ' after a ' + FEE + '% fee, and only after you confirm you received the item.';
+  S.usePts = false; S.ptsKsh = 0; { const el = $('#bpts'); if (el) el.remove(); }
+  call('/api/points').then((pt) => {   // points can only cover the platform fee on this purchase
+    const c = Math.min(Math.floor((l.price * FEE) / 100 + 1e-9), Math.floor(pt.points / (pt.per_ksh || CFG.ppk)));
+    if (c < 1 || S.buyL !== l) return; S.ptsKsh = c;
+    const row = document.createElement('label'); row.id = 'bpts'; row.className = 'sub'; row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-top:10px';
+    row.innerHTML = '<input type="checkbox"> Use ' + (c * (pt.per_ksh || CFG.ppk)) + ' points to save ' + kes(c) + ' on this item';
+    row.querySelector('input').onchange = (e) => { S.usePts = e.target.checked; $('#bp').textContent = kes(l.price - (S.usePts ? c : 0)); };
+    $('#bn').after(row);
+  }).catch(() => {});
   bs(1); $('#bph').value = ST.get('cc_phone', ''); $('#bpe').textContent = ''; openDm('buy');
 };
 $('#bgo').onclick = () => bs(2);
@@ -417,17 +427,17 @@ $('#bpay').onclick = async () => {
   const v = $('#bph').value.replace(/\s/g, '');
   if (!/^(07|01)\d{8}$/.test(v)) return ($('#bpe').textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
   const l = S.buyL; S.paying = true; bs(3);
-  const ps = paySteps($('#dm [data-bs="3"]'), v, l.price);
+  const pay = l.price - (S.usePts ? S.ptsKsh : 0), ps = paySteps($('#dm [data-bs="3"]'), v, pay);
   try {
-    const d = await call('/api/market/buy', { body: { listing_id: l.id, phone: v } });
+    const d = await call('/api/market/buy', { body: { listing_id: l.id, phone: v, use_points: !!S.usePts } });
     ST.set('cc_phone', v);                                   // remembered on this phone for the next purchase and withdrawal
-    try { localStorage.setItem('cc_pending', JSON.stringify({ id: d.id, amount: l.price, t: Date.now() })); } catch (e) {}
+    try { localStorage.setItem('cc_pending', JSON.stringify({ id: d.id, amount: d.amount, t: Date.now() })); } catch (e) {}
     ps.go('prompt');
     await waitPaid(d.id, (st) => ps.go(st));
     try { localStorage.removeItem('cc_pending'); } catch (e) {}
     ps.go('done'); await sleep(1100);                        // let the last tick play before the receipt screen
     S.list = S.list.filter((x) => x.id !== l.id);
-    $('#bok').textContent = 'Payment received. ' + kes(l.price) + ' for ' + l.title + ' is held safely in escrow. Tap Done to see it under Orders.';
+    $('#bok').textContent = 'Payment received. ' + kes(d.amount) + (d.credit ? ' plus ' + kes(d.credit) + ' of points' : '') + ' for ' + l.title + ' is held safely in escrow. Tap Done to see it under Orders.';
     bs(4); ccTick($('#bok')); loadOrders(true);
   } catch (e) {
     if (e.pending) { ps.stop(); toast(e.message); shut(); S.sub = 'orders'; draw(); loadOrders(); }

@@ -502,7 +502,7 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
   <div class="box g"><h3>Comrade Connect Club</h3><p class="sub" style="margin:6px 0 12px">Wholesale member prices on everyday student items, with campus collection or hostel delivery.</p><button class="btn p" id="cgo" style="width:100%">Open the Club</button></div>
   <div class="box g"><h3>Invite a friend, earn a reward</h3><p class="sub" style="margin-bottom:12px">You earn KSh 20 when a friend who joined with your link makes their first purchase in the Market and the 7-day refund period ends. The reward goes into your Market wallet. Direct invites only. Fake, duplicate or refunded purchases earn nothing. Rewards are a thank-you, not income you can count on.</p><div class="code" id="rlk"></div><div class="two" style="margin-top:12px"><a class="btn p" id="rwa" target="_blank" rel="noopener">Share on WhatsApp</a><button class="btn g" id="rcp">Copy link</button></div><div id="rled"></div></div>
   <div class="box g"><h3>More ways to earn</h3><div class="rw"><span>Post a story<small>Anonymous, always</small></span><b>+5</b></div><div class="rw"><span>Share a story on WhatsApp<small>Once per story per day</small></span><b>+5</b></div><div class="rw"><span>Comment on a story</span><b>+1</b></div><div class="rw"><span>Daily check-in<small>Longer streaks pay more</small></span><b>+2 to +7</b></div><div class="rw"><span>Go live or post a clip</span><b>+10 / +5</b></div></div>
-  <div class="box g"><h3>Spend your points</h3><div id="shop"></div><p class="sub" style="margin-top:10px">Rewards are funded by sponsors. Points are a thank-you, not money.</p></div>
+  <div class="box g"><h3>Spend your points</h3><div id="shop"></div><p class="sub" style="margin-top:10px">Points are worth money: every 50 points saves you KSh 5 on a Market item. They can only cover our fee on that purchase, so the seller always gets their full share. Pick "Use points" when you buy.</p></div>
   <div class="box g"><h3>Top referrers this week</h3><div id="rlb"></div></div>
 </section>
 
@@ -1112,7 +1112,7 @@ const dk=(t=Date.now())=>new Date(t+3*36e5).toISOString().slice(0,10);
 let ME=ST.get('cs_me',null);
 if(!ME){ME={handle:AD[rnd(AD.length)]+'_'+NN[rnd(NN.length)]+(10+rnd(90)),code:[mk(4),mk(4),mk(4)].join('-'),ref:mk(6),pts:0,streak:0,last:'',refs:0,credits:0,badge:'',vouch:[],log:{},shares:[],joined:Date.now()};ST.set('cs_me',ME)}
 const saveMe=()=>ST.set('cs_me',ME);if(!ME.aid){ME.aid=mk(8);saveMe()}
-function earn(n,why,quiet){ME.pts+=n;const k=dk();ME.log[k]=(ME.log[k]||0)+n;saveMe();if(!quiet)toast('+'+n+' points: '+why)}
+function earn(n,why,quiet){if(typeof CC_API==='string'&&CC_API.indexOf('YOUR-SUBDOMAIN')<0)return;ME.pts+=n;const k=dk();ME.log[k]=(ME.log[k]||0)+n;saveMe();if(!quiet)toast('+'+n+' points: '+why)}
 function earnOnce(key,n,why){const k=dk()+key;if(ME.shares.includes(k))return;ME.shares.push(k);if(ME.shares.length>200)ME.shares.shift();earn(n,why)}
 const rp0=new URLSearchParams(location.search).get('ref');
 if(rp0&&rp0!==ME.ref&&!ST.get('cs_joined',0)){ST.set('cs_joined',1);earn(20,'Welcome bonus',1);setTimeout(()=>toast('Welcome! A friend sent you 20 bonus points.'),2200)}
@@ -1130,17 +1130,18 @@ $('#rrs').onclick=()=>{const v=$('#rcode').value.trim().toUpperCase();if(!v)retu
 
 /* ---------- rewards, referrals, check-in ---------- */
 const LV=[['Fresher',0],['Comrade',100],['Senior',300],['Legend',700]];
-const SHOP=[{k:'boost',n:'Free 24-hour boost',c:150,d:'Pin one of your stories for a day'},{k:'badge',n:'Legend badge',c:300,d:'Shows on your profile'}];
+const SHOP=[];   // points are spent on Market items at checkout (server-side), not here
 const rlink=()=>{const c=window.ccRef&&window.ccRef.code;return c?location.origin+location.pathname+'?ref='+c:''};
-function drawRewards(){let i=0;LV.forEach((l,j)=>{if(ME.pts>=l[1])i=j});const nx=LV[i+1];
+async function syncPts(){try{const r=await window.ccCall('/api/points');ME.pts=r.points;ME.streak=r.streak;ME.last=r.checked_in?dk():'';ME.val=r.value_ksh;ME.per=r.per_ksh;drawRewards()}catch(e){}}
+function drawRewards(){if(!window.__ps){window.__ps=1;setTimeout(()=>{window.__ps=0},4000);syncPts()}let i=0;LV.forEach((l,j)=>{if(ME.pts>=l[1])i=j});const nx=LV[i+1];
  $('#rp').textContent=ME.pts.toLocaleString('en-KE');$('#rl').textContent=LV[i][0];
  $('#rpb').style.width=(nx?(ME.pts-LV[i][1])/(nx[1]-LV[i][1])*100:100)+'%';$('#rn').textContent=nx?(nx[1]-ME.pts)+' points to '+nx[0]:'You reached the top level';
  const done=ME.last===dk();$('#ci').disabled=done;$('#ci').textContent=done?'Checked in today. Streak: '+ME.streak+' days':'Daily check-in';
  drawRefLink();
  drawLedger();if(window.ccRefresh)window.ccRefresh();
- $('#shop').innerHTML=SHOP.map(s=>`<div class="rw"><span>${s.n}<small>${s.d}</small></span><button class="act" data-k="${s.k}" ${ME.pts<s.c?'disabled style="opacity:.45"':''}>${s.c} pts</button></div>`).join('')+(ME.credits?`<div class="rw"><span>Boost credits<small>Use from the Boost button on your story</small></span><b>${ME.credits}</b></div>`:'')+(ME.vouch.length?`<div class="rw"><span>Your vouchers<small>${ME.vouch.join('  ')}</small></span><b></b></div>`:'');
+ $('#shop').innerHTML=(ME.val!==undefined?`<div class="rw"><span>Your points are worth<small>${ME.per||10} points = KSh 1, used at Market checkout</small></span><b>KSh ${ME.val}</b></div>`:'')+SHOP.map(s=>`<div class="rw"><span>${s.n}<small>${s.d}</small></span><button class="act" data-k="${s.k}" ${ME.pts<s.c?'disabled style="opacity:.45"':''}>${s.c} pts</button></div>`).join('')+(ME.credits?`<div class="rw"><span>Boost credits<small>Use from the Boost button on your story</small></span><b>${ME.credits}</b></div>`:'')+(ME.vouch.length?`<div class="rw"><span>Your vouchers<small>${ME.vouch.join('  ')}</small></span><b></b></div>`:'');
  $('#rlb').innerHTML=!ME.refs?'<p class="sub">No referrals yet. Share your link to get on the board.</p>':[['You',ME.refs]].sort((a,b)=>b[1]-a[1]).map((r,j)=>`<div class="rw"><span>${j+1}. ${r[0]==='You'?'You (@'+ME.handle+')':'@'+r[0]}</span><b>${r[1]}</b></div>`).join('')}
-$('#ci').onclick=()=>{const t=dk();if(ME.last===t)return;ME.streak=ME.last===dk(Date.now()-864e5)?ME.streak+1:1;ME.last=t;earn(2+Math.min(ME.streak-1,5),'Check-in, day '+ME.streak);drawRewards()};
+$('#ci').onclick=async()=>{if(typeof CC_API==='string'&&CC_API.indexOf('YOUR-SUBDOMAIN')<0){try{const r=await window.ccCall('/api/points/checkin',{body:{}});toast('+'+r.awarded+' points: check-in, day '+r.streak)}catch(e){toast(e.message)}return syncPts()}const t=dk();if(ME.last===t)return;ME.streak=ME.last===dk(Date.now()-864e5)?ME.streak+1:1;ME.last=t;earn(2+Math.min(ME.streak-1,5),'Check-in, day '+ME.streak);drawRewards()};
 function drawRefLink(){const l=rlink(),R=window.ccRef||{};$('#rlk').textContent=l||(R.state==='loading'?'Loading your link...':'Sign in to get your invite link');
  $('#rwa').href=l?'https://api.whatsapp.com/send?text='+encodeURIComponent('Join me on Comrade Connect, the anonymous Kirinyaga campus feed. Spill tea, earn points: '+l):'#'}
 $('#rwa').addEventListener('click',e=>{if(!rlink()){e.preventDefault();if(window.ccRefresh)window.ccRefresh(false,true)}});

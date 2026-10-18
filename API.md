@@ -56,3 +56,9 @@ Rate limits: every write has a per-account and per-IP daily cap (see `throttle(.
 | | `GET /api/admin/payouts?status=paid|rejected|requested` | payout history |
 | | `GET /api/admin/sponsors` | all sponsors incl. paused and ended, with `amount` |
 | | `POST /api/admin/(notices|events|sponsors)/:id {action:'update', ...fields}` | edit instead of delete and re-add |
+
+## Points (server-owned)
+- `GET /api/points` -> `{ points, per_ksh, value_ksh, daily_cap, earned_today, checked_in, streak }`
+- `POST /api/points/checkin` -> once per Kenya day, with a daily cap.
+- `POST /api/market/buy` accepts `use_points: true`. Credit = min(fee on the price, floor(points / per_ksh)) KSh, so the seller still receives price - fee.
+- Admin settings: `points_per_ksh` (default 10), `points_daily_cap` (default 30). `withdraw_min` now defaults to 1.

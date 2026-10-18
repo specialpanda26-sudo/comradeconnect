@@ -204,7 +204,7 @@ test('withdrawals: need verified ID, cannot exceed balance, cannot overdraw in p
   await w.call('POST', '/api/me/handle', { as: s, body: { handle: 'Seller_One' } });
   w.row('profiles', (p) => p.aid === s.aid).verified = true;
   assert.equal((await w.call('POST', '/api/wallet/withdraw', { as: s, body: { amount: 5000, phone: '0700111222' } })).status, 400);
-  assert.equal((await w.call('POST', '/api/wallet/withdraw', { as: s, body: { amount: 10, phone: '0700111222' } })).status, 400, 'minimum 50');
+  assert.equal((await w.call('POST', '/api/wallet/withdraw', { as: s, body: { amount: 0, phone: '0700111222' } })).status, 400, 'minimum 1');
   const par = await Promise.all([1, 2, 3].map(() => w.call('POST', '/api/wallet/withdraw', { as: s, body: { amount: 600, phone: '0700111222' } })));
   assert.equal(par.filter((r) => r.status === 201).length, 1, 'only one 600 fits in 970');
   assert.equal((await w.call('GET', '/api/me', { as: s })).data.balance, 370);

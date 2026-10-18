@@ -33,6 +33,7 @@ export const SCHEMA = {
   live_comments: T(['id'], { defaults: { hidden: false } }), live_viewers: T(['stream_id', 'viewer']),
 };
 
+SCHEMA.points_ledger = T(['id'], { uniques: [nn('kind', 'ref')] });
 SCHEMA.email_verifications = T(['aid']);
 SCHEMA.profiles.defaults.student_verified = false;
 SCHEMA.profiles.uniques.push(nn('student_email_hash'));

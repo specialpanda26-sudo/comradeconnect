@@ -7,10 +7,12 @@ export const DEFS = {
   platform_fee_percent: { env: 'PLATFORM_FEE_PERCENT', def: 3, min: 0, max: 30, dec: true, unit: '%', label: 'Marketplace fee', help: 'Share of every sale the company keeps. The seller gets the rest after the buyer confirms.' },
   boost_price: { env: 'BOOST_PRICE', def: 30, min: 1, max: 5000, unit: 'KSh', label: 'Advert boost, 24 hours', help: 'Price of pinning a Feed story for 1 day.' },
   boost_price_3d: { env: 'BOOST_PRICE_3D', def: 70, min: 1, max: 15000, unit: 'KSh', label: 'Advert boost, 3 days', help: 'Price of pinning a Feed story for 3 days.' },
-  withdraw_min: { env: 'WITHDRAW_MIN', def: 50, min: 50, max: 5000, unit: 'KSh', label: 'Smallest withdrawal', help: 'Sellers cannot request less than this.' },
+  withdraw_min: { env: 'WITHDRAW_MIN', def: 1, min: 1, max: 5000, unit: 'KSh', label: 'Smallest withdrawal', help: 'Sellers cannot request less than this.' },
   withdraw_max: { env: 'WITHDRAW_MAX', def: 150000, min: 50, max: 250000, unit: 'KSh', label: 'Largest withdrawal', help: 'Sellers cannot request more than this in one withdrawal.' },
   withdraw_fee_percent: { env: 'WITHDRAW_FEE_PERCENT', def: 0, min: 0, max: 20, dec: true, unit: '%', label: 'Withdrawal fee (percent)', help: 'Kept from each withdrawal. 0 = free. Use it to cover M-Pesa send charges.' },
   withdraw_fee_flat: { env: 'WITHDRAW_FEE_FLAT', def: 0, min: 0, max: 500, unit: 'KSh', label: 'Withdrawal fee (flat)', help: 'Fixed amount kept from each withdrawal, added to the percent fee.' },
+  points_per_ksh: { env: 'POINTS_PER_KSH', def: 10, min: 1, max: 1000, unit: 'pts', label: 'Points worth KSh 1', help: '10 means 50 points = KSh 5. Points can only be spent on Market items, and never more than your fee on that purchase.' },
+  points_daily_cap: { env: 'POINTS_DAILY_CAP', def: 30, min: 0, max: 1000, unit: 'pts', label: 'Most points one account can earn per day', help: 'Limits point farming. 0 stops new points.' },
   referral_reward: { env: 'REFERRAL_REWARD', def: 20, min: 0, max: 1000, unit: 'KSh', label: 'Referral reward', help: 'Paid to the inviter after the friend completes a purchase.' },
   listing_price_min: { env: 'LISTING_PRICE_MIN', def: 1, min: 1, max: 250000, unit: 'KSh', label: 'Lowest item price', help: 'Cheapest price a seller can put on a Market item. 1 means any price.' },
   listing_price_max: { env: 'LISTING_PRICE_MAX', def: 150000, min: 1, max: 250000, unit: 'KSh', label: 'Highest item price', help: 'Most a seller can ask for one Market item. M-Pesa allows at most 250,000 per payment.' },
@@ -56,7 +58,7 @@ export const boostPlans = (S) => [{ id: '1d', hours: 24, price: S.boost_price },
 export const publicConfig = (S) => ({
   fee_percent: S.platform_fee_percent, boost_plans: boostPlans(S),
   price_min: S.listing_price_min, price_max: S.listing_price_max,
-  withdraw_min: S.withdraw_min, withdraw_max: S.withdraw_max, withdraw_fee_percent: S.withdraw_fee_percent, withdraw_fee_flat: S.withdraw_fee_flat,
+  points_per_ksh: S.points_per_ksh, withdraw_min: S.withdraw_min, withdraw_max: S.withdraw_max, withdraw_fee_percent: S.withdraw_fee_percent, withdraw_fee_flat: S.withdraw_fee_flat,
 });
 
 // Validates and saves. Returns { error } or { changed: { key: [old, new] } }.

@@ -104,7 +104,7 @@ export function manualInfo(env, p) {
 export const hooks = { onPaid: async () => {}, onFailed: async () => {} };   // filled in by index.js
 
 // Starts an STK push. Returns { id } or { res } (an error Response).
-export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone: rawPhone, boost_hours }) {
+export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone: rawPhone, boost_hours, credit_ksh }) {
   const phone = normPhone(rawPhone);
   amount = Math.floor(Number(amount));
   const mode = payMode(env), tinyOk = tinyKeys(env).length > 0 && !!env.TINYPESA_USERNAME;
@@ -112,7 +112,7 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   if (mode === 'tinypesa' && !tinyOk) { console.error('payments: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY or TINYPESA_USERNAME is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (mode === 'intasend' && !intaReady(env) && !tinyOk) { console.error('payments: PAYMENT_MODE=intasend but INTASEND_SECRET_KEY is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (!phone || !(amount >= 1) || amount > 250000 || !aid) return { res: err(env, 'Check the phone number and amount') };
-  const pr = await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, 100) : null, amount, phone, ip, boost_hours: boost_hours || null });
+  const pr = await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, 100) : null, amount, phone, ip, boost_hours: boost_hours || null, ...(credit_ksh > 0 ? { credit_ksh } : {}) });
   const pj = await pr.json().catch(() => null);
   const row = Array.isArray(pj) ? pj[0] : null;
   if (!row) { console.error('payments: could not save the payment row (is supabase/schema.sql fully run?)', pr.status, JSON.stringify(pj).slice(0, 300)); return { res: err(env, 'Server could not save the payment', 500) }; }

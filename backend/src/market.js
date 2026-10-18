@@ -3,6 +3,7 @@ import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, der
 import { initPayment, credit } from './pay.js';
 import { getSettings, feeOf } from './settings.js';
 import { disputeHours } from './trust.js';
+import { creditFor, spendPoints, giveBack, awardPoints } from './points.js';
 
 const CATS = ['General', 'Electronics', 'Books', 'Clothes', 'Furniture', 'Food', 'Services', 'Other'];
 import { mediaUrl } from './storage.js';
@@ -35,6 +36,8 @@ export async function releaseOrder(env, id, by, from = ['handed']) {
   }));
   if (!o) return null;
   await credit(env, o.seller_aid, o.seller_amount ?? o.amount, 'sale', o.id, 'Sale');
+  await awardPoints(env, o.seller_aid, 'sale', o.id, 10).catch(() => {});
+  await awardPoints(env, o.buyer_aid, 'purchase', o.id, 5).catch(() => {});
   return o;
 }
 export async function refundOrder(env, id, by) {
@@ -42,7 +45,9 @@ export async function refundOrder(env, id, by) {
     status: 'refunded', refunded_at: new Date().toISOString(), decided_by: by, dispute_status: 'resolved_refund',
   }));
   if (!o) return null;
-  await credit(env, o.buyer_aid, o.amount, 'refund', o.id, 'Order refunded');   // goes to the buyer's wallet; withdraw to M-Pesa is a manual step
+  const used = o.credit_ksh || 0;   // the buyer paid cash for the price minus the points credit
+  if (o.amount - used > 0) await credit(env, o.buyer_aid, o.amount - used, 'refund', o.id, 'Order refunded');
+  if (used > 0) await giveBack(env, o.buyer_aid, 'pay:' + o.payment_id);   // goes to the buyer's wallet; withdraw to M-Pesa is a manual step
   await patch(env, `listings?id=eq.${o.listing_id}&status=eq.sold`, { status: 'approved' });
   await patch(env, `referrals?order_id=eq.${o.id}&status=eq.pending`, { status: 'void' });
   return o;
@@ -51,14 +56,15 @@ export async function refundOrder(env, id, by) {
 // Called when an 'order' payment is confirmed by the M-Pesa callback.
 export async function createOrderFromPayment(env, p) {
   const [l] = await rows(await patch(env, `listings?id=eq.${p.ref_id}&status=eq.approved`, { status: 'sold' }));   // claim the listing atomically
-  if (!l) { await credit(env, p.aid, p.amount, 'refund', 'pay:' + p.id, 'Item no longer available'); return null; }
-  const fee = feeOf(p.amount, (await getSettings(env)).platform_fee_percent);   // fixed on the order now: later fee changes never touch it
+  if (!l) { await credit(env, p.aid, p.amount, 'refund', 'pay:' + p.id, 'Item no longer available'); if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id); return null; }
+  const credit_ksh = p.credit_ksh || 0, price = p.amount + credit_ksh;   // price = cash paid + points credit
+  const fee = feeOf(price, (await getSettings(env)).platform_fee_percent);   // fixed on the order now: later fee changes never touch it
   const id = crypto.randomUUID();
   const o = await one(await post(env, 'orders', {
-    id, payment_id: p.id, listing_id: l.id, buyer_aid: p.aid, seller_aid: l.seller_aid, amount: p.amount, fee, seller_amount: p.amount - fee,
+    id, payment_id: p.id, listing_id: l.id, buyer_aid: p.aid, seller_aid: l.seller_aid, amount: price, fee, seller_amount: price - fee, ...(credit_ksh ? { credit_ksh } : {}),
     status: 'held', code_hash: await codeHash(env, 'order', id, await deriveCode(env, 'order', id, 6)),
   }));
-  if (!o) { await patch(env, `listings?id=eq.${l.id}`, { status: 'approved' }); return null; }
+  if (!o) { await patch(env, `listings?id=eq.${l.id}`, { status: 'approved' }); if (credit_ksh) await giveBack(env, p.aid, 'pay:' + p.id); return null; }
   await patch(env, `referrals?referred_aid=eq.${enc(p.aid)}&status=eq.pending&order_id=is.null`, {
     order_id: id, unlock_at: ahead(Number(env.REFERRAL_UNLOCK_DAYS || 7) * DAY),
   });
@@ -125,8 +131,15 @@ export async function marketRoutes(req, env, url, ip) {
     const l = await one(await sb(env, `listings?id=eq.${b.listing_id}&status=eq.approved`));
     if (!l) return err(env, 'This item is no longer available', 404);
     if (l.seller_aid === u.aid) return err(env, 'You cannot buy your own item', 400);
-    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'order', ref_id: l.id, amount: l.price, phone: b.phone });
-    return r.res || json(env, { id: r.id, amount: l.price });
+    // Points can pay for the platform's fee on this purchase (never more), so the seller still gets their full share.
+    const c = b.use_points ? await creditFor(env, u.aid, l.price) : { ksh: 0, pts: 0 };
+    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'order', ref_id: l.id, amount: l.price - c.ksh, phone: b.phone, credit_ksh: c.ksh });
+    if (r.res) return r.res;
+    if (c.ksh > 0 && !(await spendPoints(env, u.aid, c.pts, r.id))) {
+      await patch(env, `payments?id=eq.${r.id}&status=eq.pending`, { status: 'failed' });
+      return err(env, 'Not enough points. Try again without points.', 409);
+    }
+    return json(env, { id: r.id, amount: l.price - c.ksh, credit: c.ksh, price: l.price });
   }
 
   // ---- orders ----

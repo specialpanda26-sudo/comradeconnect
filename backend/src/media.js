@@ -2,6 +2,8 @@
 import * as store from './storage.js';
 import { viewerCounts } from './live.js';
 import { mediaUrl, MEDIA_BUCKET, PRIVATE_BUCKET } from './storage.js';
+import { isWholesaler } from './wholesale.js';
+import { getSettings } from './settings.js';
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, randHex, throttle, tooMany, user, authProfile, isAdmin, ahead, DAY } from './lib.js';
 
 const VERIFY_ROLES = ['Student', 'Class rep', 'Student leader', 'Club official', 'Hostel rep', 'Lecturer or staff', 'Local seller'];
@@ -29,7 +31,8 @@ export async function mediaRoutes(req, env, url, ip) {
       const l = await one(await sb(env, `listings?select=id&id=eq.${b.listing_id}&seller_aid=eq.${enc(u.aid)}&status=in.(pending,approved)`));
       if (!l) return err(env, 'Listing not found', 404);
       const have = await rows(await sb(env, `media?select=id&listing_id=eq.${l.id}&kind=eq.listing_photo&status=in.(pending,ready)`));
-      if (have.length >= 5) return err(env, 'Up to 5 photos per listing');
+      const cap = isWholesaler(u) ? (await getSettings(env)).wholesale_photos : 5;
+      if (have.length >= cap) return err(env, isWholesaler(u) ? `Up to ${cap} photos per listing` : 'Up to 5 photos per listing. Wholesalers can add more.', 400);
       listing_id = l.id;
     }
     if (!(await throttle(env, ip, 'upload:' + kind, u.aid, photo ? 30 : 5, photo ? 100 : 20))) return tooMany(env);

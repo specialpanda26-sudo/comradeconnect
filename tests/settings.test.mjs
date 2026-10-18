@@ -101,8 +101,8 @@ test('sponsors: amount, end date, pause, edit; notices and events can be edited'
   assert.equal((await w.call('POST', `/api/admin/events/${ev.data.id}`, { admin: true, body: { action: 'update', date: '2099-13-45' } })).status, 400);
 });
 
-test('open market: no posting limit, items live at once, admin can remove, switch back to approval', async (t) => {
-  const w = await fresh(t, { env: { LISTING_AUTO_PUBLISH: '1' } });
+test('open market: no posting limit (free limit raised), items live at once, admin can remove, switch back to approval', async (t) => {
+  const w = await fresh(t, { env: { LISTING_AUTO_PUBLISH: '1', FREE_LISTING_LIMIT: '1000' } });
   const s = await w.user('s');
   const post = (n) => w.call('POST', '/api/market/listings', { as: s, body: { title: 'Item ' + n, description: 'fine', price: 100 + n, contact_phone: '0722000111' } });
   for (let i = 0; i < 12; i++) { const r = await post(i); assert.equal(r.status, 201, 'post ' + i); assert.equal(r.data.status, 'approved'); }

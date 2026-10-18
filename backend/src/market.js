@@ -3,6 +3,8 @@ import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, der
 import { initPayment, credit } from './pay.js';
 import { getSettings, feeOf } from './settings.js';
 import { disputeHours } from './trust.js';
+import { isWholesaler, activeListings } from './wholesale.js';
+import { balance } from './account.js';
 import { creditFor, spendPoints, giveBack, awardPoints } from './points.js';
 
 const CATS = ['General', 'Electronics', 'Books', 'Clothes', 'Furniture', 'Food', 'Services', 'Other'];
@@ -86,6 +88,7 @@ export async function marketRoutes(req, env, url, ip) {
     const contact_phone = normPhone(b.contact_phone);
     if (!contact_phone) return err(env, 'Add your phone number (like 0712345678). The buyer sees it only after they pay.');
     const blk = contactBlock(env, title, description, zone, condition); if (blk) return blk;
+    if (!isWholesaler(u) && (await activeListings(env, u.aid)) >= S.free_listing_limit) return err(env, `Free sellers can have ${S.free_listing_limit} items posted at once. Join the wholesalers community (KSh ${S.wholesale_fee}) to post as many as you want.`, 402);
     const live = (await getSettings(env)).listing_auto_publish === 1;
     const ins = await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip,
       ...(live ? { status: 'approved', approved_by: 'auto', approved_at: new Date().toISOString() } : {}) });
@@ -132,6 +135,22 @@ export async function marketRoutes(req, env, url, ip) {
     if (!l) return err(env, 'This item is no longer available', 404);
     if (l.seller_aid === u.aid) return err(env, 'You cannot buy your own item', 400);
     // Points can pay for the platform's fee on this purchase (never more), so the seller still gets their full share.
+    if (b.pay_with === 'wallet') {
+      const c = b.use_points ? await creditFor(env, u.aid, l.price) : { ksh: 0, pts: 0 }, cash = l.price - c.ksh, pid = crypto.randomUUID();
+      if ((await balance(env, u.aid)) < cash) return err(env, 'Not enough wallet balance. Deposit first.', 402);
+      if (c.ksh > 0 && !(await spendPoints(env, u.aid, c.pts, pid))) return err(env, 'Not enough points. Try again without points.', 409);
+      const pr = await one(await post(env, 'payments', { id: pid, aid: u.aid, purpose: 'order', ref_id: l.id, amount: cash, phone: 'wallet', ip, status: 'paid', receipt: 'WAL' + pid.replace(/-/g, '').slice(0, 12).toUpperCase(), paid_at: new Date().toISOString(), ...(c.ksh > 0 ? { credit_ksh: c.ksh } : {}) }));
+      if (!pr) { if (c.ksh > 0) await giveBack(env, u.aid, 'pay:' + pid); return err(env, 'Could not start the order', 500); }
+      await credit(env, u.aid, -cash, 'purchase', 'pay:' + pid, 'Bought: ' + l.title.slice(0, 40));
+      if ((await balance(env, u.aid)) < 0) {
+        await patch(env, `wallet_ledger?kind=eq.purchase&ref=eq.${enc('pay:' + pid)}`, { status: 'void' });
+        await patch(env, `payments?id=eq.${pid}`, { status: 'failed' });
+        if (c.ksh > 0) await giveBack(env, u.aid, 'pay:' + pid);
+        return err(env, 'Not enough wallet balance', 402);
+      }
+      const o = await createOrderFromPayment(env, pr);
+      return o ? json(env, { paid: 'wallet', order_id: o.id, amount: cash, credit: c.ksh, price: l.price }) : err(env, 'This item was just sold. Your money is back in your wallet.', 409);
+    }
     const c = b.use_points ? await creditFor(env, u.aid, l.price) : { ksh: 0, pts: 0 };
     const r = await initPayment(env, ip, { aid: u.aid, purpose: 'order', ref_id: l.id, amount: l.price - c.ksh, phone: b.phone, credit_ksh: c.ksh });
     if (r.res) return r.res;

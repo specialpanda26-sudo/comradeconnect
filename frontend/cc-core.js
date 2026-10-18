@@ -467,7 +467,7 @@ async function toJpeg(file) {
 }
 function drawPrev() {
   $('#mprev').innerHTML = S.photos.map((p, i) => '<span style="position:relative;display:inline-block;margin:0 8px 8px 0"><img src="' + p.url + '" alt="" style="height:90px;border-radius:12px"><button type="button" class="act" data-rp="' + i + '" aria-label="Remove photo" style="position:absolute;top:2px;right:2px;padding:2px 8px">x</button></span>').join('')
-    + (S.photos.length ? '<div class="note">' + S.photos.length + ' of 5 photos added.</div>' : '');
+    + (S.photos.length ? '<div class="note">' + S.photos.length + ' of ' + (window.ccPhotoCap || 5) + ' photos added.</div>' : '');
 }
 window.resetSell = () => {
   S.photos.forEach((p) => URL.revokeObjectURL(p.url)); S.photos = []; S.sending = false; drawPrev();
@@ -480,7 +480,7 @@ $('#mprev').onclick = (e) => { const b = e.target.closest('[data-rp]'); if (!b) 
 async function addPhoto(f) {
   if (!f) return;
   if (!f.type.startsWith('image/')) return toast('Listings take photos only. Videos go in Clips.');
-  if (S.photos.length >= 5) return toast('Up to 5 photos per listing');
+  if (S.photos.length >= (window.ccPhotoCap || 5)) return toast((window.ccPhotoCap || 5) > 5 ? 'Up to ' + window.ccPhotoCap + ' photos per listing' : 'Up to 5 photos per listing. Join the wholesalers community (Me page) to add more.');
   try { const blob = await toJpeg(f); S.photos.push({ blob, url: URL.createObjectURL(blob) }); drawPrev(); } catch (e) { toast(e.message || 'Could not use that photo'); }
 }
 ['mphi', 'mgi'].forEach((i) => { $('#' + i).onchange = (e) => { addPhoto(e.target.files[0]); e.target.value = ''; }; });

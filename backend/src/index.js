@@ -10,6 +10,8 @@ import { contentRoutes } from './content.js';
 import { mediaRoutes } from './media.js';
 import { liveRoutes } from './live.js';
 import { clubRoutes, clubPaid, ticketPaid, restoreClubOrder, expireClubOrders } from './club.js';
+import { wholesaleRoutes, extendWholesale } from './wholesale.js';
+import { credit } from './pay.js';
 import { adminRoutes } from './admin.js';
 import { settingsRoutes } from './settings.js';
 import { siteContentRoutes } from './sitecontent.js';
@@ -27,6 +29,8 @@ hooks.onPaid = async (env, p) => {
   else if (p.purpose === 'club') await clubPaid(env, p);
   else if (p.purpose === 'ticket') await ticketPaid(env, p);
   else if (p.purpose === 'boost') await boostPost(env, p);
+  else if (p.purpose === 'topup') await credit(env, p.aid, p.amount, 'topup', 'pay:' + p.id, 'Wallet deposit');
+  else if (p.purpose === 'wholesale') await extendWholesale(env, p.aid);
 };
 // A boost adds time on top of any boost still running.
 async function boostPost(env, p) {
@@ -39,7 +43,7 @@ hooks.onFailed = async (env, p) => {
   if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
 };
 
-const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, ratingRoutes, marketRoutes, messageRoutes, contentRoutes, liveRoutes, mediaRoutes, clubRoutes, adminRoutes];
+const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, contentRoutes, liveRoutes, mediaRoutes, clubRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

@@ -17,6 +17,10 @@ export const DEFS = {
   listing_price_min: { env: 'LISTING_PRICE_MIN', def: 1, min: 1, max: 250000, unit: 'KSh', label: 'Lowest item price', help: 'Cheapest price a seller can put on a Market item. 1 means any price.' },
   listing_price_max: { env: 'LISTING_PRICE_MAX', def: 150000, min: 1, max: 250000, unit: 'KSh', label: 'Highest item price', help: 'Most a seller can ask for one Market item. M-Pesa allows at most 250,000 per payment.' },
   listing_auto_publish: { env: 'LISTING_AUTO_PUBLISH', def: 1, min: 0, max: 1, unit: '', label: 'New items go live instantly (1 = yes, 0 = admin approves first)', help: '1: items appear on the Market as soon as they are posted and you remove anything unsafe in Live items. 0: every item waits for your approval.' },
+  wholesale_fee: { env: 'WHOLESALE_FEE', def: 100, min: 1, max: 10000, unit: 'KSh', label: 'Wholesaler membership fee', help: 'Paid to join the wholesalers community and again at every renewal.' },
+  wholesale_days: { env: 'WHOLESALE_DAYS', def: 30, min: 1, max: 365, unit: 'days', label: 'Wholesaler membership length', help: 'Days one payment keeps the membership active. Renewing early adds days to the end date.' },
+  free_listing_limit: { env: 'FREE_LISTING_LIMIT', def: 5, min: 1, max: 1000, unit: 'items', label: 'Live items for free sellers', help: 'Most items a non-wholesaler can have posted at once. Wholesalers have no limit.' },
+  wholesale_photos: { env: 'WHOLESALE_PHOTOS', def: 15, min: 5, max: 50, unit: 'photos', label: 'Photos per item for wholesalers', help: 'Free sellers get 5 photos per item.' },
   escrow_auto_release_days: { env: 'ESCROW_AUTO_RELEASE_DAYS', def: 3, min: 1, max: 14, unit: 'days', label: 'Auto-release after', help: 'Days after "handed over" before the seller is paid if the buyer says nothing.' },
 };
 
@@ -59,6 +63,7 @@ export const publicConfig = (S) => ({
   fee_percent: S.platform_fee_percent, boost_plans: boostPlans(S),
   price_min: S.listing_price_min, price_max: S.listing_price_max,
   points_per_ksh: S.points_per_ksh, withdraw_min: S.withdraw_min, withdraw_max: S.withdraw_max, withdraw_fee_percent: S.withdraw_fee_percent, withdraw_fee_flat: S.withdraw_fee_flat,
+  wholesale_fee: S.wholesale_fee, wholesale_days: S.wholesale_days, free_listing_limit: S.free_listing_limit, wholesale_photos: S.wholesale_photos,
 });
 
 // Validates and saves. Returns { error } or { changed: { key: [old, new] } }.

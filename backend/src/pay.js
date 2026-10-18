@@ -37,10 +37,6 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   if (manualMode(env) && !env.MPESA_PAY_TO) return { res: err(env, 'Payments are not set up yet', 503) };
   if (!manualMode(env) && (!tinyKeys(env).length || !env.TINYPESA_USERNAME)) { console.error('payments: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY or TINYPESA_USERNAME is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (!phone || !(amount >= 1) || amount > 150000 || !aid) return { res: err(env, 'Check the phone number and amount') };
-  // Rate limits so nobody can spam STK prompts to other people's phones through your account
-  const byPhone = await rows(await sb(env, `payments?select=id&phone=eq.${phone}&created_at=gte.${ago(10 * 60e3)}&limit=10`));
-  const byIp = await rows(await sb(env, `payments?select=id&ip=eq.${enc(ip)}&created_at=gte.${ago(60 * 60e3)}&limit=20`));
-  if (byPhone.length >= 3 || byIp.length >= 8) return { res: err(env, 'Too many attempts. Wait a few minutes and try again.', 429) };
   const pr = await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, 100) : null, amount, phone, ip, boost_hours: boost_hours || null });
   const pj = await pr.json().catch(() => null);
   const row = Array.isArray(pj) ? pj[0] : null;

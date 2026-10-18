@@ -277,7 +277,7 @@ function draw() {
     $('#wb').textContent = S.wallet ? kes(bal) : '...'; $('#wd').disabled = !bal;
     let w = document.getElementById('wlg'); if (!w) { $('#mord .box').insertAdjacentHTML('afterend', '<div id="wlg"></div>'); w = document.getElementById('wlg'); }
     const wds = S.wallet ? S.wallet.withdrawals || [] : [];
-    w.innerHTML = wds.length ? '<div class="box g" style="margin-top:14px"><h3>Withdrawals</h3>' + wds.slice(0, 5).map((x) => '<div class="rw"><span>' + kes(x.amount) + '<small>' + (x.fee ? 'Fee ' + kes(x.fee) + ', you get ' + kes(x.net) + '. ' : '') + ago(Date.parse(x.created_at)) + '</small></span><b>' + ({ requested: 'Waiting for admin', paid: 'Paid', rejected: 'Rejected, money returned' }[x.status] || esc(x.status)) + '</b>' + (x.status === 'requested' ? '<button class="act" data-wdc="' + esc(x.id) + '">Cancel</button>' : '') + '</div>').join('') + '</div>' : '';
+    w.innerHTML = wds.length ? '<div class="box g" style="margin-top:14px"><h3>Withdrawals</h3>' + wds.slice(0, 5).map((x) => '<div class="rw"><span>' + kes(x.amount) + '<small>' + (x.fee ? 'Fee ' + kes(x.fee) + ', you get ' + kes(x.net) + '. ' : '') + ago(Date.parse(x.created_at)) + '</small></span><b>' + ({ requested: 'Waiting for admin', paid: 'Paid', rejected: 'Rejected, money returned' }[x.status] || esc(x.status)) + '</b>' + (x.status === 'requested' ? '<button class="act" data-wdc="' + esc(x.id) + '">Cancel</button>' : '') + '</div>' + wdTrack(x)).join('') + '</div>' : '';
     let h = S.orders.map((o) => {
       const buy = o.role === 'buyer', r = buy ? 0 : 1, live = o.status === 'held' || o.status === 'handed';
       let main = '', info = '';
@@ -292,6 +292,7 @@ function draw() {
           : o.status === 'held' ? 'The money is safe in escrow. Hand over the item, then tap "I handed it over".'
           : o.status === 'handed' ? 'Ask the buyer for their 6-digit code, or wait for them to confirm.' + (o.auto_release_at ? ' If they say nothing, the money is released on ' + new Date(o.auto_release_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' }) + '.' : '')
           : o.status === 'refunded' ? 'The buyer was refunded.' : '';
+        if (o.status === 'released' && S.wallet && S.wallet.balance >= CFG.min) main = dbtn('withdraw', 'Withdraw to M-Pesa', o.id);
       }
       if (o.status === 'disputed') info = 'An admin will review this and decide.' + (o.dispute_reason ? ' Reason given: ' + esc(o.dispute_reason) : '');
       return '<div class="box g"><div class="flex items-center justify-between"><span class="badge">' + (buy ? 'Buying' : 'Selling') + '</span><span class="mst">' + OS[o.status][r] + '</span></div><h3 style="margin:10px 0 2px">' + esc(o.title) + '</h3><b>' + kes(o.amount) + '</b>'
@@ -326,6 +327,63 @@ function openListing(id) {
 }
 $('#mvdm').onclick = () => { const l = S.list.find((x) => x.id === $('#mvdm').dataset.id); if (!l) return; try { dmKey = 'mk:' + l.id; dmSnip = l.title; } catch (e) {} openDm('dm'); };
 
+/* ---------- animated steps (escrow checkout and withdrawals) ---------- */
+function stepsCss() {
+  if (document.getElementById('cc-steps-css')) return;
+  const st = document.createElement('style'); st.id = 'cc-steps-css';
+  st.textContent = '.cs-h{margin:14px 0 0;font-size:13px;color:var(--mut)}.cs-h b{color:var(--fg);font-size:20px;display:block;margin-top:2px}'
+    + '.cs-l{list-style:none;margin:16px 0 0;padding:0}.cs-m{margin:10px 0 0}'
+    + '.cs-l .cs-s{display:flex;gap:14px;position:relative;padding-bottom:20px;opacity:.38;transition:opacity .45s}.cs-m .cs-s{padding-bottom:14px}.cs-l .cs-s:last-child{padding-bottom:0}'
+    + '.cs-l .cs-s::before,.cs-l .cs-s::after{content:"";position:absolute;left:13px;top:30px;bottom:2px;width:2px;border-radius:2px}.cs-l .cs-s::before{background:var(--line)}'
+    + '.cs-l .cs-s::after{background:var(--fg);transform:scaleY(0);transform-origin:top;transition:transform .6s ease .15s}.cs-l .cs-s:last-child::before,.cs-l .cs-s:last-child::after{display:none}'
+    + '.cs-l .cs-s.d::after{transform:scaleY(1)}.cs-l .cs-s.a,.cs-l .cs-s.d,.cs-l .cs-s.f{opacity:1}'
+    + '.cs-i{width:28px;height:28px;flex:none;border-radius:50%;border:2px solid var(--gb);background:var(--g);display:grid;place-items:center;position:relative;z-index:1;transition:background .35s,border-color .35s}'
+    + '.cs-l .cs-s.a .cs-i{border-color:var(--fg);animation:cs-pulse 1.6s ease-out infinite}'
+    + '.cs-l .cs-s.a .cs-i::after{content:"";width:12px;height:12px;border-radius:50%;border:2px solid var(--fg);border-top-color:transparent;animation:cs-spin .8s linear infinite}'
+    + '.cs-l .cs-s.d .cs-i{background:var(--fg);border-color:var(--fg)}'
+    + '.cs-l .cs-s.d .cs-i::after{content:"";width:6px;height:11px;border:solid var(--bg);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px);animation:cs-pop .35s ease-out}'
+    + '.cs-l .cs-s.f .cs-i{border-color:#f87171;background:rgba(248,113,113,.15)}.cs-l .cs-s.f .cs-i::after{content:"\\00d7";color:#f87171;font-size:20px;line-height:1;font-weight:700}'
+    + '.cs-l b{display:block;font-size:14px;line-height:1.35;margin-top:3px}.cs-l small{display:block;font-size:12px;color:var(--mut);line-height:1.5;margin-top:2px;overflow-wrap:anywhere}'
+    + '.cs-e{margin:14px 0 0;font-size:12px;color:#f87171;line-height:1.5}'
+    + '@keyframes cs-spin{to{transform:rotate(360deg)}}@keyframes cs-pop{from{transform:rotate(45deg) translate(-1px,-1px) scale(0)}}'
+    + '@keyframes cs-pulse{0%{box-shadow:0 0 0 0 rgba(128,128,128,.5)}100%{box-shadow:0 0 0 12px rgba(128,128,128,0)}}';
+  document.head.appendChild(st);
+}
+const stepLi = (c, t, sub) => '<div class="cs-s ' + c + '"><span class="cs-i"></span><div><b>' + t + '</b><small>' + (sub || '') + '</small></div></div>';
+// Escrow checkout: send the prompt > enter the PIN > verify > held in escrow. go() takes 'send' | 'prompt' | 'manual' | 'verify' | 'done'.
+function paySteps(box, phone, amount) {
+  stepsCss();
+  let at = 0, manual = false, tm = 0, t0 = Date.now(), dead = false;
+  const T = () => manual
+    ? [['Starting your payment', 'Reference created for ' + kes(amount)], ['Pay with M-Pesa, then enter the code', 'Waiting for your M-Pesa code'], ['Checking your payment', 'An admin confirms it, usually within a few minutes'], ['Held safely in escrow', kes(amount) + ' is protected until you get the item']]
+    : [['Sending M-Pesa prompt', 'To ' + esc(phone)], ['Prompt sent. Enter your PIN', 'Check your phone'], ['Verifying payment', 'Confirming with M-Pesa'], ['Payment received', kes(amount) + ' is held safely in escrow']];
+  const draw = (bad) => {
+    box.innerHTML = '<p class="cs-h">Paying<b>' + kes(amount) + '</b></p><div class="cs-l" role="status" aria-live="polite">'
+      + T().map((x, i) => stepLi(bad && i === at ? 'f' : i < at || at === 4 ? 'd' : i === at ? 'a' : '', x[0], i === 1 && i === at && !bad ? '<span id="cs-t">Check your phone</span>' : x[1])).join('') + '</div>';
+  };
+  const tick = () => { const n = box.querySelector('#cs-t'); if (!n) return; const s = Math.floor((Date.now() - t0) / 1000);
+    n.textContent = (manual ? 'Waiting for your M-Pesa code' : 'Check your phone') + ' (' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ')'
+      + (!manual && s > 40 ? '. No prompt? Check the number you entered.' : ''); };
+  const api = {
+    go(st) {
+      if (dead) return;
+      if (st === 'manual') { manual = true; at = 1; } else at = { send: 0, prompt: 1, verify: 2, done: 4 }[st] ?? at;
+      draw(false); clearInterval(tm); t0 = Date.now(); if (at === 1) tm = setInterval(tick, 1000);
+    },
+    fail(msg) { clearInterval(tm); draw(true); if (msg) box.insertAdjacentHTML('beforeend', '<p class="cs-e">' + esc(msg) + '</p>'); },
+    stop() { dead = true; clearInterval(tm); },
+  };
+  api.go('send'); return api;
+}
+// Withdrawal tracker shown under each request in the wallet.
+function wdTrack(x) {
+  stepsCss();
+  const paid = x.status === 'paid', rej = x.status === 'rejected';
+  return '<div class="cs-l cs-m">' + stepLi('d', 'Request sent', ago(Date.parse(x.created_at)))
+    + stepLi(paid ? 'd' : rej ? 'f' : 'a', rej ? 'Rejected' : paid ? 'Approved by admin' : 'Admin is sending it to your M-Pesa', rej ? 'The money is back in your wallet' : paid ? '' : 'This is done by hand, usually within a day')
+    + (rej ? '' : stepLi(paid ? 'd' : '', 'Money sent to your M-Pesa', paid && x.payout_ref ? 'M-Pesa ref ' + esc(x.payout_ref) : '')) + '</div>';
+}
+
 /* ---------- buy ---------- */
 const bs = (n) => $$('#dm [data-bs]').forEach((x) => { x.hidden = x.dataset.bs !== String(n); });
 $('#mvbuy').onclick = () => {
@@ -340,20 +398,23 @@ $('#bpay').onclick = async () => {
   const v = $('#bph').value.replace(/\s/g, '');
   if (!/^(07|01)\d{8}$/.test(v)) return ($('#bpe').textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
   const l = S.buyL; S.paying = true; bs(3);
+  const ps = paySteps($('#dm [data-bs="3"]'), v, l.price);
   try {
     const d = await call('/api/market/buy', { body: { listing_id: l.id, phone: v } });
     ST.set('cc_phone', v);                                   // remembered on this phone for the next purchase and withdrawal
     try { localStorage.setItem('cc_pending', JSON.stringify({ id: d.id, amount: l.price, t: Date.now() })); } catch (e) {}
-    await waitPaid(d.id);
+    ps.go('prompt');
+    await waitPaid(d.id, (st) => ps.go(st));
     try { localStorage.removeItem('cc_pending'); } catch (e) {}
+    ps.go('done'); await sleep(1100);                        // let the last tick play before the receipt screen
     S.list = S.list.filter((x) => x.id !== l.id);
     $('#bok').textContent = 'Payment received. ' + kes(l.price) + ' for ' + l.title + ' is held safely in escrow. Tap Done to see it under Orders.';
     bs(4); ccTick($('#bok')); loadOrders(true);
   } catch (e) {
-    if (e.pending) { toast(e.message); shut(); S.sub = 'orders'; draw(); loadOrders(); }
-    else { $('#bpe').textContent = e.message; bs(2); }
+    if (e.pending) { ps.stop(); toast(e.message); shut(); S.sub = 'orders'; draw(); loadOrders(); }
+    else { ps.fail(e.message); await sleep(1800); $('#bpe').textContent = e.message; bs(2); }
   }
-  S.paying = false;
+  ps.stop(); S.paying = false;
 };
 $('#bdone').onclick = () => { shut(); S.sub = 'orders'; draw(); loadOrders(); };
 ['dx5', 'dx6', 'dx7'].forEach((i) => { $('#' + i).onclick = shut; });
@@ -461,7 +522,8 @@ $('#olist').onclick = async (e) => {
     if (k === 'received') {
       if (S.armed !== id + k) { S.armed = id + k; draw(); setTimeout(() => { S.armed = ''; draw(); }, 5000); return; }
       S.armed = ''; await call('/api/orders/' + id + '/received', { body: {} }); toast('Money released to the seller. Thanks for confirming.');
-    } else if (k === 'handed') { await call('/api/orders/' + id + '/handed', { body: {} }); toast('Marked as handed over.'); }
+    } else if (k === 'withdraw') { $('#wd').click(); return; }
+    else if (k === 'handed') { await call('/api/orders/' + id + '/handed', { body: {} }); toast('Marked as handed over.'); }
     else if (k === 'code') {
       const v = ((b.parentElement.querySelector('.hc') || {}).value || '').replace(/\D/g, '');
       if (v.length !== 6) return toast('Enter the buyer\'s 6-digit code');
@@ -982,15 +1044,17 @@ function askCode(id, man) {
   });
 }
 /* Waits until a payment is paid. Automatic mode: waits for the M-Pesa prompt. Manual mode: asks for the code, then tells the buyer an admin is checking. */
-async function waitPaid(id) {
+async function waitPaid(id, on) {
+  on = on || (() => {});
   let st = null, asked = false;
   for (let i = 0; i < 60; i++) {
     if (i) await sleep(3000);
     try { st = await call('/api/pay/status?id=' + encodeURIComponent(id), { auth: false }); } catch (e) { continue; }
-    if (st.manual && !asked) { asked = true; await askCode(id, st.manual); i = -1; continue; }
-    if (st.status === 'submitted') { const e = new Error('Code received. We are checking your payment. It shows under Orders and Wallet once confirmed, usually within a few minutes.'); e.pending = true; throw e; }
+    if (st.manual && !asked) { asked = true; on('manual'); await askCode(id, st.manual); i = -1; continue; }
+    if (st.status === 'submitted') { on('verify'); await sleep(900); const e = new Error('Code received. We are checking your payment. It shows under Orders and Wallet once confirmed, usually within a few minutes.'); e.pending = true; throw e; }
     if (st.status !== 'pending') break;
   }
+  if (st && st.status !== 'pending') { on('verify'); await sleep(1200); }   // the "Verifying payment" step is always visible for a moment
   if (!st || st.status === 'pending') { const e = new Error('We have not had the M-Pesa confirmation yet. If you entered your PIN, your order appears under Orders as soon as it is confirmed. Keep the M-Pesa SMS.'); e.pending = true; throw e; }
   if (st.status === 'underpaid') throw new Error('The amount paid was less than required. Keep your M-Pesa message and contact support.');
   if (st.status !== 'paid') throw new Error('Payment was cancelled or failed. If you did pay, keep your M-Pesa message and contact support.');

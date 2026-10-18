@@ -298,7 +298,12 @@ document.addEventListener('click', async (e) => {
   if (d === 'cocollect') { if (!confirm('Mark as collected? Check the buyer\'s Ref first.')) return; return act(b, () => api('/api/admin/club/orders/' + id + '/collect', {}), 'Marked collected'); }
   if (d === 'approve') return act(b, () => api('/api/admin/listings/' + id, { action: 'approve' }), 'Approved');
   if (d === 'reject') { const r = ask('Reason for the seller (they will see it):'); if (!r) return; return act(b, () => api('/api/admin/listings/' + id, { action: 'reject', reason: r }), 'Rejected'); }
-  if (d === 'paid') { const r = ask('M-Pesa confirmation code you got when you sent it:'); if (!r) return; return act(b, () => api('/api/admin/withdrawals/' + id, { action: 'paid', payout_ref: r }), 'Marked paid'); }
+  if (d === 'paid') {
+    const r0 = ask('Paste the M-Pesa message you got after sending (or just the code):'); if (!r0) return;
+    const hit = String(r0).toUpperCase().match(/\b(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{10}\b/), r = hit ? hit[0] : String(r0).trim().slice(0, 40);
+    if (!hit && !confirm('No 10-character M-Pesa code found. Save "' + r + '" as the code?')) return;
+    return act(b, () => api('/api/admin/withdrawals/' + id, { action: 'paid', payout_ref: r }), 'Marked paid, code ' + r);
+  }
   if (d === 'wreject') { if (!confirm('Reject and return the money to the wallet?')) return; return act(b, () => api('/api/admin/withdrawals/' + id, { action: 'reject' }), 'Rejected, money returned'); }
   if (d === 'orelease') { if (!confirm('Pay the seller? This cannot be undone.')) return; return act(b, () => api('/api/admin/orders/' + id, { action: 'release' }), 'Seller paid'); }
   if (d === 'orefund') { if (!confirm('Refund the buyer? This cannot be undone.')) return; return act(b, () => api('/api/admin/orders/' + id, { action: 'refund' }), 'Buyer refunded'); }
@@ -329,7 +334,7 @@ document.addEventListener('pointermove', (e) => {
 addEventListener('scroll', () => document.documentElement.style.setProperty('--p', Math.min(1, scrollY / Math.max(1, document.body.scrollHeight - innerHeight)).toFixed(3)), { passive: true });
 window.addEventListener('pageshow', () => { if (store.get('k')) load().catch((e) => { Q = null; login(e.message); }); else login(); });
 </script>
-<script src="admin-extra.js?v=2"></script>
+<script src="admin-extra.js?v=3"></script>
 <script src="admin-site.js?v=1"></script>
 </body>
 </html>

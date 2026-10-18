@@ -34,9 +34,12 @@ SECTIONS.payouts = () => ['<div class="row"><button data-x="pf" data-s="paid">Pa
     + kv([['Wallet debited', kes(w.amount)], ['Fee kept', w.fee ? kes(w.fee) : ''], ['Sent to', w.phone], ['Account', w.aid], ['M-Pesa code', w.payout_ref], ['Decided', when(w.decided_at)]]) + '</div>'));
 
 SECTIONS.withdrawals = () => Q.withdrawals.map((w) => { const net = w.net == null ? w.amount : w.net;
+  const local = /^254\d{9}$/.test(String(w.phone)) ? '0' + String(w.phone).slice(3) : String(w.phone);      // 0712345678 pastes straight into M-Pesa Send Money
   return '<div class="card" data-id="' + esc(w.id) + '"><h3>Send ' + kes(net) + '</h3>'
-    + kv([['Wallet debited', kes(w.amount)], ['Fee kept', w.fee ? kes(w.fee) : ''], ['Send to', w.phone], ['Account', w.aid], ['Requested', when(w.created_at)]])
-    + '<p class="sub">Send exactly ' + esc(kes(net)) + ' by M-Pesa first, then mark it paid with the M-Pesa code.</p><div class="row"><button data-do="copy" data-v="' + esc(w.phone) + '">Copy number</button><button class="ok" data-do="paid">I sent it</button><button class="bad" data-do="wreject">Reject and refund wallet</button></div></div>'; });
+    + '<div class="kv"><span class="sub">M-Pesa number</span><b style="font-size:20px;letter-spacing:1px">' + esc(local) + '</b></div>'
+    + '<div class="row"><button data-do="copy" data-v="' + esc(local) + '">Copy number</button><button data-do="copy" data-v="' + esc(net) + '">Copy amount (' + esc(net) + ')</button></div>'
+    + kv([['Wallet debited', kes(w.amount)], ['Fee kept', w.fee ? kes(w.fee) : ''], ['Full number', w.phone], ['Account', w.aid], ['Requested', when(w.created_at)]])
+    + '<p class="sub">Send exactly ' + esc(kes(net)) + ' by M-Pesa, then tap I sent it and paste the M-Pesa message. The code is picked out for you, and the seller sees it as Paid.</p><div class="row"><button class="ok" data-do="paid">I sent it</button><button class="bad" data-do="wreject">Reject and refund wallet</button></div></div>'; });
 
 SECTIONS.sponsors = () => {
   const form = '<div class="card"><h3>New sponsor</h3><input id="sp_n" placeholder="Sponsor name" maxlength="80"><input id="sp_b" placeholder="One line about them" maxlength="200"><input id="sp_l" placeholder="Link, must start with https://" maxlength="200"><input id="sp_a" placeholder="Advert amount agreed, KSh" inputmode="numeric" maxlength="7"><input id="sp_e" placeholder="Ends on, YYYY-MM-DD (empty = no end)" maxlength="10"><div class="row"><button class="p" id="spadd2">Add sponsor</button></div></div>';

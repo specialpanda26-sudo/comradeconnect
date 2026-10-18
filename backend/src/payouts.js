@@ -12,7 +12,7 @@ const num = (v, d) => { const n = Number(v); return Number.isFinite(n) && n > 0 
 export async function trySendNow(env, w) {
   if (!autoPayout(env)) return 'manual';
   const net = w.net ?? w.amount;
-  if (net < num(env.PAYOUT_AUTO_MIN, 10)) return 'manual';                       // M-Pesa B2C has its own minimum; tiny ones are paid by hand
+  if (net < num(env.PAYOUT_AUTO_MIN, 1)) return 'manual';                       // M-Pesa B2C has its own minimum; tiny ones are paid by hand
   const today = await rows(await sb(env, `withdrawals?select=amount&aid=eq.${enc(w.aid)}&status=in.(sending,paid)&created_at=gte.${ago(24 * 3600e3)}`));
   if (today.reduce((s, x) => s + x.amount, 0) + w.amount > num(env.PAYOUT_AUTO_DAILY_MAX, 5000)) return 'manual';   // big amounts get a human look
   const [claimed] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&status=eq.requested`, { status: 'sending' }));

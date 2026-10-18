@@ -3,4 +3,4 @@
    CC_GOOGLE_ID: the OAuth Web client ID from Google Cloud (public value, not a secret). Empty = Google button hidden. */
 const CC_API = 'https://comradeconnectback.onrender.com';
 const CC_GOOGLE_ID = '628050649968-umh0eflaigqqet517sj7te2oa9h0bsmq.apps.googleusercontent.com';
-const CC_AGORA_ID = 'gitadd-Agitcommit-m"Profileusernameandphoto,Liveinsidethesitewithviewersbutton,livecardsinfeed"gitpushoriginmain';
+const CC_AGORA_ID = 'PASTE_ID_HERE';

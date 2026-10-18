@@ -268,6 +268,9 @@ html[data-lay="desktop"] #fab{right:28px;bottom:28px}
 #cc-maint{position:fixed;inset:0;z-index:900;display:grid;place-items:center;text-align:center;padding:30px;background:var(--bg);color:var(--fg)}
 #cc-maint h1{font:800 clamp(28px,8vw,48px) Unbounded,Poppins,sans-serif;text-transform:uppercase;letter-spacing:.02em;margin-bottom:14px}
 #cc-maint p{color:var(--mut);max-width:420px;line-height:1.8;font-size:14px}
+
+/* Fix: do not cover the page with the startup loader. */
+#loader{display:none!important;visibility:hidden!important;pointer-events:none!important}
 </style>
 <script>
 function wordHit(t){const M={zero:0,sifuri:0,nought:0,naught:0,one:1,moja:1,two:2,mbili:2,three:3,tatu:3,four:4,nne:4,five:5,tano:5,six:6,sita:6,seven:7,saba:7,eight:8,nane:8,nine:9,tisa:9},ks=Object.keys(M).sort((a,b)=>b.length-a.length).join('|');
@@ -1826,3 +1829,14 @@ document.head.appendChild(s);
 
 </body>
 </html>
+
+
+<style>
+/* Emergency fix: remove full-screen startup covers. */
+#loader {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+</style>

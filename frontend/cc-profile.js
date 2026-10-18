@@ -39,9 +39,9 @@
     '.ccp-row span{color:var(--mut);font-size:13px}',
     '.ccp-row b{font-size:14px;overflow-wrap:anywhere;text-align:right}',
     /* camera recorder */
-    '.ccr{position:fixed;inset:0;z-index:10001;background:#000;color:#fff;display:flex;flex-direction:column}',
-    '.ccr video{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}',
-    '.ccr video.mir{transform:scaleX(-1)}',
+    '.ccrec{position:fixed;inset:0;z-index:10001;background:#000;color:#fff;display:flex;flex-direction:column}',
+    '.ccrec video{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}',
+    '.ccrec video.mir{transform:scaleX(-1)}',
     '.ccr-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px;background:linear-gradient(rgba(0,0,0,.55),transparent)}',
     '.ccr-top button,.ccr-bot button.ccr-ic{width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;display:grid;place-items:center;padding:0}',
     '.ccr-top svg,.ccr-bot svg{width:22px;height:22px}',
@@ -336,7 +336,7 @@
   async function openRecorder() {
     if (REC) return;
     if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder)) return fallbackPicker();
-    var el = document.createElement('div'); el.className = 'ccr'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Record a clip');
+    var el = document.createElement('div'); el.className = 'ccrec'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Record a clip');
     el.innerHTML = '<video playsinline muted autoplay></video>'
       + '<div class="ccr-top"><button type="button" id="ccr-x" aria-label="Close">' + SV('<path d="M6 6l12 12M18 6L6 18"/>') + '</button><span id="ccrt">0:00</span>'
       + '<button type="button" id="ccr-f" aria-label="Switch camera">' + SV('<path d="M4 8V5h3M20 16v3h-3"/><path d="M5 8a8 8 0 0 1 14-1M19 16a8 8 0 0 1-14 1"/>') + '</button></div>'

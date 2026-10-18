@@ -64,7 +64,7 @@ export async function trustInfo(env, amount = 1000) {
       levels: [
         { id: 'anonymous', label: 'Anonymous', needs: 'Nothing. Anyone, student or not, can join.' },
         { id: 'student', label: 'Verified student', needs: 'A working university email on an approved domain. Optional.' },
-        { id: 'id', label: 'ID verified', needs: 'Photos of a school ID, checked by an admin. Needed to withdraw money.' },
+        { id: 'id', label: 'ID verified', needs: 'Photos of a student ID or national ID, checked by an admin. Needed to withdraw money.' },
       ],
       student_domains: studentDomains(env), student_email_available: mailReady(env),
       withdraw_requires_id: (env.WITHDRAW_REQUIRES_VERIFIED ?? '1') === '1',

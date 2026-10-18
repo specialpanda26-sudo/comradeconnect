@@ -4,7 +4,7 @@ import { viewerCounts } from './live.js';
 import { mediaUrl, MEDIA_BUCKET, PRIVATE_BUCKET } from './storage.js';
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, randHex, throttle, tooMany, user, authProfile, isAdmin, ahead, DAY } from './lib.js';
 
-const VERIFY_ROLES = ['Student', 'Class rep', 'Student leader', 'Club official', 'Hostel rep', 'Lecturer or staff'];
+const VERIFY_ROLES = ['Student', 'Class rep', 'Student leader', 'Club official', 'Hostel rep', 'Lecturer or staff', 'Local seller'];
 const OFFICIAL_ROLES = ['Class rep', 'Hostel rep'];       // these also need a group link an admin can check
 const PHOTO_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const VIDEO_TYPES = { 'video/mp4': 'mp4', 'video/webm': 'webm' };
@@ -104,7 +104,7 @@ export async function mediaRoutes(req, env, url, ip) {
     if (!['image/jpeg', 'image/png'].includes(store.sniff(await store.peek(env, PRIVATE_BUCKET(env), key)))) { await store.remove(env, PRIVATE_BUCKET(env), key); return err(env, 'That file is not a JPG or PNG photo', 415); }
     const open = await one(await sb(env, `verifications?select=id&aid=eq.${enc(u.aid)}&status=eq.pending`));
     if (open) return err(env, 'You already have a request waiting for review', 409);
-    if (u.verified && role === 'Student') return err(env, 'Your ID is already verified', 409);
+    if (u.verified && (role === 'Student' || role === 'Local seller')) return err(env, 'Your ID is already verified', 409);
     const v = await one(await post(env, 'verifications', { aid: u.aid, r2_key: key, full_name: name, claimed_role: role, id_number: idNo || null, group_link: link || null, barcode_check: bc, purge_after: ahead(30 * DAY) }));
     return v ? json(env, { id: v.id, status: 'pending' }, 201) : err(env, 'Could not save', 500);
   }

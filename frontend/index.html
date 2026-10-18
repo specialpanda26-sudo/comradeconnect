@@ -194,7 +194,7 @@ body:not([data-view="feed"]) #fab{display:none}
 .mc .mm{border-radius:0;aspect-ratio:1;max-height:none}
 .mc .mb{padding:12px 14px}
 /* market trust look */
-.mtrust{padding:18px 20px;border-radius:24px;margin:14px 0}.mt-h{display:flex;gap:12px;align-items:center}.mt-h svg{width:28px;height:28px;flex-shrink:0}.mt-h b{display:block;font-size:16px;font-weight:600}.mt-h small{display:block;color:var(--mut);font-size:12px;margin-top:2px;line-height:1.5}.mtr{display:flex!important;align-items:center;gap:5px;margin-top:6px;font-size:11px;color:var(--mut)}.mtr svg{width:13px;height:13px;flex-shrink:0}.mtb{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.mtb .badge{display:inline-flex;align-items:center;gap:5px}.mtb .badge svg{width:12px;height:12px}.mc b{display:block;font-size:13px;font-weight:600;line-height:1.35}.mc em{font-style:normal;font-weight:700;font-size:15px;display:block;margin-top:4px}.mc small{display:block;font-size:10px;color:var(--mut);margin-top:3px}
+.mtrust{padding:18px 20px;border-radius:24px;margin:14px 0}.mt-h{display:flex;gap:12px;align-items:center}.mt-h svg{width:28px;height:28px;flex-shrink:0}.mt-h b{display:block;font-size:16px;font-weight:600}.mt-h small{display:block;color:var(--mut);font-size:12px;margin-top:2px;line-height:1.5}.mtl{display:flex!important;align-items:center;gap:5px;margin-top:6px;font-size:11px;color:var(--mut)}.mtl svg{width:13px;height:13px;flex-shrink:0}.mtb{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.mtb .badge{display:inline-flex;align-items:center;gap:5px}.mtb .badge svg{width:12px;height:12px}.mc b{display:block;font-size:13px;font-weight:600;line-height:1.35}.mc em{font-style:normal;font-weight:700;font-size:15px;display:block;margin-top:4px}.mc small{display:block;font-size:10px;color:var(--mut);margin-top:3px}
 .mst{display:inline-block;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--gb)}
 .dmo{border:1px dashed var(--gb);border-radius:16px;padding:12px;margin-top:12px;font-size:11px;color:var(--mut)}.dmo .two{margin-top:8px;flex-wrap:wrap}.dmo .act{justify-content:center;font-size:11px}
 .act:disabled{opacity:.45;cursor:default}
@@ -837,8 +837,8 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
   </section>
   <section data-v="bdg" hidden>
     <div class="flex items-center justify-between"><h2>Get verified</h2><button class="ib xb" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <p class="note">Verify your school ID to withdraw money and sell bigger items. Class reps and other officials also get a badge.</p>
-    <div class="fld"><select id="bdr" aria-label="Your role"><option value="Student">Student (ID check only)</option><option value="Class rep">Class rep</option><option value="Student leader">Student leader</option><option value="Club official">Club or society official</option><option value="Hostel rep">Hostel or zone rep</option><option value="Lecturer or staff">Lecturer or staff</option></select></div>
+    <p class="note">Verify your student ID or national ID to withdraw money and sell bigger items. Class reps and other officials also get a badge.</p>
+    <div class="fld"><select id="bdr" aria-label="Your role"><option value="Student">Student (ID check only)</option><option value="Local seller">Local seller or worker (national ID)</option><option value="Class rep">Class rep</option><option value="Student leader">Student leader</option><option value="Club official">Club or society official</option><option value="Hostel rep">Hostel or zone rep</option><option value="Lecturer or staff">Lecturer or staff</option></select></div>
     <div class="fld" id="bdlw" hidden><input id="bdl" placeholder="Your class or hostel group link" aria-label="Group link"></div>
     <div class="fld"><input id="bdnm" placeholder="Full name exactly as on your ID" autocomplete="name" maxlength="80" aria-label="Full name"></div>
     <div class="fld"><input id="bdn" placeholder="Admission or staff number" maxlength="30" aria-label="Admission or staff number"></div>
@@ -1336,10 +1336,10 @@ $('#bon').onchange=e=>{BOT.on=e.target.checked;svb();drawBot()};$('#bhu').onchan
 $('#btry').onclick=()=>{const o=$('#bout');o.hidden=false;if(!BOT.on){o.textContent='Spill Bot is off. Turn it on to try it.';return}o.innerHTML='<b>Spill Bot ('+esc($('#brl').selectedOptions[0].text)+')</b><br>'+esc(botSay(BOT.role,$('#bin').value.trim()||'hello'))};
 $('#madm').addEventListener('click',drawBot);drawBot();
 const RR=['Class rep','Hostel rep'],idOK=()=>!!(ME.ver&&ME.ver.st==='approved'),isOff=()=>idOK()&&ME.ver.role!=='Student';
-function needId(){toast('Please verify your school ID first. It takes a minute.');openDm('bdg')}
+function needId(){toast('Please verify your student ID or national ID first. It takes a minute.');openDm('bdg')}
 function syncCats(){const c=$('#sc'),i=[...c.options].findIndex(o=>o.value==='Notices');if(isOff()&&i<0)c.add(new Option('Notices','Notices'));if(!isOff()&&i>=0)c.remove(i)}
 function drawVer(){const v=ME.ver,bcT={match:'The barcode matched your number.',mismatch:'The barcode did not match your number, so an admin will look closer.',unread:'The barcode could not be read, so an admin will check it by eye.',unsupported:'An admin will check the barcode.'};
- $('#vst').textContent=!v?'Not verified yet. Verify your school ID to withdraw money and sell bigger items. Class reps and other officials also get a badge.'
+ $('#vst').textContent=!v?'Not verified yet. Verify your student ID or national ID to withdraw money and sell bigger items. Class reps and other officials also get a badge.'
   :v.st==='pending'?'Sent. An admin is checking it'+(v.role&&v.role!=='Student'?' (role: '+v.role+')':'')+'. '+(bcT[v.bc&&v.bc.st]||'')
   :v.st==='rejected'?'Not approved'+(v.note?': '+v.note:'.')+' You can send a new request.'
   :'Verified'+(v.role!=='Student'?' as '+v.role:' student')+'.'+(v.waitBadge?' Your '+v.waitBadge+' badge is being checked.':'');
@@ -1502,7 +1502,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-core.js?v=op1"></script><script src="cc-site.js?v=3" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-market-plus.js?v=2" defer></script>
+<script src="cc-core.js?v=op2"></script><script src="cc-site.js?v=3" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-market-plus.js?v=2" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

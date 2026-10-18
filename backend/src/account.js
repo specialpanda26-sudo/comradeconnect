@@ -139,7 +139,6 @@ export async function accountRoutes(req, env, url, ip) {
     const phone = String(b.phone || '').replace(/\D/g, '');
     const norm = /^0[17]\d{8}$/.test(phone) ? '254' + phone.slice(1) : /^254[17]\d{8}$/.test(phone) ? phone : null;
     if (!amount || !norm) return err(env, `Check the amount (KES ${S.withdraw_min} to ${S.withdraw_max}) and phone number`);
-    if (!(await throttle(env, ip, 'withdraw', u.aid, 3, 10))) return tooMany(env);
     if ((await balance(env, u.aid)) < amount) return err(env, 'Not enough available balance');
     const fee = withdrawFee(amount, S);
     const w = await one(await post(env, 'withdrawals', { aid: u.aid, amount, phone: norm, fee, net: amount - fee }));

@@ -37,7 +37,7 @@ window.fetch = function (u) {
 var grid = $('#mgrid'), browse = $('#mbrowse'), none = el('p', 'sub', 'No items in that price range. Clear the price boxes to see everything.');
 none.hidden = true;
 if (browse && grid) {
-  var det = el('details', 'cce box g'), sum = el('summary', '', '\uD83D\uDEE1\uFE0F How escrow protects you');
+  var det = el('details', 'cce box g'), sum = el('summary', '', 'How escrow works, step by step');
   det.appendChild(sum);
   var ol = el('ol'); [
     'You pay on Comrade Connect. The seller does not get the money yet.',

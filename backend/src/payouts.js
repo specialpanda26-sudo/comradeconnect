@@ -3,9 +3,9 @@
 // refused by IntaSend) simply stays in the admin "Withdrawals" queue exactly as before.
 // Lifecycle: requested -> sending (claimed by ONE conditional update, so it can never be sent twice) -> paid | rejected (money returned).
 import { sb, rows, patch, enc, ago } from './lib.js';
-import { credit, intaReady, intaBase, intaHead } from './pay.js';
+import { credit, intaKey, intaBase, intaHead } from './pay.js';
 
-export const autoPayout = (env) => String(env.PAYOUT_MODE || 'manual').trim().toLowerCase() === 'intasend' && intaReady(env);
+export const autoPayout = (env) => String(env.PAYOUT_MODE || 'manual').trim().toLowerCase() === 'intasend' && !!intaKey(env);   // paying OUT needs the secret key; the publishable key cannot send money
 const num = (v, d) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : d; };
 
 // Called right after a withdrawal request is saved and the wallet debited. Returns 'sending' or 'manual'.

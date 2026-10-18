@@ -29,14 +29,17 @@ export const manualMode = (env) => payMode(env) === 'manual';
 // Live host is payment.intasend.com, sandbox is sandbox.intasend.com. Set INTASEND_BASE_URL if IntaSend ever tells you to use another host.
 const IS_PREFIX = 'is:';   // IntaSend invoice ids are stored in payments.request_id as "is:INVOICEID" so they are never confused with TinyPesa ids
 export const intaKey = (env) => String(env.INTASEND_SECRET_KEY || '').trim();
-export const intaReady = (env) => !!intaKey(env);
+// The publishable key (ISPubKey_...) is enough to COLLECT money (STK push + status check). The secret key is only needed for paying money OUT (seller payouts).
+export const intaPub = (env) => String(env.INTASEND_PUBLISHABLE_KEY || '').trim();
+export const intaReady = (env) => !!(intaKey(env) || intaPub(env));
 export const intaBase = (env) => String(env.INTASEND_BASE_URL || (String(env.INTASEND_TEST || '') === '1' ? 'https://sandbox.intasend.com' : 'https://payment.intasend.com')).replace(/\/$/, '');
-export const intaHead = (env) => ({ 'Content-Type': 'application/json', Authorization: 'Bearer ' + intaKey(env) });
+// Authorization is sent only when a secret key exists; with just the publishable key the key travels as public_key in the body (see intaBody).
+export const intaHead = (env) => ({ 'Content-Type': 'application/json', ...(intaKey(env) ? { Authorization: 'Bearer ' + intaKey(env) } : {}) });
+export const intaBody = (env, o) => ({ ...o, ...(intaPub(env) ? { public_key: intaPub(env) } : {}) });
 
 // Sends the M-Pesa prompt. api_ref is OUR payment id, so every webhook and status answer names the payment it belongs to. Returns the invoice or null.
 async function intaPush(env, row, phone, amount) {
-  const body = { amount, phone_number: phone, api_ref: row.id };
-  if (env.INTASEND_PUBLISHABLE_KEY) body.public_key = String(env.INTASEND_PUBLISHABLE_KEY).trim();
+  const body = intaBody(env, { amount, phone_number: phone, api_ref: row.id });
   const r = await fetch(`${intaBase(env)}/api/v1/payment/mpesa-stk-push/`, { method: 'POST', headers: intaHead(env), body: JSON.stringify(body) })
     .catch((e) => { console.error('intasend: request failed', e && e.message); return null; });
   const t = r ? await r.json().catch(() => ({})) : {};
@@ -45,7 +48,7 @@ async function intaPush(env, row, phone, amount) {
 }
 // The truth about one invoice, straight from IntaSend with our secret key. A webhook is never believed on its own.
 export async function intaStatus(env, invoiceId) {
-  const r = await fetch(`${intaBase(env)}/api/v1/payment/status/`, { method: 'POST', headers: intaHead(env), body: JSON.stringify({ invoice_id: invoiceId }) })
+  const r = await fetch(`${intaBase(env)}/api/v1/payment/status/`, { method: 'POST', headers: intaHead(env), body: JSON.stringify(intaBody(env, { invoice_id: invoiceId })) })
     .catch((e) => { console.error('intasend: status request failed', e && e.message); return null; });
   const t = r && r.ok ? await r.json().catch(() => null) : null;
   return t && t.invoice && typeof t.invoice === 'object' ? t.invoice : null;
@@ -110,7 +113,7 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   const mode = payMode(env), tinyOk = tinyKeys(env).length > 0 && !!env.TINYPESA_USERNAME;
   if (mode === 'manual' && !env.MPESA_PAY_TO) return { res: err(env, 'Payments are not set up yet', 503) };
   if (mode === 'tinypesa' && !tinyOk) { console.error('payments: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY or TINYPESA_USERNAME is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
-  if (mode === 'intasend' && !intaReady(env) && !tinyOk) { console.error('payments: PAYMENT_MODE=intasend but INTASEND_SECRET_KEY is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
+  if (mode === 'intasend' && !intaReady(env) && !tinyOk) { console.error('payments: PAYMENT_MODE=intasend but neither INTASEND_PUBLISHABLE_KEY nor INTASEND_SECRET_KEY is set on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (!phone || !(amount >= 1) || amount > 250000 || !aid) return { res: err(env, 'Check the phone number and amount') };
   const pr = await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, 100) : null, amount, phone, ip, boost_hours: boost_hours || null, ...(credit_ksh > 0 ? { credit_ksh } : {}) });
   const pj = await pr.json().catch(() => null);
@@ -175,7 +178,7 @@ export async function payRoutes(req, env, url, ip) {
 
   // IntaSend webhook. In the IntaSend dashboard: Settings > Webhooks > New. Endpoint https://YOUR-API-HOST/api/intasend/webhook,
   // Challenge = the same string as INTASEND_WEBHOOK_CHALLENGE, event = collection_event. The webhook only says "look at this invoice":
-  // we ask IntaSend for the real state with our secret key before touching any money.
+  // we ask IntaSend for the real state with our key before touching any money.
   if (path === '/api/intasend/webhook' && req.method === 'POST') {
     if (!env.INTASEND_WEBHOOK_CHALLENGE) return new Response('not configured', { status: 503 });
     const b = await req.json().catch(() => ({}));

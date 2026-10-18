@@ -184,8 +184,8 @@ window.ccCall = call;
 // Wallet and referral pay-ins from older code (boost, top-up) need the account first.
 if (typeof window.ccRun === 'function') {
   const old = window.ccRun;
-  window.ccRun = function (phone, amount, purpose, ref, ok, fail) {
-    ensureAccount().then(() => old(phone, amount, purpose, ref, ok, fail)).catch((e) => fail(e.message || 'Could not start the payment'));
+  window.ccRun = function (phone, amount, purpose, ref, ok, fail, onStep) {
+    ensureAccount().then(() => old(phone, amount, purpose, ref, ok, fail, onStep)).catch((e) => fail(e.message || 'Could not start the payment'));
   };
 }
 
@@ -370,15 +370,24 @@ function stepsCss() {
   document.head.appendChild(st);
 }
 const stepLi = (c, t, sub) => '<div class="cs-s ' + c + '"><span class="cs-i"></span><div><b>' + t + '</b><small>' + (sub || '') + '</small></div></div>';
-// Escrow checkout: send the prompt > enter the PIN > verify > held in escrow. go() takes 'send' | 'prompt' | 'manual' | 'verify' | 'done'.
-function paySteps(box, phone, amount) {
+// Money-in progress: send the prompt > enter the PIN > verify > done. go() takes 'send' | 'prompt' | 'manual' | 'verify' | 'done'.
+// kind: 'escrow' (default) | 'deposit' | 'plan' | 'boost' | 'club'. Only the wording of the heading and the last step changes.
+const PAYKIND = {
+  escrow: ['Paying', 'Payment received', (a) => kes(a) + ' is held safely in escrow', 'Held safely in escrow'],
+  deposit: ['Depositing', 'Money added to your wallet', (a) => kes(a) + ' is now in your wallet', 'Added to your wallet'],
+  plan: ['Paying', 'Payment received', () => 'Your wholesaler plan is being switched on', 'Plan activated'],
+  boost: ['Paying', 'Payment received', () => 'Your post is being pinned to the top', 'Boost activated'],
+  club: ['Paying', 'Payment received', () => 'Your payment is confirmed', 'Payment confirmed'],
+};
+function paySteps(box, phone, amount, kind) {
   stepsCss();
+  const K = PAYKIND[kind] || PAYKIND.escrow;
   let at = 0, manual = false, tm = 0, t0 = Date.now(), dead = false;
   const T = () => manual
-    ? [['Starting your payment', 'Reference created for ' + kes(amount)], ['Pay with M-Pesa, then enter the code', 'Waiting for your M-Pesa code'], ['Checking your payment', 'An admin confirms it, usually within a few minutes'], ['Held safely in escrow', kes(amount) + ' is protected until you get the item']]
-    : [['Sending M-Pesa prompt', 'To ' + esc(phone)], ['Prompt sent. Enter your PIN', 'Check your phone'], ['Verifying payment', 'Confirming with M-Pesa'], ['Payment received', kes(amount) + ' is held safely in escrow']];
+    ? [['Starting your payment', 'Reference created for ' + kes(amount)], ['Pay with M-Pesa, then enter the code', 'Waiting for your M-Pesa code'], ['Checking your payment', 'An admin confirms it, usually within a few minutes'], [K[3], K[2](amount)]]
+    : [['Sending M-Pesa prompt', 'To ' + esc(phone)], ['Prompt sent. Enter your PIN', 'Check your phone'], ['Verifying payment', 'Confirming with M-Pesa'], [K[1], K[2](amount)]];
   const draw = (bad) => {
-    box.innerHTML = '<p class="cs-h">Paying<b>' + kes(amount) + '</b></p><div class="cs-l" role="status" aria-live="polite">'
+    box.innerHTML = '<p class="cs-h">' + K[0] + '<b>' + kes(amount) + '</b></p><div class="cs-l" role="status" aria-live="polite">'
       + T().map((x, i) => stepLi(bad && i === at ? 'f' : i < at || at === 4 ? 'd' : i === at ? 'a' : '', x[0], i === 1 && i === at && !bad ? '<span id="cs-t">Check your phone</span>' : x[1])).join('') + '</div>';
   };
   const tick = () => { const n = box.querySelector('#cs-t'); if (!n) return; const s = Math.floor((Date.now() - t0) / 1000);
@@ -394,6 +403,44 @@ function paySteps(box, phone, amount) {
     stop() { dead = true; clearInterval(tm); },
   };
   api.go('send'); return api;
+}
+// Withdrawal progress (live, inside the withdraw sheet): request sent > request received > sending / admin > money sent.
+// Polls the wallet until the withdrawal is paid or rejected (about 2 minutes for automatic payouts); a by-hand payout is shown as waiting for the admin.
+function wdSteps(box, amount, phone) {
+  stepsCss();
+  let at = 0, dead = false, manual = false;
+  const T = () => [['Sending your request', 'To ' + esc(phone)], ['Request received', kes(amount) + ' is set aside from your wallet'],
+    [manual ? 'Admin is sending it to your M-Pesa' : 'Sending to your M-Pesa now', manual ? 'This is done by hand, usually within a day' : 'This usually takes under a minute'], ['Money sent to your M-Pesa', kes(amount) + ' (less any fee) is on its way to ' + esc(phone)]];
+  const draw = (bad, last) => {
+    box.innerHTML = '<p class="cs-h">Withdrawing<b>' + kes(amount) + '</b></p><div class="cs-l" role="status" aria-live="polite">'
+      + T().map((x, i) => stepLi(bad && i === at ? 'f' : i < at || at === 4 ? 'd' : i === at ? 'a' : '', i === 3 && last ? last[0] : x[0], i === 3 && last ? last[1] : x[1])).join('') + '</div>';
+  };
+  const api = {
+    go(n, m) { if (dead) return; at = n; if (m === 'manual') manual = true; draw(false); },
+    done(ref) { if (dead) return; at = 4; draw(false, ['Money sent to your M-Pesa', ref ? 'M-Pesa ref ' + esc(ref) : 'Check your M-Pesa messages']); },
+    fail(msg) { if (dead) return; draw(true); if (msg) box.insertAdjacentHTML('beforeend', '<p class="cs-e">' + esc(msg) + '</p>'); },
+    stop() { dead = true; },
+    get dead() { return dead; },
+  };
+  draw(false); return api;
+}
+// Runs a withdrawal request with live progress inside `box`. Resolves with { status } when it ends or is left waiting for the admin; throws a normal Error if the request is refused.
+async function withdrawFlow(box, amount, phone, ask, poll) {
+  const ws = wdSteps(box, amount, phone); ws.go(0); await sleep(500);
+  let r;
+  try { r = await ask(); } catch (e) { ws.fail(e.message); throw e; }
+  ws.go(1); await sleep(900);
+  const sending = r.status === 'sending'; ws.go(2, sending ? 'auto' : 'manual');
+  if (!sending) return { status: 'requested', ws };
+  for (let i = 0; i < 40 && !ws.dead; i++) {
+    await sleep(3000);
+    let w = null; try { w = await poll(r.id); } catch (e) { continue; }
+    if (!w) continue;
+    if (w.status === 'paid') { await sleep(400); ws.done(w.payout_ref); return { status: 'paid', ws }; }
+    if (w.status === 'rejected') { ws.fail('The payout could not be sent. The money is back in your wallet.'); return { status: 'rejected', ws }; }
+    if (w.status === 'requested') { ws.go(2, 'manual'); return { status: 'requested', ws }; }   // the automatic payout gave up and left it for an admin
+  }
+  return { status: 'sending', ws };
 }
 // Withdrawal tracker shown under each request in the wallet.
 function wdTrack(x) {
@@ -587,8 +634,13 @@ $('#wd').onclick = async () => {
     if (!(amount >= CFG.min && amount <= Math.min(bal, CFG.max))) return (er.textContent = 'Enter an amount from ' + kes(CFG.min) + ' up to ' + kes(Math.min(bal, CFG.max)));
     if (!/^(07|01)\d{8}$/.test(phone)) return (er.textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
     const g = m.querySelector('#ccw-go'); g.disabled = true;
-    try { const wr = await call('/api/wallet/withdraw', { body: { amount, phone } }); ST.set('cc_phone', phone); m.close(); toast(wr.status === 'sending' ? 'Sending to your M-Pesa now.' : 'Request sent. An admin will pay it out.'); loadOrders(); }
-    catch (err) { er.textContent = err.message; g.disabled = false; }
+    const box = m.firstChild; box.innerHTML = '<div id="ccw-prog"></div><button class="btn p" id="ccw-ok" style="width:100%;margin-top:14px" hidden>Done</button>';
+    const ok = box.querySelector('#ccw-ok'); ok.onclick = () => m.close();
+    try {
+      const r = await withdrawFlow(box.querySelector('#ccw-prog'), amount, phone, () => call('/api/wallet/withdraw', { body: { amount, phone } }),
+        async (id) => ((await call('/api/wallet')).withdrawals || []).find((x) => x.id === id));
+      ST.set('cc_phone', phone); ok.hidden = false; r.ws.stop(); loadOrders();
+    } catch (err) { ST.set('cc_phone', phone); ok.hidden = false; ok.textContent = 'Close'; }
   };
 };
 
@@ -1116,7 +1168,7 @@ function payNow(o) {
     + (mx > 1 ? '<div class="fld" style="margin-top:10px"><select id="ccqty" aria-label="Quantity">' + Array.from({ length: mx }, (_, i) => '<option value="' + (i + 1) + '">Quantity ' + (i + 1) + '</option>').join('') + '</select></div>' : '')
     + '<div class="rw"><span><b>Total</b></span><b id="cctot"></b></div><div class="fld" style="margin-top:12px"><input id="ccpp" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div><p class="note" id="ccpe" style="color:var(--fg)"></p>'
     + '<div class="two" style="margin-top:12px"><button class="btn g" id="ccpx">Cancel</button><button class="btn p" id="ccpg">Pay with M-Pesa</button></div></div>'
-    + '<div id="ccpw" hidden><p class="tot" style="font-size:18px;margin-top:14px">Waiting for payment...</p><p class="note">If an M-Pesa prompt appears, enter your PIN. Keep this open.</p></div>'
+    + '<div id="ccpw" hidden></div>'
     + '<div id="ccpd" hidden><p class="tot" style="font-size:18px;margin-top:14px" id="ccpm"></p><button class="btn p" id="ccpo" style="width:100%;margin-top:14px">Done</button></div>');
   const q = (s) => m.querySelector(s), qty = () => (mx > 1 ? +q('#ccqty').value : 1), show = (w) => { ['f', 'w', 'd'].forEach((k) => { q('#ccp' + k).hidden = k !== w; }); };
   const tot = () => { q('#cctot').textContent = kes(o.unit * qty()); };
@@ -1129,12 +1181,16 @@ function payNow(o) {
     const v = q('#ccpp').value.replace(/\s/g, '');
     if (!/^(07|01)\d{8}$/.test(v)) return (q('#ccpe').textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
     busy = true; q('#ccpe').textContent = ''; show('w');
+    const total = o.unit * qty(), ps = paySteps(q('#ccpw'), v, total, o.kind || 'club');
     try {
       const d = await o.start(v, qty()); ST.set('cc_phone', v);
-      await waitPaid(d.id);
-      q('#ccpm').textContent = 'Payment received. ' + kes(o.unit * qty()) + '. ' + o.done; show('d'); ccTick(q('#ccpm'));
+      ps.go('prompt');
+      await waitPaid(d.id, (st) => ps.go(st));
+      ps.go('done'); await sleep(1100);
+      q('#ccpm').textContent = 'Payment received. ' + kes(total) + '. ' + o.done; show('d'); ccTick(q('#ccpm'));
       try { await o.after(); } catch (e) { /* the lists refresh next time */ }
-    } catch (e) { if (e.pending) { q('#ccpm').textContent = e.message; show('d'); try { await o.after(); } catch (x) { /* refreshes later */ } } else { q('#ccpe').textContent = e.message; show('f'); } }
+    } catch (e) { if (e.pending) { ps.stop(); q('#ccpm').textContent = e.message; show('d'); try { await o.after(); } catch (x) { /* refreshes later */ } } else { ps.fail(e.message); await sleep(1800); q('#ccpe').textContent = e.message; show('f'); } }
+    ps.stop();
     busy = false;
   };
 }
@@ -1326,5 +1382,6 @@ window.ccSignOut = signOut;
 window.ccGoogle = { on: googleOn, mount: mountGoogle };
 
 window.ccMarketTerms = () => S.list.map((l) => l.title);
-window.CC = { ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid };      // used by the other sections
+window.CC = { ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid };
+window.ccSteps = { paySteps, withdrawFlow, stepsCss };   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections
 })();

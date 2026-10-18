@@ -27,6 +27,15 @@ function errLine(m) { var e = el('p', 'sub'); e.style.cssText = 'color:#f87171;m
 function btn(label, cls, fn) { var b = el('button', 'btn ' + cls, label); b.onclick = fn; return b; }
 function row2(m, a, b) { var d = el('div', 'two'); d.appendChild(a); d.appendChild(b); m.box.appendChild(d); }
 
+// Swap a sheet's form for a live progress area (same animation as the escrow checkout). Returns { box, end(label) }.
+function progress(m) {
+  m.box.textContent = '';
+  var box = el('div'), ok = el('button', 'btn p', 'Done'); ok.style.cssText = 'width:100%;margin-top:14px'; ok.hidden = true; ok.onclick = function () { m.close(); };
+  m.box.appendChild(box); m.box.appendChild(ok);
+  return { box: box, end: function (label) { if (label) ok.textContent = label; ok.hidden = false; } };
+}
+var steps = function () { return window.ccSteps || null; };
+
 async function load() {
   try { var r = await Promise.all([call('/api/wholesale/me'), call('/api/wallet')]); W = r[0]; W.wallet = r[1]; window.ccPhotoCap = W.active ? W.photos : 5; draw(); }
   catch (e) { }
@@ -64,9 +73,22 @@ function deposit() {
     var amt = Math.floor(+a.value), ph = p.value.replace(/\s/g, '');
     if (!(amt >= 1 && amt <= 150000)) return (e.textContent = 'Enter an amount from KSh 1 to KSh 150,000.');
     if (!okPhone(ph)) return (e.textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
-    go.disabled = true; e.textContent = ''; go.textContent = 'Check your phone...';
-    try { var d = await call('/api/pay', { body: { purpose: 'topup', amount: amt, phone: ph } }); savePhone(ph); await window.CC.waitPaid(d.id); m.close(); say(kes(amt) + ' added to your wallet.'); load(); }
-    catch (x) { e.textContent = x.message; go.disabled = false; go.textContent = 'Deposit'; if (x.pending) { m.close(); say(x.message); load(); } }
+    go.disabled = true; e.textContent = '';
+    var P = progress(m), ps = steps() && steps().paySteps(P.box, ph, amt, 'deposit');
+    try {
+      var d = await call('/api/pay', { body: { purpose: 'topup', amount: amt, phone: ph } }); savePhone(ph);
+      if (ps) ps.go('prompt');
+      await window.CC.waitPaid(d.id, function (st) { if (ps) ps.go(st); });
+      if (ps) ps.go('done');
+      await new Promise(function (r) { setTimeout(r, 1100); });
+      if (window.ccTick) { var t = el('p', 'tot', kes(amt) + ' added to your wallet.'); t.style.cssText = 'font-size:18px;margin-top:14px'; P.box.appendChild(t); window.ccTick(t); }
+      P.end('Done'); load();
+    } catch (x) {
+      if (ps) { if (x.pending) ps.stop(); else ps.fail(x.message); }
+      if (x.pending) { P.box.appendChild(Object.assign(el('p', 'note', x.message), { style: 'margin-top:12px' })); }
+      P.end('Close'); load();
+    }
+    if (ps) ps.stop();
   });
   row2(m, btn('Cancel', 'btn g', function () { m.close(); }), go);
 }
@@ -82,8 +104,12 @@ async function withdraw() {
     if (!(amt >= min && amt <= max)) return (e.textContent = 'Enter an amount from ' + kes(min) + ' up to ' + kes(max) + '.');
     if (!okPhone(ph)) return (e.textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
     go.disabled = true;
-    try { var r = await call('/api/wallet/withdraw', { body: { amount: amt, phone: ph } }); savePhone(ph); m.close(); say(r.status === 'sending' ? 'Sending to your M-Pesa now.' : 'Request sent. An admin will pay it out.'); load(); }
-    catch (x) { e.textContent = x.message; go.disabled = false; }
+    var P = progress(m), S = steps();
+    try {
+      var r = await S.withdrawFlow(P.box, amt, ph, function () { return call('/api/wallet/withdraw', { body: { amount: amt, phone: ph } }); },
+        async function (id) { return ((await call('/api/wallet')).withdrawals || []).find(function (x) { return x.id === id; }); });
+      savePhone(ph); r.ws.stop(); P.end('Done'); load();
+    } catch (x) { P.end('Close'); load(); }
   });
   row2(m, btn('Cancel', 'btn g', function () { m.close(); }), go);
 }
@@ -101,9 +127,22 @@ function join() {
   var p = field(m, 'M-Pesa number, e.g. 0712345678', phone(), 'numeric');
   var mb = btn('Pay ' + kes(W.fee) + ' with M-Pesa', 'btn g', async function () {
     var ph = p.value.replace(/\s/g, ''); if (!okPhone(ph)) return (e.textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
-    mb.disabled = true; e.textContent = ''; mb.textContent = 'Check your phone...';
-    try { var d = await call('/api/wholesale/join', { body: { method: 'mpesa', phone: ph } }); savePhone(ph); await window.CC.waitPaid(d.id); m.close(); say('Wholesaler plan active.'); load(); }
-    catch (x) { e.textContent = x.message; mb.disabled = false; mb.textContent = 'Pay ' + kes(W.fee) + ' with M-Pesa'; if (x.pending) { m.close(); say(x.message); load(); } }
+    mb.disabled = true; e.textContent = '';
+    var P = progress(m), ps = steps() && steps().paySteps(P.box, ph, W.fee, 'plan');
+    try {
+      var d = await call('/api/wholesale/join', { body: { method: 'mpesa', phone: ph } }); savePhone(ph);
+      if (ps) ps.go('prompt');
+      await window.CC.waitPaid(d.id, function (st) { if (ps) ps.go(st); });
+      if (ps) ps.go('done');
+      await new Promise(function (r) { setTimeout(r, 1100); });
+      if (window.ccTick) { var t = el('p', 'tot', 'Wholesaler plan active.'); t.style.cssText = 'font-size:18px;margin-top:14px'; P.box.appendChild(t); window.ccTick(t); }
+      P.end('Done'); load();
+    } catch (x) {
+      if (ps) { if (x.pending) ps.stop(); else ps.fail(x.message); }
+      if (x.pending) { P.box.appendChild(Object.assign(el('p', 'note', x.message), { style: 'margin-top:12px' })); }
+      P.end('Close'); load();
+    }
+    if (ps) ps.stop();
   });
   mb.style.cssText = 'width:100%;margin-top:10px'; m.box.appendChild(mb);
   var c = btn('Close', 'btn g', function () { m.close(); }); c.style.cssText = 'width:100%;margin-top:10px'; m.box.appendChild(c);

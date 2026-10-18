@@ -295,16 +295,23 @@ function modLog(kind,text){try{const L=JSON.parse(localStorage.getItem('cs_modlo
 /* Comrade Connect payment client. CC_API and CC_GOOGLE_ID come from config.js. */
 async function ccJson(url,opt){let r;try{r=await fetch(url,opt)}catch(e){throw new Error('Could not reach the server. Check your internet and try again.')}
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(ccErr(r.status,d.error,'The payment did not go through. Please try again.'));return d}
-async function ccPay(o){
+async function ccPay(o,on){
+  on=on||function(){};on('send');
   const d=await ccJson(CC_API+'/api/pay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)});
   try{localStorage.setItem('cc_pending',JSON.stringify({id:d.id,amount:o.amount,t:Date.now()}))}catch(e){}
-  try{await CC.waitPaid(d.id)}catch(e){if(!e.pending)try{localStorage.removeItem('cc_pending')}catch(x){}throw e}
+  on('prompt');
+  try{await CC.waitPaid(d.id,on)}catch(e){if(!e.pending)try{localStorage.removeItem('cc_pending')}catch(x){}throw e}
   try{localStorage.removeItem('cc_pending')}catch(e){}return{status:'paid'}}
 async function ccAI(prompt){const d=await ccJson(CC_API+'/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});return d.text}
-function ccRun(phone,amount,purpose,ref,ok,fail){
+function ccRun(phone,amount,purpose,ref,ok,fail,onStep){
   if(CC_API.indexOf('YOUR-SUBDOMAIN')>-1)return fail('Payments are not set up yet');
   const aid=(typeof ME!=='undefined'&&ME.aid)||'';
-  ccPay({aid:aid,phone:phone,amount:amount,purpose:purpose,ref_id:ref||null}).then(()=>ok()).catch(e=>fail(e.message||'Payment failed'))}
+  ccPay({aid:aid,phone:phone,amount:amount,purpose:purpose,ref_id:ref||null},onStep).then(()=>ok()).catch(e=>fail(e.message||'Payment failed'))}
+/* Live progress (send prompt > enter PIN > verify > done) for boosts and club payments. Uses the same animation as the escrow checkout. */
+function ccFlow(box,phone,amount,kind){
+  const S=window.ccSteps;if(!S||!box)return{on:function(){},done:function(){return Promise.resolve()},fail:function(){return Promise.resolve()},stop:function(){}};
+  const ps=S.paySteps(box,phone,amount,kind);
+  return{on:function(st){ps.go(st)},done:function(){ps.go('done');return new Promise(r=>setTimeout(r,1100))},fail:function(m){ps.fail(m);return new Promise(r=>setTimeout(r,1800))},stop:function(){ps.stop()}}}
 /* If the page was closed mid-payment, tell the user when the money did arrive. */
 window.addEventListener('load',async()=>{try{const p=JSON.parse(localStorage.getItem('cc_pending')||'null');if(!p)return;
   if(Date.now()-p.t>864e5||CC_API.indexOf('YOUR-SUBDOMAIN')>-1){localStorage.removeItem('cc_pending');return}
@@ -918,7 +925,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
     <div class="flex items-center justify-between"><h2 id="p2t">Pay</h2><button class="ib" id="dx8" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div data-p2="1"><div id="p2b" style="margin-top:12px"></div><div class="rw"><span><b>Total to pay</b></span><b id="p2a"></b></div><button class="btn p" id="p2go" style="width:100%;margin-top:14px">Continue to M-Pesa</button></div>
     <div data-p2="2" hidden><p class="note">Enter the M-Pesa number to pay with.</p><div class="fld"><input id="p2h" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div><p class="note" id="p2e" style="color:var(--fg)"></p><button class="btn p" id="p2pay" style="width:100%;margin-top:14px">Pay with M-Pesa</button></div>
-    <div data-p2="3" hidden><p class="tot" style="font-size:20px;margin-top:14px">Waiting for payment...</p><p class="note">If an M-Pesa prompt appears, enter your PIN.</p></div>
+    <div data-p2="3" hidden><div id="p2steps"></div></div>
     <div data-p2="4" hidden><p class="tot" style="font-size:20px;margin-top:14px" id="p2ok"></p><button class="btn p" id="p2d" style="width:100%;margin-top:14px">Done</button></div>
   </section>
   <section data-v="tk" hidden>
@@ -936,7 +943,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
       <div class="fld"><input id="ph" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div>
       <p class="note" id="pe" style="color:var(--fg)"></p>
       <button class="btn p" id="s2" style="width:100%;margin-top:14px">Send M-Pesa prompt</button></div>
-    <div data-s="3" hidden><p class="note">Step 3 of 4. Check your phone and enter your M-Pesa PIN.</p><p class="tot" style="font-size:20px" id="wt">Waiting for approval...</p><p class="note">Do not close this screen until it completes.</p></div>
+    <div data-s="3" hidden><p class="note">Step 3 of 4. Check your phone and enter your M-Pesa PIN.</p><div id="bsteps"></div><p class="note">Do not close this screen until it completes.</p></div>
     <div data-s="4" hidden><p class="note">Step 4 of 4.</p><p class="tot" style="font-size:22px" id="ok"></p><button class="btn p" id="s4" style="width:100%;margin-top:14px">See it at the top</button></div>
   </section>
   </div>
@@ -1097,7 +1104,8 @@ dm.onclick=e=>{if(e.target===dm)shut()};addEventListener('keydown',e=>{if(e.key=
 $$('#dm .pl .act').forEach(b=>b.onclick=()=>{$$('#dm .pl .act').forEach(x=>x.classList.toggle('sel',x===b));plan={pr:+b.dataset.pr,du:b.dataset.du}});
 $('#s1').onclick=()=>{if(ME.credits>0){ME.credits--;saveMe();$('#ok').textContent='Free boost used. Your post is pinned for '+plan.du+'.';stp(4)}else stp(2)};
 $('#s2').onclick=()=>{const v=$('#ph').value.replace(/\s/g,'');if(!/^(07|01)\d{8}$/.test(v))return $('#pe').textContent='Enter a Safaricom or Airtel number like 0712345678.';
- stp(3);ccRun(v,plan.pr,'boost',tgt&&tgt._id,()=>{$('#ok').textContent='Payment received. KSh '+plan.pr+'. Your post is pinned for '+plan.du+'.';stp(4);if(window.ccTick)ccTick($('#ok'))},m=>{$('#pe').textContent=m;stp(2)})};
+ stp(3);const fl=ccFlow($('#bsteps'),v,plan.pr,'boost');
+ ccRun(v,plan.pr,'boost',tgt&&tgt._id,async()=>{await fl.done();fl.stop();$('#ok').textContent='Payment received. KSh '+plan.pr+'. Your post is pinned for '+plan.du+'.';stp(4);if(window.ccTick)ccTick($('#ok'))},async m=>{await fl.fail(m);fl.stop();$('#pe').textContent=m;stp(2)},fl.on)};
 $('#s4').onclick=async()=>{if(tgt){tgt.boosted=true;save();shut();await load(true);scrollTo({top:$('#tabs').offsetTop-90,behavior:'smooth'})}else{shut();toast('Post something first, then boost it from your card.')}};
 
 /* ---------- tabs ---------- */
@@ -1208,7 +1216,7 @@ let p2d=null,p2b=false,p2amt=0;
 const p2s=n=>$$('#dm [data-p2]').forEach(x=>x.hidden=x.dataset.p2!==String(n));
 function payFlow(o){$('#p2t').textContent=o.title;$('#p2a').textContent=ksh(o.amount);$('#p2b').innerHTML=o.html;$('#p2h').value='';$('#p2e').textContent='';p2d=o.done;p2amt=o.amount;p2s(1);openDm('pay2')}
 $('#p2go').onclick=()=>p2s(2);
-$('#p2pay').onclick=()=>{if(p2b)return;const v=$('#p2h').value.replace(/\s/g,'');if(!/^(07|01)\d{8}$/.test(v))return $('#p2e').textContent='Enter a Safaricom or Airtel number like 0712345678.';p2b=true;p2s(3);ccRun(v,p2amt,'club',null,()=>{p2b=false;if(!p2d)return;const f=p2d;p2d=null;$('#p2ok').textContent=f();p2s(4)},m=>{p2b=false;$('#p2e').textContent=m;p2s(2)})};
+$('#p2pay').onclick=()=>{if(p2b)return;const v=$('#p2h').value.replace(/\s/g,'');if(!/^(07|01)\d{8}$/.test(v))return $('#p2e').textContent='Enter a Safaricom or Airtel number like 0712345678.';p2b=true;p2s(3);const fl=ccFlow($('#p2steps'),v,p2amt,'club');ccRun(v,p2amt,'club',null,async()=>{await fl.done();fl.stop();p2b=false;if(!p2d)return;const f=p2d;p2d=null;$('#p2ok').textContent=f();p2s(4);if(window.ccTick)ccTick($('#p2ok'))},async m=>{await fl.fail(m);fl.stop();p2b=false;$('#p2e').textContent=m;p2s(2)},fl.on)};
 $('#p2d').onclick=shut;$('#dx8').onclick=shut;$('#dx9').onclick=shut;
 /* membership */
 function drawMem(){const m=CL.mem;$('#cmem').innerHTML=isMem()?`<div class="flex items-center justify-between"><span class="badge">Active member</span><b>${m.id}</b></div><p class="sub" style="margin-top:10px">Wholesale prices are unlocked until ${dday(m.exp)}.</p>`:`<h3>Become a member for ${ksh(MEMB)}</h3><p class="sub" style="margin:6px 0 12px">Unlock wholesale member prices on everyday items, order for campus collection or hostel delivery, and get support from the team. This is an access pass with clear benefits. It is not an investment and does not guarantee income.</p><button class="btn p" id="cjoin" style="width:100%">Join for ${ksh(MEMB)}</button>`}
@@ -1503,7 +1511,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-core.js?v=op3"></script><script src="cc-site.js?v=3" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1" defer></script>
+<script src="cc-core.js?v=op4"></script><script src="cc-site.js?v=3" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1b" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

@@ -77,7 +77,10 @@ export async function payRoutes(req, env, url, ip) {
   if (path === '/api/tinypesa/callback' && req.method === 'POST') {
     if (!env.CALLBACK_SECRET || !tsEqual(url.searchParams.get('s') || '', env.CALLBACK_SECRET)) return new Response('no', { status: 403 });
     const body = await req.json().catch(() => ({}));
-    const cb = body?.Body?.stkCallback;
+    // TinyPesa forwards the Safaricom result. Find it even when it is wrapped in another object.
+    const findCb = (o, d = 0) => { if (!o || typeof o !== 'object' || d > 3) return null; if (o.stkCallback) return o.stkCallback; for (const v of Object.values(o)) { const r = findCb(v, d + 1); if (r) return r; } return null; };
+    const cb = findCb(body);
+    console.log('tinypesa callback:', cb ? `ResultCode=${cb.ResultCode} checkout=${String(cb.CheckoutRequestID || '').slice(0, 14)}` : 'UNRECOGNISED shape ' + JSON.stringify(body).slice(0, 400));
     if (!cb) return json(env, { ok: true });
     const checkout = String(cb.CheckoutRequestID || '');
     if (cb.ResultCode !== 0) {
@@ -100,6 +103,7 @@ export async function payRoutes(req, env, url, ip) {
       if (!late && phone) [late] = await rows(await sb(env, `payments?status=eq.expired&phone=eq.${phone}&amount=eq.${amount}&created_at=gte.${ago(24 * 3600e3)}&order=created_at.desc&limit=1`));
       if (late && amount >= late.amount) await patch(env, `payments?id=eq.${late.id}&status=eq.expired`, { status: 'submitted', receipt, checkout_id: checkout });
     }
+    if (!p && !receipt) console.log('tinypesa callback: no pending payment matched');
     if (p) {
       const good = amount >= p.amount && !!receipt;
       const upd = await rows(await patch(env, `payments?id=eq.${p.id}&status=eq.pending`,

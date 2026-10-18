@@ -1087,7 +1087,7 @@ dm.onclick=e=>{if(e.target===dm)shut()};addEventListener('keydown',e=>{if(e.key=
 $$('#dm .pl .act').forEach(b=>b.onclick=()=>{$$('#dm .pl .act').forEach(x=>x.classList.toggle('sel',x===b));plan={pr:+b.dataset.pr,du:b.dataset.du}});
 $('#s1').onclick=()=>{if(ME.credits>0){ME.credits--;saveMe();$('#ok').textContent='Free boost used. Your post is pinned for '+plan.du+'.';stp(4)}else stp(2)};
 $('#s2').onclick=()=>{const v=$('#ph').value.replace(/\s/g,'');if(!/^(07|01)\d{8}$/.test(v))return $('#pe').textContent='Enter a Safaricom or Airtel number like 0712345678.';
- stp(3);ccRun(v,plan.pr,'boost',tgt&&tgt._id,()=>{$('#ok').textContent='Paid KSh '+plan.pr+'. Your post is pinned for '+plan.du+'.';stp(4)},m=>{$('#pe').textContent=m;stp(2)})};
+ stp(3);ccRun(v,plan.pr,'boost',tgt&&tgt._id,()=>{$('#ok').textContent='Payment received. KSh '+plan.pr+'. Your post is pinned for '+plan.du+'.';stp(4);if(window.ccTick)ccTick($('#ok'))},m=>{$('#pe').textContent=m;stp(2)})};
 $('#s4').onclick=async()=>{if(tgt){tgt.boosted=true;save();shut();await load(true);scrollTo({top:$('#tabs').offsetTop-90,behavior:'smooth'})}else{shut();toast('Post something first, then boost it from your card.')}};
 
 /* ---------- tabs ---------- */

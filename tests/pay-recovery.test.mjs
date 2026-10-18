@@ -58,3 +58,16 @@ test('automatic mode without TINYPESA_USERNAME refuses cleanly', async (t) => {
   const r = await w.call('POST', '/api/pay', { as: a, body: { purpose: 'topup', amount: 50, phone: '0712345678' } });
   assert.equal(r.status, 503);
 });
+
+test('a callback wrapped inside another object is still understood and completes the payment', async (t) => {
+  const w = await fresh(t);
+  const a = await w.user('a');
+  const r = await w.call('POST', '/api/pay', { as: a, body: { purpose: 'topup', amount: 50, phone: '0712345678' } });
+  const p = w.row('payments', (x) => x.id === r.data.id);
+  const wrapped = { data: { Body: { stkCallback: { CheckoutRequestID: p.request_id, ResultCode: 0, CallbackMetadata: { Item: [{ Name: 'Amount', Value: 50 }, { Name: 'MpesaReceiptNumber', Value: 'WRAP123456' }, { Name: 'PhoneNumber', Value: 254712345678 }] } } } } };
+  const cb = await w.call('POST', '/api/tinypesa/callback?s=cb-secret', { body: wrapped });
+  assert.equal(cb.status, 200);
+  const after = w.row('payments', (x) => x.id === p.id);
+  assert.equal(after.status, 'paid');
+  assert.equal(after.receipt, 'WRAP123456');
+});

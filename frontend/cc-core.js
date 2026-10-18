@@ -347,8 +347,8 @@ $('#bpay').onclick = async () => {
     await waitPaid(d.id);
     try { localStorage.removeItem('cc_pending'); } catch (e) {}
     S.list = S.list.filter((x) => x.id !== l.id);
-    $('#bok').textContent = 'Paid ' + kes(l.price) + '. It is held safely in escrow.';
-    bs(4); loadOrders(true);
+    $('#bok').textContent = 'Payment received. ' + kes(l.price) + ' for ' + l.title + ' is held safely in escrow. Tap Done to see it under Orders.';
+    bs(4); ccTick($('#bok')); loadOrders(true);
   } catch (e) {
     if (e.pending) { toast(e.message); shut(); S.sub = 'orders'; draw(); loadOrders(); }
     else { $('#bpe').textContent = e.message; bs(2); }
@@ -984,17 +984,36 @@ function askCode(id, man) {
 /* Waits until a payment is paid. Automatic mode: waits for the M-Pesa prompt. Manual mode: asks for the code, then tells the buyer an admin is checking. */
 async function waitPaid(id) {
   let st = null, asked = false;
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 60; i++) {
     if (i) await sleep(3000);
     try { st = await call('/api/pay/status?id=' + encodeURIComponent(id), { auth: false }); } catch (e) { continue; }
     if (st.manual && !asked) { asked = true; await askCode(id, st.manual); i = -1; continue; }
     if (st.status === 'submitted') { const e = new Error('Code received. We are checking your payment. It shows under Orders and Wallet once confirmed, usually within a few minutes.'); e.pending = true; throw e; }
     if (st.status !== 'pending') break;
   }
-  if (!st || st.status === 'pending') throw new Error('No confirmation yet. If M-Pesa took your money, keep the SMS and check again in a few minutes.');
+  if (!st || st.status === 'pending') { const e = new Error('We have not had the M-Pesa confirmation yet. If you entered your PIN, your order appears under Orders as soon as it is confirmed. Keep the M-Pesa SMS.'); e.pending = true; throw e; }
   if (st.status === 'underpaid') throw new Error('The amount paid was less than required. Keep your M-Pesa message and contact support.');
   if (st.status !== 'paid') throw new Error('Payment was cancelled or failed. If you did pay, keep your M-Pesa message and contact support.');
 }
+// Animated "payment received" tick for every success screen. It plays once; with reduced motion it simply appears.
+window.ccTick = function (before) {
+  if (!before || !before.parentNode) return;
+  if (!document.getElementById('cc-tick-css')) {
+    const st = document.createElement('style'); st.id = 'cc-tick-css';
+    st.textContent = '.cc-tick{width:92px;height:92px;margin:10px auto 2px;display:block}'
+      + '.cc-tick .r{fill:none;stroke:#22c55e;stroke-width:4;opacity:0;transform-origin:50% 50%;animation:cct-ring .9s ease-out}'
+      + '.cc-tick .c{fill:rgba(34,197,94,.14);stroke:#22c55e;stroke-width:4;stroke-dasharray:264;stroke-dashoffset:0;transform-origin:50% 50%;animation:cct-circ .55s ease-out,cct-pop .5s .45s ease-out}'
+      + '.cc-tick .k{fill:none;stroke:#22c55e;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:0;animation:cct-draw .4s .45s ease-out backwards}'
+      + '@keyframes cct-circ{from{stroke-dashoffset:264}}@keyframes cct-draw{from{stroke-dashoffset:60}}'
+      + '@keyframes cct-pop{50%{transform:scale(1.08)}}@keyframes cct-ring{from{transform:scale(.7);opacity:.7}to{transform:scale(1.35);opacity:0}}';
+    document.head.appendChild(st);
+  }
+  const old = before.parentNode.querySelector('.cc-tick'); if (old) old.remove();
+  const d = document.createElement('div');
+  d.innerHTML = '<svg class="cc-tick" viewBox="0 0 100 100" role="img" aria-label="Payment received"><circle class="r" cx="50" cy="50" r="42"/><circle class="c" cx="50" cy="50" r="42"/><path class="k" d="M30 52l13 13 27-29"/></svg>';
+  before.parentNode.insertBefore(d.firstChild, before);
+  try { if (navigator.vibrate) navigator.vibrate([30, 40, 30]); } catch (e) { /* not supported */ }
+};
 function payNow(o) {
   const mx = o.qtyMax || 1;
   const m = sheet('<h3>' + esc(o.title) + '</h3><div id="ccpf">' + (o.note ? '<p class="note" style="margin-top:6px">' + esc(o.note) + '</p>' : '')
@@ -1017,7 +1036,7 @@ function payNow(o) {
     try {
       const d = await o.start(v, qty()); ST.set('cc_phone', v);
       await waitPaid(d.id);
-      q('#ccpm').textContent = 'Paid ' + kes(o.unit * qty()) + '. ' + o.done; show('d');
+      q('#ccpm').textContent = 'Payment received. ' + kes(o.unit * qty()) + '. ' + o.done; show('d'); ccTick(q('#ccpm'));
       try { await o.after(); } catch (e) { /* the lists refresh next time */ }
     } catch (e) { if (e.pending) { q('#ccpm').textContent = e.message; show('d'); try { await o.after(); } catch (x) { /* refreshes later */ } } else { q('#ccpe').textContent = e.message; show('f'); } }
     busy = false;

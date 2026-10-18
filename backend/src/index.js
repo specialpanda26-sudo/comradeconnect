@@ -15,6 +15,7 @@ import { settingsRoutes } from './settings.js';
 import { siteContentRoutes } from './sitecontent.js';
 import { trustRoutes } from './trust.js';
 import { pointsRoutes } from './points.js';
+import { reconcilePayouts } from './payouts.js';
 import { giveBack } from './points.js';
 import { pruneMedia } from './media.js';
 import * as store from './storage.js';
@@ -83,6 +84,7 @@ export async function runCron(env) {
   out.released = await autoReleaseOrders(env);
   out.referrals = await unlockReferrals(env);
   out.clubExpired = await expireClubOrders(env);
+  out.payouts = await reconcilePayouts(env).catch((e) => { console.error('payout reconcile error', e && e.message); return -1; });
   out.intasendChecked = await reconcileIntasend(env).catch((e) => { console.error('intasend reconcile error', e && e.message); return -1; });   // before expiring, so a paid prompt is never expired by mistake
   const stale = await markFailed(env, `payments?status=eq.pending&created_at=lte.${ago(Number(env.PENDING_MINUTES || (manualMode(env) ? 90 : 30)) * 60e3)}`, 'expired', 'no_response', null);
   for (const p of stale) await hooks.onFailed(env, p);

@@ -716,3 +716,10 @@ do $$ begin
 exception when others then null; end $$;
 alter table payments add column if not exists credit_ksh integer not null default 0;
 alter table orders add column if not exists credit_ksh integer not null default 0;
+
+-- ---------- automatic payouts (IntaSend Send Money) ----------
+alter table withdrawals add column if not exists payout_tracking text;
+do $$ begin
+  alter table withdrawals drop constraint if exists withdrawals_status_check;
+  alter table withdrawals add constraint withdrawals_status_check check (status in ('requested','sending','paid','rejected'));
+exception when others then null; end $$;

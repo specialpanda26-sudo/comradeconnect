@@ -2,6 +2,7 @@
 import { json, err, sb, rows, one, post, patch, enc, str, int, UUID, H, tsEqual, randHex, throttle, tooMany, user, authProfile, contactBlock, ahead, DAY } from './lib.js';
 import { credit } from './pay.js';
 import { getSettings, withdrawFee, publicConfig } from './settings.js';
+import { trySendNow, reconcilePayouts } from './payouts.js';
 
 export async function balance(env, aid) {
   const r = await sb(env, 'rpc/wallet_balance', { method: 'POST', body: JSON.stringify({ p: aid }) });
@@ -128,6 +129,7 @@ export async function accountRoutes(req, env, url, ip) {
   // ---------- wallet ----------
   if (path === '/api/wallet' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;
+    await reconcilePayouts(env, u.aid).catch(() => {});          // pick up the result of automatic payouts
     const ledger = await rows(await sb(env, `wallet_ledger?select=delta,kind,status,note,created_at&aid=eq.${enc(u.aid)}&order=created_at.desc&limit=50`));
     const wd = await rows(await sb(env, `withdrawals?select=id,amount,fee,net,status,payout_ref,created_at&aid=eq.${enc(u.aid)}&order=created_at.desc&limit=20`));
     return json(env, { balance: await balance(env, u.aid), ledger, withdrawals: wd, rules: publicConfig(await getSettings(env)) });
@@ -149,7 +151,8 @@ export async function accountRoutes(req, env, url, ip) {
       await patch(env, `withdrawals?id=eq.${w.id}`, { status: 'rejected' });
       return err(env, 'Not enough available balance');
     }
-    return json(env, { id: w.id, status: 'requested', fee, net: amount - fee }, 201);
+    const how = await trySendNow(env, w).catch((e) => { console.error('payout error', e && e.message); return 'manual'; });
+    return json(env, { id: w.id, status: how === 'sending' ? 'sending' : 'requested', fee, net: amount - fee }, 201);
   }
   // The seller can take back a request the admin has not paid yet. One conditional UPDATE, so cancel and "paid" can never both win.
   const wc = path.match(/^\/api\/wallet\/withdraw\/([0-9a-f-]{36})\/cancel$/);

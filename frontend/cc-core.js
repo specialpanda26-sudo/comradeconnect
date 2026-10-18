@@ -297,7 +297,7 @@ function draw() {
     $('#wb').textContent = S.wallet ? kes(bal) : '...'; $('#wd').disabled = !bal;
     let w = document.getElementById('wlg'); if (!w) { $('#mord .box').insertAdjacentHTML('afterend', '<div id="wlg"></div>'); w = document.getElementById('wlg'); }
     const wds = S.wallet ? S.wallet.withdrawals || [] : [];
-    w.innerHTML = wds.length ? '<div class="box g" style="margin-top:14px"><h3>Withdrawals</h3>' + wds.slice(0, 5).map((x) => '<div class="rw"><span>' + kes(x.amount) + '<small>' + (x.fee ? 'Fee ' + kes(x.fee) + ', you get ' + kes(x.net) + '. ' : '') + ago(Date.parse(x.created_at)) + '</small></span><b>' + ({ requested: 'Waiting for admin', paid: 'Paid', rejected: 'Rejected, money returned' }[x.status] || esc(x.status)) + '</b>' + (x.status === 'requested' ? '<button class="act" data-wdc="' + esc(x.id) + '">Cancel</button>' : '') + '</div>' + wdTrack(x)).join('') + '</div>' : '';
+    w.innerHTML = wds.length ? '<div class="box g" style="margin-top:14px"><h3>Withdrawals</h3>' + wds.slice(0, 5).map((x) => '<div class="rw"><span>' + kes(x.amount) + '<small>' + (x.fee ? 'Fee ' + kes(x.fee) + ', you get ' + kes(x.net) + '. ' : '') + ago(Date.parse(x.created_at)) + '</small></span><b>' + ({ requested: 'Waiting for admin', sending: 'Sending to M-Pesa', paid: 'Paid', rejected: 'Rejected, money returned' }[x.status] || esc(x.status)) + '</b>' + (x.status === 'requested' ? '<button class="act" data-wdc="' + esc(x.id) + '">Cancel</button>' : '') + '</div>' + wdTrack(x)).join('') + '</div>' : '';
     let h = S.orders.map((o) => {
       const buy = o.role === 'buyer', r = buy ? 0 : 1, live = o.status === 'held' || o.status === 'handed';
       let main = '', info = '';
@@ -400,7 +400,7 @@ function wdTrack(x) {
   stepsCss();
   const paid = x.status === 'paid', rej = x.status === 'rejected';
   return '<div class="cs-l cs-m">' + stepLi('d', 'Request sent', ago(Date.parse(x.created_at)))
-    + stepLi(paid ? 'd' : rej ? 'f' : 'a', rej ? 'Rejected' : paid ? 'Approved by admin' : 'Admin is sending it to your M-Pesa', rej ? 'The money is back in your wallet' : paid ? '' : 'This is done by hand, usually within a day')
+    + stepLi(paid ? 'd' : rej ? 'f' : 'a', rej ? 'Rejected' : paid ? 'Approved' : x.status === 'sending' ? 'Sending to your M-Pesa now' : 'Admin is sending it to your M-Pesa', rej ? 'The money is back in your wallet' : paid ? '' : x.status === 'sending' ? 'This usually takes under a minute' : 'This is done by hand, usually within a day')
     + (rej ? '' : stepLi(paid ? 'd' : '', 'Money sent to your M-Pesa', paid && x.payout_ref ? 'M-Pesa ref ' + esc(x.payout_ref) : '')) + '</div>';
 }
 
@@ -587,7 +587,7 @@ $('#wd').onclick = async () => {
     if (!(amount >= CFG.min && amount <= Math.min(bal, CFG.max))) return (er.textContent = 'Enter an amount from ' + kes(CFG.min) + ' up to ' + kes(Math.min(bal, CFG.max)));
     if (!/^(07|01)\d{8}$/.test(phone)) return (er.textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
     const g = m.querySelector('#ccw-go'); g.disabled = true;
-    try { await call('/api/wallet/withdraw', { body: { amount, phone } }); ST.set('cc_phone', phone); m.close(); toast('Request sent. An admin will pay it out.'); loadOrders(); }
+    try { const wr = await call('/api/wallet/withdraw', { body: { amount, phone } }); ST.set('cc_phone', phone); m.close(); toast(wr.status === 'sending' ? 'Sending to your M-Pesa now.' : 'Request sent. An admin will pay it out.'); loadOrders(); }
     catch (err) { er.textContent = err.message; g.disabled = false; }
   };
 };

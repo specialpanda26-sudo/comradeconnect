@@ -30,8 +30,8 @@ export const manualMode = (env) => payMode(env) === 'manual';
 const IS_PREFIX = 'is:';   // IntaSend invoice ids are stored in payments.request_id as "is:INVOICEID" so they are never confused with TinyPesa ids
 export const intaKey = (env) => String(env.INTASEND_SECRET_KEY || '').trim();
 export const intaReady = (env) => !!intaKey(env);
-const intaBase = (env) => String(env.INTASEND_BASE_URL || (String(env.INTASEND_TEST || '') === '1' ? 'https://sandbox.intasend.com' : 'https://payment.intasend.com')).replace(/\/$/, '');
-const intaHead = (env) => ({ 'Content-Type': 'application/json', Authorization: 'Bearer ' + intaKey(env) });
+export const intaBase = (env) => String(env.INTASEND_BASE_URL || (String(env.INTASEND_TEST || '') === '1' ? 'https://sandbox.intasend.com' : 'https://payment.intasend.com')).replace(/\/$/, '');
+export const intaHead = (env) => ({ 'Content-Type': 'application/json', Authorization: 'Bearer ' + intaKey(env) });
 
 // Sends the M-Pesa prompt. api_ref is OUR payment id, so every webhook and status answer names the payment it belongs to. Returns the invoice or null.
 async function intaPush(env, row, phone, amount) {

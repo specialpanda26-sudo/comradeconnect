@@ -7,10 +7,12 @@ function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c
 function https(u) { return /^https:\/\/[^\s<>"']+$/i.test(u || ''); }
 function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
 var st = el('style'); st.textContent =
-'#cch{position:fixed;right:12px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:950;display:flex;flex-direction:column;gap:10px}' +
-'#cch button{all:unset;cursor:pointer;position:relative;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:var(--bg,#000);color:var(--fg,#fff);border:1px solid var(--line,rgba(255,255,255,.25));box-shadow:0 8px 22px rgba(0,0,0,.4)}' +
+'#cch{position:fixed;inset:0;z-index:950;pointer-events:none}' +
+'#cch button{all:unset;cursor:pointer;pointer-events:auto;position:fixed;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--bg,#000);color:var(--fg,#fff);border:1px solid var(--line,rgba(255,255,255,.25));box-shadow:0 8px 22px rgba(0,0,0,.4)}' +
+'#cch button svg{width:29px;height:29px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}' +
+'#cch button:first-child{right:12px;bottom:calc(154px + env(safe-area-inset-bottom,0px))}' +
 '#cch button:focus-visible{outline:2px solid var(--fg,#fff);outline-offset:2px}#cch i{position:absolute;top:4px;right:4px;width:11px;height:11px;border-radius:50%;background:#ef4444;border:2px solid var(--bg,#000)}' +
-'html[data-lay="desktop"] #cch{bottom:20px}' +
+'html[data-lay="desktop"] #cch button:first-child{bottom:76px;right:20px}' +
 '#ccp{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(520px,100%);max-height:78vh;display:flex;flex-direction:column;z-index:960;background:var(--bg,#000);color:var(--fg,#fff);border:1px solid var(--line,rgba(255,255,255,.2));border-radius:24px 24px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.5);padding-bottom:env(safe-area-inset-bottom,0)}' +
 '#ccp .h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;font-weight:700}#ccp .h button{all:unset;cursor:pointer;font-size:22px;padding:4px 10px}' +
 '#ccp .tabs{display:flex;gap:6px;padding:0 14px 8px}#ccp .tabs button{all:unset;cursor:pointer;flex:1;text-align:center;padding:8px;border-radius:14px;font-size:13px;border:1px solid var(--line,rgba(255,255,255,.2))}#ccp .tabs .on{background:var(--fg,#fff);color:var(--bg,#000);font-weight:700}' +
@@ -22,9 +24,10 @@ var st = el('style'); st.textContent =
 document.head.appendChild(st);
 
 var box = el('div'); box.id = 'cch';
-var bell = el('button', '', '\uD83D\uDD14'), bot = el('button', '', '\uD83E\uDD16');
-bell.type = bot.type = 'button'; bell.setAttribute('aria-label', 'Notifications'); bot.setAttribute('aria-label', 'Support and AI help');
-box.appendChild(bell); box.appendChild(bot);
+var bell = el('button');
+bell.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>';
+bell.type = 'button'; bell.setAttribute('aria-label', 'Notifications');
+box.appendChild(bell);
 
 function notices() {
   var a = [];
@@ -98,7 +101,7 @@ function bots(tab) {
   }
 }
 bell.onclick = function () { open && open.getAttribute('aria-label') === 'Notifications' ? close() : showBell(); };
-bot.onclick = function () { open && open.getAttribute('aria-label') === 'Support' ? close() : bots(0); };
+document.addEventListener('cc-open-support', function () { bots(0); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
 
 function load() {

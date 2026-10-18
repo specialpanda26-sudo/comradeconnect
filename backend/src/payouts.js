@@ -1,20 +1,27 @@
-// Automatic seller payouts through IntaSend "Send Money" (M-Pesa B2C). Off unless PAYOUT_MODE=intasend and INTASEND_SECRET_KEY are set,
-// so nothing changes until you switch it on. Anything the automation cannot or should not send (small, large, over the daily limit,
-// refused by IntaSend) simply stays in the admin "Withdrawals" queue exactly as before.
+// Automatic seller payouts through IntaSend "Send Money" (M-Pesa B2C). ON by default as soon as INTASEND_SECRET_KEY is set
+// (set PAYOUT_MODE=manual to switch it off). No admin is involved: anything IntaSend refuses, or that is under the minimum or over the
+// daily limit, is rejected on the spot and the money goes straight back to the wallet. Only an UNCLEAR answer (no reply from IntaSend)
+// is held as "sending" and checked later, so nothing is ever sent twice.
 // Lifecycle: requested -> sending (claimed by ONE conditional update, so it can never be sent twice) -> paid | rejected (money returned).
 import { sb, rows, patch, enc, ago } from './lib.js';
 import { credit, intaKey, intaBase, intaHead } from './pay.js';
 
-export const autoPayout = (env) => String(env.PAYOUT_MODE || 'manual').trim().toLowerCase() === 'intasend' && !!intaKey(env);   // paying OUT needs the secret key; the publishable key cannot send money
+export const autoPayout = (env) => String(env.PAYOUT_MODE || 'intasend').trim().toLowerCase() !== 'manual' && !!intaKey(env);   // paying OUT needs the secret key; the publishable key cannot send money
 const num = (v, d) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : d; };
 
-// Called right after a withdrawal request is saved and the wallet debited. Returns 'sending' or 'manual'.
+// Reject a request on the spot and return the money (one conditional update, so it can only happen once).
+async function giveBack(env, w, note) {
+  const [x] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&status=in.(requested,sending)`, { status: 'rejected', decided_by: 'auto', decided_at: new Date().toISOString() }));
+  if (x) await credit(env, x.aid, x.amount, 'adjustment', 'wdrej:' + x.id, note);
+}
+// Called right after a withdrawal request is saved and the wallet debited.
+// Returns 'sending' | 'manual' (automatic payouts are off) | 'toosmall' | 'limit' | 'refused' (the last three: money already returned).
 export async function trySendNow(env, w) {
   if (!autoPayout(env)) return 'manual';
   const net = w.net ?? w.amount;
-  if (net < num(env.PAYOUT_AUTO_MIN, 10)) return 'manual';                       // M-Pesa B2C has its own minimum; tiny ones are paid by hand
+  if (net < num(env.PAYOUT_AUTO_MIN, 10)) { await giveBack(env, w, 'Withdrawal below the M-Pesa minimum, money returned'); return 'toosmall'; }
   const today = await rows(await sb(env, `withdrawals?select=amount&aid=eq.${enc(w.aid)}&status=in.(sending,paid)&created_at=gte.${ago(24 * 3600e3)}`));
-  if (today.reduce((s, x) => s + x.amount, 0) + w.amount > num(env.PAYOUT_AUTO_DAILY_MAX, 5000)) return 'manual';   // big amounts get a human look
+  if (today.reduce((s, x) => s + x.amount, 0) + w.amount > num(env.PAYOUT_AUTO_DAILY_MAX, 150000)) { await giveBack(env, w, 'Daily withdrawal limit reached, money returned'); return 'limit'; }
   const [claimed] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&status=eq.requested`, { status: 'sending' }));
   if (!claimed) return 'manual';
   const r = await fetch(`${intaBase(env)}/api/v1/send-money/initiate/`, {
@@ -24,10 +31,10 @@ export async function trySendNow(env, w) {
   const t = r ? await r.json().catch(() => ({})) : {};
   if (r && r.ok && t.tracking_id) { await patch(env, `withdrawals?id=eq.${w.id}`, { payout_tracking: String(t.tracking_id) }); return 'sending'; }
   console.error('payout: IntaSend did not accept', w.id, r ? r.status : 'no response', JSON.stringify(t).slice(0, 200));
-  // A clear refusal (4xx: no funds, not enabled...) means nothing was sent: back to the manual queue.
+  // A clear refusal (4xx: no funds, not enabled...) means nothing was sent: the money goes straight back to the wallet.
   // No answer or a 5xx is unclear: it stays "sending" and the checker below decides, so it is never sent twice.
-  if (r && r.status >= 400 && r.status < 500) await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending`, { status: 'requested' });
-  return r && r.status >= 400 && r.status < 500 ? 'manual' : 'sending';
+  if (r && r.status >= 400 && r.status < 500) { await giveBack(env, w, 'Payout could not be sent, money returned'); return 'refused'; }
+  return 'sending';
 }
 
 // Ask IntaSend what happened to one "sending" withdrawal. Safe to call any number of times.

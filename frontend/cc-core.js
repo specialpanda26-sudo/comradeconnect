@@ -410,7 +410,7 @@ function wdSteps(box, amount, phone) {
   stepsCss();
   let at = 0, dead = false, manual = false;
   const T = () => [['Sending your request', 'To ' + esc(phone)], ['Request received', kes(amount) + ' is set aside from your wallet'],
-    [manual ? 'Admin is sending it to your M-Pesa' : 'Sending to your M-Pesa now', manual ? 'This is done by hand, usually within a day' : 'This usually takes under a minute'], ['Money sent to your M-Pesa', kes(amount) + ' (less any fee) is on its way to ' + esc(phone)]];
+    [manual ? 'Being sent to your M-Pesa' : 'Sending to your M-Pesa now', manual ? 'Taking a little longer than usual. You can close this, we will tell you when it lands' : 'This usually takes under a minute'], ['Money sent to your M-Pesa', kes(amount) + ' (less any fee) is on its way to ' + esc(phone)]];
   const draw = (bad, last) => {
     box.innerHTML = '<p class="cs-h">Withdrawing<b>' + kes(amount) + '</b></p><div class="cs-l" role="status" aria-live="polite">'
       + T().map((x, i) => stepLi(bad && i === at ? 'f' : i < at || at === 4 ? 'd' : i === at ? 'a' : '', i === 3 && last ? last[0] : x[0], i === 3 && last ? last[1] : x[1])).join('') + '</div>';
@@ -447,7 +447,7 @@ function wdTrack(x) {
   stepsCss();
   const paid = x.status === 'paid', rej = x.status === 'rejected';
   return '<div class="cs-l cs-m">' + stepLi('d', 'Request sent', ago(Date.parse(x.created_at)))
-    + stepLi(paid ? 'd' : rej ? 'f' : 'a', rej ? 'Rejected' : paid ? 'Approved' : x.status === 'sending' ? 'Sending to your M-Pesa now' : 'Admin is sending it to your M-Pesa', rej ? 'The money is back in your wallet' : paid ? '' : x.status === 'sending' ? 'This usually takes under a minute' : 'This is done by hand, usually within a day')
+    + stepLi(paid ? 'd' : rej ? 'f' : 'a', rej ? 'Could not be sent' : paid ? 'Approved' : x.status === 'sending' ? 'Sending to your M-Pesa now' : 'Being sent to your M-Pesa', rej ? 'The money is back in your wallet' : paid ? '' : x.status === 'sending' ? 'This usually takes under a minute' : 'Taking a little longer than usual')
     + (rej ? '' : stepLi(paid ? 'd' : '', 'Money sent to your M-Pesa', paid && x.payout_ref ? 'M-Pesa ref ' + esc(x.payout_ref) : '')) + '</div>';
 }
 
@@ -623,7 +623,7 @@ $('#wd').onclick = async () => {
   const bal = S.wallet ? S.wallet.balance : 0; if (!bal) return;
   if (!idOK()) return needId();
   if (typeof bioGate === 'function' && !(await bioGate())) return toast('Fingerprint check failed');
-  const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. An admin sends the money to your M-Pesa and marks it paid. It is not instant. Smallest withdrawal: ' + kes(CFG.min) + '. Largest: ' + kes(CFG.max) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
+  const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. The money is sent straight to your M-Pesa, usually within a minute. Smallest withdrawal: ' + kes(CFG.min) + '. Largest: ' + kes(CFG.max) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
     + '<div class="fld" style="margin-top:10px"><input id="ccwa" type="number" inputmode="numeric" value="' + Math.min(bal, CFG.max) + '" aria-label="Amount in KSh"></div>'
     + '<div class="fld"><input id="ccwp" inputmode="numeric" maxlength="12" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'
     + '<p class="sub" id="ccw-e" style="color:#f87171;min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');

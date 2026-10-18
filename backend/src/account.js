@@ -156,6 +156,9 @@ export async function accountRoutes(req, env, url, ip) {
       return err(env, 'Not enough available balance');
     }
     const how = await trySendNow(env, w).catch((e) => { console.error('payout error', e && e.message); return 'manual'; });
+    if (how === 'toosmall') return err(env, 'That is below the smallest amount M-Pesa can send. Your money is still in your wallet.');
+    if (how === 'limit') return err(env, 'You have reached the daily withdrawal limit. Your money is still in your wallet. Try again tomorrow.');
+    if (how === 'refused') return err(env, 'We could not send to M-Pesa right now. Your money is still in your wallet. Please try again in a few minutes.', 502);
     return json(env, { id: w.id, status: how === 'sending' ? 'sending' : 'requested', fee, net: amount - fee }, 201);
   }
   // The seller can take back a request the admin has not paid yet. One conditional UPDATE, so cancel and "paid" can never both win.

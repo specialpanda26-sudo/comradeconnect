@@ -4,6 +4,7 @@
 import { json, err, sb, rows, post, patch, enc, int, ahead, throttle, tooMany, user, tsEqual, H } from './lib.js';
 import { getSettings, feeOf, withdrawFee, boostPlans } from './settings.js';
 import { payMode, tinyKeys, manualMode } from './pay.js';
+import { autoPayout } from './payouts.js';
 import { mailReady, sendMail } from './mail.js';
 
 export const TRUST_UPDATED = '2026-10-18';
@@ -54,7 +55,7 @@ export async function trustInfo(env, amount = 1000) {
       referral_reward: S.referral_reward, boost_plans: boostPlans(S),
       example: { sale: amount, fee, seller_receives: sellerGets, withdrawal_fee: wFee, seller_net_to_mpesa: Math.max(0, sellerGets - wFee) },
     },
-    payouts: { method: 'M-Pesa, sent by our team to the number on your withdrawal request', manual: true, target_hours: Math.max(1, Math.floor(Number(env.PAYOUT_TARGET_HOURS) || 24)), cancel_until_paid: true },
+    payouts: { method: autoPayout(env) ? 'M-Pesa, sent automatically to the number on your withdrawal request' : 'M-Pesa, sent by our team to the number on your withdrawal request', manual: !autoPayout(env), target_hours: Math.max(1, Math.floor(Number(env.PAYOUT_TARGET_HOURS) || 24)), cancel_until_paid: true },
     escrow: {
       auto_release_days: S.escrow_auto_release_days, code_attempt_limit: 5,
       release_by: ['buyer gives the 6-digit code to the seller', 'buyer taps "I received it"', 'automatic release if the buyer stays silent after "handed over"', 'admin decision after a dispute'],

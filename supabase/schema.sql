@@ -686,3 +686,12 @@ create table if not exists email_verifications (
   sent_at timestamptz not null default now()
 );
 alter table email_verifications enable row level security;
+
+
+-- v16: item price limit follows the admin setting (up to KSh 250,000, the M-Pesa per-payment limit). Safe to run again.
+do $$ declare c text; begin
+  for c in select conname from pg_constraint where conrelid = 'listings'::regclass and contype = 'c' and pg_get_constraintdef(oid) ilike '%price%' loop
+    execute format('alter table listings drop constraint %I', c);
+  end loop;
+end $$;
+alter table listings add constraint listings_price_check check (price >= 1 and price <= 250000);

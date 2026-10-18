@@ -80,8 +80,9 @@ export async function marketRoutes(req, env, url, ip) {
     const contact_phone = normPhone(b.contact_phone);
     if (!contact_phone) return err(env, 'Add your phone number (like 0712345678). The buyer sees it only after they pay.');
     const blk = contactBlock(env, title, description, zone, condition); if (blk) return blk;
-    if (!(await throttle(env, ip, 'listing', u.aid, 5, 15))) return tooMany(env);
-    const l = await one(await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip }));
+    const live = (await getSettings(env)).listing_auto_publish === 1;
+    const l = await one(await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip,
+      ...(live ? { status: 'approved', approved_by: 'auto', approved_at: new Date().toISOString() } : {}) }));
     if (!l) return err(env, 'Could not save the listing', 500);
     return json(env, (await decorate(env, [l], u))[0], 201);
   }

@@ -274,7 +274,7 @@ function draw() {
   if (S.sub === 'browse') {
     const q = $('#mkq').value.trim().toLowerCase();
     const a = S.list.filter((l) => !q || (l.title + ' ' + (l.description || '')).toLowerCase().includes(q));
-    let h = a.map((l) => '<button class="mc g" data-id="' + esc(l.id) + '">' + pic(l) + '<div class="mb"><b>' + esc(l.title) + '</b><em>' + kes(l.price) + '</em><small>@' + esc(l.zone || 'Campus') + (l.condition ? ', ' + esc(l.condition) : '') + '</small><small class="mtr">' + SHLD + 'Admin checked</small><small class="mtr">' + esc(sellerBits(l).join(' \u00B7 ') || 'New seller') + '</small></div></button>').join('');
+    let h = a.map((l) => '<button class="mc g" data-id="' + esc(l.id) + '">' + pic(l) + '<div class="mb"><b>' + esc(l.title) + '</b><em>' + kes(l.price) + '</em><small>@' + esc(l.zone || 'Campus') + (l.condition ? ', ' + esc(l.condition) : '') + '</small><small class="mtr">' + SHLD + 'Escrow protected</small><small class="mtr">' + esc(sellerBits(l).join(' \u00B7 ') || 'New seller') + '</small></div></button>').join('');
     if (S.loading.browse && !S.list.length) h = loadingP;
     else if (S.error.browse) h += retry('browse');
     else if (!a.length) h = '<p class="sub" style="grid-column:1/3">' + (S.list.length ? 'Nothing matches. Try another word.' : 'No items yet. Sell the first one.') + '</p>';
@@ -341,7 +341,7 @@ $('#mgrid').onclick = (e) => { const b = e.target.closest('.mc'); if (b) openLis
 function openListing(id) {
   const l = S.list.find((x) => x.id === id) || S.mine.find((x) => x.id === id); if (!l) return;
   const strip = (l.photos || []).length > 1 ? '<div style="display:flex;gap:8px;overflow-x:auto;margin-top:8px">' + l.photos.slice(1).map((u) => '<img src="' + esc(u) + '" alt="" style="height:70px;border-radius:10px" loading="lazy">').join('') + '</div>' : '';
-  $('#mvb').innerHTML = pic(l, 1) + strip + '<div class="flex items-center justify-between" style="margin-top:14px"><b style="font-size:22px">' + kes(l.price) + '</b><span class="badge">Escrow protected</span></div><h3 style="margin:8px 0 4px;font-size:17px">' + esc(l.title) + '</h3><p class="note" style="margin-top:0">@' + esc(l.zone || 'Campus') + (l.condition ? ', ' + esc(l.condition) : '') + ', listed ' + ago(l.createdAt) + ' by @' + esc(l.seller ? l.seller.handle : 'Seller') + '</p><div class="mtb"><span class="badge">' + SHLD + 'Admin checked</span></div><p style="font-size:13px;line-height:1.7;margin:12px 0;overflow-wrap:anywhere">' + esc(l.description || 'No description.') + '</p>';
+  $('#mvb').innerHTML = pic(l, 1) + strip + '<div class="flex items-center justify-between" style="margin-top:14px"><b style="font-size:22px">' + kes(l.price) + '</b><span class="badge">Escrow protected</span></div><h3 style="margin:8px 0 4px;font-size:17px">' + esc(l.title) + '</h3><p class="note" style="margin-top:0">@' + esc(l.zone || 'Campus') + (l.condition ? ', ' + esc(l.condition) : '') + ', listed ' + ago(l.createdAt) + ' by @' + esc(l.seller ? l.seller.handle : 'Seller') + '</p><p style="font-size:13px;line-height:1.7;margin:12px 0;overflow-wrap:anywhere">' + esc(l.description || 'No description.') + '</p>';
   $('#mvbuy').hidden = !!l.mine || l.status !== 'approved'; $('#mvdm').hidden = !!l.mine; $('#mvbuy').dataset.id = id; $('#mvdm').dataset.id = id; openDm('mkview');
 }
 $('#mvdm').onclick = () => { const l = S.list.find((x) => x.id === $('#mvdm').dataset.id); if (!l) return; try { dmKey = 'mk:' + l.id; dmSnip = l.title; } catch (e) {} openDm('dm'); };
@@ -464,7 +464,7 @@ window.resetSell = () => {
   ['mti', 'mpr', 'mde'].forEach((i) => { $('#' + i).value = ''; });
   $('#mzo').innerHTML = ZONES.concat(['Other']).map((z) => '<option>' + esc(z) + '</option>').join('');
   $('#mcp').value = ST.get('cc_sellphone', '') || ST.get('cc_phone', '');
-  $('#msub').disabled = false; $('#msub').textContent = 'Submit for verification';
+  $('#msub').disabled = false; $('#msub').textContent = 'Post item';
 };
 $('#mprev').onclick = (e) => { const b = e.target.closest('[data-rp]'); if (!b) return; const p = S.photos.splice(+b.dataset.rp, 1)[0]; if (p) URL.revokeObjectURL(p.url); drawPrev(); };
 async function addPhoto(f) {
@@ -493,7 +493,7 @@ $('#msub').onclick = async () => {
   const t = $('#mti').value.trim(), p = Math.round(+$('#mpr').value), d = $('#mde').value.trim();
   if (t.length < 3) return toast('Add a title for your item');
   if (!(p >= CFG.pmin && p <= CFG.pmax)) return toast('Enter a price between KSh ' + CFG.pmin.toLocaleString('en-US') + ' and KSh ' + CFG.pmax.toLocaleString('en-US'));
-  if (!S.photos.length) return toast('Add at least one photo so the admin can verify it');
+  if (!S.photos.length) return toast('Add at least one photo so buyers can see the item');
   const cp = $('#mcp').value.replace(/[\s-]/g, '');
   if (!/^(07|01)\d{8}$/.test(cp) && !/^\+?254[17]\d{8}$/.test(cp)) return toast('Add your phone number like 0712345678. Buyers see it only after they pay.');
   const wh = wordHit(t + ' ' + d); if (wh) modLog('listing', t + ' ' + d);
@@ -507,12 +507,12 @@ $('#msub').onclick = async () => {
     const l = await call('/api/market/listings', { body: { title: t, description: d || 'No description.', price: p, zone: $('#mzo').value, condition: $('#mco').value, contact_phone: cp, category: ($('#mcat') || {}).value || 'General' } });
     id = l.id; ST.set('cc_sellphone', cp);
     for (let i = 0; i < S.photos.length; i++) { btn.textContent = 'Uploading photo ' + (i + 1) + ' of ' + S.photos.length + '...'; await uploadPhoto(id, S.photos[i].blob); }
-    shut(); S.sub = 'mine'; draw(); loadMine(); toast('Sent for admin verification');
+    shut(); S.sub = 'mine'; draw(); loadMine(); toast(l.status === 'approved' ? 'Your item is live' : 'Sent for admin verification');
   } catch (e) {
     if (id) { try { await call('/api/market/listings/' + id + '/remove', { body: {} }); } catch (x) {} }
     toast(e.message || 'Could not send your listing');
   }
-  S.sending = false; btn.disabled = false; btn.textContent = 'Submit for verification';
+  S.sending = false; btn.disabled = false; btn.textContent = 'Post item';
 };
 $('#msell').onclick = () => openDm('sell');
 

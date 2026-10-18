@@ -100,3 +100,19 @@ test('sponsors: amount, end date, pause, edit; notices and events can be edited'
   assert.equal(w.row('events', (x) => x.id === ev.data.id).ticket_price, null);
   assert.equal((await w.call('POST', `/api/admin/events/${ev.data.id}`, { admin: true, body: { action: 'update', date: '2099-13-45' } })).status, 400);
 });
+
+test('open market: no posting limit, items live at once, admin can remove, switch back to approval', async (t) => {
+  const w = await fresh(t, { env: { LISTING_AUTO_PUBLISH: '1' } });
+  const s = await w.user('s');
+  const post = (n) => w.call('POST', '/api/market/listings', { as: s, body: { title: 'Item ' + n, description: 'fine', price: 100 + n, contact_phone: '0722000111' } });
+  for (let i = 0; i < 12; i++) { const r = await post(i); assert.equal(r.status, 201, 'post ' + i); assert.equal(r.data.status, 'approved'); }
+  assert.equal((await w.call('GET', '/api/market/listings?limit=30')).data.listings.length, 12, 'all live without approval');
+  const live = (await w.call('GET', '/api/admin/listings-live', { admin: true })).data.listings;
+  assert.equal(live.length, 12);
+  assert.equal((await w.call('GET', '/api/admin/listings-live')).status, 403, 'admin only');
+  assert.equal((await w.call('POST', '/api/admin/listings/' + live[0].id, { admin: true, body: { action: 'remove' } })).status, 200);
+  assert.equal((await w.call('GET', '/api/market/listings?limit=30')).data.listings.length, 11, 'removed item is gone');
+  assert.equal((await save(w, { listing_auto_publish: 0 })).status, 200);
+  const p = await post(99); assert.equal(p.data.status, 'pending');
+  assert.equal((await w.call('GET', '/api/market/listings?limit=30')).data.listings.length, 11, 'pending stays hidden');
+});

@@ -468,7 +468,7 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
 
 <section class="view pg" id="v-market">
   <h2 class="ph">Market</h2>
-  <p class="sub">Buy and sell with other comrades. Real items, protected payments.</p><div class="box g mtrust"><div class="mt-h"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><div><b>Protected by escrow</b><small>Every listing is checked by an admin before it goes live</small></div></div><div class="mtb"><span class="badge">Money held in escrow</span><span class="badge">Seller paid after you confirm</span><span class="badge">Refunds reviewed by an admin</span></div></div>
+  <p class="sub">Buy and sell with other comrades. Real items, protected payments.</p><div class="box g mtrust"><div class="mt-h"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><div><b>Protected by escrow</b><small>Admins watch the Market and remove anything unsafe</small></div></div><div class="mtb"><span class="badge">Money held in escrow</span><span class="badge">Seller paid after you confirm</span><span class="badge">Refunds reviewed by an admin</span></div></div>
   <div class="seg g" id="mseg"><button class="on" data-s="browse">Browse</button><button data-s="mine">My listings</button><button data-s="orders">Orders</button></div>
   <div id="mbrowse" style="display:grid;gap:14px">
     <div class="fld"><input id="mkq" placeholder="Search beds, tables, fridges..." aria-label="Search the market"></div>
@@ -874,7 +874,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
   </section>
   <section data-v="sell" hidden>
     <div class="flex items-center justify-between"><h2>Sell an item</h2><button class="ib" id="dx5" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <p class="note">Take clear photos of the item (up to 5, in daylight). An admin checks every listing before it goes live. No weapons, drugs, alcohol, stolen goods or exam papers.</p>
+    <p class="note">Take clear photos of the item (up to 5, in daylight). Items go live straight away, and admins remove anything unsafe. No weapons, drugs, alcohol, stolen goods or exam papers.</p>
     <div class="two" style="margin-top:12px"><button class="btn g" id="mph">Take photo</button><button class="btn g" id="mgal">Choose from gallery</button></div>
         <input type="file" id="mphi" accept="image/*" capture="environment" hidden><input type="file" id="mgi" accept="image/*" hidden>
     <div id="mprev" style="margin-top:10px"></div>
@@ -886,7 +886,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
     <div class="fld"><input id="mcp" type="tel" inputmode="tel" maxlength="13" placeholder="Your phone number, e.g. 0712345678" aria-label="Your phone number"></div>
     <p class="note" style="margin-top:-4px">Buyers see this number only after they have paid. Until then it stays hidden.</p>
     <div class="fld"><textarea id="mde" maxlength="300" style="height:80px;resize:none" placeholder="Short description. No phone numbers." aria-label="Description"></textarea></div>
-    <button class="btn p" id="msub" style="width:100%;margin-top:18px">Submit for verification</button>
+    <button class="btn p" id="msub" style="width:100%;margin-top:18px">Post item</button>
   </section>
   <section data-v="mkview" hidden>
     <div class="flex items-center justify-between" style="margin-bottom:12px"><h2>Item</h2><button class="ib" id="dx7" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -1496,7 +1496,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-core.js?v=mt1"></script><script src="cc-site.js?v=2" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-market-plus.js?v=2" defer></script>
+<script src="cc-core.js?v=op1"></script><script src="cc-site.js?v=2" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-market-plus.js?v=2" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

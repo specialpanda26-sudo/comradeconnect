@@ -13,6 +13,7 @@ export const DEFS = {
   referral_reward: { env: 'REFERRAL_REWARD', def: 20, min: 0, max: 1000, unit: 'KSh', label: 'Referral reward', help: 'Paid to the inviter after the friend completes a purchase.' },
   listing_price_min: { env: 'LISTING_PRICE_MIN', def: 1, min: 1, max: 250000, unit: 'KSh', label: 'Lowest item price', help: 'Cheapest price a seller can put on a Market item. 1 means any price.' },
   listing_price_max: { env: 'LISTING_PRICE_MAX', def: 150000, min: 1, max: 250000, unit: 'KSh', label: 'Highest item price', help: 'Most a seller can ask for one Market item. M-Pesa allows at most 250,000 per payment.' },
+  listing_auto_publish: { env: 'LISTING_AUTO_PUBLISH', def: 1, min: 0, max: 1, unit: '', label: 'New items go live instantly (1 = yes, 0 = admin approves first)', help: '1: items appear on the Market as soon as they are posted and you remove anything unsafe in Live items. 0: every item waits for your approval.' },
   escrow_auto_release_days: { env: 'ESCROW_AUTO_RELEASE_DAYS', def: 3, min: 1, max: 14, unit: 'days', label: 'Auto-release after', help: 'Days after "handed over" before the seller is paid if the buyer says nothing.' },
 };
 

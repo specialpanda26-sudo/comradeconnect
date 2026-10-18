@@ -92,6 +92,12 @@ export async function adminRoutes(req, env, url, ip) {
     return json(env, { ok: true });
   }
 
+  if (path === '/api/admin/listings-live' && m === 'GET') {
+    const ls = await rows(await sb(env, 'listings?status=eq.approved&order=created_at.desc&limit=100'));
+    const ph = ls.length ? await rows(await sb(env, `media?select=listing_id,r2_key&kind=eq.listing_photo&status=eq.ready&listing_id=${inList(ls.map((l) => l.id))}`)) : [];
+    return json(env, { listings: ls.map((l) => ({ id: l.id, title: l.title, description: l.description, price: l.price, category: l.category, seller: l.seller_aid, createdAt: Date.parse(l.created_at), photos: ph.filter((p) => p.listing_id === l.id).map((p) => mediaUrl(env, p.r2_key)) })) });
+  }
+
   mm = path.match(/^\/api\/admin\/listings\/([0-9a-f-]{36})$/);
   if (mm && m === 'POST') {
     const b = await body(), act = b.action;

@@ -3,6 +3,7 @@ import { json, err, corsHeaders, sb, rows, patch, ago } from './lib.js';
 import { feedRoutes } from './feed.js';
 import { payRoutes, hooks, manualMode, markFailed, reconcileIntasend } from './pay.js';
 import { accountRoutes, unlockReferrals } from './account.js';
+import { ratingRoutes } from './ratings.js';
 import { marketRoutes, createOrderFromPayment, autoReleaseOrders } from './market.js';
 import { messageRoutes } from './messages.js';
 import { contentRoutes } from './content.js';
@@ -31,7 +32,7 @@ async function boostPost(env, p) {
 }
 hooks.onFailed = async (env, p) => { if (p.purpose === 'club') await restoreClubOrder(env, p.ref_id); };
 
-const ROUTES = [settingsRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, marketRoutes, messageRoutes, contentRoutes, liveRoutes, mediaRoutes, clubRoutes, adminRoutes];
+const ROUTES = [settingsRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, ratingRoutes, marketRoutes, messageRoutes, contentRoutes, liveRoutes, mediaRoutes, clubRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

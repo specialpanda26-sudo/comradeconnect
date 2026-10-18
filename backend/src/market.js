@@ -5,19 +5,21 @@ import { getSettings, feeOf } from './settings.js';
 
 const CATS = ['General', 'Electronics', 'Books', 'Clothes', 'Furniture', 'Food', 'Services', 'Other'];
 import { mediaUrl } from './storage.js';
+import { ratingMap, myRatings } from './ratings.js';
 
 async function decorate(env, list, me) {          // photos + seller handle, never the seller's aid
   if (!list.length) return [];
   const ids = list.map((l) => l.id), aids = [...new Set(list.map((l) => l.seller_aid))];
   const photos = await rows(await sb(env, `media?select=listing_id,r2_key&kind=eq.listing_photo&status=eq.ready&listing_id=${inList(ids)}&order=created_at.asc`));
   const profs = await rows(await sb(env, `profiles?select=aid,handle,verified&aid=${inList(aids)}`));
+  const rt = await ratingMap(env, aids);
   return list.map((l) => {
     const p = profs.find((x) => x.aid === l.seller_aid);
     return {
       id: l.id, title: l.title, description: l.description, category: l.category, price: l.price, zone: l.zone, condition: l.condition,
       status: l.status, reject_reason: me && me.aid === l.seller_aid ? l.reject_reason : undefined,
       photos: photos.filter((x) => x.listing_id === l.id).map((x) => mediaUrl(env, x.r2_key)),
-      seller: { handle: p?.handle || 'Seller', verified: !!p?.verified },
+      seller: { handle: p?.handle || 'Seller', verified: !!p?.verified, rating: rt[l.seller_aid] || null },
       contact_phone: me && me.aid === l.seller_aid ? l.contact_phone || undefined : undefined,
       mine: !!me && me.aid === l.seller_aid, createdAt: Date.parse(l.created_at),
     };
@@ -126,6 +128,7 @@ export async function marketRoutes(req, env, url, ip) {
     const a = enc(u.aid);
     const all = [...await rows(await sb(env, `orders?buyer_aid=eq.${a}&order=created_at.desc&limit=50`)), ...await rows(await sb(env, `orders?seller_aid=eq.${a}&order=created_at.desc&limit=50`))];
     const ls = all.length ? await rows(await sb(env, `listings?select=id,title,contact_phone&id=${inList(all.map((o) => o.listing_id))}`)) : [];
+    const mine = await myRatings(env, all.filter((o) => o.buyer_aid === u.aid && o.status === 'released').map((o) => o.id));
     const out = [];
     for (const o of all.sort((x, y) => (x.created_at < y.created_at ? 1 : -1))) {
       const buyer = o.buyer_aid === u.aid;
@@ -135,7 +138,7 @@ export async function marketRoutes(req, env, url, ip) {
         you_receive: buyer ? undefined : o.seller_amount, status: o.status, dispute_status: o.dispute_status, dispute_reason: o.dispute_reason,
         // only the buyer can see the handover code; the seller must be given it in person
         code: buyer && ['held', 'handed', 'disputed'].includes(o.status) ? await deriveCode(env, 'order', o.id, 6) : undefined,
-        handed_at: o.handed_at, auto_release_at: o.auto_release_at, released_at: o.released_at, refunded_at: o.refunded_at, createdAt: Date.parse(o.created_at),
+        my_rating: buyer ? mine[o.id] || null : undefined, handed_at: o.handed_at, auto_release_at: o.auto_release_at, released_at: o.released_at, refunded_at: o.refunded_at, createdAt: Date.parse(o.created_at),
       });
     }
     return json(env, { orders: out });

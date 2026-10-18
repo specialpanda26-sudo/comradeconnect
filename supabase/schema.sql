@@ -659,3 +659,13 @@ alter table listings add column if not exists contact_phone text;
 -- v13: why a payment failed (insufficient funds, cancelled, no PIN...). Safe to run again.
 alter table payments add column if not exists fail_reason text;
 alter table payments add column if not exists fail_code integer;
+
+-- v14: seller ratings, one per completed order (stars only). Safe to run again.
+create table if not exists seller_ratings (
+  order_id uuid primary key references orders(id) on delete cascade,
+  seller_aid text not null, buyer_aid text not null,
+  stars int not null check (stars between 1 and 5),
+  created_at timestamptz not null default now()
+);
+create index if not exists seller_ratings_seller on seller_ratings(seller_aid);
+alter table seller_ratings enable row level security;

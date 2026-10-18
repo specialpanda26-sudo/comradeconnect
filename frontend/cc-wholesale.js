@@ -160,7 +160,7 @@ function addWalletPay() {
     try {
       var d = await call('/api/market/buy', { body: { listing_id: id, pay_with: 'wallet', use_points: usePts } });
       try { shut(); } catch (x) {} say('Paid ' + kes(d.amount) + ' from your wallet. Your order is under Market > Orders.');
-      var o = document.querySelector('#mseg [data-s="orders"]'); if (o) o.click(); load();
+      var o = document.querySelector('#mseg [data-s="orders"]'); try { S.wallet = null; S.loading.orders = false; } catch (e) {} if (o) o.click(); load();
     } catch (x) { say(x.message); }
     busy = false; b.disabled = false; b.textContent = 'Pay from wallet';
   };

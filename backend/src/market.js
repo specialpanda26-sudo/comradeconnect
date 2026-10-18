@@ -141,7 +141,11 @@ export async function marketRoutes(req, env, url, ip) {
       if (c.ksh > 0 && !(await spendPoints(env, u.aid, c.pts, pid))) return err(env, 'Not enough points. Try again without points.', 409);
       const pr = await one(await post(env, 'payments', { id: pid, aid: u.aid, purpose: 'order', ref_id: l.id, amount: cash, phone: 'wallet', ip, status: 'paid', receipt: 'WAL' + pid.replace(/-/g, '').slice(0, 12).toUpperCase(), paid_at: new Date().toISOString(), ...(c.ksh > 0 ? { credit_ksh: c.ksh } : {}) }));
       if (!pr) { if (c.ksh > 0) await giveBack(env, u.aid, 'pay:' + pid); return err(env, 'Could not start the order', 500); }
-      await credit(env, u.aid, -cash, 'purchase', 'pay:' + pid, 'Bought: ' + l.title.slice(0, 40));
+      if (!(await credit(env, u.aid, -cash, 'purchase', 'pay:' + pid, 'Bought: ' + l.title.slice(0, 40)))) {   // the wallet row was refused: charge nothing, make no order
+        await patch(env, `payments?id=eq.${pid}`, { status: 'failed' });
+        if (c.ksh > 0) await giveBack(env, u.aid, 'pay:' + pid);
+        return err(env, 'Wallet payment is not ready yet. Nothing was charged.', 503);
+      }
       if ((await balance(env, u.aid)) < 0) {
         await patch(env, `wallet_ledger?kind=eq.purchase&ref=eq.${enc('pay:' + pid)}`, { status: 'void' });
         await patch(env, `payments?id=eq.${pid}`, { status: 'failed' });

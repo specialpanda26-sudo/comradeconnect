@@ -58,7 +58,7 @@ function mount() {
 }
 
 function deposit() {
-  var m = sheet('Deposit to wallet', 'Add money with M-Pesa. You can then buy items and pay your wholesaler plan from your wallet.');
+  var m = sheet('Deposit to wallet', 'Add money with M-Pesa. Your wallet is credited exactly the amount you enter. M-Pesa or the payment provider may add a small charge on the prompt, which is not part of your deposit.');
   var a = field(m, 'Amount in KSh', '', 'numeric'), p = field(m, 'M-Pesa number, e.g. 0712345678', phone(), 'numeric'), e = errLine(m);
   var go = btn('Deposit', 'btn p', async function () {
     var amt = Math.floor(+a.value), ph = p.value.replace(/\s/g, '');

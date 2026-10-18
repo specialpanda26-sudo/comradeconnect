@@ -59,9 +59,9 @@ export async function settleIntasend(env, p, inv) {
     const value = Number(inv.value), cur = String(inv.currency || 'KES').toUpperCase();
     const receipt = String(inv.mpesa_reference || inv.provider_ref || 'IS-' + inv.invoice_id).toUpperCase();
     const good = cur === 'KES' && value >= p.amount;
-    if (p.status === 'expired') {
-      // The money arrived after we gave up. Do not pay out automatically (the order or stock was already released): a person approves it.
-      if (good) await patch(env, `payments?id=eq.${p.id}&status=eq.expired`, { status: 'submitted', receipt, checkout_id: inv.invoice_id });
+    if (p.status === 'expired' || p.status === 'failed') {
+      // The money arrived after we gave up (expired, or we had already shown "failed"). Do not pay out automatically (the order or stock was already released): a person approves it.
+      if (good) await patch(env, `payments?id=eq.${p.id}&status=eq.${p.status}`, { status: 'submitted', receipt, checkout_id: inv.invoice_id });
       return good ? 'parked' : 'ignored';
     }
     if (p.status !== 'pending') return 'ignored';
@@ -72,7 +72,7 @@ export async function settleIntasend(env, p, inv) {
     if (upd) { if (good) await hooks.onPaid(env, upd); else await hooks.onFailed(env, upd); }
     return good ? 'paid' : 'underpaid';
   }
-  if (state === 'FAILED' || state === 'CANCELED') {
+  if (state === 'FAILED' || state === 'CANCELED' || (state === 'RETRY' && (inv.failed_code || inv.failed_reason))) {   // cancelled, wrong PIN, no balance...
     const code = Number(inv.failed_code) || null;
     const failed = await markFailed(env, `payments?id=eq.${p.id}&status=eq.pending`, 'failed', failReason(code), code);
     for (const x of failed) await hooks.onFailed(env, x);
@@ -83,7 +83,7 @@ export async function settleIntasend(env, p, inv) {
 // Safety net for missed webhooks (run by the 15-minute cron): ask IntaSend about every recent IntaSend payment we have not closed.
 export async function reconcileIntasend(env) {
   if (payMode(env) !== 'intasend' || !intaReady(env)) return 0;
-  const list = (await rows(await sb(env, `payments?select=*&status=in.(pending,expired)&request_id=not.is.null&created_at=gte.${ago(24 * 3600e3)}&order=created_at.desc&limit=100`)))
+  const list = (await rows(await sb(env, `payments?select=*&status=in.(pending,expired,failed)&request_id=not.is.null&created_at=gte.${ago(24 * 3600e3)}&order=created_at.desc&limit=100`)))
     .filter((p) => String(p.request_id).startsWith(IS_PREFIX)).slice(0, 25);
   let changed = 0;
   for (const p of list) {
@@ -183,7 +183,7 @@ export async function payRoutes(req, env, url, ip) {
     if (b.topic && b.topic !== 'collection_event') return json(env, { ok: true });
     const invoiceId = String(b.invoice_id || '').trim();
     const state = String(b.state || '').toUpperCase();
-    if (!invoiceId || !['COMPLETE', 'FAILED', 'CANCELED'].includes(state)) return json(env, { ok: true });   // created / processing events need nothing
+    if (!invoiceId || !state || state === 'PENDING' || state === 'PROCESSING') return json(env, { ok: true });   // nothing to decide yet
     const ref = String(b.api_ref || '');
     let p = null;
     if (UUID.test(ref)) [p] = await rows(await sb(env, `payments?id=eq.${ref}&limit=1`));
@@ -267,10 +267,10 @@ export async function payRoutes(req, env, url, ip) {
       return (await rows(sr))[0];
     };
     let p = await readP();
-    // IntaSend: if the webhook is late, ask IntaSend directly (a few times per payment, never before 30 s).
+    // IntaSend: if the webhook is late, ask IntaSend directly (from 8 s after the prompt, at most 40 times per payment).
     if (p && p.status === 'pending' && payMode(env) === 'intasend' && intaReady(env)) {
       const [full] = await rows(await sb(env, `payments?id=eq.${id}&select=*`));
-      if (full && String(full.request_id || '').startsWith(IS_PREFIX) && Date.now() - Date.parse(full.created_at) > 30e3 && (await bump(env, 'isck:' + id, 12))) {
+      if (full && String(full.request_id || '').startsWith(IS_PREFIX) && Date.now() - Date.parse(full.created_at) > 8e3 && (await bump(env, 'isck:' + id, 40))) {
         const inv = await intaStatus(env, full.request_id.slice(IS_PREFIX.length));
         if (inv && (await settleIntasend(env, full, inv)) !== 'waiting') p = await readP();
       }

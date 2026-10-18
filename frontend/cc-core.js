@@ -1067,7 +1067,10 @@ async function waitPaid(id, on) {
   if (st && st.status !== 'pending') { on('verify'); await sleep(1200); }   // the "Verifying payment" step is always visible for a moment
   if (!st || st.status === 'pending') { const e = new Error('We have not had the M-Pesa confirmation yet. If you entered your PIN, your order appears under Orders as soon as it is confirmed. Keep the M-Pesa SMS.'); e.pending = true; throw e; }
   if (st.status === 'underpaid') throw new Error('The amount paid was less than required. Keep your M-Pesa message and contact support.');
-  if (st.status !== 'paid') throw new Error('Payment was cancelled or failed. If you did pay, keep your M-Pesa message and contact support.');
+  if (st.status !== 'paid') {
+    const WHY = { cancelled: 'You cancelled the M-Pesa prompt. Nothing was charged and no order was made.', insufficient: 'Your M-Pesa balance was too low. Top up M-Pesa and try again. Nothing was charged.', wrong_pin: 'The M-Pesa PIN was wrong. Try again. Nothing was charged.', timeout: 'The prompt timed out or your phone could not be reached. Try again.', expired: 'The prompt expired. Try again.', busy: 'M-Pesa is busy. Wait a minute and try again.' };
+    throw new Error(WHY[st.reason] || 'Payment was cancelled or failed. If you did pay, keep your M-Pesa message and contact support.');
+  }
 }
 // Animated "payment received" tick for every success screen. It plays once; with reduced motion it simply appears.
 window.ccTick = function (before) {

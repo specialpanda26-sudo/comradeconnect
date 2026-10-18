@@ -4,7 +4,7 @@
 (function () {
 'use strict';
 let FEE = 3;                                             // percent; replaced by the server's value (admin > Money and fees) as soon as it loads
-const CFG = { min: 50, wfp: 0, wff: 0 };
+const CFG = { min: 50, wfp: 0, wff: 0, pmin: 1, pmax: 150000 };
 const kes = (n) => 'KSh ' + Number(n).toLocaleString('en-KE');
 const net = (p) => p - Math.floor((p * FEE) / 100);      // same rounding as the Worker
 const connected = () => typeof CC_API === 'string' && CC_API.indexOf('YOUR-SUBDOMAIN') < 0;
@@ -14,6 +14,8 @@ async function loadConfig() {                              // fee %, boost price
     const r = await fetch(CC_API + '/api/config'); if (!r.ok) return;
     const d = await r.json();
     if (Number.isFinite(d.fee_percent)) FEE = d.fee_percent;
+    CFG.pmin = d.price_min || 1; CFG.pmax = d.price_max || 150000;
+    { const mp = document.getElementById('mpr'); if (mp) mp.placeholder = 'Price in KSh (' + CFG.pmin.toLocaleString('en-US') + ' to ' + CFG.pmax.toLocaleString('en-US') + ')'; }
     CFG.min = d.withdraw_min || 50; CFG.wfp = d.withdraw_fee_percent || 0; CFG.wff = d.withdraw_fee_flat || 0;
     const bs = [...document.querySelectorAll('#dm .pl .act')];
     (d.boost_plans || []).forEach((p, i) => { const b = bs[i]; if (!b) return; b.dataset.pr = p.price; b.dataset.du = p.hours === 24 ? '24 hours' : '3 days'; b.innerHTML = '<b>KSh ' + p.price + '</b>' + b.dataset.du; });
@@ -483,7 +485,7 @@ $('#msub').onclick = async () => {
   if (S.sending) return;
   const t = $('#mti').value.trim(), p = Math.round(+$('#mpr').value), d = $('#mde').value.trim();
   if (t.length < 3) return toast('Add a title for your item');
-  if (!(p >= 100 && p <= 150000)) return toast('Enter a price between KSh 100 and KSh 150,000');
+  if (!(p >= CFG.pmin && p <= CFG.pmax)) return toast('Enter a price between KSh ' + CFG.pmin.toLocaleString('en-US') + ' and KSh ' + CFG.pmax.toLocaleString('en-US'));
   if (!S.photos.length) return toast('Add at least one photo so the admin can verify it');
   const cp = $('#mcp').value.replace(/[\s-]/g, '');
   if (!/^(07|01)\d{8}$/.test(cp) && !/^\+?254[17]\d{8}$/.test(cp)) return toast('Add your phone number like 0712345678. Buyers see it only after they pay.');

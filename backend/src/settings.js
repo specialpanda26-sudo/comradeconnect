@@ -11,6 +11,8 @@ export const DEFS = {
   withdraw_fee_percent: { env: 'WITHDRAW_FEE_PERCENT', def: 0, min: 0, max: 20, dec: true, unit: '%', label: 'Withdrawal fee (percent)', help: 'Kept from each withdrawal. 0 = free. Use it to cover M-Pesa send charges.' },
   withdraw_fee_flat: { env: 'WITHDRAW_FEE_FLAT', def: 0, min: 0, max: 500, unit: 'KSh', label: 'Withdrawal fee (flat)', help: 'Fixed amount kept from each withdrawal, added to the percent fee.' },
   referral_reward: { env: 'REFERRAL_REWARD', def: 20, min: 0, max: 1000, unit: 'KSh', label: 'Referral reward', help: 'Paid to the inviter after the friend completes a purchase.' },
+  listing_price_min: { env: 'LISTING_PRICE_MIN', def: 1, min: 1, max: 250000, unit: 'KSh', label: 'Lowest item price', help: 'Cheapest price a seller can put on a Market item. 1 means any price.' },
+  listing_price_max: { env: 'LISTING_PRICE_MAX', def: 150000, min: 1, max: 250000, unit: 'KSh', label: 'Highest item price', help: 'Most a seller can ask for one Market item. M-Pesa allows at most 250,000 per payment.' },
   escrow_auto_release_days: { env: 'ESCROW_AUTO_RELEASE_DAYS', def: 3, min: 1, max: 14, unit: 'days', label: 'Auto-release after', help: 'Days after "handed over" before the seller is paid if the buyer says nothing.' },
 };
 
@@ -51,6 +53,7 @@ export const withdrawFee = (amount, S) => Math.ceil((amount * S.withdraw_fee_per
 export const boostPlans = (S) => [{ id: '1d', hours: 24, price: S.boost_price }, { id: '3d', hours: 72, price: S.boost_price_3d }];
 export const publicConfig = (S) => ({
   fee_percent: S.platform_fee_percent, boost_plans: boostPlans(S),
+  price_min: S.listing_price_min, price_max: S.listing_price_max,
   withdraw_min: S.withdraw_min, withdraw_fee_percent: S.withdraw_fee_percent, withdraw_fee_flat: S.withdraw_fee_flat,
 });
 
@@ -66,6 +69,7 @@ export async function saveSettings(env, input) {
     if (n !== cur[k]) changed[k] = [cur[k], n];
   }
   const next = { ...cur }; for (const k of Object.keys(changed)) next[k] = changed[k][1];
+  if (next.listing_price_min > next.listing_price_max) return { error: 'Lowest item price cannot be higher than the highest item price.' };
   if (withdrawFee(next.withdraw_min, next) >= next.withdraw_min) return { error: 'That withdrawal fee would swallow the smallest withdrawal. Lower the fee or raise the minimum.' };
   for (const [k, [, n]] of Object.entries(changed)) {
     const res = await post(env, 'settings', { key: k, value: n, updated_at: new Date().toISOString() }, 'resolution=merge-duplicates,return=representation');

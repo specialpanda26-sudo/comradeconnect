@@ -111,7 +111,7 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   if (mode === 'manual' && !env.MPESA_PAY_TO) return { res: err(env, 'Payments are not set up yet', 503) };
   if (mode === 'tinypesa' && !tinyOk) { console.error('payments: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY or TINYPESA_USERNAME is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (mode === 'intasend' && !intaReady(env) && !tinyOk) { console.error('payments: PAYMENT_MODE=intasend but INTASEND_SECRET_KEY is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
-  if (!phone || !(amount >= 1) || amount > 150000 || !aid) return { res: err(env, 'Check the phone number and amount') };
+  if (!phone || !(amount >= 1) || amount > 250000 || !aid) return { res: err(env, 'Check the phone number and amount') };
   const pr = await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, 100) : null, amount, phone, ip, boost_hours: boost_hours || null });
   const pj = await pr.json().catch(() => null);
   const row = Array.isArray(pj) ? pj[0] : null;

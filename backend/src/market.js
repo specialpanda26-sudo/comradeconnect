@@ -75,8 +75,8 @@ export async function marketRoutes(req, env, url, ip) {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const b = await body();
     const title = str(b.title, 80), description = str(b.description, 600), zone = str(b.zone, 30), condition = str(b.condition, 20);
-    const category = CATS.includes(b.category) ? b.category : 'General', price = int(b.price, 1, 150000);
-    if (title.length < 3 || !price) return err(env, 'Add a title and a price (KES 1 to 150,000)');
+    const S = await getSettings(env), category = CATS.includes(b.category) ? b.category : 'General', price = int(b.price, S.listing_price_min, S.listing_price_max);
+    if (title.length < 3 || !price) return err(env, `Add a title and a price (KSh ${S.listing_price_min.toLocaleString('en-US')} to ${S.listing_price_max.toLocaleString('en-US')})`);
     const contact_phone = normPhone(b.contact_phone);
     if (!contact_phone) return err(env, 'Add your phone number (like 0712345678). The buyer sees it only after they pay.');
     const blk = contactBlock(env, title, description, zone, condition); if (blk) return blk;

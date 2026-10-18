@@ -878,7 +878,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
         <input type="file" id="mphi" accept="image/*" capture="environment" hidden><input type="file" id="mgi" accept="image/*" hidden>
     <div id="mprev" style="margin-top:10px"></div>
     <div class="fld"><input id="mti" maxlength="60" placeholder="What are you selling?" aria-label="Title"></div>
-    <div class="fld"><input id="mpr" type="number" inputmode="numeric" placeholder="Price in KSh (100 to 150,000)" aria-label="Price in KSh"></div>
+    <div class="fld"><input id="mpr" type="number" inputmode="numeric" placeholder="Price in KSh" aria-label="Price in KSh"></div>
     <div class="fld"><select id="mcat" aria-label="Category"><option>General</option><option>Electronics</option><option>Books</option><option>Clothes</option><option>Furniture</option><option>Food</option><option>Services</option><option>Other</option></select></div>
     <div class="fld"><select id="mco" aria-label="Condition"><option>New</option><option>Like new</option><option selected>Used, good</option><option>Used, fair</option></select></div>
     <div class="fld"><select id="mzo" aria-label="Where is it"></select></div>
@@ -956,7 +956,7 @@ function dmOK(k,t){if((ME.mute||0)>Date.now()){toast('Messaging is paused for 24
 function spillBot(t,p){const s=t.toLowerCase();
  if(/\b(gun|pistol|bhang|weed|bangi|cocaine|vodka|whisky|whiskey|beer|chang'?aa|exam ?papers?|leaked|stolen|fake id)\b/.test(s))return{v:'reject',why:'This item type is not allowed on Comrade Connect.'};
  if(/(pay|send|tuma).{0,20}(first|deposit|fare|before)|pay (me )?(direct|outside|cash only)|outside (the )?(app|site)/.test(s))return{v:'reject',why:'Payments go through Comrade Connect escrow only. Remove any ask to pay first or pay outside.'};
- const r=[];if(p&&p<300)r.push('Price looks unusually low');if(p&&p>120000)r.push('Price looks unusually high');
+ const r=[];if(p&&p>120000)r.push('Price looks unusually high');
  return r.length?{v:'review',why:r.join('. ')}:{v:'approve',why:''}}
 
 const ST={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -1495,7 +1495,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-core.js?v=7j"></script><script src="cc-site.js?v=2" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=3" defer></script><script src="cc-market-plus.js?v=1" defer></script>
+<script src="cc-core.js?v=7k"></script><script src="cc-site.js?v=2" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=3" defer></script><script src="cc-market-plus.js?v=1" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

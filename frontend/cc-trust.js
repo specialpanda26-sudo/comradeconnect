@@ -37,6 +37,6 @@ function load(amount) {
   return fetch(API + '/api/trust' + (amount ? '?amount=' + amount : '')).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) { if (d) fill(d); }).catch(function () {});
 }
 var inp = document.getElementById('calcAmt'), t = null;
-if (inp) inp.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { var n = Math.floor(Number(inp.value)); if (n >= 1 && n <= 150000) load(n); }, 350); });
+if (inp) inp.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { var n = Math.floor(Number(inp.value)); if (n >= 1 && n <= 250000) load(n); }, 350); });
 load();
 })();

@@ -7,21 +7,51 @@
 <link rel="stylesheet" href="/trust.css"></head><body>
 <header><a class="brand" href="/">COMRADE CONNECT</a><a class="cta" href="/">Open the app</a></header>
 <main><h1>Refunds and disputes</h1>
-<p>Money for marketplace items is held in escrow, so the seller is not paid until the buyer is satisfied. Here is exactly how it works.</p>
-<h2>How escrow works</h2>
-<div class="card"><p><b>1. Pay.</b> You pay on Comrade Connect. The money is held, not sent to the seller.</p>
+<p>Money for marketplace items is held in escrow, so the seller is not paid until the buyer is satisfied. This page is the full dispute process: who can use it, what happens, how long it takes, and how to appeal. <span id="live" class="small">Standard terms shown.</span></p>
+<div class="card"><p><b>In short.</b> Report a problem from the order, before the money is released. An admin reviews it within <b data-t="disputes.review_hours" data-suf=" hours">48 hours</b>. The answer is either a refund to the buyer's wallet or payment to the seller. You can appeal once.</p></div>
+
+<h2>How escrow protects you</h2>
+<div class="card"><p><b>1. Pay.</b> You pay on Comrade Connect. The money is held for your order, not sent to the seller.</p>
 <p><b>2. Hand over.</b> You get a 6-digit code. The seller marks the item as handed over.</p>
 <p><b>3. Confirm.</b> Give the code to the seller only after you have checked the item. The seller is then paid.</p>
-<p><b>4. Auto-release.</b> If the seller marked it handed over and you do not confirm or dispute within the days shown on your order (3 days by default), the seller is paid.</p></div>
-<h2>If something goes wrong: open a dispute</h2>
-<ul><li>Buyer or seller can open a dispute from the order, before payment is released. Say what went wrong in a few words.</li>
-<li>Entering a wrong code 5 times also stops the order, so you can dispute it.</li>
-<li>A dispute pauses auto-release. An admin reads both sides and either refunds the buyer or pays the seller.</li>
-<li>The admin decision is final inside Comrade Connect. It does not remove any rights you have under Kenyan law.</li></ul>
+<p><b>4. Auto-release.</b> If the seller marked it handed over and you do not confirm or dispute within <b data-t="escrow.auto_release_days" data-suf=" days">3 days</b>, the seller is paid.</p></div>
+<p>How the money is held, the payment gateway and all fees are in <a href="/payments.html">Payments, escrow and payouts</a>.</p>
+
+<h2>Opening a dispute</h2>
+<ul><li><b>Who:</b> the buyer or the seller of that order.</li>
+<li><b>When:</b> any time before the money is released. After release, the order is closed, so do not give the code or tap "I received it" until you are sure.</li>
+<li><b>How:</b> open the order in Market and tap <b>Report a problem</b>. Say what went wrong in a few clear words. Do not write phone numbers, links or handles.</li>
+<li>Entering a wrong code 5 times also stops the order so you can dispute it.</li></ul>
+
+<h2>What happens next</h2>
+<div class="card"><p><b>Step 1: Paused.</b> The order is frozen. Auto-release stops and nobody can release the money with the code. The money stays held.</p>
+<p><b>Step 2: Review.</b> An admin reads the reason and the order history (payment, handover, codes tried, dates). The admin may write to either side with questions. Please answer quickly: if one side stays silent, the admin decides with what is available.</p>
+<p><b>Step 3: Decision within <b data-t="disputes.review_hours" data-suf=" hours">48 hours</b>.</b> The admin chooses one outcome:</p>
+<ul><li><b>Refund the buyer.</b> The full amount paid goes to the buyer's wallet. The listing becomes available again. The seller pays no fee.</li>
+<li><b>Pay the seller.</b> The seller is paid the sale amount minus the marketplace fee, as in a normal sale.</li></ul>
+<p><b>Step 4: Shown on the order.</b> The order's status changes to refunded or released, and the wallet shows the entry.</p></div>
+<p class="small">If a dispute is very complex, or we need information from you, it can take longer. We will tell you why instead of leaving you waiting in silence.</p>
+
+<h2>What helps your case</h2>
+<ul><li>What you were told, what you got, and when.</li><li>Photos of the item as received (buyer) or as handed over (seller).</li><li>Whether the code was given, and when.</li><li>Do not send private data you do not need. Never send your M-Pesa PIN or recovery code.</li></ul>
+
+<h2>Appeals</h2>
+<ul><li>If you think the decision is wrong, email <a href="mailto:support@comradeconnect.co.ke">support@comradeconnect.co.ke</a> within <b>7 days</b> of the decision. Put the order number in the subject and add anything new.</li>
+<li>Where we have more than one admin, a different admin looks at the appeal.</li>
+<li>The decision on appeal is final inside Comrade Connect. It does not remove any rights you have under Kenyan law.</li></ul>
+
+<h2>False or abusive disputes</h2>
+<p>Opening disputes to get an item for free, threatening the other person, or lying to an admin breaks the <a href="/terms.html">Terms</a>. It can lead to strikes, withheld rewards or a suspended account.</p>
+
 <h2>Where refunds go</h2>
-<p>A refunded order is credited to the buyer's Comrade Connect wallet. Withdrawing the wallet to M-Pesa is handled by our team, and withdrawals need a verified account (see <a href="/safety.html">Safety</a>).</p>
-<h2>Fees</h2><p>The marketplace fee (currently 3%) is taken from the seller's payout, and is shown before a sale is confirmed. Buyers do not pay it.</p>
-<h2>Payments that were not completed</h2><p>If you start a payment and do not finish it, it expires automatically and no escrow order is created. Always keep your M-Pesa message and send us the code if you paid and nothing happened.</p>
+<p>A refund is credited to the buyer's Comrade Connect wallet as soon as the admin decides. Withdrawing the wallet to M-Pesa is done by our team, and needs an ID verified account. Fees and timing are on <a href="/payments.html">Payments, escrow and payouts</a>.</p>
+
+<h2>Fees</h2><p>The marketplace fee (currently <b data-t="fees.platform_fee_percent" data-suf="%">3%</b>) is taken from the seller's payout, and is shown before a sale is confirmed. Buyers do not pay it. A refunded order carries no fee.</p>
+
+<h2>Payments that were not completed</h2>
+<p>A payment that is not confirmed expires after <b data-t="payments.unconfirmed_expiry_minutes" data-suf=" minutes">30 minutes</b> and no order is created. If you paid and nothing happened, keep your M-Pesa message and send us the code. If the money arrives late, it is reviewed by a person and never simply lost.</p>
+
 <h2>Club items and event tickets</h2><p>The refund period for Club memberships and tickets is shown before you pay.</p>
-<h2>Still stuck?</h2><p>Email <a href="mailto:support@comradeconnect.co.ke">support@comradeconnect.co.ke</a> with your order number and what happened. See <a href="/contact.html">Contact</a>.</p></main>
-<footer><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="/cookies.html">Cookies</a><a href="/refunds.html">Refunds &amp; disputes</a><a href="/safety.html">Safety</a><a href="/contact.html">Contact</a><a href="/about.html">About</a><br>Comrade Connect, Kirinyaga Edition. Run by comradeconnect.</footer></body></html>
+
+<h2>Still stuck?</h2><p>Email <a href="mailto:support@comradeconnect.co.ke">support@comradeconnect.co.ke</a> with your order number and what happened. See <a href="/contact.html">Contact</a> and the <a href="/trust.html">Trust centre</a>.</p></main>
+<footer><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="/cookies.html">Cookies</a><a href="/refunds.html">Refunds &amp; disputes</a><a href="/payments.html">Payments &amp; payouts</a><a href="/trust.html">Trust centre</a><a href="/safety.html">Safety</a><a href="/contact.html">Contact</a><a href="/about.html">About</a><br>Comrade Connect, Kirinyaga Edition. Run by comradeconnect.</footer><script src="/config.js"></script><script src="/cc-trust.js" defer></script></body></html>

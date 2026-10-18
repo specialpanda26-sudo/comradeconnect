@@ -107,7 +107,7 @@ function reportSheet(id) {
 function decorateModal(id) {
   var l = L[id], mvb = $('#mvb'), dm = $('#mvdm'); if (!mvb || !dm) return;
   var h = mvb.querySelector('h3');
-  if (l && h && !mvb.querySelector('.ccr2')) h.insertAdjacentElement('afterend', el('p', 'ccr2', 'Seller rating: ' + (l.seller && l.seller.rating && l.seller.rating.count ? stars(l.seller.rating) + ' from completed orders' : 'new seller, no ratings yet')));
+  if (l && h && !mvb.querySelector('.ccr2')) h.insertAdjacentElement('afterend', el('p', 'ccr2', (l.seller && l.seller.student ? 'Verified student. ' : '') + 'Seller rating: ' + (l.seller && l.seller.rating && l.seller.rating.count ? stars(l.seller.rating) + ' from completed orders' : 'new seller, no ratings yet')));
   var rep = $('#ccrep');
   if (!rep) { rep = el('button', 'btn g', 'Report a scam'); rep.id = 'ccrep'; rep.type = 'button'; rep.style.cssText = 'width:100%;margin-top:10px'; dm.insertAdjacentElement('afterend', rep); rep.onclick = function () { reportSheet(rep.dataset.id); }; }
   rep.dataset.id = id; rep.hidden = dm.hidden;

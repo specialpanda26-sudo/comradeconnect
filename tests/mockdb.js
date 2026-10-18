@@ -33,6 +33,9 @@ export const SCHEMA = {
   live_comments: T(['id'], { defaults: { hidden: false } }), live_viewers: T(['stream_id', 'viewer']),
 };
 
+SCHEMA.email_verifications = T(['aid']);
+SCHEMA.profiles.defaults.student_verified = false;
+SCHEMA.profiles.uniques.push(nn('student_email_hash'));
 export class MockDB {
   constructor() { this.t = Object.fromEntries(Object.keys(SCHEMA).map((k) => [k, []])); this.log = []; }
   rows(name) { return this.t[name]; }

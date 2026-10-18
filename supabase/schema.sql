@@ -669,3 +669,20 @@ create table if not exists seller_ratings (
 );
 create index if not exists seller_ratings_seller on seller_ratings(seller_aid);
 alter table seller_ratings enable row level security;
+
+
+-- v15: optional student verification by university email (kyu.ac.ke etc). Safe to run again.
+-- We store only keyed hashes: never the email address and never the code.
+alter table profiles add column if not exists student_verified boolean not null default false;
+alter table profiles add column if not exists student_verified_at timestamptz;
+alter table profiles add column if not exists student_email_hash text;           -- one student mailbox can back only one account
+create unique index if not exists profiles_student_email_uq on profiles(student_email_hash) where student_email_hash is not null;
+create table if not exists email_verifications (
+  aid text primary key,
+  email_hash text not null,
+  code_hash text not null,
+  expires_at timestamptz not null,
+  attempts int not null default 0,
+  sent_at timestamptz not null default now()
+);
+alter table email_verifications enable row level security;

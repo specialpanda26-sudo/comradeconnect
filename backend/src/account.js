@@ -107,7 +107,7 @@ export async function accountRoutes(req, env, url, ip) {
 
   if (path === '/api/me' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;
-    return json(env, { aid: u.aid, handle: u.handle, points: u.points, verified: u.verified, badge: u.badge || null, role: u.role, adult_confirmed: u.adult_confirmed, referral_code: u.referral_code, balance: await balance(env, u.aid) });
+    return json(env, { aid: u.aid, handle: u.handle, points: u.points, verified: u.verified, student_verified: !!u.student_verified, badge: u.badge || null, role: u.role, adult_confirmed: u.adult_confirmed, referral_code: u.referral_code, balance: await balance(env, u.aid) });
   }
   if (path === '/api/me/handle' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;

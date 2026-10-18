@@ -13,6 +13,7 @@ import { clubRoutes, clubPaid, ticketPaid, restoreClubOrder, expireClubOrders } 
 import { adminRoutes } from './admin.js';
 import { settingsRoutes } from './settings.js';
 import { siteContentRoutes } from './sitecontent.js';
+import { trustRoutes } from './trust.js';
 import { pruneMedia } from './media.js';
 import * as store from './storage.js';
 import { PRIVATE_BUCKET } from './storage.js';
@@ -32,7 +33,7 @@ async function boostPost(env, p) {
 }
 hooks.onFailed = async (env, p) => { if (p.purpose === 'club') await restoreClubOrder(env, p.ref_id); };
 
-const ROUTES = [settingsRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, ratingRoutes, marketRoutes, messageRoutes, contentRoutes, liveRoutes, mediaRoutes, clubRoutes, adminRoutes];
+const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, ratingRoutes, marketRoutes, messageRoutes, contentRoutes, liveRoutes, mediaRoutes, clubRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

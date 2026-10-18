@@ -2,6 +2,7 @@
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, deriveCode, codeHash, tsEqual, throttle, tooMany, user, authProfile, contactBlock, ahead, DAY, normPhone } from './lib.js';
 import { initPayment, credit } from './pay.js';
 import { getSettings, feeOf } from './settings.js';
+import { disputeHours } from './trust.js';
 
 const CATS = ['General', 'Electronics', 'Books', 'Clothes', 'Furniture', 'Food', 'Services', 'Other'];
 import { mediaUrl } from './storage.js';
@@ -11,7 +12,7 @@ async function decorate(env, list, me) {          // photos + seller handle, nev
   if (!list.length) return [];
   const ids = list.map((l) => l.id), aids = [...new Set(list.map((l) => l.seller_aid))];
   const photos = await rows(await sb(env, `media?select=listing_id,r2_key&kind=eq.listing_photo&status=eq.ready&listing_id=${inList(ids)}&order=created_at.asc`));
-  const profs = await rows(await sb(env, `profiles?select=aid,handle,verified&aid=${inList(aids)}`));
+  const profs = await rows(await sb(env, `profiles?select=*&aid=${inList(aids)}`));
   const rt = await ratingMap(env, aids);
   return list.map((l) => {
     const p = profs.find((x) => x.aid === l.seller_aid);
@@ -19,7 +20,7 @@ async function decorate(env, list, me) {          // photos + seller handle, nev
       id: l.id, title: l.title, description: l.description, category: l.category, price: l.price, zone: l.zone, condition: l.condition,
       status: l.status, reject_reason: me && me.aid === l.seller_aid ? l.reject_reason : undefined,
       photos: photos.filter((x) => x.listing_id === l.id).map((x) => mediaUrl(env, x.r2_key)),
-      seller: { handle: p?.handle || 'Seller', verified: !!p?.verified, rating: rt[l.seller_aid] || null },
+      seller: { handle: p?.handle || 'Seller', verified: !!p?.verified, student: !!p?.student_verified, rating: rt[l.seller_aid] || null },
       contact_phone: me && me.aid === l.seller_aid ? l.contact_phone || undefined : undefined,
       mine: !!me && me.aid === l.seller_aid, createdAt: Date.parse(l.created_at),
     };
@@ -135,7 +136,7 @@ export async function marketRoutes(req, env, url, ip) {
       out.push({
         id: o.id, role: buyer ? 'buyer' : 'seller', title: ls.find((l) => l.id === o.listing_id)?.title || 'Item',
         seller_phone: buyer && ['held', 'handed', 'disputed', 'released'].includes(o.status) ? ls.find((l) => l.id === o.listing_id)?.contact_phone || null : undefined, amount: o.amount,
-        you_receive: buyer ? undefined : o.seller_amount, status: o.status, dispute_status: o.dispute_status, dispute_reason: o.dispute_reason,
+        you_receive: buyer ? undefined : o.seller_amount, fee: buyer ? undefined : o.fee, status: o.status, dispute_status: o.dispute_status, dispute_reason: o.dispute_reason, dispute_due_at: o.dispute_status === 'open' && o.disputed_at ? new Date(Date.parse(o.disputed_at) + disputeHours(env) * 3600e3).toISOString() : undefined,
         // only the buyer can see the handover code; the seller must be given it in person
         code: buyer && ['held', 'handed', 'disputed'].includes(o.status) ? await deriveCode(env, 'order', o.id, 6) : undefined,
         my_rating: buyer ? mine[o.id] || null : undefined, handed_at: o.handed_at, auto_release_at: o.auto_release_at, released_at: o.released_at, refunded_at: o.refunded_at, createdAt: Date.parse(o.created_at),

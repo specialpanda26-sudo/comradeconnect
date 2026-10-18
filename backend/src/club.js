@@ -52,7 +52,6 @@ export async function clubRoutes(req, env, url, ip) {
     const mem = await one(await sb(env, `club_members?select=status&club=eq.default&aid=eq.${enc(u.aid)}`));
     if (mem?.status !== 'active') return err(env, 'Join the club first', 403);
     const p = await one(await sb(env, `club_products?id=eq.${b.product_id}&active=eq.true`)); if (!p) return err(env, 'Product not found', 404);
-    if (!(await throttle(env, ip, 'clubord', u.aid, 10, 40))) return tooMany(env);
     const took = await (await sb(env, 'rpc/take_stock', { method: 'POST', body: JSON.stringify({ p: p.id, n: qty }) })).json().catch(() => false);
     if (took !== true) return err(env, 'Sorry, not enough stock', 409);
     const o = await one(await post(env, 'club_orders', { aid: u.aid, product_id: p.id, qty, amount: p.price * qty }));
@@ -78,7 +77,6 @@ export async function clubRoutes(req, env, url, ip) {
     if (!ev || !(ev.ticket_price > 0) || ev.starts_on < new Date().toISOString().slice(0, 10)) return err(env, 'Tickets are not available for this event', 404);
     const have = await rows(await sb(env, `tickets?select=id&event_id=eq.${ev.id}&aid=eq.${enc(u.aid)}&status=neq.void`));
     if (have.length >= 4) return err(env, 'Maximum 4 tickets per person');
-    if (!(await throttle(env, ip, 'ticket', u.aid, 8, 30))) return tooMany(env);
     const r = await initPayment(env, ip, { aid: u.aid, purpose: 'ticket', ref_id: ev.id, amount: ev.ticket_price, phone: b.phone });
     return r.res || json(env, { id: r.id, amount: ev.ticket_price }, 201);
   }

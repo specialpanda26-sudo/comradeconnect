@@ -116,7 +116,6 @@ export async function marketRoutes(req, env, url, ip) {
     const l = await one(await sb(env, `listings?id=eq.${b.listing_id}&status=eq.approved`));
     if (!l) return err(env, 'This item is no longer available', 404);
     if (l.seller_aid === u.aid) return err(env, 'You cannot buy your own item', 400);
-    if (!(await throttle(env, ip, 'buy', u.aid, 10, 40))) return tooMany(env);
     const r = await initPayment(env, ip, { aid: u.aid, purpose: 'order', ref_id: l.id, amount: l.price, phone: b.phone });
     return r.res || json(env, { id: r.id, amount: l.price });
   }

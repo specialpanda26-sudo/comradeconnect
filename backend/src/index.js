@@ -1,7 +1,7 @@
 // Comrade Connect API (Cloudflare Worker). All secrets live here, never in the HTML.
 import { json, err, corsHeaders, sb, rows, patch, ago } from './lib.js';
 import { feedRoutes } from './feed.js';
-import { payRoutes, hooks, manualMode, markFailed } from './pay.js';
+import { payRoutes, hooks, manualMode, markFailed, reconcileIntasend } from './pay.js';
 import { accountRoutes, unlockReferrals } from './account.js';
 import { marketRoutes, createOrderFromPayment, autoReleaseOrders } from './market.js';
 import { messageRoutes } from './messages.js';

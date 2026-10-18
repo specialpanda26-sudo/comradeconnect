@@ -94,3 +94,12 @@ It releases handed-over orders, unlocks referral rewards, expires unpaid payment
 5. Buy a KSh 1 item, enter your PIN, confirm `payments.status = paid` in Supabase.
 6. If a callback arrives after a payment expired (30 min), the payment moves to admin > Confirm M-Pesa with its receipt. Compare it with your M-Pesa/TinyPesa records, then approve or reject.
 7. Roll back any time with `PAYMENT_MODE=manual`.
+
+## 11. Automatic M-Pesa prompts with IntaSend (optional, replaces manual mode)
+Runs on its own while you are away. IntaSend sends the prompt, tells us when it is paid, and we double-check with IntaSend before crediting anything.
+1. IntaSend dashboard > Settings > API Keys: copy the **secret key** (starts `ISSecretKey_`). For testing use https://sandbox.intasend.com and set `INTASEND_TEST=1`.
+2. Render > Environment: `PAYMENT_MODE=intasend`, `INTASEND_SECRET_KEY=...`, `INTASEND_WEBHOOK_CHALLENGE=<openssl rand -hex 32>`.
+3. IntaSend > Settings > Webhooks > New: Endpoint `https://YOUR-API-HOST/api/intasend/webhook`, Challenge = the same string as `INTASEND_WEBHOOK_CHALLENGE`, event `collection_event`.
+4. Optional backup: also set `TINYPESA_API_KEY` and `TINYPESA_USERNAME`. If IntaSend refuses to send a prompt, TinyPesa is tried automatically.
+5. If a webhook is missed, the buyer's app and the 15-minute cron ask IntaSend directly, so nothing stays stuck.
+6. If money arrives after a payment expired, it goes to admin > Confirm M-Pesa for you to approve by hand (compare with your M-Pesa/IntaSend statement first).

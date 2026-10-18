@@ -12,6 +12,10 @@ export const FIELDS = {
   banner_text: { kind: 'text', max: 160, group: 'Announcement banner', label: 'Banner message', help: 'Example: Fresher bash this Friday. Tickets in Club.' },
   banner_link: { kind: 'link', group: 'Announcement banner', label: 'Banner link (optional)', help: 'Must start with https://' },
 
+  notice_on: { kind: 'flag', group: 'Notification bell', label: 'Show a notification', help: 'Every visitor sees a red dot on the bell until they open it. Use it for maintenance or news.' },
+  notice_title: { kind: 'text', max: 60, group: 'Notification bell', label: 'Notification title', help: 'Example: Maintenance tonight' },
+  notice_text: { kind: 'text', max: 300, group: 'Notification bell', label: 'Notification message', multi: true, help: 'Example: The Market will be down from 10pm to 11pm.' },
+
   hero_greeting: { kind: 'text', max: 60, group: 'Home page words', label: 'Greeting above the title', help: 'Built-in: Niaje comrade,' },
   hero_title: { kind: 'text', max: 120, group: 'Home page words', label: 'Main title', help: 'Built-in: Spill it. Nobody will know it was you.' },
   hero_text: { kind: 'text', max: 400, group: 'Home page words', label: 'Paragraph under the title', multi: true },

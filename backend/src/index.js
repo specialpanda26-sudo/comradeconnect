@@ -45,6 +45,14 @@ async function handle(req, env) {
 
 // Free AI. Fixed system prompt, per-IP and global daily caps so the free quota can't be drained.
 import { bump } from './lib.js';
+const SUPPORT_PROMPT = 'You are the support helper for Comrade Connect, a campus app for Kirinyaga University students in Kenya. Answer in the language the student uses (English, Swahili or Sheng) in 4 short sentences or fewer. Facts you may use: Market payments are held in escrow; the buyer gets a 6-digit code and gives it to the seller only after checking the item, then the seller is paid; if the buyer says nothing after the seller marks it handed over, the seller is paid automatically after a few days; to dispute, open the order in Market and tap Report a problem before giving the code, and an admin refunds the buyer or pays the seller; refunds go to the in-app wallet; the seller pays a small fee; lost phone: Me > Restore an account with the account ID and recovery code; posts with phone numbers, links, handles or off-site payment requests are blocked; verification: Me > Verification. Never ask for or accept passwords, PINs, recovery codes or handover codes, and tell users never to share them. You cannot see accounts or move money. For payment or account problems point to the Contact tab or comradeconnect.co.ke/contact.html. If you do not know, say so; never invent policies, prices or promises.';
+const BASE_PROMPT = 'You are a friendly assistant for Kenyan university students. Keep answers short and safe.';
+function aiContents(b, prompt) {
+  const past = b.mode === 'support' && Array.isArray(b.history) ? b.history.slice(-6).filter((h) => h && typeof h.t === 'string') : [];
+  const c = past.map((h) => ({ role: h.r === 'u' ? 'user' : 'model', parts: [{ text: h.t.slice(0, 800) }] }));
+  while (c.length && c[0].role !== 'user') c.shift();
+  return [...c, { role: 'user', parts: [{ text: prompt }] }];
+}
 async function aiRoute(req, env, ip) {
   const b = await req.json().catch(() => ({}));
   const prompt = String(b.prompt || '').slice(0, 1500);
@@ -54,8 +62,8 @@ async function aiRoute(req, env, ip) {
   const g = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.AI_MODEL}:generateContent?key=${env.GEMINI_API_KEY}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: 'You are a friendly assistant for Kenyan university students. Keep answers short and safe.' }] },
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      systemInstruction: { parts: [{ text: b.mode === 'support' ? SUPPORT_PROMPT : BASE_PROMPT }] },
+      contents: aiContents(b, prompt),
     }),
   });
   const d = await g.json().catch(() => ({}));

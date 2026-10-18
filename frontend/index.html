@@ -695,7 +695,7 @@ const tab=v=>q('#tb button[data-v="'+v+'"]');
 const clr=()=>document.querySelectorAll('#tb .tkh').forEach(x=>x.classList.remove('tkh'));
 const show=h=>{b.innerHTML=h;b.classList.add('on')};
 const hide=()=>{b.classList.remove('on');clr()};
-const menu=(first)=>{clr();show('<b>'+(first?'Hi comrade, I am Tech':'Need a hand?')+'</b>I am your guide. I can show you around the app, or you can read the full documentation.<div class="tr"><button class="btn p" data-a="go">Start tour</button><button class="btn g" data-a="support">Ask support</button><button class="btn g" data-a="doc">Read docs</button><button class="btn g" data-a="x">Not now</button></div>')};
+const menu=(first)=>{clr();show('<b>'+(first?'Hi comrade, I am Tech':'Need a hand?')+'</b>I am your guide. I can show you around the app, or you can read the full documentation.<div class="tr"><button class="btn p" data-a="support">Ask support</button><button class="btn g" data-a="go">Start tour</button><button class="btn g" data-a="doc">Read docs</button><button class="btn g" data-a="x">Not now</button></div>')};
 const step=()=>{const s=STEPS[si],t=tab(s[0]);clr();if(t){t.click();t.classList.add('tkh')}window.scrollTo(0,0);show('<b>'+s[1]+'</b>Step '+(si+1)+' of '+STEPS.length+'. '+s[2]+'<div class="tr">'+(si?'<button class="btn g" data-a="back">Back</button>':'')+'<button class="btn p" data-a="next">'+(si===STEPS.length-1?'Finish':'Next')+'</button><button class="btn g" data-a="x">Skip</button></div>')};
 const render=()=>{const d=q('#dcb');d.innerHTML='';DOCS.forEach(s=>{const h3=document.createElement('h3');h3.textContent=s[0];d.appendChild(h3);s[1].split('\n').forEach(t=>{const p=document.createElement('p');p.textContent=t;d.appendChild(p)})})};
 const openDoc=()=>{if(!q('#dcb').firstChild)render();q('#dcm').classList.add('on')};
@@ -1495,7 +1495,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-core.js?v=7j"></script><script src="cc-site.js?v=2" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=1" defer></script><script src="cc-market-plus.js?v=1" defer></script>
+<script src="cc-core.js?v=7j"></script><script src="cc-site.js?v=2" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=2" defer></script><script src="cc-market-plus.js?v=1" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

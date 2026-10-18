@@ -949,7 +949,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
   </div>
 </div>
 <div id="pv" role="dialog" aria-modal="true" aria-label="Share card"><div class="bx g"><img id="pvi" alt="Share card preview"><p style="font-size:12px;color:var(--mut);line-height:1.7;margin:0 0 12px">Press and hold the card to save it, then post it to your WhatsApp status.</p><button class="btn p" id="pvx" style="width:100%">Close</button></div></div>
-<div id="lk" role="dialog" aria-modal="true" aria-label="App locked"><div class="bx g"><div class="lgo"></div><h2>Comrade Connect is locked</h2><p class="note">Use your phone fingerprint to open it.</p><button class="btn p" id="lku" style="width:100%;margin-top:14px">Unlock with fingerprint</button><div class="fld" style="margin-top:14px"><input id="lkc" placeholder="Or enter your recovery code" autocomplete="off" aria-label="Recovery code"></div><button class="btn g" id="lkr" style="width:100%;margin-top:10px">Unlock with recovery code</button></div></div>
+<div id="lk" role="dialog" aria-modal="true" aria-label="App locked"><div class="bx g"><div class="lgo"></div><h2>Comrade Connect is locked</h2><p class="note">Use your phone fingerprint to open it.</p><button class="btn p" id="lku" style="width:100%;margin-top:14px">Unlock with fingerprint</button><div class="fld" style="margin-top:14px"><input id="lkc" placeholder="Or enter your phone unlock code" autocomplete="off" aria-label="Recovery code"></div><button class="btn g" id="lkr" style="width:100%;margin-top:10px">Unlock with recovery code</button></div></div>
 <div id="ck" class="g" role="dialog" aria-label="Cookie settings"><b>Cookies</b><p style="margin:6px 0 0">We use essential cookies and local storage to keep you signed in and remember your settings. Optional analytics help us fix and improve the app, and only run if you accept. <a href="#cookies" data-legal="cookies" style="color:var(--fg);text-decoration:underline">Cookie policy</a> &middot; <a href="#privacy" data-legal="privacy" style="color:var(--fg);text-decoration:underline">Privacy</a></p><div class="two"><button class="btn g" id="ckn" style="padding:10px">Essential only</button><button class="btn p" id="cky" style="padding:10px">Accept all</button></div></div>
 <div id="toast" class="g" role="status"></div>
 
@@ -1511,7 +1511,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-core.js?v=op4"></script><script src="cc-site.js?v=3" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1b" defer></script>
+<script src="cc-core.js?v=op5"></script><script src="cc-profile.js?v=1"></script><script src="cc-site.js?v=3" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1c" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

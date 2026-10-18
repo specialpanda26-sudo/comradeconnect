@@ -97,7 +97,7 @@ function chooseSignIn() {                                    // resolves 'google
     const m = sheet('<h3>Sign in to continue</h3><p class="sub" style="margin-top:6px">One tap with Google keeps your orders and wallet safe and works on any phone.</p>'
       + '<div id="ccg" style="display:flex;justify-content:center;margin-top:14px;min-height:44px"></div>'
       + '<p class="sub" id="ccg-e" style="color:#f87171;min-height:18px;margin-top:6px"></p>'
-      + '<button class="btn g" id="ccg-guest" style="width:100%;margin-top:6px">No Google? Use a recovery code instead</button>'
+      + '<button class="btn g" id="ccg-guest" style="width:100%;margin-top:6px">No Google? Create an anonymous account</button>'
       + '<button class="btn g" id="ccg-x" style="width:100%;margin-top:6px">Cancel</button>');
     m.querySelector('#ccg-guest').onclick = () => { m.close(); done('guest'); };
     m.querySelector('#ccg-x').onclick = () => { m.close(); fail(new Error('Sign in to continue')); };

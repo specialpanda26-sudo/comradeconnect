@@ -37,6 +37,7 @@ function progress(m) {
 var steps = function () { return window.ccSteps || null; };
 
 async function load() {
+  var au = window.ccAuth && window.ccAuth(); if (!au || !au.token) return;   // signed out: never create an account just by opening the page
   try { var r = await Promise.all([call('/api/wholesale/me'), call('/api/wallet')]); W = r[0]; W.wallet = r[1]; window.ccPhotoCap = W.active ? W.photos : 5; draw(); }
   catch (e) { }
 }
@@ -61,6 +62,7 @@ function draw() {
     if (W.until) host.appendChild(el('p', 'note', 'Your last membership ended. Your items stay up, but you cannot post new ones beyond the free limit until you renew.'));
   }
 }
+window.ccWholesaleLoad = function () { return load(); };
 function mount() {
   var me = $('#mecard'); if (!me || $('#ccw')) return;
   var box = el('div', 'box g'); box.id = 'ccw'; me.after(box); load();

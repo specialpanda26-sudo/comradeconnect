@@ -100,7 +100,10 @@ export async function siteContentRoutes(req, env, url, ip) {
   }
   for (const [k, v] of Object.entries(out)) {
     const res = await post(env, 'site_content', { key: k, value: v, updated_at: new Date().toISOString() }, 'resolution=merge-duplicates,return=representation');
-    if (!res.ok) return err(env, 'Could not save. Run the newest SQL (end of supabase/schema.sql) in Supabase first.', 500);
+    if (!res.ok) {
+      const t = await res.text().catch(() => ''); console.error('site_content save failed', res.status, t.slice(0, 300));
+      return err(env, /does not exist|schema cache|relation|PGRST20/i.test(t) ? 'The site_content table is missing in Supabase. Run the catch-up SQL in the Supabase SQL editor, then save again.' : 'Could not save (' + res.status + '): ' + t.slice(0, 140), 500);
+    }
   }
   CACHE.delete(env);
   if (Object.keys(out).length) await audit(env, 'site.update', 'site_content', null, { keys: Object.keys(out) }, ip);

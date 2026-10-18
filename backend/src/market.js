@@ -81,9 +81,14 @@ export async function marketRoutes(req, env, url, ip) {
     if (!contact_phone) return err(env, 'Add your phone number (like 0712345678). The buyer sees it only after they pay.');
     const blk = contactBlock(env, title, description, zone, condition); if (blk) return blk;
     const live = (await getSettings(env)).listing_auto_publish === 1;
-    const l = await one(await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip,
-      ...(live ? { status: 'approved', approved_by: 'auto', approved_at: new Date().toISOString() } : {}) }));
-    if (!l) return err(env, 'Could not save the listing', 500);
+    const ins = await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip,
+      ...(live ? { status: 'approved', approved_by: 'auto', approved_at: new Date().toISOString() } : {}) });
+    const insText = await ins.text().catch(() => ''); let l = null; try { const d = JSON.parse(insText); l = Array.isArray(d) ? d[0] : null; } catch (e) {}
+    if (!l) {
+      console.error('listing insert failed', ins.status, insText.slice(0, 400));
+      const schema = /column|schema cache|relation|does not exist|constraint/i.test(insText);
+      return err(env, schema ? 'Market is being updated. Please try again in a few minutes.' : 'Could not save the listing', schema ? 503 : 500);
+    }
     return json(env, (await decorate(env, [l], u))[0], 201);
   }
   // ---- browse approved listings ----

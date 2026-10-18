@@ -34,8 +34,9 @@ export async function mediaRoutes(req, env, url, ip) {
     }
     if (!(await throttle(env, ip, 'upload:' + kind, u.aid, photo ? 30 : 5, photo ? 100 : 20))) return tooMany(env);
     const key = `${kind}/${new Date().toISOString().slice(0, 7)}/${randHex(12)}.${ext}`;
-    const row = await one(await post(env, 'media', { aid: u.aid, kind, r2_key: key, content_type: ct, bytes, caption: str(b.caption, 140) || null, listing_id }));
-    if (!row) return err(env, 'Could not start the upload', 500);
+    const mres = await post(env, 'media', { aid: u.aid, kind, r2_key: key, content_type: ct, bytes, caption: str(b.caption, 140) || null, listing_id });
+    const mtext = await mres.text().catch(() => ''); let row = null; try { const d = JSON.parse(mtext); row = Array.isArray(d) ? d[0] : null; } catch (e) {}
+    if (!row) { console.error('media insert failed', mres.status, mtext.slice(0, 400)); return err(env, 'Could not start the upload', 500); }
     const upload_url = await store.signUpload(env, MEDIA_BUCKET(env), key);
     if (!upload_url) { await patch(env, `media?id=eq.${row.id}`, { status: 'hidden' }); return err(env, 'File storage is not ready. Try again later.', 503); }
     return json(env, { id: row.id, upload_url, content_type: ct, expires_in: 7200 }, 201);

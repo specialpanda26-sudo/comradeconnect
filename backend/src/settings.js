@@ -74,7 +74,10 @@ export async function saveSettings(env, input) {
   if (withdrawFee(next.withdraw_min, next) >= next.withdraw_min) return { error: 'That withdrawal fee would swallow the smallest withdrawal. Lower the fee or raise the minimum.' };
   for (const [k, [, n]] of Object.entries(changed)) {
     const res = await post(env, 'settings', { key: k, value: n, updated_at: new Date().toISOString() }, 'resolution=merge-duplicates,return=representation');
-    if (!res.ok) return { error: 'Could not save. Run the newest SQL (end of supabase/schema.sql) in Supabase first.' };
+    if (!res.ok) {
+      const t = await res.text().catch(() => ''); console.error('settings save failed', res.status, t.slice(0, 300));
+      return { error: /does not exist|schema cache|relation|PGRST20/i.test(t) ? 'The settings table is missing in Supabase. Run the catch-up SQL in the Supabase SQL editor, then save again.' : 'Could not save (' + res.status + '): ' + t.slice(0, 140) };
+    }
   }
   CACHE.delete(env);
   return { changed };

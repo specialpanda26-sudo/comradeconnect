@@ -40,7 +40,8 @@ function apply() {
   } else { if (b) b.remove(); document.documentElement.classList.remove('cc-has-banner'); }
   // maintenance cover
   var m = q('#cc-maint');
-  if (false && C.maintenance_on) {
+  var bypass = false; try { if (/[?&]nomaint=1/.test(location.search)) sessionStorage.setItem('cc_nomaint', '1'); bypass = sessionStorage.getItem('cc_nomaint') === '1'; } catch (e) {}
+  if (C.maintenance_on && !bypass) {
     if (!m) { m = document.createElement('div'); m.id = 'cc-maint'; m.setAttribute('role', 'alert'); m.innerHTML = '<div><h1></h1><p></p></div>'; document.body.appendChild(m); }
     q('h1', m).textContent = 'Back soon';
     q('p', m).textContent = C.maintenance_text || 'We are fixing something. Please check again in a little while.';

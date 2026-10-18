@@ -4,7 +4,7 @@
 (function () {
 'use strict';
 let FEE = 3;                                             // percent; replaced by the server's value (admin > Money and fees) as soon as it loads
-const CFG = { min: 50, wfp: 0, wff: 0, pmin: 1, pmax: 150000 };
+const CFG = { min: 50, max: 150000, wfp: 0, wff: 0, pmin: 1, pmax: 150000 };
 const kes = (n) => 'KSh ' + Number(n).toLocaleString('en-KE');
 const net = (p) => p - Math.floor((p * FEE) / 100);      // same rounding as the Worker
 const connected = () => typeof CC_API === 'string' && CC_API.indexOf('YOUR-SUBDOMAIN') < 0;
@@ -16,7 +16,7 @@ async function loadConfig() {                              // fee %, boost price
     if (Number.isFinite(d.fee_percent)) FEE = d.fee_percent;
     CFG.pmin = d.price_min || 1; CFG.pmax = d.price_max || 150000;
     { const mp = document.getElementById('mpr'); if (mp) mp.placeholder = 'Price in KSh (' + CFG.pmin.toLocaleString('en-US') + ' to ' + CFG.pmax.toLocaleString('en-US') + ')'; }
-    CFG.min = d.withdraw_min || 50; CFG.wfp = d.withdraw_fee_percent || 0; CFG.wff = d.withdraw_fee_flat || 0;
+    CFG.min = d.withdraw_min || 50; CFG.max = d.withdraw_max || 150000; CFG.wfp = d.withdraw_fee_percent || 0; CFG.wff = d.withdraw_fee_flat || 0;
     const bs = [...document.querySelectorAll('#dm .pl .act')];
     (d.boost_plans || []).forEach((p, i) => { const b = bs[i]; if (!b) return; b.dataset.pr = p.price; b.dataset.du = p.hours === 24 ? '24 hours' : '3 days'; b.innerHTML = '<b>KSh ' + p.price + '</b>' + b.dataset.du; });
     const on = bs.find((b) => b.classList.contains('sel')) || bs[0]; if (on) on.click();      // refreshes the price the boost screen will charge and show
@@ -566,15 +566,15 @@ $('#wd').onclick = async () => {
   const bal = S.wallet ? S.wallet.balance : 0; if (!bal) return;
   if (!idOK()) return needId();
   if (typeof bioGate === 'function' && !(await bioGate())) return toast('Fingerprint check failed');
-  const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. An admin sends the money to your M-Pesa and marks it paid. It is not instant. Smallest withdrawal: ' + kes(CFG.min) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
-    + '<div class="fld" style="margin-top:10px"><input id="ccwa" type="number" inputmode="numeric" value="' + bal + '" aria-label="Amount in KSh"></div>'
+  const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. An admin sends the money to your M-Pesa and marks it paid. It is not instant. Smallest withdrawal: ' + kes(CFG.min) + '. Largest: ' + kes(CFG.max) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
+    + '<div class="fld" style="margin-top:10px"><input id="ccwa" type="number" inputmode="numeric" value="' + Math.min(bal, CFG.max) + '" aria-label="Amount in KSh"></div>'
     + '<div class="fld"><input id="ccwp" inputmode="numeric" maxlength="12" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'
     + '<p class="sub" id="ccw-e" style="color:#f87171;min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
   m.querySelector('#ccw-x').onclick = () => m.close();
   m.querySelector('#ccwp').value = ST.get('cc_phone', '');
   m.querySelector('#ccw-go').onclick = async () => {
     const amount = Math.floor(+m.querySelector('#ccwa').value), phone = m.querySelector('#ccwp').value.replace(/\s/g, ''), er = m.querySelector('#ccw-e');
-    if (!(amount >= CFG.min && amount <= bal)) return (er.textContent = 'Enter an amount from ' + kes(CFG.min) + ' up to ' + kes(bal));
+    if (!(amount >= CFG.min && amount <= Math.min(bal, CFG.max))) return (er.textContent = 'Enter an amount from ' + kes(CFG.min) + ' up to ' + kes(Math.min(bal, CFG.max)));
     if (!/^(07|01)\d{8}$/.test(phone)) return (er.textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
     const g = m.querySelector('#ccw-go'); g.disabled = true;
     try { await call('/api/wallet/withdraw', { body: { amount, phone } }); ST.set('cc_phone', phone); m.close(); toast('Request sent. An admin will pay it out.'); loadOrders(); }

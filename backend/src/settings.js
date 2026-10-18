@@ -8,6 +8,7 @@ export const DEFS = {
   boost_price: { env: 'BOOST_PRICE', def: 30, min: 1, max: 5000, unit: 'KSh', label: 'Advert boost, 24 hours', help: 'Price of pinning a Feed story for 1 day.' },
   boost_price_3d: { env: 'BOOST_PRICE_3D', def: 70, min: 1, max: 15000, unit: 'KSh', label: 'Advert boost, 3 days', help: 'Price of pinning a Feed story for 3 days.' },
   withdraw_min: { env: 'WITHDRAW_MIN', def: 50, min: 50, max: 5000, unit: 'KSh', label: 'Smallest withdrawal', help: 'Sellers cannot request less than this.' },
+  withdraw_max: { env: 'WITHDRAW_MAX', def: 150000, min: 50, max: 250000, unit: 'KSh', label: 'Largest withdrawal', help: 'Sellers cannot request more than this in one withdrawal.' },
   withdraw_fee_percent: { env: 'WITHDRAW_FEE_PERCENT', def: 0, min: 0, max: 20, dec: true, unit: '%', label: 'Withdrawal fee (percent)', help: 'Kept from each withdrawal. 0 = free. Use it to cover M-Pesa send charges.' },
   withdraw_fee_flat: { env: 'WITHDRAW_FEE_FLAT', def: 0, min: 0, max: 500, unit: 'KSh', label: 'Withdrawal fee (flat)', help: 'Fixed amount kept from each withdrawal, added to the percent fee.' },
   referral_reward: { env: 'REFERRAL_REWARD', def: 20, min: 0, max: 1000, unit: 'KSh', label: 'Referral reward', help: 'Paid to the inviter after the friend completes a purchase.' },
@@ -55,7 +56,7 @@ export const boostPlans = (S) => [{ id: '1d', hours: 24, price: S.boost_price },
 export const publicConfig = (S) => ({
   fee_percent: S.platform_fee_percent, boost_plans: boostPlans(S),
   price_min: S.listing_price_min, price_max: S.listing_price_max,
-  withdraw_min: S.withdraw_min, withdraw_fee_percent: S.withdraw_fee_percent, withdraw_fee_flat: S.withdraw_fee_flat,
+  withdraw_min: S.withdraw_min, withdraw_max: S.withdraw_max, withdraw_fee_percent: S.withdraw_fee_percent, withdraw_fee_flat: S.withdraw_fee_flat,
 });
 
 // Validates and saves. Returns { error } or { changed: { key: [old, new] } }.
@@ -71,6 +72,7 @@ export async function saveSettings(env, input) {
   }
   const next = { ...cur }; for (const k of Object.keys(changed)) next[k] = changed[k][1];
   if (next.listing_price_min > next.listing_price_max) return { error: 'Lowest item price cannot be higher than the highest item price.' };
+  if (next.withdraw_min > next.withdraw_max) return { error: 'Smallest withdrawal cannot be higher than the largest withdrawal.' };
   if (withdrawFee(next.withdraw_min, next) >= next.withdraw_min) return { error: 'That withdrawal fee would swallow the smallest withdrawal. Lower the fee or raise the minimum.' };
   for (const [k, [, n]] of Object.entries(changed)) {
     const res = await post(env, 'settings', { key: k, value: n, updated_at: new Date().toISOString() }, 'resolution=merge-duplicates,return=representation');

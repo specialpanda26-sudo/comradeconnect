@@ -21,7 +21,7 @@ const missing = REQUIRED.filter((k) => !env[k]);
 if (missing.length) { console.error('Missing required environment variables: ' + missing.join(', ')); process.exit(1); }
 if (env.ADMIN_KEY.length < 24 || env.HASH_PEPPER.length < 24) { console.error('ADMIN_KEY and HASH_PEPPER must each be at least 24 characters (use: openssl rand -hex 32)'); process.exit(1); }
 if (env.PAYMENT_MODE === 'manual' && !env.MPESA_PAY_TO) console.warn('WARNING: MPESA_PAY_TO is empty, so buyers cannot be shown where to pay.');
-if (env.PAYMENT_MODE === 'tinypesa' && (!env.TINYPESA_API_KEY || !env.CALLBACK_SECRET)) { console.error('PAYMENT_MODE=tinypesa needs TINYPESA_API_KEY and CALLBACK_SECRET'); process.exit(1); }
+if (env.PAYMENT_MODE === 'tinypesa' && (!(env.TINYPESA_LINK_API_KEY || env.TINYPESA_ACCOUNT_API_KEY || env.TINYPESA_API_KEY) || !env.CALLBACK_SECRET)) { console.error('PAYMENT_MODE=tinypesa needs TINYPESA_LINK_API_KEY and/or TINYPESA_ACCOUNT_API_KEY, plus CALLBACK_SECRET'); process.exit(1); }
 if (env.ALLOWED_ORIGINS === '*') console.warn('WARNING: ALLOWED_ORIGINS is "*". Set it to your site address before launch.');
 
 const MAX_BODY = 1024 * 1024; // 1 MB: photos and clips go straight to Supabase Storage, never through this server

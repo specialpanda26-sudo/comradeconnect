@@ -20,7 +20,9 @@ services:
       - { key: CRON_SECRET, sync: false }
       - { key: GEMINI_API_KEY, sync: false }
       - { key: GOOGLE_CLIENT_ID, sync: false }
-      - { key: TINYPESA_API_KEY, sync: false }   # TinyPesa link API key (the one shown with a link username)
+      - { key: TINYPESA_LINK_API_KEY, sync: false }
+      - { key: TINYPESA_ACCOUNT_API_KEY, sync: false }
+      - { key: TINYPESA_API_KEY, sync: false }
       - { key: TINYPESA_USERNAME, sync: false }  # the link username that goes with the link API key
       - { key: CALLBACK_SECRET, sync: false }    # same string you put after ?s= in the TinyPesa callback URL
       - { key: MPESA_PAY_TYPE, value: send }

@@ -15,13 +15,6 @@ export async function markFailed(env, filter, status, reason, code) {
   if (!res.ok) res = await patch(env, filter, { status });
   return rows(res);
 }
-// TinyPesa has two keys: the LINK key (goes with the link username) and the ACCOUNT key. Either can work as "the key".
-// TINYPESA_API_KEY (old name) is treated as the link key.
-export const tinyKeys = (env) => {
-  const link = String(env.TINYPESA_LINK_API_KEY || env.TINYPESA_API_KEY || '').trim();
-  const account = String(env.TINYPESA_ACCOUNT_API_KEY || '').trim();
-  return [link, account].filter((k, i, a) => k && a.indexOf(k) === i);
-};
 export const manualMode = (env) => String(env.PAYMENT_MODE || 'manual') !== 'tinypesa';
 // What the buyer must do in manual mode. Shown in the app, never contains anything secret.
 export function manualInfo(env, p) {
@@ -37,7 +30,7 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   const phone = normPhone(rawPhone);
   amount = Math.floor(Number(amount));
   if (manualMode(env) && !env.MPESA_PAY_TO) return { res: err(env, 'Payments are not set up yet', 503) };
-  if (!manualMode(env) && (!tinyKeys(env).length || !env.TINYPESA_USERNAME)) { console.error('payments: PAYMENT_MODE=tinypesa but no TinyPesa key (TINYPESA_LINK_API_KEY / TINYPESA_ACCOUNT_API_KEY) or TINYPESA_USERNAME is set on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
+  if (!manualMode(env) && (!env.TINYPESA_API_KEY || !env.TINYPESA_USERNAME)) { console.error('payments: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY or TINYPESA_USERNAME is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (!phone || !(amount >= 1) || amount > 150000 || !aid) return { res: err(env, 'Check the phone number and amount') };
   // Rate limits so nobody can spam STK prompts to other people's phones through your account
   const byPhone = await rows(await sb(env, `payments?select=id&phone=eq.${phone}&created_at=gte.${ago(10 * 60e3)}&limit=10`));
@@ -48,17 +41,12 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   const row = Array.isArray(pj) ? pj[0] : null;
   if (!row) { console.error('payments: could not save the payment row (is supabase/schema.sql fully run?)', pr.status, JSON.stringify(pj).slice(0, 300)); return { res: err(env, 'Server could not save the payment', 500) }; }
   if (manualMode(env)) return { id: row.id };       // no prompt is sent: the app shows manualInfo() and asks for the M-Pesa code
-  let r = null, t = {};
-  for (const key of tinyKeys(env)) {
-    r = await fetch(`${TINYPESA_URL}?username=${enc(env.TINYPESA_USERNAME)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ApiKey: key, Apikey: key },
-      body: JSON.stringify({ amount, msisdn: phone }),
-    }).catch((e) => { console.error('tinypesa: request failed', e && e.message); return null; });
-    t = r ? await r.json().catch(() => ({})) : {};
-    if (r && r.status !== 401 && r.status !== 403) break;
-    console.error('tinypesa: key refused (' + (r ? r.status : 'no response') + '), trying the next key if there is one');
-  }
+  const r = await fetch(`${TINYPESA_URL}?username=${enc(env.TINYPESA_USERNAME)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ApiKey: env.TINYPESA_API_KEY },
+    body: JSON.stringify({ amount, msisdn: phone }),
+  }).catch((e) => { console.error('tinypesa: request failed', e && e.message); return null; });
+  const t = r ? await r.json().catch(() => ({})) : {};
   if (!r || !r.ok || String(t.success) === 'false' || !(t.request_id || String(t.success) === 'true')) {
     console.error('tinypesa: initialize refused', r ? r.status : 'no response', JSON.stringify(t).slice(0, 200));
     await markFailed(env, `payments?id=eq.${row.id}`, 'failed', 'not_sent', null);

@@ -3,7 +3,8 @@
 // you confirm it in the admin panel) and "tinypesa" (automatic STK push; TinyPesa has its own fees).
 import { getSettings } from './settings.js';
 import { json, err, sb, rows, one, post, patch, enc, normPhone, ago, tsEqual, user, UUID, throttle, tooMany } from './lib.js';
-const TINYPESA_URL = 'https://tinypesa.com/api/v1/express/initialize';
+// TinyPesa's current API: api. host, trailing slash, the link username in the query string, JSON body.
+const TINYPESA_URL = 'https://api.tinypesa.com/api/v1/express/initialize/';
 export const manualMode = (env) => String(env.PAYMENT_MODE || 'manual') !== 'tinypesa';
 // What the buyer must do in manual mode. Shown in the app, never contains anything secret.
 export function manualInfo(env, p) {
@@ -19,7 +20,7 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   const phone = normPhone(rawPhone);
   amount = Math.floor(Number(amount));
   if (manualMode(env) && !env.MPESA_PAY_TO) return { res: err(env, 'Payments are not set up yet', 503) };
-  if (!manualMode(env) && !env.TINYPESA_API_KEY) { console.error('payments: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
+  if (!manualMode(env) && (!env.TINYPESA_API_KEY || !env.TINYPESA_USERNAME)) { console.error('payments: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY or TINYPESA_USERNAME is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (!phone || !(amount >= 1) || amount > 150000 || !aid) return { res: err(env, 'Check the phone number and amount') };
   // Rate limits so nobody can spam STK prompts to other people's phones through your account
   const byPhone = await rows(await sb(env, `payments?select=id&phone=eq.${phone}&created_at=gte.${ago(10 * 60e3)}&limit=10`));
@@ -30,13 +31,13 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   const row = Array.isArray(pj) ? pj[0] : null;
   if (!row) { console.error('payments: could not save the payment row (is supabase/schema.sql fully run?)', pr.status, JSON.stringify(pj).slice(0, 300)); return { res: err(env, 'Server could not save the payment', 500) }; }
   if (manualMode(env)) return { id: row.id };       // no prompt is sent: the app shows manualInfo() and asks for the M-Pesa code
-  const r = await fetch(TINYPESA_URL, {
+  const r = await fetch(`${TINYPESA_URL}?username=${enc(env.TINYPESA_USERNAME)}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', ApiKey: env.TINYPESA_API_KEY },
-    body: new URLSearchParams({ amount: String(amount), msisdn: phone, account_no: 'CC' + row.id.slice(0, 8) }),
+    headers: { 'Content-Type': 'application/json', ApiKey: env.TINYPESA_API_KEY },
+    body: JSON.stringify({ amount, msisdn: phone }),
   }).catch((e) => { console.error('tinypesa: request failed', e && e.message); return null; });
   const t = r ? await r.json().catch(() => ({})) : {};
-  if (String(t.success) !== 'true') {
+  if (!r || !r.ok || String(t.success) === 'false' || !(t.request_id || String(t.success) === 'true')) {
     console.error('tinypesa: initialize refused', r ? r.status : 'no response', JSON.stringify(t).slice(0, 200));
     await patch(env, `payments?id=eq.${row.id}`, { status: 'failed' });
     return { res: err(env, 'Could not send the M-Pesa prompt. Try again.', 502) };

@@ -87,8 +87,8 @@ It releases handed-over orders, unlocks referral rewards, expires unpaid payment
 - Keep `.env`, `.dev.vars` and `*.zip` out of Git (`.gitignore` already does).
 
 ## 10. Automatic M-Pesa prompts with TinyPesa (optional, replaces manual mode)
-1. TinyPesa dashboard: copy the **account** API key (not the payment-link key).
-2. Render > Environment: `PAYMENT_MODE=tinypesa`, `TINYPESA_API_KEY=...`, `CALLBACK_SECRET=<openssl rand -hex 32>`. Keep the same values in `render.yaml` or the next Blueprint sync reverts them.
+1. TinyPesa dashboard > Developer: copy the **link API key** and the **link username** that go together.
+2. Render > Environment: `PAYMENT_MODE=tinypesa`, `TINYPESA_API_KEY=...`, `TINYPESA_USERNAME=...`, `CALLBACK_SECRET=<openssl rand -hex 32>`. Keep the same values in `render.yaml` or the next Blueprint sync reverts them.
 3. TinyPesa callback URL: `https://YOUR-API-HOST/api/tinypesa/callback?s=YOUR_CALLBACK_SECRET` (the secret must match exactly).
 4. Check: the same URL with `?s=wrong` returns 403, with the real secret returns `{"ok":true}`.
 5. Buy a KSh 1 item, enter your PIN, confirm `payments.status = paid` in Supabase.

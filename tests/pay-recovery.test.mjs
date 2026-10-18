@@ -39,3 +39,22 @@ test('a late callback with too little money is not parked for approval', async (
   await w.callback(w.row('payments', (x) => x.id === p.id), { receipt: 'SHORT12345', amount: 10 });
   assert.equal(w.row('payments', (x) => x.id === p.id).status, 'expired');
 });
+
+test('STK request matches the TinyPesa API: api host, username in the URL, ApiKey header, JSON body', async (t) => {
+  const w = await fresh(t, { env: { TINYPESA_API_KEY: 'key123', TINYPESA_USERNAME: 'My Link' } });
+  const a = await w.user('a');
+  const r = await w.call('POST', '/api/pay', { as: a, body: { purpose: 'topup', amount: 50, phone: '0712345678' } });
+  assert.equal(r.status, 200);
+  const c = w.calls.find((x) => x.url.includes('tinypesa.com'));
+  assert.equal(c.url, 'https://api.tinypesa.com/api/v1/express/initialize/?username=My%20Link');
+  assert.equal(c.init.headers.ApiKey, 'key123');
+  assert.equal(c.init.headers['Content-Type'], 'application/json');
+  assert.deepEqual(JSON.parse(c.init.body), { amount: 50, msisdn: '254712345678' });
+});
+
+test('automatic mode without TINYPESA_USERNAME refuses cleanly', async (t) => {
+  const w = await fresh(t, { env: { TINYPESA_USERNAME: '' } });
+  const a = await w.user('a');
+  const r = await w.call('POST', '/api/pay', { as: a, body: { purpose: 'topup', amount: 50, phone: '0712345678' } });
+  assert.equal(r.status, 503);
+});

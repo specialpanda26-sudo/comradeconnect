@@ -4,7 +4,7 @@ import worker, { runCron } from '../backend/src/index.js';
 export function world(opts = {}) {
   const db = new MockDB(), SB = 'https://sb.test';
   const f = installFetch(db, SB, opts);
-  const env = { SUPABASE_URL: SB, SUPABASE_SERVICE_KEY: 'svc', ADMIN_KEY: 'admin-secret-key', HASH_PEPPER: 'test-pepper', CALLBACK_SECRET: 'cb-secret', TINYPESA_API_KEY: 'tp',
+  const env = { SUPABASE_URL: SB, SUPABASE_SERVICE_KEY: 'svc', ADMIN_KEY: 'admin-secret-key', HASH_PEPPER: 'test-pepper', CALLBACK_SECRET: 'cb-secret', TINYPESA_API_KEY: 'tp', TINYPESA_USERNAME: 'link',
     PAYMENT_MODE: 'tinypesa', MPESA_PAY_TO: '0700000000', MPESA_PAY_NAME: 'Test Shop', MEDIA_BUCKET: 'media-bucket', PRIVATE_BUCKET: 'private-bucket', MEDIA_PUBLIC_URL: 'https://media.test', PLATFORM_FEE_PERCENT: '3', REFERRAL_REWARD: '20', ...opts.env };
   env.MEDIA = new FakeBucket(); env.PRIVATE = new FakeBucket();
   f.buckets['media-bucket'] = env.MEDIA; f.buckets['private-bucket'] = env.PRIVATE;   // the fake Supabase Storage serves these two buckets

@@ -72,6 +72,8 @@
         + '<button class="btn g" id="ccp-cp" style="width:100%;margin-top:12px">Copy both</button>'
         + '<label class="sub" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="ccp-ok"> I saved my account ID and recovery code</label>'
         + '<button class="btn p" id="ccp-go" style="width:100%;margin-top:12px" disabled>Continue</button>');
+      m.dataset.noclose = '1';
+      if (window.ccAddX) ccAddX(m, function () { if (confirm('Close without saving your recovery code? We cannot show it again, and without it you cannot get this account back on a new phone.')) { m.close(); done(); } });
       $('#ccp-cp', m).onclick = function () { copy('Comrade Connect account ID: ' + d.aid + '\nRecovery code: ' + d.recovery_code); };
       $('#ccp-ok', m).onchange = function (e) { $('#ccp-go', m).disabled = !e.target.checked; };
       $('#ccp-go', m).onclick = function () { m.close(); done(); };

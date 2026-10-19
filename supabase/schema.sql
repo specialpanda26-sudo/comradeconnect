@@ -732,3 +732,14 @@ create table if not exists zones (
 );
 alter table zones enable row level security;
 create index if not exists wifi_map on wifi(hidden, lat, lng);
+
+-- v18: detailed services. Admin can add official services with contact, hours, price list. Safe to run again.
+alter table services add column if not exists official boolean not null default false;
+alter table services add column if not exists featured boolean not null default false;
+alter table services add column if not exists phone text;
+alter table services add column if not exists whatsapp text;
+alter table services add column if not exists location text;
+alter table services add column if not exists hours text;
+alter table services add column if not exists offerings text;
+alter table services add column if not exists delivery boolean not null default false;
+create index if not exists services_featured on services(hidden, featured desc, created_at desc);

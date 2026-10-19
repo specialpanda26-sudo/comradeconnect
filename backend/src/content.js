@@ -124,10 +124,11 @@ export async function contentRoutes(req, env, url, ip) {
     let me = req.headers.get('X-Token') ? await authProfile(req, env) : null;
     if (res.adult) { if (!me) return err(env, 'Please sign in again', 401); const blk = await adultBlock(env, me); if (blk) return blk; }
     const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1), limit = Math.min(30, Math.max(1, parseInt(url.searchParams.get('limit')) || 15));
-    let q = `${res.table}?hidden=eq.false&order=created_at.desc&limit=${limit + 1}&offset=${(page - 1) * limit}`;
-    const zone = url.searchParams.get('zone'); if (zone && zone !== 'All' && res.table !== 'polls' && res.table !== 'study_tips' && res.table !== 'study_groups') q += `&zone=eq.${enc(zone.slice(0, 30))}`;
+    let q = `${res.table}?hidden=eq.false&order=${mm[1] === 'services' ? 'featured.desc,' : ''}created_at.desc&limit=${limit + 1}&offset=${(page - 1) * limit}`;
+    const zone = url.searchParams.get('zone'); if (zone && zone !== 'All' && res.table !== 'polls' && res.table !== 'study_tips' && res.table !== 'study_groups') q += mm[1] === 'services' ? `&or=(zone.eq.${enc(zone.slice(0, 30))},zone.eq.)` : `&zone=eq.${enc(zone.slice(0, 30))}`;
     const kd = url.searchParams.get('kind'); if (res.table === 'wifi' && ['spot', 'share', 'reseller'].includes(kd)) q += '&kind=eq.' + kd;
-    const r = await rows(await sb(env, q)); const list = r.slice(0, limit), ids = list.map((x) => x.id);
+    let lr = await sb(env, q); if (!lr.ok && q.includes('featured.desc,')) lr = await sb(env, q.replace('featured.desc,', ''));
+    const r = await rows(lr); const list = r.slice(0, limit), ids = list.map((x) => x.id);
     let items = list.map((x) => pub(x, me));
     if (ids.length && mm[1] === 'polls') {
       const v = await rows(await sb(env, `poll_votes?select=poll_id,aid,option_idx&poll_id=${inList(ids)}`));

@@ -931,12 +931,33 @@ const XP = {
   sv(s, L) {
     const form = s.form ? '<article class="box g"><b>Add a service</b>' + xin('x_st', 'Business name, e.g. Quick Print Point', 80) + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px"><select id="x_sc" aria-label="Category">' + xopt(SVC, 'Printing') + '</select><select id="x_sz" aria-label="Zone">' + xopt(ZONES) + '</select></div>'
       + xin('x_sp', 'Price, e.g. KSh 5 a page', 40) + xin('x_sd', 'What they do and opening hours', 400) + '<p class="sub" style="margin-top:8px">No phone numbers. Comrades reach you with anonymous messages.</p><div class="bar" style="margin-top:14px"><button class="btn p" data-xa="save">Post</button><button class="act" data-xa="cancel">Cancel</button></div></article>' : '';
-    const F = L.filter((x) => s.cat === 'All' || x.category === s.cat);
-    return '<p class="sub">Printing, gas, laundry, food and boda near the hostels. Message a service anonymously.</p>' + xadd('Add a service') + form
-      + '<div class="tabs z" style="padding:0">' + ['All'].concat(SVC).map((c) => '<button class="tab g' + (c === s.cat ? ' on' : '') + '" data-xc="' + esc(c) + '">' + esc(c) + '</button>').join('') + '</div>' + zchips(s)
-      + (F.length ? F.map((x) => '<article class="box g"><div class="flex items-center justify-between"><span><span class="badge">' + esc(x.category) + '</span><span class="badge" style="margin-left:6px">@' + esc(x.zone) + '</span></span>' + xwhen(x) + '</div>'
-        + '<p style="margin:12px 0 2px;font-weight:600">' + esc(x.title) + '</p>' + (x.price_note ? '<p class="sub" style="margin:0 0 6px">' + esc(x.price_note) + '</p>' : '') + '<p class="sub" style="margin:0 0 12px;overflow-wrap:anywhere">' + esc(x.details || '') + '</p>'
-        + xbar(x.mine ? '<span class="views">Your service</span>' : xmsg(x, '') + xrep(x)) + '</article>').join('') : xempty(s, 'No services here yet. Add one.')) + xmore(s);
+    const cats = ['All'].concat(SVC, [...new Set(L.map((x) => x.category))].filter((c) => !SVC.includes(c)));
+    const F = L.filter((x) => s.cat === 'All' || x.category === s.cat).sort((x, y) => (y.featured ? 1 : 0) - (x.featured ? 1 : 0));
+    const ic = (d, n) => '<svg viewBox="0 0 24 24" width="' + (n || 16) + '" height="' + (n || 16) + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none">' + d + '</svg>';
+    const IC = { phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>', chat: '<path d="M21 12a8 8 0 0 1-11.7 7L4 20l1.1-4.6A8 8 0 1 1 21 12z"/>',
+      pin: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      truck: '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>' };
+    const line = 'border-top:1px solid color-mix(in srgb,currentColor 14%,transparent)';
+    const info = (icon, label, text) => '<div style="display:flex;gap:10px;align-items:flex-start;margin:0 0 8px;font-size:13px;font-weight:300;line-height:1.5"><span style="margin-top:2px;opacity:.75">' + ic(IC[icon], 15) + '</span><span style="overflow-wrap:anywhere"><b style="font-weight:600">' + label + '</b> ' + esc(text) + '</span></div>';
+    const card = (x) => {
+      const tel = String(x.phone || '').replace(/[^\d+]/g, ''), wa = String(x.whatsapp || '').replace(/\D/g, '');
+      const price = String(x.offerings || '').split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 15).map((l) => { const p = l.split(/\s*\|\s*/); return '<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;' + line + '"><span style="font-weight:300">' + esc(p[0]) + '</span><b style="white-space:nowrap;font-weight:600">' + esc(p[1] || '') + '</b></div>'; }).join('');
+      const maps = x.location ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(x.location + ' Kirinyaga University') : '';
+      const bt = 'style="padding:11px 20px;text-decoration:none"';
+      const act = (tel ? '<a class="btn p" ' + bt + ' href="tel:' + esc(tel) + '">' + ic(IC.phone) + 'Call</a>' : '') + (wa ? '<a class="btn g" ' + bt + ' href="https://wa.me/' + esc(wa) + '?text=' + encodeURIComponent('Hi ' + x.title + ', I found you on Comrade Connect.') + '" target="_blank" rel="noopener noreferrer">' + ic(IC.chat) + 'WhatsApp</a>' : '')
+        + (maps ? '<a class="btn g" ' + bt + ' href="' + esc(maps) + '" target="_blank" rel="noopener noreferrer">' + ic(IC.pin) + 'Directions</a>' : '');
+      return '<article class="box g"><div class="flex items-center justify-between"><span><span class="badge">' + esc(x.category) + '</span><span class="badge" style="margin-left:6px">@' + esc(x.zone || 'Whole campus') + '</span>'
+        + (x.official ? '<span class="badge" style="margin-left:6px;display:inline-flex;gap:5px;align-items:center">' + ic(IC.check, 12) + 'Verified</span>' : '') + (x.delivery ? '<span class="badge" style="margin-left:6px;display:inline-flex;gap:5px;align-items:center">' + ic(IC.truck, 12) + 'Delivers</span>' : '') + '</span>' + xwhen(x) + '</div>'
+        + '<p style="margin:12px 0 2px;font-weight:600">' + esc(x.title) + '</p>' + (x.price_note ? '<p class="sub" style="margin:0 0 8px">' + esc(x.price_note) + '</p>' : '')
+        + (x.details ? '<p class="sub" style="margin:0 0 12px;overflow-wrap:anywhere">' + esc(x.details) + '</p>' : '')
+        + (x.hours ? info('clock', 'Hours', x.hours) : '') + (x.location ? info('pin', 'Find them', x.location) : '')
+        + (price ? '<div style="margin:6px 0 14px;font-size:13px">' + price + '</div>' : '')
+        + (act ? '<div class="bar" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">' + act + '</div>' : '')
+        + xbar(x.mine ? '<span class="views">Your service</span>' : (x.official ? '' : xmsg(x, '')) + xrep(x)) + '</article>';
+    };
+    return '<p class="sub">Printing, gas, laundry, food and boda near the hostels. Verified services have phone, hours and prices. Or message one anonymously.</p>' + xadd('Add a service') + form
+      + '<div class="tabs z" style="padding:0">' + cats.map((c) => '<button class="tab g' + (c === s.cat ? ' on' : '') + '" data-xc="' + esc(c) + '">' + esc(c) + '</button>').join('') + '</div>' + zchips(s)
+      + (F.length ? F.map(card).join('') : xempty(s, 'No services here yet. Add one.')) + xmore(s);
   },
   sn(s, L) {
     const form = s.form ? '<article class="box g"><b>Share a study tip</b>' + xin('x_nu', 'Unit, e.g. STAT 201', 40) + xin('x_nt', 'Your tip or short notes', 300) + '<div class="bar" style="margin-top:14px"><button class="btn p" data-xa="save">Post</button><button class="act" data-xa="cancel">Cancel</button></div></article>' : '';

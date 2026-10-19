@@ -1,5 +1,6 @@
 // Community content: roommates, study groups, polls, Hearts (18+), Wi-Fi, hostels, services, study tips, zone ratings,
 // plus public notices/events/sponsors and the shared report endpoint.
+import { wifiParse, wifiMask, WIFI_TEXT } from './wifi.js';
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, throttle, tooMany, user, authProfile, contactBlock } from './lib.js';
 
 const ok = (v) => v !== null && v !== undefined;
@@ -24,10 +25,7 @@ const R = {
     const content = str(b.content, 300); if (content.length < 5) return 'Write a little more';
     return { content, zone: str(b.zone, 30) };
   } },
-  wifi: { table: 'wifi', per: 8, rtype: 'wifi', text: ['place', 'zone', 'speed_note'], parse: (b) => {
-    const place = str(b.place, 60); if (place.length < 2) return 'Add the place';
-    return { place, zone: str(b.zone, 30), speed_note: str(b.speed_note, 80) || null };
-  } },
+  wifi: { table: 'wifi', per: 8, rtype: 'wifi', text: WIFI_TEXT, parse: wifiParse },
   hostels: { table: 'hostels', per: 5, rtype: 'hostel', text: ['name', 'zone', 'review'], parse: (b) => {
     const name = str(b.name, 60); if (name.length < 2) return 'Add the hostel name';
     return { name, zone: str(b.zone, 30), rent: int(b.rent, 0, 200000), rating: int(b.rating, 1, 5), review: str(b.review, 400) };
@@ -105,7 +103,7 @@ export async function contentRoutes(req, env, url, ip) {
     return json(env, { ok: true });
   }
 
-  const mm = path.match(/^\/api\/c\/(rooms|groups|polls|hearts|wifi|hostels|services|tips)(?:\/([0-9a-f-]{36})\/(join|leave|vote|interest|like))?$/);
+  const mm = path.match(/^\/api\/c\/(rooms|groups|polls|hearts|wifi|hostels|services|tips)(?:\/([0-9a-f-]{36})\/(join|leave|vote|interest|like|remove))?$/);
   if (!mm) return null;
   const res = R[mm[1]], id = mm[2], act = mm[3];
 
@@ -116,6 +114,7 @@ export async function contentRoutes(req, env, url, ip) {
     const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1), limit = Math.min(30, Math.max(1, parseInt(url.searchParams.get('limit')) || 15));
     let q = `${res.table}?hidden=eq.false&order=created_at.desc&limit=${limit + 1}&offset=${(page - 1) * limit}`;
     const zone = url.searchParams.get('zone'); if (zone && zone !== 'All' && res.table !== 'polls' && res.table !== 'study_tips' && res.table !== 'study_groups') q += `&zone=eq.${enc(zone.slice(0, 30))}`;
+    const kd = url.searchParams.get('kind'); if (res.table === 'wifi' && ['spot', 'share', 'reseller'].includes(kd)) q += '&kind=eq.' + kd;
     const r = await rows(await sb(env, q)); const list = r.slice(0, limit), ids = list.map((x) => x.id);
     let items = list.map((x) => pub(x, me));
     if (ids.length && mm[1] === 'polls') {
@@ -129,6 +128,7 @@ export async function contentRoutes(req, env, url, ip) {
     } else if (ids.length && mm[1] === 'wifi') {
       const v = await rows(await sb(env, `wifi_votes?select=wifi_id,aid,value&wifi_id=${inList(ids)}`));
       items = items.map((x) => ({ ...x, score: v.filter((y) => y.wifi_id === x.id).reduce((s, y) => s + y.value, 0), votes: v.filter((y) => y.wifi_id === x.id).length, my_vote: v.find((y) => y.wifi_id === x.id && me && y.aid === me.aid)?.value ?? 0 }));
+      items = items.map((x) => wifiMask(x, me));
     } else if (ids.length && mm[1] === 'hearts' && me) {
       const mine = await rows(await sb(env, `hearts_interests?select=post_id&aid=eq.${enc(me.aid)}&post_id=${inList(ids)}`));
       items = items.map((x) => ({ ...x, interested: mine.some((y) => y.post_id === x.id) }));
@@ -178,6 +178,11 @@ export async function contentRoutes(req, env, url, ip) {
         return err(env, 'This group is full', 409);
       }
       return json(env, { joined: true, members: Math.min(after.length, item.max_members) });
+    }
+    if (mm[1] === 'wifi' && act === 'remove') {                                        // the owner takes a network or plan down; the password is wiped too
+      if (item.aid !== u.aid) return err(env, 'Only the person who posted this can remove it', 403);
+      await patch(env, `wifi?id=eq.${id}`, { hidden: true, password: null });
+      return json(env, { ok: true });
     }
     if (mm[1] === 'wifi' && act === 'vote') {
       const value = Number(b.value);

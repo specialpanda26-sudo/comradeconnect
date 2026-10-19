@@ -857,7 +857,7 @@ async function loadX(k, reset) {
   if (reset) s.page = 1;
   if (xt === k) paintX();
   try {
-    const qs = '?page=' + s.page + (ZONED.has(k) && s.zone !== 'All' ? '&zone=' + encodeURIComponent(s.zone) : '');
+    const qs = '?page=' + s.page + (ZONED.has(k) && s.zone !== 'All' ? '&zone=' + encodeURIComponent(s.zone) : '') + (k === 'wf' && s.kind ? '&kind=' + s.kind : '');
     const d = await call('/api/c/' + XK[k] + qs, { auth: k === 'ht' ? undefined : false });
     if (seq !== s.seq) return;                                                // a newer request (zone changed) owns the list
     s.items = s.page === 1 ? d.items || [] : s.items.concat(d.items || []); s.more = !!d.hasMore; s.loaded = true; s.gate = false; s.at = Date.now();
@@ -994,6 +994,7 @@ async function createX(k, body, after) {                                   // on
 }
 const doneX = (k, pts, why) => { shut(); const s = exs(k); s.form = false; xt = k; paintX(); earn(pts, why); };
 const val = (id) => (document.getElementById(id) || { value: '' }).value.trim();
+window.__ccx = { XP, exs, paintX, createX, doneX, loadX, visible, zchips, xwhen, xrep, xmsg, xempty, xmore, call, ensureAccount, get xt() { return xt; } };   // lets cc-wifi.js build the Wi-Fi screen
 async function saveInline(k, btn) {
   if (k === 'wf') {
     const place = val('x_wp'); if (place.length < 2) return toast('Add the place');

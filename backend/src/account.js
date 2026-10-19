@@ -123,7 +123,8 @@ export async function accountRoutes(req, env, url, ip) {
 
   if (path === '/api/me' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;
-    return json(env, { aid: u.aid, handle: u.handle, points: u.points, verified: u.verified, student_verified: !!u.student_verified, badge: u.badge || null, role: u.role, adult_confirmed: u.adult_confirmed, referral_code: u.referral_code, balance: await balance(env, u.aid) });
+    const pw = await one(await sb(env, `profiles?select=recovery_hash&aid=eq.${enc(u.aid)}`));
+    return json(env, { has_password: !!(pw && String(pw.recovery_hash || '').startsWith('pw1:')), aid: u.aid, handle: u.handle, points: u.points, verified: u.verified, student_verified: !!u.student_verified, badge: u.badge || null, role: u.role, adult_confirmed: u.adult_confirmed, referral_code: u.referral_code, balance: await balance(env, u.aid) });
   }
   if (path === '/api/me/handle' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
@@ -133,6 +134,21 @@ export async function accountRoutes(req, env, url, ip) {
     const res = await patch(env, `profiles?aid=eq.${enc(u.aid)}`, { handle });
     if (res.status === 409) return err(env, 'That handle is taken', 409);
     return json(env, { handle });
+  }
+  // Choose your own username and password (for guest and Google accounts), or change them. Changing needs the current password.
+  if (path === '/api/me/credentials' && m === 'POST') {
+    const u = await user(req, env, true); if (u instanceof Response) return u;
+    if (!(await throttle(env, ip, 'cred', u.aid, 10, 30))) return tooMany(env);
+    const b = await body(), handle = str(b.handle, 20), pw = String(b.password || '');
+    if (!/^[A-Za-z0-9_]{3,20}$/.test(handle)) return err(env, 'Username: 3 to 20 letters, numbers or _');
+    const blk = contactBlock(env, handle); if (blk) return blk;
+    if (!goodPassword(pw, handle)) return err(env, 'Password: 8 to 100 characters, and not the same as your username');
+    const cur = await one(await sb(env, `profiles?select=recovery_hash&aid=eq.${enc(u.aid)}`));
+    if (cur && String(cur.recovery_hash || '').startsWith('pw1:') && !(await checkPassword(cur.recovery_hash, String(b.current || '').slice(0, 100)))) return err(env, 'Your current password is wrong', 403);
+    const res = await patch(env, `profiles?aid=eq.${enc(u.aid)}`, { handle, recovery_hash: await hashPassword(pw) });
+    if (res.status === 409) return err(env, 'That username is already taken', 409);
+    if (!res.ok) return err(env, 'Could not save. Try again.', 500);
+    return json(env, { ok: true, handle, has_password: true });
   }
   if (path === '/api/me/adult' && m === 'POST') {       // self-declaration only; this is not age verification
     const u = await user(req, env, true); if (u instanceof Response) return u;

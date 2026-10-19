@@ -95,7 +95,7 @@
   }
 
   async function afterSignIn() {
-    try { var r = await fetch(API + '/api/me'); if (r.ok) { var d = await r.json(); if (d && d.handle) ME.handle = d.handle; } } catch (e) {}
+    await fetchInfo();
     try { saveMe(); } catch (e) {}
     try { drawMe(); drawMe2(); } catch (e) {}
     try { window.ccSyncVer && ccSyncVer(); } catch (e) {}
@@ -104,16 +104,88 @@
     render();
   }
 
-  function openRestore() {
-    var m = sheet('<h3>Restore my account</h3><p class="sub" style="margin-top:6px">Enter the account ID and recovery code you saved when you created it.</p>'
-      + '<div class="fld" style="margin-top:10px"><input id="ccp-a" placeholder="Account ID" autocomplete="off" autocapitalize="off" aria-label="Account ID"></div>'
-      + '<div class="fld"><input id="ccp-c" placeholder="Recovery code" autocomplete="off" autocapitalize="characters" aria-label="Recovery code"></div>'
+  /* ---------- username and password ---------- */
+  var info = null;                                       // what the server says about this account (has_password, handle)
+  async function fetchInfo() {
+    info = null; if (!signedIn() || !live()) return;
+    try { var r = await fetch(API + '/api/me'); if (r.ok) { info = await r.json(); if (info && info.handle) ME.handle = info.handle; } } catch (e) {}
+  }
+  var pwField = function (id, ph, label, ac) { return '<div class="fld"><input id="' + id + '" type="password" placeholder="' + ph + '" autocomplete="' + (ac || 'new-password') + '" autocapitalize="off" aria-label="' + label + '"></div>'; };
+  var SHOWPW = '<label class="sub" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="ccp-sh"> Show password</label>';
+  function showToggle(m, ids) { var c = $('#ccp-sh', m); if (c) c.onchange = function () { ids.forEach(function (i) { var n = $('#' + i, m); if (n) n.type = c.checked ? 'text' : 'password'; }); }; }
+  function problem(h, p) {
+    if (!/^[A-Za-z0-9_]{3,20}$/.test(h)) return 'Username: 3 to 20 letters, numbers or _';
+    if (p.length < 8) return 'Password: at least 8 characters';
+    if (p.toLowerCase() === h.toLowerCase()) return 'The password cannot be your username';
+    return '';
+  }
+  async function post(path, body) {
+    var r, d;
+    try { r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
+    catch (e) { throw new Error('Could not reach the server. Check your internet and try again.'); }
+    d = await r.json().catch(function () { return {}; });
+    if (!r.ok) throw new Error(window.ccErr ? ccErr(r.status, d.error) : (d.error || 'Something went wrong'));
+    return d;
+  }
+  function openCreate() {
+    if (!live()) return say('We cannot reach the service right now. Please try again in a moment.');
+    var m = sheet('<h3>Create your account</h3><p class="sub" style="margin-top:6px">Pick a username and a password. You will use them to sign in on any phone. Other people only see your username.</p>'
+      + '<div class="fld" style="margin-top:10px"><input id="ccp-u" placeholder="Username" maxlength="20" autocomplete="username" autocapitalize="off" aria-label="Username"></div>'
+      + pwField('ccp-p1', 'Password (8 or more characters)', 'Password') + pwField('ccp-p2', 'Repeat the password', 'Repeat the password') + SHOWPW
       + '<p class="sub" id="ccp-e" style="color:#f87171;min-height:18px"></p>'
-      + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-r">Restore</button></div>');
+      + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-go">Create account</button></div>');
+    showToggle(m, ['ccp-p1', 'ccp-p2']);
+    $('#ccp-x', m).onclick = function () { m.close(); };
+    $('#ccp-go', m).onclick = async function () {
+      var b = $('#ccp-go', m), h = $('#ccp-u', m).value.trim(), p1 = $('#ccp-p1', m).value, p2 = $('#ccp-p2', m).value, e = $('#ccp-e', m);
+      var bad = problem(h, p1) || (p1 !== p2 ? 'The two passwords are not the same' : '');
+      if (bad) { e.textContent = bad; return; }
+      b.disabled = true; e.textContent = '';
+      try {
+        var d = await post('/api/auth/register', { handle: h, password: p1 });
+        localStorage.setItem('cc_auth', JSON.stringify({ aid: d.aid, token: d.token }));
+        if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
+        ME.aid = d.aid; ME.handle = d.handle || h; saveMe(); m.close();
+        await afterSignIn(); say('Welcome, @' + (d.handle || h));
+      } catch (er) { e.textContent = er.message; b.disabled = false; }
+    };
+  }
+  function openCredentials() {
+    var has = !!(info && info.has_password);
+    var m = sheet('<h3>' + (has ? 'Change username or password' : 'Set a username and password') + '</h3><p class="sub" style="margin-top:6px">'
+      + (has ? 'Enter your current password to make changes.' : 'Right now this account only has an account ID and a recovery code. Choose a username and password so you can sign in on any phone. Your old recovery code stops working once you save.') + '</p>'
+      + (has ? '<div style="margin-top:10px">' + pwField('ccp-cur', 'Current password', 'Current password', 'current-password') + '</div>' : '')
+      + '<div class="fld" style="margin-top:10px"><input id="ccp-u" placeholder="Username" maxlength="20" autocomplete="username" autocapitalize="off" aria-label="Username" value="' + esc((info && info.handle) || '') + '"></div>'
+      + pwField('ccp-p1', has ? 'New password' : 'Password (8 or more characters)', 'Password') + pwField('ccp-p2', 'Repeat the password', 'Repeat the password') + SHOWPW
+      + '<p class="sub" id="ccp-e" style="color:#f87171;min-height:18px"></p>'
+      + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-go">Save</button></div>');
+    showToggle(m, ['ccp-p1', 'ccp-p2', 'ccp-cur']);
+    $('#ccp-x', m).onclick = function () { m.close(); };
+    $('#ccp-go', m).onclick = async function () {
+      var b = $('#ccp-go', m), h = $('#ccp-u', m).value.trim(), p1 = $('#ccp-p1', m).value, p2 = $('#ccp-p2', m).value, e = $('#ccp-e', m);
+      var bad = problem(h, p1) || (p1 !== p2 ? 'The two passwords are not the same' : '') || (has && !$('#ccp-cur', m).value ? 'Enter your current password' : '');
+      if (bad) { e.textContent = bad; return; }
+      b.disabled = true; e.textContent = '';
+      try {
+        var d = await post('/api/me/credentials', { handle: h, password: p1, current: has ? $('#ccp-cur', m).value : undefined });
+        info = Object.assign(info || {}, { has_password: true, handle: d.handle || h }); ME.handle = d.handle || h; saveMe();
+        m.close(); say('Saved. Sign in with @' + (d.handle || h) + ' and your password.');
+        try { drawMe(); drawMe2(); } catch (x) {} render();
+      } catch (er) { e.textContent = er.message; b.disabled = false; }
+    };
+  }
+
+  function openRestore() {
+    var m = sheet('<h3>Sign in</h3><p class="sub" style="margin-top:6px">Enter your username and password. If you made your account before usernames, use your account ID and the recovery code you saved.</p>'
+      + '<div class="fld" style="margin-top:10px"><input id="ccp-a" placeholder="Username or account ID" autocomplete="username" autocapitalize="off" aria-label="Username or account ID"></div>'
+      + pwField('ccp-c', 'Password or recovery code', 'Password or recovery code', 'current-password') + SHOWPW
+      + '<p class="sub" id="ccp-e" style="color:#f87171;min-height:18px"></p>'
+      + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-r">Sign in</button></div>');
+    showToggle(m, ['ccp-c']);
     $('#ccp-x', m).onclick = function () { m.close(); };
     $('#ccp-r', m).onclick = async function () {
       var b = $('#ccp-r', m); b.disabled = true; $('#ccp-e', m).textContent = '';
-      try { await window.CC.restoreAccount($('#ccp-a', m).value, $('#ccp-c', m).value); m.close(); say('Account restored'); await afterSignIn(); }
+      try { await window.CC.restoreAccount($('#ccp-a', m).value, $('#ccp-c', m).value); m.close(); say('Signed in'); await afterSignIn(); }
       catch (e) { $('#ccp-e', m).textContent = e.message || 'Could not restore'; b.disabled = false; }
     };
   }
@@ -140,6 +212,7 @@
     var linked = !!ME.google, canG = !!(window.ccGoogle && ccGoogle.on());
     var body = linked
       ? '<p class="sub" style="margin-top:6px">You are signed in with Google. You can sign back in any time with the same Google account.</p>'
+      : (info && info.has_password) ? '<p class="sub" style="margin-top:6px">You can sign back in any time with your username <b>@' + esc(info.handle || '') + '</b> and your password.</p>'
       : '<p class="sub" style="margin-top:6px">This is an anonymous account. After you sign out, the only way back in is your account ID and the recovery code you were shown when you created it. We cannot show that code again.</p>'
         + '<div class="rw" style="margin-top:12px"><span>Account ID</span><b>' + esc(a.aid) + '</b></div>'
         + '<button class="btn g" id="ccp-sc" style="width:100%;margin-top:10px">Copy account ID</button>'
@@ -162,13 +235,26 @@
     var host = $('#mecard'); if (!host || $('#ccsi')) return;
     host.insertAdjacentHTML('afterend',
       '<div class="box g" id="ccsi"><b class="t">Sign in</b>'
-      + '<p class="sub" style="margin:0">You are not signed in on this phone. Sign in to keep your points, orders and wallet on any phone.</p>'
+      + '<p class="sub" style="margin:0">You are not signed in on this phone. Create an account or sign in to keep your points, orders and wallet on any phone.</p>'
       + '<div id="ccsig" style="display:flex;justify-content:center;min-height:44px"></div>'
       + '<p class="sub" id="ccsie" style="color:#f87171;min-height:18px;margin:0"></p>'
-      + '<button class="btn p" id="ccsiG" style="width:100%">Create an anonymous account</button>'
-      + '<button class="btn g" id="ccsiR" style="width:100%">I have an account ID and recovery code</button></div>');
+      + '<button class="btn p" id="ccsiC" style="width:100%">Create account</button>'
+      + '<button class="btn g" id="ccsiR" style="width:100%">I already have an account</button>'
+      + '<button class="btn g" id="ccsiG" style="width:100%">Continue without a username</button></div>');
+    $('#ccsiC').onclick = openCreate;
     $('#ccsiG').onclick = async function (e) { var b = e.currentTarget; b.disabled = true; try { await createGuest(); } catch (er) { say(er.message); } b.disabled = false; };
     $('#ccsiR').onclick = openRestore;
+  }
+  function ensureUp() {
+    var card = $('#ccup');
+    if (!signedIn() || !info || !$('#mecard')) { if (card) card.remove(); return; }
+    var has = !!info.has_password;
+    if (!card) { $('#mecard').insertAdjacentHTML('afterend', '<div class="box g" id="ccup"></div>'); card = $('#ccup'); }
+    var key = has ? 'y:' + (info.handle || '') : 'n'; if (card.dataset.k === key) return; card.dataset.k = key;
+    card.innerHTML = has
+      ? '<b class="t">Sign in details</b><p class="sub" style="margin:0">You sign in with the username <b>@' + esc(info.handle || '') + '</b> and your password.</p><button class="btn g" id="ccup-b" style="width:100%">Change username or password</button>'
+      : '<b class="t">Choose a username and password</b><p class="sub" style="margin:0">Right now this account only has an account ID and a recovery code. Set your own username and password so you can always sign in, on any phone.</p><button class="btn p" id="ccup-b" style="width:100%">Set username and password</button>';
+    $('#ccup-b').onclick = openCredentials;
   }
   function mountG() {
     var box = $('#ccsig'); if (!box || gMounted) return;
@@ -241,6 +327,7 @@
     else {
       h = '<p class="sub" style="margin:6px 0 10px">' + (ME.google
         ? 'You sign in with Google, so you do not need a recovery code.'
+        : (info && info.has_password) ? 'You sign in with your username and password, so you do not need a recovery code. Keep your account ID as a backup.'
         : 'Your recovery code was shown once when you created this account and cannot be shown again. Keep it together with your account ID. To never lose this account, link Google.') + '</p>'
         + '<div class="ccp-row"><span>Account ID</span><b>' + esc(a.aid) + '</b></div>'
         + '<div class="two" style="margin-top:8px"><button class="btn g" id="ccp-cid">Copy account ID</button>' + (ME.google ? '' : '<button class="btn g" id="ccp-lg">Link Google</button>') + '</div>'
@@ -260,16 +347,18 @@
   function paint() { try { paintHeader(); paintClips(); paintRecovery(); paintAccountText(); } catch (e) { console.error('cc-profile', e); } }
   function render() {
     document.body.classList.toggle('cc-out', !signedIn());
-    ensureCard(); ensureProfile();
+    ensureCard(); ensureProfile(); ensureUp();
     if (!signedIn()) mountG();
     paint();
   }
+
+  if (signedIn()) fetchInfo().then(function () { try { drawMe(); drawMe2(); } catch (e) {} render(); });
 
   /* wrap the page's own functions (same pattern the page already uses) */
   try { var d1 = drawMe; drawMe = function () { var r = d1.apply(this, arguments); render(); return r; }; } catch (e) {}
   try { var d2 = drawMe2; drawMe2 = function () { var r = d2.apply(this, arguments); paintAccountText(); return r; }; } catch (e) {}
   try { var d3 = drawVids; drawVids = function () { var r = d3.apply(this, arguments); paintClips(); return r; }; } catch (e) {}
-  try { var g1 = go; go = function (v) { var r = g1.apply(this, arguments); if (v === 'me') setTimeout(render, 0); return r; }; } catch (e) {}
+  try { var g1 = go; go = function (v) { var r = g1.apply(this, arguments); if (v === 'me') { setTimeout(render, 0); if (!info && signedIn()) fetchInfo().then(function () { render(); }); } return r; }; } catch (e) {}
 
   /* welcome sheet: "Create anonymous account" now makes a real account and shows the real recovery code */
   var siA = $('#siA');

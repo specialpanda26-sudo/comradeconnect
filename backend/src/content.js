@@ -1,6 +1,7 @@
 // Community content: roommates, study groups, polls, Hearts (18+), Wi-Fi, hostels, services, study tips, zone ratings,
 // plus public notices/events/sponsors and the shared report endpoint.
 import { wifiParse, wifiMask, WIFI_TEXT } from './wifi.js';
+import { hostelParse, hostelText, decorateHostels, isCaretaker } from './hostels.js';
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, throttle, tooMany, user, authProfile, contactBlock } from './lib.js';
 
 const ok = (v) => v !== null && v !== undefined;
@@ -26,10 +27,7 @@ const R = {
     return { content, zone: str(b.zone, 30) };
   } },
   wifi: { table: 'wifi', per: 8, rtype: 'wifi', text: WIFI_TEXT, parse: wifiParse },
-  hostels: { table: 'hostels', per: 5, rtype: 'hostel', text: ['name', 'zone', 'review'], parse: (b) => {
-    const name = str(b.name, 60); if (name.length < 2) return 'Add the hostel name';
-    return { name, zone: str(b.zone, 30), rent: int(b.rent, 0, 200000), rating: int(b.rating, 1, 5), review: str(b.review, 400) };
-  } },
+  hostels: { table: 'hostels', per: 5, rtype: 'hostel', text: hostelText, parse: hostelParse },
   services: { table: 'services', per: 5, rtype: 'service', text: ['title', 'category', 'price_note', 'zone', 'details'], parse: (b) => {
     const title = str(b.title, 80); if (title.length < 3) return 'Add a title';
     return { title, category: str(b.category, 30) || 'General', price_note: str(b.price_note, 40) || null, zone: str(b.zone, 30), details: str(b.details, 400) };
@@ -127,9 +125,11 @@ export async function contentRoutes(req, env, url, ip) {
     let q = `${res.table}?hidden=eq.false&order=${mm[1] === 'services' ? 'featured.desc,' : ''}created_at.desc&limit=${limit + 1}&offset=${(page - 1) * limit}`;
     const zone = url.searchParams.get('zone'); if (zone && zone !== 'All' && res.table !== 'polls' && res.table !== 'study_tips' && res.table !== 'study_groups') q += mm[1] === 'services' ? `&or=(zone.eq.${enc(zone.slice(0, 30))},zone.eq.)` : `&zone=eq.${enc(zone.slice(0, 30))}`;
     const kd = url.searchParams.get('kind'); if (res.table === 'wifi' && ['spot', 'share', 'reseller'].includes(kd)) q += '&kind=eq.' + kd;
+    if (res.table === 'hostels' && ['vacancy', 'review'].includes(kd)) q += '&kind=eq.' + kd;
     let lr = await sb(env, q); if (!lr.ok && q.includes('featured.desc,')) lr = await sb(env, q.replace('featured.desc,', ''));
     const r = await rows(lr); const list = r.slice(0, limit), ids = list.map((x) => x.id);
     let items = list.map((x) => pub(x, me));
+    if (mm[1] === 'hostels') items = await decorateHostels(env, items, me);
     if (ids.length && mm[1] === 'polls') {
       const v = await rows(await sb(env, `poll_votes?select=poll_id,aid,option_idx&poll_id=${inList(ids)}`));
       items = items.map((p) => { const mine = v.find((x) => x.poll_id === p.id && me && x.aid === me.aid);
@@ -155,6 +155,7 @@ export async function contentRoutes(req, env, url, ip) {
     if (res.adult) { const blk = await adultBlock(env, u); if (blk) return blk; }
     const b = await body(), parsed = res.parse(b);
     if (typeof parsed === 'string') return err(env, parsed);
+    if (mm[1] === 'hostels' && parsed.kind === 'vacancy' && !(await isCaretaker(env, u.aid))) return err(env, 'Register as a hostel caretaker first to post vacancies', 403);
     const { text_extra, ...rowData } = parsed;
     const blk = contactBlock(env, ...res.text.map((f) => rowData[f]), ...(text_extra || [])); if (blk) return blk;
     if (!(await throttle(env, ip, 'c:' + mm[1], u.aid, res.per, res.per * 4))) return tooMany(env);

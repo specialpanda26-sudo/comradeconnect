@@ -21,6 +21,7 @@ export const DEFS = {
   wholesale_days: { env: 'WHOLESALE_DAYS', def: 30, min: 1, max: 365, unit: 'days', label: 'Wholesaler membership length', help: 'Days one payment keeps the membership active. Renewing early adds days to the end date.' },
   free_listing_limit: { env: 'FREE_LISTING_LIMIT', def: 5, min: 1, max: 1000, unit: 'items', label: 'Live items for free sellers', help: 'Most items a non-wholesaler can have posted at once. Wholesalers have no limit.' },
   wholesale_photos: { env: 'WHOLESALE_PHOTOS', def: 15, min: 5, max: 50, unit: 'photos', label: 'Photos per item for wholesalers', help: 'Free sellers get 5 photos per item.' },
+  hostel_reg_fee: { env: 'HOSTEL_REG_FEE', def: 0, min: 0, max: 50000, unit: 'KSh', label: 'Hostel caretaker registration fee', help: 'Paid once by a caretaker before they can post hostel vacancies. 0 = free. Caretakers who already paid keep their access.' },
   escrow_auto_release_days: { env: 'ESCROW_AUTO_RELEASE_DAYS', def: 3, min: 1, max: 14, unit: 'days', label: 'Auto-release after', help: 'Days after "handed over" before the seller is paid if the buyer says nothing.' },
 };
 

@@ -7,6 +7,7 @@ import { ratingRoutes } from './ratings.js';
 import { marketRoutes, createOrderFromPayment, autoReleaseOrders } from './market.js';
 import { messageRoutes } from './messages.js';
 import { contentRoutes } from './content.js';
+import { hostelRoutes, caretakerPaid } from './hostels.js';
 import { mediaRoutes } from './media.js';
 import { liveRoutes } from './live.js';
 import { nativeRoutes } from './native.js';
@@ -37,6 +38,7 @@ hooks.onPaid = async (env, p) => {
   else if (p.purpose === 'spillfee') await patch(env, `posts?id=eq.${p.ref_id}&fee_pending=gt.0`, { hidden: false, fee_pending: 0, created_at: new Date().toISOString() });   // paid: the spill goes live
   else if (p.purpose === 'topup') await credit(env, p.aid, p.amount, 'topup', 'pay:' + p.id, 'Wallet deposit');
   else if (p.purpose === 'wholesale') await extendWholesale(env, p.aid);
+  else if (p.purpose === 'caretaker') await caretakerPaid(env, p);
 };
 // A boost adds time on top of any boost still running.
 async function boostPost(env, p) {
@@ -49,7 +51,7 @@ hooks.onFailed = async (env, p) => {
   if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
 };
 
-const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
+const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

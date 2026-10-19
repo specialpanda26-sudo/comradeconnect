@@ -162,6 +162,14 @@ async function ensureAccount() {
   })();
   try { const a = await regBusy; setTimeout(() => { attributeRef(); syncVer(); }, 0); return a; } finally { regBusy = null; }
 }
+// Tickets (event tickets and support tickets) need a real account. Anyone can look, but must sign up first; after signing up they tap the button again.
+async function needSignup(what) {
+  const a = window.ccAuth && window.ccAuth();
+  if (a && a.token && a.aid) return true;
+  toast('Sign up first to ' + what + '. Then tap it again.');
+  try { await ensureAccount(); } catch (e) {}
+  return false;
+}
 async function restoreAccount(aid, code) {
   aid = String(aid || '').trim(); code = String(code || '');                 // a password is case-sensitive: the server upper-cases old recovery codes itself
   if (!aid || !code.trim()) throw new Error('Enter your account ID or username, and your password or recovery code');
@@ -509,7 +517,6 @@ $('#mvbuy').onclick = () => {
   }).catch(() => {});
   bs(1); $('#bph').value = ST.get('cc_phone', ''); $('#bpe').textContent = ''; openDm('buy');
 };
-$('#bgo').onclick = () => bs(2);
 $('#bpay').onclick = async () => {
   if (S.paying || !S.buyL) return;
   const v = $('#bph').value.replace(/\s/g, '');
@@ -530,7 +537,7 @@ $('#bpay').onclick = async () => {
     try { window.ccReceipt && ccReceipt.show({ item: l.title, amount: d.amount, credit: d.credit, ref: d.id, via: 'M-Pesa', onDone: () => { try { $('#bdone').click(); } catch (e) {} } }); } catch (e) {}
   } catch (e) {
     if (e.pending) { ps.stop(); toast(e.message); shut(); S.sub = 'orders'; draw(); loadOrders(); }
-    else { ps.fail(e.message); await sleep(1800); $('#bpe').textContent = e.message; bs(2); }
+    else { ps.fail(e.message); await sleep(1800); $('#bpe').textContent = e.message; bs(1); }
   }
   ps.stop(); S.paying = false;
 };
@@ -666,8 +673,8 @@ $('#wd').onclick = async () => {
   if (!idOK()) return needId();
   if (typeof bioGate === 'function' && !(await bioGate())) return toast('Face ID check failed');
   const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. The money is sent straight to your M-Pesa, usually within a minute. Smallest withdrawal: ' + kes(CFG.min) + '. Largest: ' + kes(CFG.max) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
-    + '<div class="fld" style="margin-top:10px"><input id="ccwa" type="number" inputmode="numeric" value="' + Math.min(bal, CFG.max) + '" aria-label="Amount in KSh"></div>'
-    + '<div class="fld"><input id="ccwp" inputmode="numeric" maxlength="12" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'
+    + '<div class="fld" style="margin-top:10px"><input id="ccwp" inputmode="numeric" maxlength="12" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'
+    + '<div class="fld"><input id="ccwa" type="number" inputmode="numeric" value="' + Math.min(bal, CFG.max) + '" aria-label="Amount in KSh"></div>'
     + '<p class="sub" id="ccw-e" style="color:#f87171;min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
   m.querySelector('#ccw-x').onclick = () => m.close();
   m.querySelector('#ccwp').value = ST.get('cc_phone', '');
@@ -859,7 +866,7 @@ async function loadX(k, reset) {
   if (reset) s.page = 1;
   if (xt === k) paintX();
   try {
-    const qs = '?page=' + s.page + (ZONED.has(k) && s.zone !== 'All' ? '&zone=' + encodeURIComponent(s.zone) : '') + (k === 'wf' && s.kind ? '&kind=' + s.kind : '');
+    const qs = '?page=' + s.page + (ZONED.has(k) && s.zone !== 'All' ? '&zone=' + encodeURIComponent(s.zone) : '') + ((k === 'wf' || k === 'hs') && s.kind ? '&kind=' + s.kind : '');
     const d = await call('/api/c/' + XK[k] + qs, { auth: k === 'ht' ? undefined : false });
     if (seq !== s.seq) return;                                                // a newer request (zone changed) owns the list
     s.items = s.page === 1 ? d.items || [] : s.items.concat(d.items || []); s.more = !!d.hasMore; s.loaded = true; s.gate = false; s.at = Date.now();
@@ -1017,7 +1024,7 @@ async function createX(k, body, after) {                                   // on
 }
 const doneX = (k, pts, why) => { shut(); const s = exs(k); s.form = false; xt = k; paintX(); earn(pts, why); };
 const val = (id) => (document.getElementById(id) || { value: '' }).value.trim();
-window.__ccx = { XP, exs, paintX, createX, doneX, loadX, visible, zchips, xwhen, xrep, xmsg, xempty, xmore, call, ensureAccount, get xt() { return xt; } };   // lets cc-wifi.js build the Wi-Fi screen
+window.__ccx = { toJpeg, putFile, XP, exs, paintX, createX, doneX, loadX, visible, zchips, xwhen, xrep, xmsg, xempty, xmore, call, ensureAccount, get xt() { return xt; } };   // lets cc-wifi.js build the Wi-Fi screen
 async function saveInline(k, btn) {
   if (k === 'wf') {
     const place = val('x_wp'); if (place.length < 2) return toast('Add the place');
@@ -1230,7 +1237,7 @@ function payNow(o) {
   const mx = o.qtyMax || 1;
   const m = sheet('<h3>' + esc(o.title) + '</h3><div id="ccpf">' + (o.note ? '<p class="note" style="margin-top:6px">' + esc(o.note) + '</p>' : '')
     + (mx > 1 ? '<div class="fld" style="margin-top:10px"><select id="ccqty" aria-label="Quantity">' + Array.from({ length: mx }, (_, i) => '<option value="' + (i + 1) + '">Quantity ' + (i + 1) + '</option>').join('') + '</select></div>' : '')
-    + '<div class="rw"><span><b>Total</b></span><b id="cctot"></b></div><div class="fld" style="margin-top:12px"><input id="ccpp" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div><p class="note" id="ccpe" style="color:var(--fg)"></p>'
+    + '<div class="fld" style="margin-top:12px"><input id="ccpp" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div><p class="note" id="ccpe" style="color:var(--fg)"></p><div class="rw"><span><b>Total</b></span><b id="cctot"></b></div>'
     + '<div class="two" style="margin-top:12px"><button class="btn g" id="ccpx">Cancel</button><button class="btn p" id="ccpg">Pay with M-Pesa</button></div></div>'
     + '<div id="ccpw" hidden></div>'
     + '<div id="ccpd" hidden><p class="tot" style="font-size:18px;margin-top:14px" id="ccpm"></p><button class="btn p" id="ccpo" style="width:100%;margin-top:14px">Done</button></div>');
@@ -1281,6 +1288,7 @@ function initClub() {
     const tk = e.target.closest('[data-tk]'); if (tk && window.ccTk) return window.ccTk.click(tk.dataset.tk, () => loadClub(true));
     const b = e.target.closest('[data-tb]'); if (!b) return;
     const ev = CS.events.find((x) => x.id === b.dataset.tb); if (!ev) return;
+    if (!hasAuth()) { needSignup('buy a ticket'); return; }
     const have = CS.tickets.filter((t) => t.status !== 'void' && t.event === ev.title).length;
     if (have >= 4) return toast('Maximum 4 tickets per person');
     payNow({ title: ev.title, unit: ev.ticket_price, note: evDate(ev.date) + (ev.venue ? ', ' + ev.venue : ''), done: 'Your ticket code is under My tickets.',
@@ -1447,7 +1455,7 @@ window.ccSignOut = signOut;
 window.ccGoogle = { on: googleOn, mount: mountGoogle };
 
 window.ccMarketTerms = () => S.list.map((l) => l.title);
-window.CC = { registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid };
+window.CC = { needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid };
 window.ccSteps = { paySteps, withdrawFlow, stepsCss };
 window.ccTools = { sheet, call, toast, copyText, sleep };   // used by cc-tickets.js   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections
 })();

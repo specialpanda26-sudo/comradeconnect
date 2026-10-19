@@ -926,22 +926,21 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
   </section>
   <section data-v="buy" hidden>
     <div class="flex items-center justify-between"><h2>Buy with escrow</h2><button class="ib" id="dx6" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div data-bs="1"><h3 id="bt" style="margin-top:14px"></h3>
+    <div data-bs="1"><p class="note" style="margin-top:14px">Enter the M-Pesa number to pay with.</p>
+      <div class="fld"><input id="bph" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div>
+      <p class="note" id="bpe" style="color:var(--fg)"></p>
+      <h3 id="bt" style="margin-top:14px"></h3>
       <div class="rw"><span>Item price</span><b id="bp"></b></div>
       <div class="rw"><span>Held in escrow<small>The seller is paid only after you confirm</small></span><b id="bh"></b></div>
       <p class="note" id="bn"></p>
-      <button class="btn p" id="bgo" style="width:100%;margin-top:14px">Continue to M-Pesa</button></div>
-    <div data-bs="2" hidden><p class="note">Enter the M-Pesa number to pay with.</p>
-      <div class="fld"><input id="bph" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div>
-      <p class="note" id="bpe" style="color:var(--fg)"></p>
       <button class="btn p" id="bpay" style="width:100%;margin-top:14px">Pay with M-Pesa</button></div>
     <div data-bs="3" hidden><p class="tot" style="font-size:20px;margin-top:14px">Waiting for payment...</p><p class="note">If an M-Pesa prompt appears, enter your PIN.</p></div>
     <div data-bs="4" hidden><p class="tot" style="font-size:20px;margin-top:14px" id="bok"></p><p class="note">Meet the seller on campus and check the item. Your 6-digit handover code is in Market, Orders. Give it to the seller only after you have checked the item. Do not confirm before you have the item.</p><button class="btn p" id="bdone" style="width:100%;margin-top:14px">Go to my orders</button></div>
   </section>
   <section data-v="pay2" hidden>
     <div class="flex items-center justify-between"><h2 id="p2t">Pay</h2><button class="ib" id="dx8" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div data-p2="1"><div id="p2b" style="margin-top:12px"></div><div class="rw"><span><b>Total to pay</b></span><b id="p2a"></b></div><button class="btn p" id="p2go" style="width:100%;margin-top:14px">Continue to M-Pesa</button></div>
-    <div data-p2="2" hidden><p class="note">Enter the M-Pesa number to pay with.</p><div class="fld"><input id="p2h" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div><p class="note" id="p2e" style="color:var(--fg)"></p><button class="btn p" id="p2pay" style="width:100%;margin-top:14px">Pay with M-Pesa</button></div>
+    <div data-p2="1"><p class="note" style="margin-top:12px">Enter the M-Pesa number to pay with.</p><div class="fld"><input id="p2h" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div><p class="note" id="p2e" style="color:var(--fg)"></p>
+      <div id="p2b" style="margin-top:12px"></div><div class="rw"><span><b>Total to pay</b></span><b id="p2a"></b></div><button class="btn p" id="p2pay" style="width:100%;margin-top:14px">Pay with M-Pesa</button></div>
     <div data-p2="3" hidden><div id="p2steps"></div></div>
     <div data-p2="4" hidden><p class="tot" style="font-size:20px;margin-top:14px" id="p2ok"></p><button class="btn p" id="p2d" style="width:100%;margin-top:14px">Done</button></div>
   </section>
@@ -1257,8 +1256,7 @@ const goTo=(v,parent)=>{go(v);$$('#tb button').forEach(b=>b.classList.toggle('on
 let p2d=null,p2b=false,p2amt=0;
 const p2s=n=>$$('#dm [data-p2]').forEach(x=>x.hidden=x.dataset.p2!==String(n));
 function payFlow(o){$('#p2t').textContent=o.title;$('#p2a').textContent=ksh(o.amount);$('#p2b').innerHTML=o.html;$('#p2h').value='';$('#p2e').textContent='';p2d=o.done;p2amt=o.amount;p2s(1);openDm('pay2')}
-$('#p2go').onclick=()=>p2s(2);
-$('#p2pay').onclick=()=>{if(p2b)return;const v=$('#p2h').value.replace(/\s/g,'');if(!/^(07|01)\d{8}$/.test(v))return $('#p2e').textContent='Enter a Safaricom or Airtel number like 0712345678.';p2b=true;p2s(3);const fl=ccFlow($('#p2steps'),v,p2amt,'club');ccRun(v,p2amt,'club',null,async()=>{await fl.done();fl.stop();p2b=false;if(!p2d)return;const f=p2d;p2d=null;$('#p2ok').textContent=f();p2s(4);if(window.ccTick)ccTick($('#p2ok'))},async m=>{await fl.fail(m);fl.stop();p2b=false;$('#p2e').textContent=m;p2s(2)},fl.on)};
+$('#p2pay').onclick=()=>{if(p2b)return;const v=$('#p2h').value.replace(/\s/g,'');if(!/^(07|01)\d{8}$/.test(v))return $('#p2e').textContent='Enter a Safaricom or Airtel number like 0712345678.';p2b=true;p2s(3);const fl=ccFlow($('#p2steps'),v,p2amt,'club');ccRun(v,p2amt,'club',null,async()=>{await fl.done();fl.stop();p2b=false;if(!p2d)return;const f=p2d;p2d=null;$('#p2ok').textContent=f();p2s(4);if(window.ccTick)ccTick($('#p2ok'))},async m=>{await fl.fail(m);fl.stop();p2b=false;$('#p2e').textContent=m;p2s(1)},fl.on)};
 $('#p2d').onclick=shut;$('#dx8').onclick=shut;$('#dx9').onclick=shut;
 /* membership */
 function drawMem(){const m=CL.mem;$('#cmem').innerHTML=isMem()?`<div class="flex items-center justify-between"><span class="badge">Active member</span><b>${m.id}</b></div><p class="sub" style="margin-top:10px">Wholesale prices are unlocked until ${dday(m.exp)}.</p>`:`<h3>Become a member for ${ksh(MEMB)}</h3><p class="sub" style="margin:6px 0 12px">Unlock wholesale member prices on everyday items, order for campus collection or hostel delivery, and get support from the team. This is an access pass with clear benefits. It is not an investment and does not guarantee income.</p><button class="btn p" id="cjoin" style="width:100%">Join for ${ksh(MEMB)}</button>`}
@@ -1286,8 +1284,8 @@ function refundOrder(id){const o=CL.orders.find(x=>x.id===id);if(!o||o.ful!=='pr
 $('#cord').onclick=e=>{const a=e.target.closest('[data-oa]'),c=e.target.closest('[data-oc]');if(a)advOrder(a.dataset.oa);if(c)refundOrder(c.dataset.oc);drawClub()};
 function drawHelp(){$('#cwa').href='https://api.whatsapp.com/send?text='+encodeURIComponent('Hi Comrade Connect support, I need help with ');
  $('#ctix').innerHTML=CL.tix.length?CL.tix.map(t=>`<div class="box g" style="margin-top:12px"><div class="flex items-center justify-between"><span class="badge">${esc(t.s)}</span><span class="mst">${t.st==='open'?'Open':t.st==='work'?'In progress':'Resolved'}</span></div><p style="font-size:13px;line-height:1.7;margin:10px 0 0;overflow-wrap:anywhere">${esc(t.m)}</p></div>`).join(''):'<p class="sub" style="margin-top:12px">No tickets yet.</p>'}
-$('#cnew').onclick=async()=>{try{await CC.ensureAccount()}catch(e){return toast(e&&e.message?e.message:'Sign up first to open a support ticket')}$('#tkm').value='';openDm('tk')};
-$('#tkb').onclick=async()=>{const m=$('#tkm').value.trim();if(m.length<5)return toast('Tell us a little more');try{await CC.ensureAccount()}catch(e){return toast(e&&e.message?e.message:'Sign up first to send a support ticket')}CL.tix.unshift({id:'T'+Date.now(),s:$('#tks').value,m,aid:ME.aid,st:'open',at:Date.now()});svc();shut();csub='help';notify('Ticket received','We will reply within 24 hours.');drawClub()};
+$('#cnew').onclick=async()=>{if(!(await CC.needSignup('open a support ticket')))return;$('#tkm').value='';openDm('tk')};
+$('#tkb').onclick=async()=>{const m=$('#tkm').value.trim();if(m.length<5)return toast('Tell us a little more');if(!(await CC.needSignup('send a support ticket')))return;CL.tix.unshift({id:'T'+Date.now(),s:$('#tks').value,m,aid:ME.aid,st:'open',at:Date.now()});svc();shut();csub='help';notify('Ticket received','We will reply within 24 hours.');drawClub()};
 $('#chelp').onclick=e=>{const b=e.target.closest('[data-tk]');if(!b)return;const t=CL.tix.find(x=>x.id===b.dataset.tk);t.st=t.st==='open'?'work':'resolved';svc();notify('Support update','Your ticket is '+(t.st==='work'?'being looked at.':'resolved.'));drawClub()};
 $('#cgo').onclick=$('#mclub').onclick=()=>{goTo('club','rewards');drawClub()};$('#clb').onclick=()=>goTo('rewards','rewards');
 /* referral ledger: reward only after a qualifying membership and the refund period */
@@ -1553,7 +1551,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-core.js?v=rc2"></script><script src="cc-receipt.js?v=3"></script><script src="cc-wifi.js?v=1"></script><script src="cc-profile.js?v=2"></script><script src="cc-me.js?v=1"></script><script src="cc-live.js?v=1"></script><script src="cc-staff.js?v=1" defer></script><script src="cc-site.js?v=4" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-faceid.js?v=2" defer></script><script src="cc-fixes.js?v=1" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1d" defer></script><script src="cc-tickets.js?v=1" defer></script>
+<script src="cc-core.js?v=rc3"></script><script src="cc-receipt.js?v=3"></script><script src="cc-wifi.js?v=1"></script><script src="cc-hostels.js?v=1"></script><script src="cc-profile.js?v=2"></script><script src="cc-me.js?v=1"></script><script src="cc-live.js?v=1"></script><script src="cc-staff.js?v=1" defer></script><script src="cc-site.js?v=4" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-faceid.js?v=2" defer></script><script src="cc-fixes.js?v=1" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1d" defer></script><script src="cc-tickets.js?v=1" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

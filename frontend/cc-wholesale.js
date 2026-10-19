@@ -70,7 +70,7 @@ function mount() {
 
 function deposit() {
   var m = sheet('Deposit to wallet', 'Add money with M-Pesa. Your wallet is credited exactly the amount you enter. M-Pesa or the payment provider may add a small charge on the prompt, which is not part of your deposit.');
-  var a = field(m, 'Amount in KSh', '', 'numeric'), p = field(m, 'M-Pesa number, e.g. 0712345678', phone(), 'numeric'), e = errLine(m);
+  var p = field(m, 'M-Pesa number, e.g. 0712345678', phone(), 'numeric'), a = field(m, 'Amount in KSh', '', 'numeric'), e = errLine(m);
   var go = btn('Deposit', 'btn p', async function () {
     var amt = Math.floor(+a.value), ph = p.value.replace(/\s/g, '');
     if (!(amt >= 1 && amt <= 150000)) return (e.textContent = 'Enter an amount from KSh 1 to KSh 150,000.');
@@ -100,7 +100,7 @@ async function withdraw() {
   var cfg = {}; try { cfg = await (await fetch(API + '/api/config')).json(); } catch (x) {}
   var min = cfg.withdraw_min || 1, max = Math.min(bal, cfg.withdraw_max || 150000);
   var m = sheet('Withdraw to M-Pesa', 'Available: ' + kes(bal) + '. Smallest ' + kes(min) + '.' + (cfg.withdraw_fee_percent || cfg.withdraw_fee_flat ? ' A withdrawal fee applies.' : ''));
-  var a = field(m, 'Amount in KSh', String(max), 'numeric'), p = field(m, 'M-Pesa number', phone(), 'numeric'), e = errLine(m);
+  var p = field(m, 'M-Pesa number', phone(), 'numeric'), a = field(m, 'Amount in KSh', String(max), 'numeric'), e = errLine(m);
   var go = btn('Request', 'btn p', async function () {
     var amt = Math.floor(+a.value), ph = p.value.replace(/\s/g, '');
     if (!(amt >= min && amt <= max)) return (e.textContent = 'Enter an amount from ' + kes(min) + ' up to ' + kes(max) + '.');
@@ -151,7 +151,7 @@ function join() {
 }
 
 function addWalletPay() {
-  var bgo = $('#bgo'); if (!bgo || $('#ccw-pay')) return;
+  var bgo = $('#bpay'); if (!bgo || $('#ccw-pay')) return;
   var b = el('button', 'btn g', 'Pay from wallet'); b.id = 'ccw-pay'; b.style.cssText = 'width:100%;margin-top:8px'; bgo.after(b);
   b.onclick = async function () {
     if (busy) return; var id = ($('#mvbuy') || {}).dataset && $('#mvbuy').dataset.id; if (!id) return;

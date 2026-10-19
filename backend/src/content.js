@@ -61,7 +61,7 @@ export async function contentRoutes(req, env, url, ip) {
   if (m === 'GET' && path === '/api/events') {
     const today = new Date().toISOString().slice(0, 10);
     const r = await rows(await sb(env, `events?hidden=eq.false&starts_on=gte.${today}&order=starts_on.asc&limit=50`));
-    return json(env, { events: r.map((e) => ({ id: e.id, title: e.title, date: e.starts_on, venue: e.venue, details: e.details, ticket_price: e.ticket_price })) });
+    return json(env, { events: r.map((e) => ({ id: e.id, title: e.title, date: e.starts_on, venue: e.venue, details: e.details, ticket_price: e.ticket_price, hosted: !!e.owner_aid, capacity: e.capacity })) });
   }
   if (m === 'GET' && path === '/api/sponsors') {
     const now = new Date().toISOString();

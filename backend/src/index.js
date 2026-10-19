@@ -12,6 +12,7 @@ import { mediaRoutes } from './media.js';
 import { liveRoutes } from './live.js';
 import { nativeRoutes } from './native.js';
 import { clubRoutes, clubPaid, ticketPaid, restoreClubOrder, expireClubOrders } from './club.js';
+import { myEventRoutes } from './myevents.js';
 import { wholesaleRoutes, extendWholesale } from './wholesale.js';
 import { credit } from './pay.js';
 import { adminRoutes } from './admin.js';
@@ -51,7 +52,7 @@ hooks.onFailed = async (env, p) => {
   if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
 };
 
-const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
+const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, myEventRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

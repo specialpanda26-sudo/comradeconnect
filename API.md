@@ -62,3 +62,13 @@ Rate limits: every write has a per-account and per-IP daily cap (see `throttle(.
 - `POST /api/points/checkin` -> once per Kenya day, with a daily cap.
 - `POST /api/market/buy` accepts `use_points: true`. Credit = min(fee on the price, floor(points / per_ksh)) KSh, so the seller still receives price - fee.
 - Admin settings: `points_per_ksh` (default 10), `points_daily_cap` (default 30). `withdraw_min` now defaults to 1.
+
+## Host an event (user-hosted events and door scanning)
+Run `supabase/user-events.sql` once. Any signed-in account can host up to 5 upcoming events. Ticket money goes to the host's wallet (price minus the platform fee).
+- [auth] `POST /api/my/events {title, date, venue, ticket_price, capacity?, details?}` returns `id` and `scan_path` (the secret door link)
+- [auth] `GET /api/my/events` lists the host's events with `sold`, `scanned`, `you_earn`, `scan_path`
+- [auth] `POST /api/my/events/:id/cancel` only while no ticket is sold
+- `GET /api/scan/info?e=<event_id>&k=<key>` and `POST /api/scan/check {event_id, key, code}` are the door scanner (no account, the key in the link is the pass). A ticket can be used once.
+
+## Credits
+Comrade Connect is built by Ogolla Tech. Founder and CEO: Henry O. Odhiambo. Developers: Christian N., Peter M.

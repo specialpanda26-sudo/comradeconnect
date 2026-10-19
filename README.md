@@ -29,3 +29,7 @@ Never commit keys. Every secret is set with `npx wrangler secret put NAME`; the 
 
 ## SEO
 After the site is live: `python3 set-domain.py YOUR-DOMAIN [GOOGLE_VERIFICATION_CODE]`, re-upload `frontend/`, then add the property and `sitemap.xml` in Google Search Console. Ranking for the single word "comrades" is unrealistic; realistic targets are "Comrade Connect" and "Comrade Connect Kirinyaga".
+
+
+## Credits
+Built by **Ogolla Tech**. Founder and CEO: **Henry O. Odhiambo**. Developers: **Christian N.**, **Peter M.**

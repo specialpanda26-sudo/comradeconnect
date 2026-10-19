@@ -1,6 +1,7 @@
 // Club: join, products, orders (stock reserved atomically), tickets with hashed codes.
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, deriveCode, codeHash, tsEqual, throttle, tooMany, user, ago } from './lib.js';
 import { initPayment, credit } from './pay.js';
+import { getSettings } from './settings.js';
 
 export async function restoreClubOrder(env, id) {         // give reserved stock back, once
   const [o] = await rows(await patch(env, `club_orders?id=eq.${id}&status=eq.pending&stock_held=eq.true`, { status: 'cancelled', stock_held: false }));
@@ -14,9 +15,17 @@ export async function clubPaid(env, p) {
 export async function ticketPaid(env, p) {
   const ev = await one(await sb(env, `events?id=eq.${p.ref_id}&hidden=eq.false`));
   if (!ev) { await credit(env, p.aid, p.amount, 'refund', 'pay:' + p.id, 'Event not available'); return; }
+  if (ev.capacity) {
+    const sold = await rows(await sb(env, `tickets?select=id&event_id=eq.${ev.id}&status=neq.void&limit=5000`));
+    if (sold.length >= ev.capacity) { await credit(env, p.aid, p.amount, 'refund', 'pay:' + p.id, 'Event sold out, refunded to wallet'); return; }
+  }
   const id = crypto.randomUUID();
   const code = await deriveCode(env, 'ticket', id, 8);
   await post(env, 'tickets', { id, event_id: ev.id, aid: p.aid, payment_id: p.id, ticket_price: p.amount, code_hash: await codeHash(env, 'ticket', id, code) });
+  if (ev.owner_aid) {
+    const S = await getSettings(env), fee = Math.ceil((p.amount * (S.platform_fee_percent || 0)) / 100 - 1e-9);
+    await credit(env, ev.owner_aid, p.amount - fee, 'sale', 'ticket:' + id, 'Ticket sold: ' + ev.title);
+  }
 }
 export async function expireClubOrders(env) {
   let n = 0;
@@ -77,6 +86,7 @@ export async function clubRoutes(req, env, url, ip) {
     if (!ev || !(ev.ticket_price > 0) || ev.starts_on < new Date().toISOString().slice(0, 10)) return err(env, 'Tickets are not available for this event', 404);
     const have = await rows(await sb(env, `tickets?select=id&event_id=eq.${ev.id}&aid=eq.${enc(u.aid)}&status=neq.void`));
     if (have.length >= 4) return err(env, 'Maximum 4 tickets per person');
+    if (ev.capacity) { const sold = await rows(await sb(env, `tickets?select=id&event_id=eq.${ev.id}&status=neq.void&limit=5000`)); if (sold.length >= ev.capacity) return err(env, 'This event is sold out', 409); }
     const r = await initPayment(env, ip, { aid: u.aid, purpose: 'ticket', ref_id: ev.id, amount: ev.ticket_price, phone: b.phone });
     return r.res || json(env, { id: r.id, amount: ev.ticket_price }, 201);
   }

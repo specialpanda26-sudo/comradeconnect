@@ -241,7 +241,7 @@ const OS = {
   refunded: ['Refunded to your wallet', 'Refunded to the buyer'],
 };
 const pic = (l, big) => (l.photos && l.photos.length
-  ? '<img src="' + esc(l.photos[0]) + '" alt="" class="mm" loading="lazy">'
+  ? '<img src="' + esc(l.photos[0]) + '" alt="" class="mm" decoding="async">'
   : '<div class="mm poster" style="font-size:11px;padding:10px;aspect-ratio:' + (big ? '4/3' : '1') + '">No photo</div>');
 const retry = (k) => '<p class="sub" style="grid-column:1/3"><button class="btn g" data-retry="' + k + '">Could not load. Tap to retry</button></p>';
 const loadingP = '<p class="sub" style="grid-column:1/3">Loading...</p>';
@@ -664,7 +664,7 @@ document.addEventListener('click', async (e) => {
 $('#wd').onclick = async () => {
   const bal = S.wallet ? S.wallet.balance : 0; if (!bal) return;
   if (!idOK()) return needId();
-  if (typeof bioGate === 'function' && !(await bioGate())) return toast('Fingerprint check failed');
+  if (typeof bioGate === 'function' && !(await bioGate())) return toast('Face ID check failed');
   const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. The money is sent straight to your M-Pesa, usually within a minute. Smallest withdrawal: ' + kes(CFG.min) + '. Largest: ' + kes(CFG.max) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
     + '<div class="fld" style="margin-top:10px"><input id="ccwa" type="number" inputmode="numeric" value="' + Math.min(bal, CFG.max) + '" aria-label="Amount in KSh"></div>'
     + '<div class="fld"><input id="ccwp" inputmode="numeric" maxlength="12" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'

@@ -18,7 +18,6 @@ export async function myEventRoutes(req, env, url, ip) {
   // ---- host creates an event ----
   if (path === '/api/my/events' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
-    if (!(await throttle(env, ip, 'event_create', u.aid, 5))) return tooMany(env);
     const b = await body();
     const title = str(b.title, 100), venue = str(b.venue, 80), details = str(b.details, 400), date = String(b.date || '');
     if (title.length < 3) return err(env, 'Give your event a name');
@@ -30,6 +29,7 @@ export async function myEventRoutes(req, env, url, ip) {
     const blk = contactBlock(env, title, venue, details); if (blk) return blk;
     const open = await rows(await sb(env, `events?select=id&owner_aid=eq.${enc(u.aid)}&hidden=eq.false&starts_on=gte.${today}`));
     if (open.length >= 5) return err(env, 'You already have 5 upcoming events. Wait for one to finish or cancel one.');
+    if (!(await throttle(env, ip, 'event_create', u.aid, 10))) return tooMany(env);   // counted only for real attempts, so typos do not lock a host out
     const [ev] = await rows(await post(env, 'events', { title, starts_on: date, venue, details: details || null, ticket_price: price, capacity, owner_aid: u.aid }, 'return=representation'));
     if (!ev) return err(env, 'Could not create the event. Try again.', 500);
     return json(env, { id: ev.id, scan_path: `/scan.html?e=${ev.id}&k=${await scanKey(env, ev.id)}` }, 201);

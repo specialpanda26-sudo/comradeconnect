@@ -61,7 +61,12 @@ export async function contentRoutes(req, env, url, ip) {
   if (m === 'GET' && path === '/api/events') {
     const today = new Date().toISOString().slice(0, 10);
     const r = await rows(await sb(env, `events?hidden=eq.false&starts_on=gte.${today}&order=starts_on.asc&limit=50`));
-    return json(env, { events: r.map((e) => ({ id: e.id, title: e.title, date: e.starts_on, venue: e.venue, details: e.details, ticket_price: e.ticket_price, hosted: !!e.owner_aid, capacity: e.capacity })) });
+    const hosts = [...new Set(r.filter((e) => e.owner_aid).map((e) => e.owner_aid))];
+    const names = hosts.length ? await rows(await sb(env, `profiles?select=aid,handle&aid=${inList(hosts)}`)) : [];
+    const capped = r.filter((e) => e.capacity), sold = capped.length ? await rows(await sb(env, `tickets?select=event_id&event_id=${inList(capped.map((e) => e.id))}&status=neq.void&limit=5000`)) : [];
+    return json(env, { events: r.map((e) => ({ id: e.id, title: e.title, date: e.starts_on, venue: e.venue, details: e.details, ticket_price: e.ticket_price, hosted: !!e.owner_aid, capacity: e.capacity,
+      organizer: e.owner_aid ? '@' + (names.find((x) => x.aid === e.owner_aid)?.handle || 'comrade') : undefined,
+      left: e.capacity ? Math.max(0, e.capacity - sold.filter((t) => t.event_id === e.id).length) : undefined })) });
   }
   if (m === 'GET' && path === '/api/sponsors') {
     const now = new Date().toISOString();

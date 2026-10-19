@@ -16,6 +16,8 @@ button{width:100%;margin-top:12px;padding:15px;border:0;border-radius:14px;font-
 </style></head><body><main>
 <h1 id="t">Door scanner</h1><p class="sub" id="s">Loading event...</p>
 <div class="card"><div class="stats"><div><b id="sold">-</b><span class="sub">Sold</span></div><div><b id="in">-</b><span class="sub">Checked in</span></div></div></div>
+<div class="card" id="cam" hidden><video id="v" playsinline muted style="width:100%;border-radius:14px;background:#000"></video><p class="sub" id="camnote" style="margin:8px 0 0;text-align:center">Point the camera at the guest's ticket QR</p></div>
+<button id="camb" type="button" style="margin:0 0 14px" hidden>Scan with camera</button>
 <div class="card"><label class="sub" for="c">Type the 8-digit code on the guest's ticket</label>
 <input id="c" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="00000000" aria-label="Ticket code"><button id="go" type="button">Check ticket</button>
 <div id="res" role="status" aria-live="polite"></div></div>
@@ -43,6 +45,23 @@ function check(){
     $('c').value='';$('c').focus();info();
   }).catch(function(){say('bad','No connection','Check your internet and try again')}).then(function(){$('go').disabled=false});
 }
+var stream=null,timer=null,last='',lastAt=0;
+function stopCam(){if(timer)clearInterval(timer);timer=null;if(stream){stream.getTracks().forEach(function(t){t.stop()});stream=null}$('cam').hidden=true;$('camb').textContent='Scan with camera'}
+function startCam(){
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}).then(function(s){
+    stream=s;var v=$('v');v.srcObject=s;v.play();$('cam').hidden=false;$('camb').textContent='Stop camera';
+    var det=new BarcodeDetector({formats:['qr_code']});
+    timer=setInterval(function(){
+      if(v.readyState<2)return;
+      det.detect(v).then(function(a){
+        if(!a.length)return;var raw=String(a[0].rawValue||'').replace(/\D/g,'');
+        if(raw.length!==8||(raw===last&&Date.now()-lastAt<4000))return;
+        last=raw;lastAt=Date.now();$('c').value=raw;check();
+      }).catch(function(){});
+    },350);
+  }).catch(function(){$('camnote').textContent='Camera blocked. Allow the camera in your browser, or type the code below.';$('cam').hidden=false});
+}
+if(window.BarcodeDetector&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){$('camb').hidden=false;$('camb').addEventListener('click',function(){if(stream)stopCam();else startCam()})}
 $('go').addEventListener('click',check);$('c').addEventListener('keydown',function(e){if(e.key==='Enter')check()});
 info();
 })();

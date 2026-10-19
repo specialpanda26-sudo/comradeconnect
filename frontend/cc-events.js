@@ -100,6 +100,19 @@ function myEvents() {
   }).catch(function (e) { list.textContent = ''; list.appendChild(h('p', { text: e.message || 'Could not load your events' })); });
 }
 
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+// "My tickets" card: the QR holds only the 8-digit code (digits made by our server), so it is safe to draw as SVG.
+window.ccTk = {
+  bar: function () { return ''; },
+  card: function (t) {
+    var badge = t.status === 'valid' ? 'Valid' : t.status === 'used' ? 'Used' : 'Cancelled', digits = String(t.code || '').replace(/\D/g, ''), qr = '';
+    if (t.status === 'valid' && digits.length === 8 && window.ccQR) { try { qr = '<div style="background:#fff;border-radius:14px;padding:6px;display:inline-block;margin-top:12px">' + window.ccQR.svg(digits, 170) + '</div>'; } catch (e) { qr = ''; } }
+    return '<div class="box g" style="margin-top:12px"><div class="flex items-center justify-between"><b>' + esc(t.event || 'Event') + '</b><span class="badge">' + badge + '</span></div>'
+      + '<p class="sub" style="margin:6px 0 0">' + esc(t.date || '') + (t.venue ? ', ' + esc(t.venue) : '') + '</p>'
+      + (t.status === 'valid' && digits.length === 8 ? qr + '<p style="font-size:26px;letter-spacing:.12em;font-weight:700;margin:10px 0 4px">' + esc(digits.slice(0, 4) + ' ' + digits.slice(4)) + '</p><p class="note" style="margin:0">Show this at the door. Do not share it. It works once.</p>' : '') + '</div>';
+  }
+};
+
 function mount() {
   var host = document.getElementById('ccart');
   if (!host || host.querySelector('.cchost')) return;

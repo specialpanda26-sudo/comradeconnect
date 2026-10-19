@@ -39,9 +39,9 @@
     '.ccp-row span{color:var(--mut);font-size:13px}',
     '.ccp-row b{font-size:14px;overflow-wrap:anywhere;text-align:right}',
     /* camera recorder */
-    '.ccrec{position:fixed;inset:0;z-index:10001;background:#000;color:#fff;display:flex;flex-direction:column}',
-    '.ccrec video{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}',
-    '.ccrec video.mir{transform:scaleX(-1)}',
+    '.ccr{position:fixed;inset:0;z-index:10001;background:#000;color:#fff;display:flex;flex-direction:column}',
+    '.ccr video{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}',
+    '.ccr video.mir{transform:scaleX(-1)}',
     '.ccr-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px;background:linear-gradient(rgba(0,0,0,.55),transparent)}',
     '.ccr-top button,.ccr-bot button.ccr-ic{width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;display:grid;place-items:center;padding:0}',
     '.ccr-top svg,.ccr-bot svg{width:22px;height:22px}',
@@ -65,7 +65,6 @@
 
   /* ---------- account actions ---------- */
   function showRecovery(d) {
-    if (!d.recovery_code && window.CC && CC.showWelcome) return CC.showWelcome(d);
     return new Promise(function (done) {
       var m = sheet('<h3>Save your recovery code</h3><p class="sub" style="margin-top:6px">This is the only way to get this account back on a new phone. We cannot show it again. Screenshot it or write it down.</p>'
         + '<div class="rw" style="margin-top:12px"><span>Account ID</span><b>' + esc(d.aid) + '</b></div>'
@@ -82,7 +81,11 @@
   /* a REAL account (the old Me page and welcome sheet showed a made-up local code that could not restore anything) */
   async function createGuest() {
     if (!live()) throw new Error('We cannot reach the service right now. Please try again in a moment.');
-    var d = await window.CC.registerFlow();            // username + password sheet (or a random recovery code if they skip it)
+    var r, d;
+    try { r = await fetch(API + '/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); }
+    catch (e) { throw new Error('Could not reach the server. Check your internet and try again.'); }
+    d = await r.json().catch(function () { return {}; });
+    if (!r.ok) throw new Error(window.ccErr ? ccErr(r.status, d.error) : 'Could not create the account');
     localStorage.setItem('cc_auth', JSON.stringify({ aid: d.aid, token: d.token }));
     if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
     ME.aid = d.aid; saveMe();
@@ -103,8 +106,8 @@
 
   function openRestore() {
     var m = sheet('<h3>Restore my account</h3><p class="sub" style="margin-top:6px">Enter the account ID and recovery code you saved when you created it.</p>'
-      + '<div class="fld" style="margin-top:10px"><input id="ccp-a" placeholder="Account ID or username" autocomplete="off" autocapitalize="off" aria-label="Account ID or username"></div>'
-      + '<div class="fld"><input id="ccp-c" type="password" placeholder="Password or recovery code" autocomplete="off" autocapitalize="off" aria-label="Password or recovery code"></div>'
+      + '<div class="fld" style="margin-top:10px"><input id="ccp-a" placeholder="Account ID" autocomplete="off" autocapitalize="off" aria-label="Account ID"></div>'
+      + '<div class="fld"><input id="ccp-c" placeholder="Recovery code" autocomplete="off" autocapitalize="characters" aria-label="Recovery code"></div>'
       + '<p class="sub" id="ccp-e" style="color:#f87171;min-height:18px"></p>'
       + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-r">Restore</button></div>');
     $('#ccp-x', m).onclick = function () { m.close(); };
@@ -333,7 +336,7 @@
   async function openRecorder() {
     if (REC) return;
     if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder)) return fallbackPicker();
-    var el = document.createElement('div'); el.className = 'ccrec'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Record a clip');
+    var el = document.createElement('div'); el.className = 'ccr'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Record a clip');
     el.innerHTML = '<video playsinline muted autoplay></video>'
       + '<div class="ccr-top"><button type="button" id="ccr-x" aria-label="Close">' + SV('<path d="M6 6l12 12M18 6L6 18"/>') + '</button><span id="ccrt">0:00</span>'
       + '<button type="button" id="ccr-f" aria-label="Switch camera">' + SV('<path d="M4 8V5h3M20 16v3h-3"/><path d="M5 8a8 8 0 0 1 14-1M19 16a8 8 0 0 1-14 1"/>') + '</button></div>'

@@ -58,8 +58,8 @@ test('payout: a failed send returns the money once', async (t) => {
 
 test('payout: refused by IntaSend falls back to the admin queue (money stays reserved)', async (t) => {
   const { w, s } = await setup(t, ENV, { mode: 'refuse' });
-  const r = await wd(w, s, 100);
-  assert.equal(r.data.status, 'requested'); assert.equal(w.db.rows('withdrawals')[0].status, 'requested'); assert.equal(await bal(w, s), 870);
+  const before = await bal(w, s), r = await wd(w, s, 100);
+  assert.equal(r.status, 502, 'a clear refusal tells the user and returns the money'); assert.equal(await bal(w, s), before, 'money is back in the wallet');
 });
 
 test('payout: no answer from IntaSend stays "sending" and is never sent a second time', async (t) => {
@@ -73,13 +73,15 @@ test('payout: no answer from IntaSend stays "sending" and is never sent a second
 
 test('payout: small (under KSh 10 net) and over-the-daily-limit requests stay manual; switched off means manual', async (t) => {
   const { w, is, s } = await setup(t);
-  assert.equal((await wd(w, s, 5)).data.status, 'requested');
+  const small = await wd(w, s, 5);
+  assert.equal(small.status, 400); assert.match(small.data.error, /smallest amount/i);
   assert.equal(is.seen.length, 0, 'nothing sent to IntaSend');
   const off = await setup(t, {});
   assert.equal((await wd(off.w, off.s, 100)).data.status, 'requested');
   const big = await setup(t, { ...ENV, PAYOUT_AUTO_DAILY_MAX: '150' });
   assert.equal((await wd(big.w, big.s, 100)).data.status, 'sending');
-  assert.equal((await wd(big.w, big.s, 100)).data.status, 'requested', '200 would pass the 150 daily limit');
+  const over = await wd(big.w, big.s, 100);
+  assert.equal(over.status, 400); assert.match(over.data.error, /daily/i, '200 would pass the 150 daily limit');
 });
 
 test('payout: a sending request cannot be cancelled or paid by hand at the same time', async (t) => {

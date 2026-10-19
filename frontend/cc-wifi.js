@@ -20,7 +20,8 @@
     chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
     tool: '<path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-2.4 2.4-2.6-.7-.7-2.6z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
-    x: '<path d="M6 6l12 12M18 6L6 18"/>'
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    map: '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>'
   };
   var ic = function (n) { return '<svg class="wf-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IC[n] + '</svg>'; };
 
@@ -48,7 +49,19 @@
     '.wff .pk .g3{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}',
     '.wfl{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);font-size:13px}',
     '.wfl.ok{border-color:#22c55e}',
-    'a.act{text-decoration:none}'
+    'a.act{text-decoration:none}',
+    '#wfov{position:fixed;inset:0;z-index:9500;background:var(--bg);display:flex;flex-direction:column}',
+    '#wfov .tp{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 8px}',
+    '#wfov .tp b{font-size:16px}#wfov .tp .sub{flex:1;margin:0;font-size:12px}',
+    '#wfov .ch{display:flex;gap:8px;padding:0 14px 8px;overflow-x:auto}',
+    '#wfov .ch button,#wfov .tp button{flex:none;padding:8px 16px;border-radius:999px;font:500 12px Poppins,sans-serif;color:var(--mut);background:var(--g);border:1px solid var(--gb);cursor:pointer}',
+    '#wfov .ch button.on{background:var(--ink);color:var(--inkfg);border-color:var(--ink);font-weight:600}',
+    '#wfmap{flex:1;min-height:0;position:relative;z-index:0}',
+    '#wfov .me{position:absolute;right:12px;top:120px;z-index:1000;padding:10px 14px;border-radius:999px;font:600 12px Poppins,sans-serif;color:var(--fg);background:var(--g);border:1px solid var(--gb);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);cursor:pointer}',
+    '#wfov .cd{position:absolute;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:1000;max-height:55%;overflow:auto;max-width:520px;margin:0 auto}',
+    '.wfpin{background:none;border:0}.wfpin i{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;color:#fff;background:#16a34a;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.45)}',
+    '.wfpin i.rs{background:#2563eb}.wfpin i.bad{background:#6b7280}.wfpin i.sel{outline:3px solid #fff;transform:scale(1.18)}.wfpin svg{width:18px;height:18px;margin:0}',
+    '.wfme{background:#2563eb;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 6px rgba(37,99,235,.25)}'
   ].join('');
   document.head.appendChild(css);
 
@@ -192,7 +205,7 @@
   X.XP.wf = function (s, L) {
     var h = '<p class="sub">Find free Wi-Fi, or compare Wi-Fi plans and installation from resellers around campus and the hostels.</p>';
     var form = s.mode === 'choose' ? chooser() : s.mode === 'share' ? shareForm(s) : s.mode === 'reseller' ? resellerForm(s) : '';
-    h += '<button class="btn p" data-wf="add" style="width:100%">' + ic('plus') + 'Add Wi-Fi or plans</button>' + form;
+    h += '<button class="btn p" data-wf="add" style="width:100%">' + ic('plus') + 'Add Wi-Fi or plans</button><button class="btn g" data-wf="map" style="width:100%;margin-top:8px">' + ic('map') + 'Open Wi-Fi map</button>' + form;
     var chips = [['', 'All'], ['share', 'Free to join'], ['reseller', 'Plans and installation']];
     h += '<div class="tabs z" style="padding:0">' + chips.map(function (c) { return '<button class="tab g' + ((s.kind || '') === c[0] ? ' on' : '') + '" data-wf="kind" data-k="' + c[0] + '">' + c[1] + '</button>'; }).join('')
       + '<button class="tab g' + (s.near ? ' on' : '') + '" data-wf="near">' + ic('pin') + (s.near ? 'Nearest first' : 'Near me') + '</button></div>';
@@ -203,6 +216,102 @@
       : X.xempty(s, s.kind === 'reseller' ? 'No Wi-Fi plans here yet. Are you a reseller? Add yours.' : s.kind === 'share' ? 'No shared Wi-Fi here yet. Share yours.' : 'No Wi-Fi here yet. Be the first.');
     return h + X.xmore(s);
   };
+
+  /* ---------- the map (Leaflet + OpenStreetMap, loaded only when the map is opened) ---------- */
+  var LEAF = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/', leafP = null;
+  function loadLeaflet() {
+    if (window.L && window.L.map) return Promise.resolve();
+    if (leafP) return leafP;
+    leafP = new Promise(function (res, rej) {
+      var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = LEAF + 'leaflet.min.css'; document.head.appendChild(l);
+      var s = document.createElement('script'); s.src = LEAF + 'leaflet.min.js';
+      s.onload = function () { if (window.L && window.L.map) res(); else { leafP = null; rej(new Error('The map could not start. Try again.')); } };
+      s.onerror = function () { leafP = null; rej(new Error('Could not load the map. Check your internet and try again.')); };
+      document.head.appendChild(s);
+    });
+    return leafP;
+  }
+  var M = { items: [], kind: '', map: null, markers: {}, sel: null, shown: {}, me: null, meMark: null };
+  var pinIcon = function (w, on) {
+    var cls = w.kind === 'reseller' ? 'rs' : ((w.votes || 0) - Math.round(((w.votes || 0) + (w.score || 0)) / 2) >= Math.round(((w.votes || 0) + (w.score || 0)) / 2) + 3 ? 'bad' : '');
+    return L.divIcon({ className: 'wfpin', html: '<i class="' + cls + (on ? ' sel' : '') + '">' + ic('wifi') + '</i>', iconSize: [34, 34], iconAnchor: [17, 17] });
+  };
+  function mapCard(w) {
+    var h = '', d = M.me ? km(M.me, w) : null, up = Math.round(((w.votes || 0) + (w.score || 0)) / 2), down = (w.votes || 0) - up;
+    h += '<div class="flex items-center justify-between"><span><span class="badge">' + (w.kind === 'reseller' ? ic('tool') + 'Plans' : ic('wifi') + 'Free to join') + '</span>' + (w.zone ? '<span class="badge" style="margin-left:6px">@' + esc(w.zone) + '</span>' : '')
+      + (d !== null ? '<span class="badge" style="margin-left:6px">' + dist(d) + ' away</span>' : '') + '</span><button class="act" data-wm="x" aria-label="Close">' + ic('x') + '</button></div>';
+    h += '<p style="margin:10px 0 2px;font-weight:600;overflow-wrap:anywhere">' + esc(w.place) + '</p>' + (w.business ? '<p class="sub" style="margin:0">' + esc(w.business) + '</p>' : '');
+    if (w.kind === 'share') {
+      h += row('Wi-Fi name (SSID)', esc(w.ssid || ''), '<button class="act" data-wm="cp" data-k="ssid" aria-label="Copy Wi-Fi name">' + ic('copy') + 'Copy</button>');
+      if (w.has_password === false || (!w.has_password && w.password === null)) h += row('Password', 'Open network, no password');
+      else if (w.locked || w.password === undefined) h += '<div class="wfr"><div><small>Password</small><b>Hidden</b></div><div class="acts"><button class="act" data-wm="signin">' + ic('key') + 'Sign in to see it</button></div></div>';
+      else { var sh = M.shown[w.id]; h += row('Password', sh ? esc(w.password) : '&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;', '<button class="act" data-wm="sh">' + (sh ? 'Hide' : 'Show') + '</button><button class="act" data-wm="cp" data-k="pw" aria-label="Copy password">' + ic('copy') + 'Copy</button>'); }
+    } else if (w.kind === 'reseller') {
+      var pk = Array.isArray(w.packages) ? w.packages : [], low = pk.length ? pk.reduce(function (a, b) { return b.price < a.price ? b : a; }) : null;
+      h += (w.tech ? '<p class="sub" style="margin:8px 0 0">' + esc(w.tech) + '</p>' : '') + (low ? '<p class="sub" style="margin:4px 0 0">From ' + kes(low.price) + ' for ' + esc(low.mbps) + ' Mbps / ' + esc(PER[low.period] || low.period) + '. More plans in the list.</p>' : '');
+    }
+    if (w.speed_note) h += '<p class="sub" style="margin:10px 0 0">Speed: ' + esc(w.speed_note) + '</p>';
+    if (w.votes) h += '<p class="sub" style="margin:6px 0 0">Works ' + up + ' &middot; Not working ' + down + '</p>';
+    h += '<div class="bar" style="margin-top:12px">' + mapLink(w) + '</div>';
+    return h;
+  }
+  function pick(w) {
+    var old = M.sel; M.sel = w;
+    if (old && M.markers[old.id]) M.markers[old.id].setIcon(pinIcon(old, false));
+    if (w && M.markers[w.id]) { M.markers[w.id].setIcon(pinIcon(w, true)); M.map.panTo([w.lat, w.lng]); }
+    var c = $('#wfov-cd'); if (!c) return;
+    if (!w) { c.hidden = true; c.innerHTML = ''; return; }
+    c.innerHTML = mapCard(w); c.hidden = false;
+  }
+  async function loadPins() {
+    var n = $('#wfov-n'); if (n) n.textContent = 'Loading...';
+    var d;
+    try { d = await X.call('/api/c/wifi/map' + (M.kind ? '?kind=' + M.kind : ''), { auth: false }); } catch (e) { if (n) n.textContent = ''; return say(e.message || 'Could not load the map pins'); }
+    if (!M.map) return;
+    Object.keys(M.markers).forEach(function (k) { M.map.removeLayer(M.markers[k]); }); M.markers = {};
+    M.items = (d.items || []).filter(hasLoc); M.sel = null; pick(null);
+    M.items.forEach(function (w) { var mk = L.marker([w.lat, w.lng], { icon: pinIcon(w, false), title: w.place, keyboard: true }).addTo(M.map); mk.on('click', function () { pick(w); }); M.markers[w.id] = mk; });
+    if (n) n.textContent = M.items.length ? M.items.length + (M.items.length === 1 ? ' place on the map' : ' places on the map') : 'Nothing here yet';
+    if (M.items.length) { var pts = M.items.map(function (w) { return [w.lat, w.lng]; }); if (M.me) pts.push([M.me.lat, M.me.lng]); M.map.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom: 17 }); }
+  }
+  function closeMap() {
+    var ov = $('#wfov'); if (M.map) { try { M.map.remove(); } catch (e) {} } M.map = null; M.markers = {}; M.sel = null;
+    if (ov) ov.remove(); document.body.style.overflow = ''; document.removeEventListener('keydown', mapKey);
+  }
+  function mapKey(e) { if (e.key === 'Escape') closeMap(); }
+  async function openMap() {
+    if ($('#wfov')) return;
+    var ov = document.createElement('div'); ov.id = 'wfov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Wi-Fi map');
+    ov.innerHTML = '<div class="tp"><b>Wi-Fi map</b><span class="sub" id="wfov-n">Loading map...</span><button type="button" data-wm="close">Close</button></div>'
+      + '<div class="ch">' + [['', 'All'], ['share', 'Free to join'], ['reseller', 'Plans and installation']].map(function (c) { return '<button type="button" data-wm="kind" data-k="' + c[0] + '" class="' + (M.kind === c[0] ? 'on' : '') + '">' + c[1] + '</button>'; }).join('') + '</div>'
+      + '<div id="wfmap"></div><button type="button" class="me" data-wm="me">' + ic('pin') + 'Near me</button><div class="box g cd" id="wfov-cd" hidden></div>';
+    document.body.appendChild(ov); document.body.style.overflow = 'hidden'; document.addEventListener('keydown', mapKey);
+    ov.addEventListener('click', onMapClick);
+    try { await loadLeaflet(); } catch (e) { say(e.message); return closeMap(); }
+    if (!$('#wfov')) return;
+    M.map = L.map('wfmap', { zoomControl: true }).setView([-0.5, 37.28], 12);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(M.map);
+    M.map.on('click', function () { pick(null); });
+    setTimeout(function () { if (M.map) M.map.invalidateSize(); }, 80);
+    await loadPins();
+  }
+  async function onMapClick(e) {
+    var b = e.target.closest('[data-wm]'); if (!b) return; var a = b.dataset.wm;
+    try {
+      if (a === 'close') return closeMap();
+      if (a === 'x') return pick(null);
+      if (a === 'kind') { M.kind = b.dataset.k; document.querySelectorAll('#wfov [data-wm=kind]').forEach(function (x) { x.classList.toggle('on', x === b); }); return loadPins(); }
+      if (a === 'sh') { M.shown[M.sel.id] = !M.shown[M.sel.id]; return pick(M.sel); }
+      if (a === 'cp' && M.sel) { try { await navigator.clipboard.writeText(b.dataset.k === 'pw' ? M.sel.password : M.sel.ssid); say('Copied'); } catch (er) { say('Could not copy. Select the text and copy it.'); } return; }
+      if (a === 'signin') { await X.ensureAccount(); var keep = M.sel && M.sel.id; await loadPins(); var again = M.items.filter(function (w) { return w.id === keep; })[0]; if (again) pick(again); return; }
+      if (a === 'me') {
+        b.disabled = true;
+        try { var l = await getLoc(); M.me = { lat: l.lat, lng: l.lng }; if (M.meMark) M.map.removeLayer(M.meMark); M.meMark = L.marker([l.lat, l.lng], { icon: L.divIcon({ className: '', html: '<div class="wfme" style="width:16px;height:16px"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }), interactive: false }).addTo(M.map); M.map.setView([l.lat, l.lng], 16); }
+        catch (er) { say(er.message); }
+        b.disabled = false;
+      }
+    } catch (er) { say(er.message || 'Something went wrong'); }
+  }
 
   /* ---------- actions ---------- */
   var v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; };
@@ -243,6 +352,7 @@
     e.stopImmediatePropagation(); e.preventDefault();
     var s = X.exs('wf'), a = b.dataset.wf, id = b.dataset.id, item = id ? s.items.filter(function (y) { return y.id === id; })[0] : null;
     try {
+      if (a === 'map') return openMap();
       if (a === 'add') { s.mode = 'choose'; return X.paintX(); }
       if (a === 'cancel') { s.mode = ''; s.loc = null; s.npk = 1; return X.paintX(); }
       if (a === 'mode-share') { s.mode = 'share'; return X.paintX(); }
@@ -286,6 +396,6 @@
     s.npk = Math.max(1, n - 1); X.paintX();
   }
   window.addEventListener('click', onClick, true);   // window capture runs before the Explore handler, so only data-wf buttons are taken
-  window.ccWifi = { getLoc: getLoc };
+  window.ccWifi = { getLoc: getLoc, openMap: openMap, closeMap: closeMap };
   try { if (X.xt === 'wf') X.paintX(); } catch (e) {}
 })();

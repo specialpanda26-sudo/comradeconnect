@@ -28,13 +28,13 @@ const GROUPS = [
   { n: 'Review', icon: 'inbox', h: 'Waiting for you', lead: 'Everything that needs a decision from you.', tabs: ['listings', 'confirm', 'withdrawals', 'verifications', 'disputes', 'reports', 'payments'] },
   { n: 'Market', icon: 'bag', h: 'Market and campus', lead: 'Items, events, notices, sponsors and the club shop.', tabs: ['live', 'events', 'notices', 'sponsors', 'club'] },
   { n: 'Money', icon: 'wallet', h: 'Money', lead: 'Earnings, fees and payouts.', tabs: ['settings', 'payouts'] },
-  { n: 'Site', icon: 'sliders', h: 'Site', lead: 'Change the words and switches on the public site, and read the log.', tabs: ['site', 'audit'] },
+  { n: 'Site', icon: 'sliders', h: 'Site', lead: 'Change the words and switches on the public site, and read the log.', tabs: ['site', 'zones', 'audit'] },
 ];
 const groupOf = (t) => Math.max(0, GROUPS.findIndex((g) => g.tabs.indexOf(t) > -1));
 const oldLabel = Object.assign({}, LABEL); Object.keys(LABEL).forEach((k) => delete LABEL[k]);
 LABEL.dashboard = 'Dashboard'; LABEL.users = 'Users';
 GROUPS.forEach((g) => g.tabs.forEach((k) => { if (!LABEL[k]) LABEL[k] = oldLabel[k] || k; }));
-LABEL.grant = 'Send money'; LABEL.live = 'Live items'; LABEL.settings = 'Fees and earnings';
+LABEL.zones = 'Zones'; LABEL.grant = 'Send money'; LABEL.live = 'Live items'; LABEL.settings = 'Fees and earnings';
 tab = 'dashboard';
 
 /* ---------- styles ---------- */

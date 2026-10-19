@@ -4,7 +4,8 @@ import { releaseOrder, refundOrder } from './market.js';
 import { credit, hooks } from './pay.js';
 import { HIDE } from './content.js';
 import { validateTicket } from './club.js';
-import { getSettings, saveSettings, DEFS, envDefault } from './settings.js';
+import { getSettings, saveSettings, DEFS, envDefault, getZones, DEFAULT_ZONES } from './settings.js';
+import { contactBlock } from './lib.js';
 
 import * as store from './storage.js';
 import { mediaUrl, PRIVATE_BUCKET } from './storage.js';
@@ -324,6 +325,30 @@ export async function adminRoutes(req, env, url, ip) {
   }
   if (path === '/api/admin/audit' && m === 'GET') {
     return json(env, { log: await rows(await sb(env, `admin_audit_log?order=created_at.desc&limit=${Math.min(200, parseInt(url.searchParams.get('limit')) || 50)}`)) });
+  }
+  // ---- zones: the places comrades pick from (Feed filter, Market, Wi-Fi, hostels...) ----
+  if (path === '/api/admin/zones' && m === 'GET') return json(env, { zones: await getZones(env) });
+  if (path === '/api/admin/zones' && m === 'POST') {
+    const b = await body(), act = b.action, name = str(b.name, 30);
+    const have = await rows(await sb(env, 'zones?select=name&limit=100'));
+    const seed = async () => { if (!have.length) { for (const [i, z] of DEFAULT_ZONES.entries()) await post(env, 'zones', { name: z, sort: i }, 'resolution=ignore-duplicates,return=representation'); } };
+    const cur = have.length ? have.map((x) => x.name) : DEFAULT_ZONES;
+    if (act === 'add') {
+      if (name.length < 2) return err(env, 'Type the zone name (at least 2 letters)');
+      if (/[<>"]/.test(name)) return err(env, 'Use letters and numbers only');
+      const blk = contactBlock(env, name); if (blk) return blk;
+      if (cur.some((z) => z.toLowerCase() === name.toLowerCase())) return err(env, 'That zone is already there', 409);
+      if (cur.length >= 40) return err(env, 'You can have up to 40 zones');
+      await seed();
+      await post(env, 'zones', { name, sort: cur.length }, 'return=representation');
+    } else if (act === 'remove') {
+      if (!cur.includes(name)) return err(env, 'No such zone', 404);
+      if (cur.length <= 1) return err(env, 'Keep at least one zone');
+      await seed();
+      await sb(env, `zones?name=eq.${enc(name)}`, { method: 'DELETE' });
+    } else return err(env, 'Unknown action');
+    await A('zones.' + act, 'zone', name, null);
+    return json(env, { ok: true, zones: await getZones(env) });
   }
   return err(env, 'Unknown admin action', 404);
 }

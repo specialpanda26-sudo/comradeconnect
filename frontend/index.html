@@ -62,7 +62,16 @@ nav b{font-weight:700;letter-spacing:-.02em;font-size:16px}
 .tab::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(circle 46px at var(--x,50%) var(--y,50%),rgba(255,255,255,.7),transparent 70%);mix-blend-mode:screen}
 .tab.lit::after{opacity:1;transition-duration:.08s}
 :root[data-theme="light"] .tab::after{mix-blend-mode:multiply;background:radial-gradient(circle 46px at var(--x,50%) var(--y,50%),rgba(0,0,0,.3),transparent 70%)}
-/* feed */
+/* feed: grid fills every gap (cards pack into columns), list is one per row */
+.vt{display:flex;justify-content:flex-end;align-items:center;gap:6px;max-width:1100px;margin:0 auto;padding:6px 6vw 0}
+.vt button{padding:6px 16px;border-radius:999px;font:500 12px Poppins,sans-serif;color:var(--mut);background:var(--g);border:1px solid var(--gb);cursor:pointer;transition:all .25s}
+.vt button.on{background:var(--ink);color:var(--inkfg);border-color:var(--ink);font-weight:600}
+#feed.grid{display:block;max-width:1100px;column-count:2;column-gap:12px;padding-left:4vw;padding-right:4vw}
+@media(min-width:760px){#feed.grid{column-count:3;column-gap:16px}}
+@media(min-width:1100px){#feed.grid{column-count:4}}
+#feed.grid>.card{break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid;margin:0 0 12px;padding:14px;border-radius:18px}
+#feed.grid>.card p.t{font-size:13px;line-height:1.6;margin:10px 0 12px}
+#feed.grid>:not(.card){column-span:all;-webkit-column-span:all;margin-bottom:12px}
 #feed{max-width:680px;margin:0 auto;padding:14px 6vw 140px;display:grid;gap:18px}
 .card{border-radius:22px;padding:22px;opacity:0;transform:translateY(34px);filter:blur(8px);transition:opacity .8s,transform .8s,filter .8s}
 .card.in{opacity:1;transform:none;filter:none}
@@ -418,6 +427,7 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
 
 <div class="tabs z" id="zones" aria-label="Filter by hostel zone"></div>
 <div class="tabs" id="tabs" role="tablist" aria-label="Filter by category"></div>
+<div class="vt" id="vt" role="group" aria-label="Feed layout"><button type="button" data-vw="grid">Grid</button><button type="button" data-vw="list">List</button></div>
 <main id="feed" aria-live="polite"></main>
 </div>
 
@@ -1033,10 +1043,12 @@ const IC={heart:'<svg class="i" viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a
 /* ---------- feed ---------- */
 const HID=new Set(ST.get('cs_hidden',[])),BLK=new Set(ST.get('cs_blocked',[]));
 const CATS=['All','Notices','HostelTea','Crush','StrikeUpdates'];let cat='All',page=1,zone='All';
-/* Edit this list to the hostel areas students actually use */
+/* Starting list. The admin edits the real list in admin > Zones; the app swaps it in when it loads. */
 const ZONES=['Kerugoya','Kutus','Kagio','On campus'];
-$('#zones').innerHTML='<button class="tab g on" data-z="All">All zones</button>'+ZONES.map(z=>`<button class="tab g" data-z="${z}">@${z}</button>`).join('');
-$('#sz').innerHTML='<option value="">Not saying</option>'+ZONES.map(z=>`<option>${z}</option>`).join('');
+function drawZones(){if(zone!=='All'&&!ZONES.includes(zone)){zone='All';try{load(true)}catch(e){}}
+$('#zones').innerHTML='<button class="tab g'+(zone==='All'?' on':'')+'" data-z="All">All zones</button>'+ZONES.map(z=>`<button class="tab g${z===zone?' on':''}" data-z="${esc(z)}">@${esc(z)}</button>`).join('');
+const sv=$('#sz').value;$('#sz').innerHTML='<option value="">Not saying</option>'+ZONES.map(z=>`<option>${esc(z)}</option>`).join('');if(ZONES.includes(sv))$('#sz').value=sv}
+window.ccDrawZones=drawZones;drawZones();
 $('#zones').onclick=e=>{const t=e.target.closest('.tab');if(!t)return;zone=t.dataset.z;$$('#zones .tab').forEach(x=>x.classList.toggle('on',x===t));load(true)};
 const liked=new Set(ST.get('cs_liked',[])),viewed=new Set(ST.get('cs_viewed',[]));
 $('#tabs').innerHTML=CATS.map(c=>`<button class="tab g${c==='All'?' on':''}" role="tab" data-c="${c}">#${c}</button>`).join('');
@@ -1067,6 +1079,9 @@ async function load(reset){const f=$('#feed');if(reset){page=1;f.innerHTML='';fs
  if(!r.posts.length&&reset)f.innerHTML='<div class="empty">Hakuna tea hapa bado.<br>Be the first to spill in this corner.</div>';
  r.posts.forEach((p,i)=>{f.append(card(p));fseen.add(p._id);if(p.createdAt>fnewest)fnewest=p.createdAt});
  if(r.hasMore){const b=document.createElement('button');b.className='btn g more';b.style.margin='6px auto 0';b.textContent='Mimina tea zaidi';b.onclick=()=>{page++;load()};f.append(b)}}
+(function(){const f=$('#feed'),vt=$('#vt');let v='grid';try{v=localStorage.getItem('cc_feedview')==='list'?'list':'grid'}catch(e){}
+const set=x=>{v=x;f.classList.toggle('grid',x==='grid');$$('#vt button').forEach(b=>b.classList.toggle('on',b.dataset.vw===x));try{localStorage.setItem('cc_feedview',x)}catch(e){}};
+vt.onclick=e=>{const b=e.target.closest('button');if(b)set(b.dataset.vw)};set(v)})();
 $('#tabs').onclick=e=>{const t=e.target.closest('.tab');if(!t)return;cat=t.dataset.c;$$('#tabs .tab').forEach(x=>x.classList.toggle('on',x===t));load(true)};
 /* Feed auto-refresh: look for newer stories without moving the page, then offer a button (cards count views when shown, so nothing is inserted behind your back) */
 function fpill(n){let b=$('#fnew');if(!n){if(b)b.hidden=true;return}

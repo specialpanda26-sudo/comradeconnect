@@ -103,6 +103,18 @@ export async function contentRoutes(req, env, url, ip) {
     return json(env, { ok: true });
   }
 
+  if (path === '/api/c/wifi/map' && req.method === 'GET') {            // every shared network that has a real location, for the map
+    const me = req.headers.get('X-Token') ? await authProfile(req, env) : null;
+    const kd = url.searchParams.get('kind');
+    const r = await rows(await sb(env, `wifi?hidden=eq.false&lat=not.is.null&order=created_at.desc&limit=500${['spot', 'share', 'reseller'].includes(kd) ? '&kind=eq.' + kd : ''}`));
+    const v = r.length ? await rows(await sb(env, `wifi_votes?select=wifi_id,value&wifi_id=${inList(r.map((x) => x.id))}`)) : [];
+    const items = r.map((x) => {
+      const sc = v.filter((y) => y.wifi_id === x.id), p = wifiMask(pub(x, me), me);
+      return { id: p.id, kind: p.kind, place: p.place, zone: p.zone, business: p.business, ssid: p.ssid, password: p.password, has_password: p.has_password, locked: p.locked, speed_note: p.speed_note,
+        lat: p.lat, lng: p.lng, score: sc.reduce((t, y) => t + y.value, 0), votes: sc.length, tech: p.tech, packages: p.packages, mine: p.mine };
+    });
+    return json(env, { items });
+  }
   const mm = path.match(/^\/api\/c\/(rooms|groups|polls|hearts|wifi|hostels|services|tips)(?:\/([0-9a-f-]{36})\/(join|leave|vote|interest|like|remove))?$/);
   if (!mm) return null;
   const res = R[mm[1]], id = mm[2], act = mm[3];

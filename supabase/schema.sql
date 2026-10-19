@@ -723,3 +723,12 @@ do $$ begin
   alter table withdrawals drop constraint if exists withdrawals_status_check;
   alter table withdrawals add constraint withdrawals_status_check check (status in ('requested','sending','paid','rejected'));
 exception when others then null; end $$;
+
+-- v17: zones the admin can edit (empty table = the built-in four). Safe to run again.
+create table if not exists zones (
+  name text primary key,
+  sort int not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table zones enable row level security;
+create index if not exists wifi_map on wifi(hidden, lat, lng);

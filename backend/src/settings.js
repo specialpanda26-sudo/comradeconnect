@@ -55,6 +55,15 @@ export async function getSettings(env) {
   return vals;
 }
 
+export const DEFAULT_ZONES = ['Kerugoya', 'Kutus', 'Kagio', 'On campus'];
+// The zones comrades pick from. The admin edits them (admin > Zones); an empty table means the built-in four.
+export async function getZones(env) {
+  try {
+    const r = await rows(await sb(env, 'zones?select=name,sort,created_at&order=sort.asc,created_at.asc&limit=100'));
+    const names = r.map((x) => x.name).filter(Boolean);
+    return names.length ? names : DEFAULT_ZONES.slice();
+  } catch (e) { return DEFAULT_ZONES.slice(); }
+}
 // Whole shillings, rounded down in the platform's favour only when exact (same rule everywhere).
 export const feeOf = (amount, pct) => Math.floor((amount * pct) / 100 + 1e-9);
 export const withdrawFee = (amount, S) => Math.ceil((amount * S.withdraw_fee_percent) / 100 - 1e-9) + S.withdraw_fee_flat;
@@ -94,6 +103,6 @@ export async function saveSettings(env, input) {
 
 // Public: the app reads fees and prices from here so the screens never disagree with the server.
 export async function settingsRoutes(req, env, url) {
-  if (req.method === 'GET' && url.pathname === '/api/config') return json(env, publicConfig(await getSettings(env)));
+  if (req.method === 'GET' && url.pathname === '/api/config') return json(env, { ...publicConfig(await getSettings(env)), zones: await getZones(env) });
   return null;
 }

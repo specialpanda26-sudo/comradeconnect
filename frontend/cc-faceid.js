@@ -134,5 +134,6 @@ bypass = b; b.click();
 intercept('#secY', function () { return 'enable'; });
 intercept('#sgo', function () { return hasBio() ? 'verify' : 'enable'; });
 intercept('#lku', function () { return 'verify'; });
+intercept('#wd', function () { return hasBio() ? 'verify' : null; });
 window.ccFaceId = { scan: flow };
 })();

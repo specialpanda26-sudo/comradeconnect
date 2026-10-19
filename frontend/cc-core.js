@@ -1150,12 +1150,12 @@ function drawClubX() {
         + '<button class="act" data-buy="' + esc(p.id) + '" style="margin-top:8px;width:100%;justify-content:center"' + (p.stock <= 0 ? ' disabled' : '') + '>' + (p.stock <= 0 ? 'Sold out' : 'Buy') + '</button></div></div>').join('');
   }
   if (sub === 'cart') {
-    const mine = CS.tickets.map((t) => '<div class="box g" style="margin-top:12px"><div class="flex items-center justify-between"><b>' + esc(t.event || 'Event') + '</b><span class="badge">' + (t.status === 'valid' ? 'Valid' : t.status === 'used' ? 'Used' : 'Cancelled') + '</span></div>'
+    const mine = CS.tickets.map((t) => window.ccTk ? window.ccTk.card(t) : '<div class="box g" style="margin-top:12px"><div class="flex items-center justify-between"><b>' + esc(t.event || 'Event') + '</b><span class="badge">' + (t.status === 'valid' ? 'Valid' : t.status === 'used' ? 'Used' : 'Cancelled') + '</span></div>'
       + '<p class="sub" style="margin:6px 0 0">' + (t.date ? esc(evDate(t.date)) : '') + (t.venue ? ', ' + esc(t.venue) : '') + '</p>'
       + (t.status === 'valid' && t.code ? '<p style="font-size:26px;letter-spacing:.12em;font-weight:700;margin:12px 0 4px">' + esc(t.code.replace(/(\d{4})(\d{4})/, '$1 $2')) + '</p><p class="note" style="margin:0">Show this code at the door. Do not share it. It works once.</p>' : '') + '</div>').join('');
-    $('#ccart').innerHTML = (CS.err && !CS.events.length ? retryBtn : !CS.loaded ? '<p class="sub">Loading...</p>' : (CS.events.length ? CS.events.map((e) => '<div class="box g" style="margin-bottom:12px"><div class="flex items-center justify-between" style="gap:8px"><b>' + esc(e.title) + '</b><span class="badge">' + esc(evDate(e.date)) + '</span></div>'
-      + '<p class="sub" style="margin:6px 0 0">' + (e.venue ? esc(e.venue) : 'Venue to be announced') + '</p>' + (e.details ? '<p class="sub" style="margin:6px 0 0;overflow-wrap:anywhere">' + esc(e.details) + '</p>' : '')
-      + (e.ticket_price ? '<button class="btn p" data-tb="' + esc(e.id) + '" style="width:100%;margin-top:12px">Buy a ticket, ' + kes(e.ticket_price) + '</button>' : '<p class="note" style="margin-bottom:0">No tickets needed for this event.</p>') + '</div>').join('') : '<p class="sub">No upcoming events yet.</p>'))
+    $('#ccart').innerHTML = (window.ccTk ? window.ccTk.bar() : '') + (CS.err && !CS.events.length ? retryBtn : !CS.loaded ? '<p class="sub">Loading...</p>' : (CS.events.length ? CS.events.map((e) => '<div class="box g" style="margin-bottom:12px"><div class="flex items-center justify-between" style="gap:8px"><b>' + esc(e.title) + '</b><span class="badge">' + esc(evDate(e.date)) + '</span></div>'
+      + '<p class="sub" style="margin:6px 0 0">' + (e.venue ? esc(e.venue) : 'Venue to be announced') + (e.organizer ? ' &middot; by ' + esc(e.organizer) : '') + (e.left != null && e.left > 0 && e.left <= 20 ? ' &middot; ' + e.left + ' left' : '') + '</p>' + (e.details ? '<p class="sub" style="margin:6px 0 0;overflow-wrap:anywhere">' + esc(e.details) + '</p>' : '')
+      + (e.ticket_price && e.left === 0 ? '<p class="note" style="margin-bottom:0">Sold out</p>' : e.ticket_price ? '<button class="btn p" data-tb="' + esc(e.id) + '" style="width:100%;margin-top:12px">Buy a ticket, ' + kes(e.ticket_price) + '</button>' : '<p class="note" style="margin-bottom:0">No tickets needed for this event.</p>') + '</div>').join('') : '<p class="sub">No upcoming events yet.</p>'))
       + '<h3 style="margin-top:18px">My tickets</h3>' + (mine || '<p class="sub">No tickets yet.</p>');
   }
   if (sub === 'ord') {
@@ -1278,6 +1278,7 @@ function initClub() {
   });
   guard('#ccart', (e) => {
     if (e.target.closest('[data-retry]')) return loadClub();
+    const tk = e.target.closest('[data-tk]'); if (tk && window.ccTk) return window.ccTk.click(tk.dataset.tk, () => loadClub(true));
     const b = e.target.closest('[data-tb]'); if (!b) return;
     const ev = CS.events.find((x) => x.id === b.dataset.tb); if (!ev) return;
     const have = CS.tickets.filter((t) => t.status !== 'void' && t.event === ev.title).length;
@@ -1447,5 +1448,6 @@ window.ccGoogle = { on: googleOn, mount: mountGoogle };
 
 window.ccMarketTerms = () => S.list.map((l) => l.title);
 window.CC = { registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid };
-window.ccSteps = { paySteps, withdrawFlow, stepsCss };   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections
+window.ccSteps = { paySteps, withdrawFlow, stepsCss };
+window.ccTools = { sheet, call, toast, copyText, sleep };   // used by cc-tickets.js   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections
 })();

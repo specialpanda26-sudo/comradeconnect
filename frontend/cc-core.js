@@ -527,6 +527,7 @@ $('#bpay').onclick = async () => {
     S.list = S.list.filter((x) => x.id !== l.id);
     $('#bok').textContent = 'Payment received. ' + kes(d.amount) + (d.credit ? ' plus ' + kes(d.credit) + ' of points' : '') + ' for ' + l.title + ' is held safely in escrow. Tap Done to see it under Orders.';
     bs(4); ccTick($('#bok')); loadOrders(true);
+    try { window.ccReceipt && ccReceipt.show({ item: l.title, amount: d.amount, credit: d.credit, ref: d.id, via: 'M-Pesa', onDone: () => { try { $('#bdone').click(); } catch (e) {} } }); } catch (e) {}
   } catch (e) {
     if (e.pending) { ps.stop(); toast(e.message); shut(); S.sub = 'orders'; draw(); loadOrders(); }
     else { ps.fail(e.message); await sleep(1800); $('#bpe').textContent = e.message; bs(2); }

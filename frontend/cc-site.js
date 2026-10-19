@@ -40,13 +40,32 @@ function apply() {
   } else { if (b) b.remove(); document.documentElement.classList.remove('cc-has-banner'); }
   // maintenance cover
   var m = q('#cc-maint');
-  var bypass = false; try { if (/[?&]nomaint=1/.test(location.search)) sessionStorage.setItem('cc_nomaint', '1'); bypass = sessionStorage.getItem('cc_nomaint') === '1'; } catch (e) {}
+  var bypass = !!(window.ccStaff && window.ccStaff.ok);   // a signed-in admin (checked with the server) sees the real site
   if (C.maintenance_on && !bypass) {
-    if (!m) { m = document.createElement('div'); m.id = 'cc-maint'; m.setAttribute('role', 'alert'); m.innerHTML = '<div><h1></h1><p></p></div>'; document.body.appendChild(m); }
+    if (!m) { m = document.createElement('div'); m.id = 'cc-maint'; m.setAttribute('role', 'alert'); m.innerHTML = '<div><h1></h1><p></p></div>'; document.body.appendChild(m); staffBox(m); }
     q('h1', m).textContent = 'Back soon';
     q('p', m).textContent = C.maintenance_text || 'We are fixing something. Please check again in a little while.';
   } else if (m) m.remove();
   links();
+}
+
+// "Staff sign in" on the maintenance cover: only an admin account gets past it
+function staffBox(m) {
+  var box = m.firstChild; if (!box || !window.ccStaff) return;
+  var btn = document.createElement('button'); btn.type = 'button'; btn.id = 'cc-staff-btn'; btn.textContent = 'Staff sign in';
+  var f = document.createElement('div'); f.id = 'cc-staff-f'; f.hidden = true;
+  var u = document.createElement('input'); u.placeholder = 'Username'; u.autocomplete = 'username'; u.autocapitalize = 'off'; u.setAttribute('aria-label', 'Username');
+  var p = document.createElement('input'); p.type = 'password'; p.placeholder = 'Password'; p.autocomplete = 'current-password'; p.setAttribute('aria-label', 'Password');
+  var go = document.createElement('button'); go.type = 'button'; go.textContent = 'Sign in';
+  var e = document.createElement('p'); e.id = 'cc-staff-e'; e.setAttribute('role', 'alert');
+  f.append(u, p, go, e); box.append(btn, f);
+  btn.onclick = function () { f.hidden = !f.hidden; if (!f.hidden) u.focus(); };
+  function run() {
+    e.textContent = ''; go.disabled = true; go.textContent = 'Checking...';
+    window.ccStaff.signIn(u.value, p.value).then(function () { p.value = ''; }, function (x) { e.textContent = x && x.message ? x.message : 'Could not sign in.'; })
+      .then(function () { go.disabled = false; go.textContent = 'Sign in'; });
+  }
+  go.onclick = run; p.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') run(); });
 }
 
 // links from the editor go on top of Me > Join our community
@@ -84,5 +103,6 @@ function boot() {
   // the Me page redraws itself, so re-add links when it does
   if (!started) { started = true; new MutationObserver(function () { if (q('#ccl') && !q('#ccl [data-cc-soc]') && Object.keys(C).some(function (k) { return k.indexOf('social_') === 0; })) links(); }).observe(document.body, { childList: true, subtree: true }); }
 }
+window.ccSiteApply = apply;
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

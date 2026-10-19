@@ -1,5 +1,5 @@
 // Accounts, wallet, withdrawals and referrals.
-import { json, err, sb, rows, one, post, patch, enc, str, int, UUID, H, tsEqual, randHex, throttle, tooMany, user, authProfile, contactBlock, ahead, ago, DAY } from './lib.js';
+import { json, err, sb, rows, one, post, patch, enc, str, int, UUID, H, tsEqual, randHex, throttle, tooMany, user, authProfile, contactBlock, ahead, ago, DAY, hashPassword, checkPassword, goodPassword } from './lib.js';
 import { credit } from './pay.js';
 import { getSettings, withdrawFee, publicConfig } from './settings.js';
 import { trySendNow, reconcilePayouts } from './payouts.js';
@@ -57,6 +57,16 @@ export async function accountRoutes(req, env, url, ip) {
     if (!/^[A-Za-z0-9_-]{6,64}$/.test(aid)) aid = 'u_' + randHex(8);
     if (await one(await sb(env, `profiles?select=aid&aid=eq.${enc(aid)}`))) return err(env, 'This account already exists. Use your recovery code.', 409);
     const token = randHex(24), recovery = randHex(6).toUpperCase(), refcode = randHex(4).toUpperCase();
+    if (b.password !== undefined && b.password !== null && b.password !== '') {       // the person chose a username and a password: no random code
+      const handle = str(b.handle, 20), pw = String(b.password);
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(handle)) return err(env, 'Username: 3 to 20 letters, numbers or _');
+      const blk = contactBlock(env, handle); if (blk) return blk;
+      if (!goodPassword(pw, handle)) return err(env, 'Password: 8 to 100 characters, and not the same as your username');
+      const res = await post(env, 'profiles', { aid, handle, token_hash: await H(env, 'tok:' + token), recovery_hash: await hashPassword(pw), referral_code: refcode });
+      if (res.status === 409) return err(env, 'That username is already taken', 409);
+      if (!res.ok) return err(env, 'Could not create the account', 500);
+      return json(env, { aid, handle, token, referral_code: refcode }, 201);
+    }
     const res = await post(env, 'profiles', { aid, token_hash: await H(env, 'tok:' + token), recovery_hash: await H(env, `rec:${aid}:${recovery}`), referral_code: refcode });
     if (res.status === 409) return err(env, 'This account already exists. Use your recovery code.', 409);
     if (!res.ok) return err(env, 'Could not create the account', 500);
@@ -96,12 +106,17 @@ export async function accountRoutes(req, env, url, ip) {
   }
   // Get a new token with the recovery code (also rotates the token, so a lost device is cut off).
   if (path === '/api/auth/recover' && m === 'POST') {
-    const b = await body(); const aid = str(b.aid, 64), code = str(b.recovery_code, 40).toUpperCase();
-    if (!(await throttle(env, ip, 'recover', aid || 'x', 10, 30))) return tooMany(env);
-    const p = aid ? await one(await sb(env, `profiles?aid=eq.${enc(aid)}`)) : null;
-    if (!p || !p.recovery_hash || !tsEqual(p.recovery_hash, await H(env, `rec:${aid}:${code}`))) return err(env, 'Wrong account or recovery code', 401);
+    const b = await body(); const who = str(b.aid || b.handle || b.username, 64), raw = String(b.password ?? b.recovery_code ?? '').slice(0, 100);   // account ID or username; recovery code or password
+    if (!(await throttle(env, ip, 'recover', who.toLowerCase() || 'x', 10, 30))) return tooMany(env);
+    let p = who ? await one(await sb(env, `profiles?aid=eq.${enc(who)}`)) : null;
+    if (!p && /^[A-Za-z0-9_]{3,20}$/.test(who)) {                                    // not an account ID: try it as a username
+      p = await one(await sb(env, `profiles?handle=eq.${enc(who)}`));
+      if (!p) { const c = await one(await sb(env, `profiles?handle=ilike.${enc(who.replace(/_/g, '\\_'))}`)); if (c && String(c.handle).toLowerCase() === who.toLowerCase()) p = c; }
+    }
+    const ok = !!(p && p.recovery_hash) && (String(p.recovery_hash).startsWith('pw1:') ? await checkPassword(p.recovery_hash, raw) : tsEqual(p.recovery_hash, await H(env, `rec:${p.aid}:${raw.trim().toUpperCase().slice(0, 40)}`)));
+    if (!ok) return err(env, 'Wrong account or recovery code', 401);
     if (p.banned) return err(env, 'This account is suspended', 403);
-    const token = randHex(24);
+    const aid = p.aid, token = randHex(24);
     await patch(env, `profiles?aid=eq.${enc(aid)}`, { token_hash: await H(env, 'tok:' + token) });
     return json(env, { aid, token });
   }

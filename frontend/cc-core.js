@@ -48,8 +48,48 @@ async function rawPost(path, body) {
   if (!r.ok) throw Object.assign(new Error(ccErr(r.status, d.error)), { status: r.status });
   return d;
 }
+/* ---------- anonymous account with a password you choose (no random code) ---------- */
+function registerFlow() {
+  return new Promise((done, fail) => {
+    const m = sheet('<h3>Create your anonymous account</h3><p class="sub" style="margin-top:6px">Pick a username and a password you will remember. No email, no phone number. Your password is the only way back in on a new phone.</p>'
+      + '<div class="fld" style="margin-top:10px"><input id="ccw-u" placeholder="Username (3 to 20 letters, numbers or _)" maxlength="20" autocomplete="off" autocapitalize="off" aria-label="Username"></div>'
+      + '<div class="fld"><input id="ccw-p" type="password" placeholder="Password (at least 8 characters)" maxlength="100" autocomplete="new-password" aria-label="Password"></div>'
+      + '<div class="fld"><input id="ccw-p2" type="password" placeholder="Type the password again" maxlength="100" autocomplete="new-password" aria-label="Confirm password"></div>'
+      + '<p class="sub" id="ccw-e" style="color:#f87171;min-height:18px"></p>'
+      + '<button class="btn p" id="ccw-go" style="width:100%">Create account</button>'
+      + '<button class="btn g" id="ccw-rand" style="width:100%;margin-top:6px">Skip: give me a random recovery code</button>'
+      + '<button class="btn g" id="ccw-x" style="width:100%;margin-top:6px">Cancel</button>');
+    const $q = (s) => m.querySelector(s), err = (t) => { $q('#ccw-e').textContent = t || ''; };
+    const run = async (body) => {
+      $q('#ccw-go').disabled = $q('#ccw-rand').disabled = true; err('');
+      try { const d = await rawPost('/api/auth/register', body); m.close(); done(d); }
+      catch (e) { err(e.message); $q('#ccw-go').disabled = $q('#ccw-rand').disabled = false; }
+    };
+    $q('#ccw-go').onclick = () => {
+      const u = $q('#ccw-u').value.trim(), p = $q('#ccw-p').value;
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(u)) return err('Username: 3 to 20 letters, numbers or _');
+      if (p.length < 8) return err('The password needs at least 8 characters');
+      if (p.toLowerCase() === u.toLowerCase()) return err('The password cannot be your username');
+      if (p !== $q('#ccw-p2').value) return err('The two passwords do not match');
+      run({ handle: u, password: p });
+    };
+    $q('#ccw-rand').onclick = () => run({});
+    $q('#ccw-x').onclick = () => { m.close(); fail(new Error('Sign in to continue')); };
+  });
+}
+function showWelcome(d) {
+  return new Promise((done) => {
+    const m = sheet('<h3>Account created</h3><p class="sub" style="margin-top:6px">Sign in on any phone with your username and password. We cannot show or reset your password, so keep it safe.</p>'
+      + '<div class="rw" style="margin-top:12px"><span>Username</span><b>' + esc(d.handle || '') + '</b></div><div class="rw"><span>Account ID</span><b>' + esc(d.aid) + '</b></div>'
+      + '<label class="sub" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="ccwl-ok"> I will remember my password</label>'
+      + '<button class="btn p" id="ccwl-go" style="width:100%;margin-top:12px" disabled>Continue</button>');
+    m.querySelector('#ccwl-ok').onchange = (e) => { m.querySelector('#ccwl-go').disabled = !e.target.checked; };
+    m.querySelector('#ccwl-go').onclick = () => { m.close(); done(); };
+  });
+}
 let regBusy = null;
 function showRecovery(d) {
+  if (!d.recovery_code) return showWelcome(d);
   return new Promise((done) => {
     const m = sheet('<h3>Save your recovery code</h3><p class="sub" style="margin-top:6px">This is the only way to get your account back on a new phone. We cannot show it again. Screenshot it or write it down.</p>'
       + '<div class="rw" style="margin-top:12px"><span>Account ID</span><b id="ccaid">' + esc(d.aid) + '</b></div>'
@@ -112,7 +152,7 @@ async function ensureAccount() {
   if (regBusy) return regBusy;
   regBusy = (async () => {
     if (googleOn() && (await chooseSignIn()) === 'google') return window.ccAuth();
-    const d = await rawPost('/api/auth/register', {});
+    const d = await registerFlow();
     saveAuth({ aid: d.aid, token: d.token });
     if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
     ME.aid = d.aid; saveMe();
@@ -122,8 +162,8 @@ async function ensureAccount() {
   try { const a = await regBusy; setTimeout(() => { attributeRef(); syncVer(); }, 0); return a; } finally { regBusy = null; }
 }
 async function restoreAccount(aid, code) {
-  aid = String(aid || '').trim(); code = String(code || '').trim().toUpperCase();
-  if (!aid || !code) throw new Error('Enter your account ID and recovery code');
+  aid = String(aid || '').trim(); code = String(code || '');                 // a password is case-sensitive: the server upper-cases old recovery codes itself
+  if (!aid || !code.trim()) throw new Error('Enter your account ID or username, and your password or recovery code');
   const d = await rawPost('/api/auth/recover', { aid, recovery_code: code });
   saveAuth({ aid: d.aid, token: d.token });
   ME.aid = d.aid; saveMe();
@@ -134,8 +174,8 @@ function promptRestore(msg) {
   if (document.getElementById('ccrst')) return;
   const m = sheet('<h3>Sign in again</h3><p class="sub" style="margin-top:6px">' + esc(msg || 'This phone is not signed in to your account.') + '</p>'
     + (googleOn() ? '<div id="ccrg" style="display:flex;justify-content:center;margin-top:12px;min-height:44px"></div><p class="sub" style="text-align:center;margin-top:8px">or use the recovery code you saved</p>' : '<p class="sub">Enter the account ID and recovery code you saved.</p>')
-    + '<div class="fld" style="margin-top:10px"><input id="ccrst-a" placeholder="Account ID" autocomplete="off" aria-label="Account ID"></div>'
-    + '<div class="fld"><input id="ccrst-c" placeholder="Recovery code" autocomplete="off" aria-label="Recovery code"></div>'
+    + '<div class="fld" style="margin-top:10px"><input id="ccrst-a" placeholder="Account ID or username" autocomplete="off" autocapitalize="off" aria-label="Account ID or username"></div>'
+    + '<div class="fld"><input id="ccrst-c" type="password" placeholder="Password or recovery code" autocomplete="off" autocapitalize="off" aria-label="Password or recovery code"></div>'
     + '<p class="sub" id="ccrst-e" style="color:#f87171;min-height:18px"></p>'
     + '<div class="two"><button class="btn g" id="ccrst-x">Cancel</button><button class="btn p" id="ccrst-go">Restore</button></div>');
   m.id = 'ccrst';
@@ -1382,6 +1422,6 @@ window.ccSignOut = signOut;
 window.ccGoogle = { on: googleOn, mount: mountGoogle };
 
 window.ccMarketTerms = () => S.list.map((l) => l.title);
-window.CC = { ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid };
+window.CC = { registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid };
 window.ccSteps = { paySteps, withdrawFlow, stepsCss };   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections
 })();

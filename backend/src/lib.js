@@ -133,3 +133,17 @@ export async function audit(env, action, type, id, detail, ip) {
   await post(env, 'admin_audit_log', { actor: 'admin', action, target_type: type || null, target_id: id ? String(id) : null, detail: detail || null, ip: ip || null });
 }
 
+// ---------- passwords (PBKDF2: slow on purpose, so a stolen database cannot be cracked quickly) ----------
+async function pbkdf2(pw, salt) {
+  const k = await crypto.subtle.importKey('raw', te.encode(pw), 'PBKDF2', false, ['deriveBits']);
+  return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 100000 }, k, 256));
+}
+export async function hashPassword(pw) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  return `pw1:${hex(salt)}:${await pbkdf2(String(pw), salt)}`;
+}
+export async function checkPassword(stored, pw) {
+  const m = /^pw1:([0-9a-f]{32}):([0-9a-f]{64})$/.exec(String(stored || '')); if (!m) return false;
+  return tsEqual(await pbkdf2(String(pw), new Uint8Array(m[1].match(/../g).map((h) => parseInt(h, 16)))), m[2]);
+}
+export const goodPassword = (pw, handle) => typeof pw === 'string' && pw.length >= 8 && pw.length <= 100 && !/^(.)\1+$/.test(pw) && (!handle || pw.toLowerCase() !== String(handle).toLowerCase());

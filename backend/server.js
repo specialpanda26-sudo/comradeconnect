@@ -19,7 +19,8 @@ const env = { ...DEFAULTS, ...Object.fromEntries(Object.entries(process.env).fil
 const REQUIRED = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'ADMIN_KEY', 'HASH_PEPPER'];
 const missing = REQUIRED.filter((k) => !env[k]);
 if (missing.length) { console.error('Missing required environment variables: ' + missing.join(', ')); process.exit(1); }
-if (env.ADMIN_KEY.length < 24 || env.HASH_PEPPER.length < 24) { console.error('ADMIN_KEY and HASH_PEPPER must each be at least 24 characters (use: openssl rand -hex 32)'); process.exit(1); }
+if (env.ADMIN_KEY.length < 8) { console.error('ADMIN_KEY must be at least 8 characters'); process.exit(1); }
+if (env.HASH_PEPPER.length < 24) { console.error('HASH_PEPPER must be at least 24 characters (use: openssl rand -hex 32)'); process.exit(1); }
 if (env.PAYMENT_MODE === 'manual' && !env.MPESA_PAY_TO) console.warn('WARNING: MPESA_PAY_TO is empty, so buyers cannot be shown where to pay.');
 if (env.PAYMENT_MODE === 'tinypesa' && (!env.TINYPESA_API_KEY || !env.CALLBACK_SECRET)) { console.error('PAYMENT_MODE=tinypesa needs TINYPESA_API_KEY and CALLBACK_SECRET'); process.exit(1); }
 if (env.ALLOWED_ORIGINS === '*') console.warn('WARNING: ALLOWED_ORIGINS is "*". Set it to your site address before launch.');

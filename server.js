@@ -19,7 +19,7 @@ for (const [k, v] of Object.entries(DEFAULTS)) if (env[k] === undefined || env[k
 // Refuse to start half-configured, so a missing secret is obvious in the Render logs instead of failing on a customer.
 const missing = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'ADMIN_KEY', 'HASH_PEPPER'].filter((k) => !env[k]);
 if (missing.length) { console.error('Missing required environment variables: ' + missing.join(', ')); process.exit(1); }
-if (env.ADMIN_KEY.length < 24) console.warn('WARNING: ADMIN_KEY is short. Use a long random value (openssl rand -hex 32).');
+if (env.ADMIN_KEY.length < 8) console.warn('WARNING: ADMIN_KEY is shorter than 8 characters. Use at least 8.');
 if (!env.ALLOWED_ORIGINS || env.ALLOWED_ORIGINS === '*') console.warn('WARNING: ALLOWED_ORIGINS is open to every website. Set it to your site, e.g. https://comradeconnect.co.ke');
 if (env.PAYMENT_MODE === 'tinypesa' && !(env.TINYPESA_LINK_API_KEY || env.TINYPESA_ACCOUNT_API_KEY || env.TINYPESA_API_KEY)) console.warn('WARNING: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY is empty. Buyers will see "Payments are not set up yet".');
 if (env.PAYMENT_MODE === 'tinypesa' && !env.TINYPESA_USERNAME) console.warn('WARNING: PAYMENT_MODE=tinypesa but TINYPESA_USERNAME is empty. Set it to the link username shown next to your TinyPesa link API key.');

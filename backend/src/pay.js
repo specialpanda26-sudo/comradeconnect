@@ -162,7 +162,7 @@ export async function payRoutes(req, env, url, ip) {
   if (path === '/api/pay' && req.method === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const b = await req.json().catch(() => ({}));
-    if (b.purpose !== 'boost' && b.purpose !== 'topup') return err(env, 'Use the order, club or ticket checkout for that', 400);
+    if (b.purpose !== 'boost' && b.purpose !== 'topup' && b.purpose !== 'spillfee') return err(env, 'Use the order, club or ticket checkout for that', 400);
     let amount = b.amount, ref_id = b.ref_id, boost_hours = null;
     if (b.purpose === 'boost') {
       if (!UUID.test(String(ref_id || ''))) return err(env, 'Pick a post to boost');
@@ -171,6 +171,12 @@ export async function payRoutes(req, env, url, ip) {
       const S = await getSettings(env);
       const three = b.plan === '3d' || (b.plan === undefined && S.boost_price_3d !== S.boost_price && Number(b.amount) === S.boost_price_3d);
       amount = three ? S.boost_price_3d : S.boost_price; boost_hours = three ? 72 : 24;   // the phone's price is never trusted
+    }
+    if (b.purpose === 'spillfee') {                                  // the fee was fixed by the server when the post was saved
+      if (!UUID.test(String(ref_id || ''))) return err(env, 'Post not found', 404);
+      const [pst] = await rows(await sb(env, `posts?select=id,fee_pending&id=eq.${ref_id}&aid=eq.${encodeURIComponent(u.aid)}&hidden=eq.true&fee_pending=gt.0`));
+      if (!pst) return err(env, 'That post is not waiting for payment', 404);
+      amount = pst.fee_pending;
     }
     const r = await initPayment(env, ip, { aid: u.aid, purpose: b.purpose, ref_id, amount, phone: b.phone, boost_hours });
     return r.res || json(env, { id: r.id });

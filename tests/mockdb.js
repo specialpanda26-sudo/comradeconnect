@@ -34,6 +34,7 @@ export const SCHEMA = {
 };
 
 SCHEMA.points_ledger = T(['id'], { uniques: [nn('kind', 'ref')] });
+SCHEMA.post_rules = T(['id']);
 SCHEMA.email_verifications = T(['aid']);
 SCHEMA.profiles.defaults.student_verified = false;
 SCHEMA.profiles.uniques.push(nn('student_email_hash'));

@@ -956,6 +956,15 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
     <div data-s="3" hidden><p class="note">Step 3 of 4. Check your phone and enter your M-Pesa PIN.</p><div id="bsteps"></div><p class="note">Do not close this screen until it completes.</p></div>
     <div data-s="4" hidden><p class="note">Step 4 of 4.</p><p class="tot" style="font-size:22px" id="ok"></p><button class="btn p" id="s4" style="width:100%;margin-top:14px">See it at the top</button></div>
   </section>
+  <section data-v="fee" hidden>
+    <div class="flex items-center justify-between"><h2>Pay to post</h2><button class="ib" id="dx3" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div data-f="1"><p class="note" id="fnote"></p>
+      <div class="fld"><input id="fph" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div>
+      <p class="note" id="fe" style="color:var(--fg)"></p>
+      <button class="btn p" id="fgo" style="width:100%;margin-top:14px">Send M-Pesa prompt</button></div>
+    <div data-f="2" hidden><p class="note">Check your phone and enter your M-Pesa PIN.</p><div id="fsteps"></div><p class="note">Do not close this screen until it completes.</p></div>
+    <div data-f="3" hidden><p class="tot" style="font-size:22px" id="fok"></p><button class="btn p" id="fdone" style="width:100%;margin-top:14px">See my spill</button></div>
+  </section>
   </div>
 </div>
 <div id="pv" role="dialog" aria-modal="true" aria-label="Share card"><div class="bx g"><img id="pvi" alt="Share card preview"><p style="font-size:12px;color:var(--mut);line-height:1.7;margin:0 0 12px">Press and hold the card to save it, then post it to your WhatsApp status.</p><button class="btn p" id="pvx" style="width:100%">Close</button></div></div>
@@ -1015,7 +1024,7 @@ const save=()=>{if(mem)ST.set('cs_posts2',mem)};
 const find=id=>db().find(p=>p._id===id);
 const REMOTE=CC_API.indexOf('YOUR-SUBDOMAIN')<0;
 const rq=async(path,body)=>{let r;try{r=await fetch(CC_API+path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined)}catch(e){throw new Error('Could not reach the server. Check your internet and try again.')}
- const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(ccErr(r.status,d.error));return d};
+ const d=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(ccErr(r.status,d.error));e.data=d;e.status=r.status;throw e}return d};
 const apiLocal={
  async list({page=1,limit=5,category='All',zone='All'}={}){let d=[...db()].filter(p=>!p.hidden).sort((a,b)=>(b.boosted?1:0)-(a.boosted?1:0)||b.createdAt-a.createdAt);if(category!=='All')d=d.filter(p=>p.category===category);if(zone!=='All')d=d.filter(p=>p.zone===zone);d=d.filter(p=>!HID.has('post:'+p._id)&&!BLK.has(p.aid));return{posts:d.slice((page-1)*limit,page*limit),hasMore:d.length>page*limit}},
  async create({content,category,zone}){const p={_id:'p'+Date.now(),content,category:category||'General',zone:zone||'',aid:ME.aid,verified:isOff()&&category==='Notices',role:isOff()&&category==='Notices'?ME.ver.role:'',campus:'Kirinyaga University',likes:0,views:0,comments:[],createdAt:Date.now()};db().unshift(p);save();return p},
@@ -1105,7 +1114,7 @@ md.onclick=e=>{if(e.target===md)close()};addEventListener('keydown',e=>{if(e.key
 ta.oninput=()=>{const l=ta.value.length;cnt.textContent=l+' / 500';cnt.classList.toggle('warn',l>450);sb.disabled=!ta.value.trim()};
 $('#sf').onsubmit=async e=>{e.preventDefault();const c=ta.value.trim();if(!c)return;if(!wordHit(c)&&contactHit(c))return toast('Remove phone numbers, handles and links. Keep it anonymous and on Comrade Connect');sb.disabled=true;
  if(REMOTE&&wordHit(c)){sb.disabled=false;return toast('Remove phone numbers, even written in words. Keep it anonymous.')}
- let p;try{p=await api.create({content:c,category:$('#sc').value,zone:$('#sz').value})}catch(err){sb.disabled=false;return toast(err.message)}if(!REMOTE&&wordHit(c)){p.hidden=true;p.flag='number-words';save();modLog('spill',c)}ta.value='';ta.oninput();close();
+ let p;try{p=await api.create({content:c,category:$('#sc').value,zone:$('#sz').value})}catch(err){sb.disabled=false;if(err.data&&err.data.payment_required){close();return openFee(err.data)}return toast(err.message)}if(!REMOTE&&wordHit(c)){p.hidden=true;p.flag='number-words';save();modLog('spill',c)}ta.value='';ta.oninput();close();
  cat='All';zone='All';$$('#tabs .tab').forEach(x=>x.classList.toggle('on',x.dataset.c==='All'));$$('#zones .tab').forEach(x=>x.classList.toggle('on',x.dataset.z==='All'));await load(true);scrollTo({top:$('#tabs').offsetTop-90,behavior:'smooth'});earn(5,'Posted',1);toast('Imeenda. Nobody will know it was you. +5 points')};
 
 
@@ -1122,6 +1131,15 @@ $('#s2').onclick=()=>{const v=$('#ph').value.replace(/\s/g,'');if(!/^(07|01)\d{8
  stp(3);const fl=ccFlow($('#bsteps'),v,plan.pr,'boost');
  ccRun(v,plan.pr,'boost',tgt&&tgt._id,async()=>{await fl.done();fl.stop();$('#ok').textContent='Payment received. KSh '+plan.pr+'. Your post is pinned for '+plan.du+'.';stp(4);if(window.ccTick)ccTick($('#ok'))},async m=>{await fl.fail(m);fl.stop();$('#pe').textContent=m;stp(2)},fl.on)};
 $('#s4').onclick=async()=>{if(tgt){tgt.boosted=true;save();shut();await load(true);scrollTo({top:$('#tabs').offsetTop-90,behavior:'smooth'})}else{shut();toast('Post something first, then boost it from your card.')}};
+
+/* ---------- pay-to-post: a spill about money waits (hidden) until its fee is paid ---------- */
+let feeD=null;const fst=n=>$$('#dm [data-f]').forEach(x=>x.hidden=x.dataset.f!==String(n));
+function openFee(d){feeD=d;openDm('fee');fst(1);$('#fnote').textContent='Posts about money cost KSh '+d.fee+'. Pay once and your spill goes live straight away.';$('#fe').textContent='';$('#fph').value=''}
+$('#dx3').onclick=shut;
+$('#fgo').onclick=()=>{const v=$('#fph').value.replace(/\s/g,'');if(!/^(07|01)\d{8}$/.test(v))return $('#fe').textContent='Enter a Safaricom or Airtel number like 0712345678.';
+ fst(2);const fl=ccFlow($('#fsteps'),v,feeD.fee,'boost');
+ ccRun(v,feeD.fee,'spillfee',feeD.post_id,async()=>{await fl.done();fl.stop();$('#fok').textContent='Payment received. KSh '+feeD.fee+'. Your spill is live.';fst(3);if(window.ccTick)ccTick($('#fok'))},async m=>{await fl.fail(m);fl.stop();$('#fe').textContent=m;fst(1)},fl.on)};
+$('#fdone').onclick=async()=>{shut();ta.value='';ta.oninput();cat='All';zone='All';$$('#tabs .tab').forEach(x=>x.classList.toggle('on',x.dataset.c==='All'));$$('#zones .tab').forEach(x=>x.classList.toggle('on',x.dataset.z==='All'));await load(true);scrollTo({top:$('#tabs').offsetTop-90,behavior:'smooth'});toast('Imeenda. Your spill is live.')};
 
 /* ---------- tabs ---------- */
 let roomT=null,stream=null;

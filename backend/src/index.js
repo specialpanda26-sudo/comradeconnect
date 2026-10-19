@@ -21,6 +21,7 @@ import { siteContentRoutes } from './sitecontent.js';
 import { trustRoutes } from './trust.js';
 import { pointsRoutes } from './points.js';
 import { reconcilePayouts } from './payouts.js';
+import { postRuleRoutes, dropUnpaidDrafts } from './postrules.js';
 import { giveBack } from './points.js';
 import { pruneMedia } from './media.js';
 import * as store from './storage.js';
@@ -32,6 +33,7 @@ hooks.onPaid = async (env, p) => {
   else if (p.purpose === 'club') await clubPaid(env, p);
   else if (p.purpose === 'ticket') await ticketPaid(env, p);
   else if (p.purpose === 'boost') await boostPost(env, p);
+  else if (p.purpose === 'spillfee') await patch(env, `posts?id=eq.${p.ref_id}&fee_pending=gt.0`, { hidden: false, fee_pending: 0, created_at: new Date().toISOString() });   // paid: the spill goes live
   else if (p.purpose === 'topup') await credit(env, p.aid, p.amount, 'topup', 'pay:' + p.id, 'Wallet deposit');
   else if (p.purpose === 'wholesale') await extendWholesale(env, p.aid);
 };
@@ -46,7 +48,7 @@ hooks.onFailed = async (env, p) => {
   if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
 };
 
-const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, adminUserRoutes, adminServiceRoutes, adminRoutes];
+const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);
@@ -91,6 +93,7 @@ export async function runCron(env) {
   out.released = await autoReleaseOrders(env);
   out.referrals = await unlockReferrals(env);
   out.clubExpired = await expireClubOrders(env);
+  out.unpaidDrafts = await dropUnpaidDrafts(env).catch(() => -1);
   out.payouts = await reconcilePayouts(env).catch((e) => { console.error('payout reconcile error', e && e.message); return -1; });
   out.intasendChecked = await reconcileIntasend(env).catch((e) => { console.error('intasend reconcile error', e && e.message); return -1; });   // before expiring, so a paid prompt is never expired by mistake
   const stale = await markFailed(env, `payments?status=eq.pending&created_at=lte.${ago(Number(env.PENDING_MINUTES || (manualMode(env) ? 90 : 30)) * 60e3)}`, 'expired', 'no_response', null);

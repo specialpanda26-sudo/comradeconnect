@@ -743,3 +743,18 @@ alter table services add column if not exists hours text;
 alter table services add column if not exists offerings text;
 alter table services add column if not exists delivery boolean not null default false;
 create index if not exists services_featured on services(hidden, featured desc, created_at desc);
+
+-- ---------- paid posts (spills that talk about money) ----------
+create table if not exists post_rules (
+  id uuid primary key default gen_random_uuid(),
+  label text not null,
+  words text not null,
+  fee integer not null check (fee >= 1),
+  active boolean not null default true,
+  created_at timestamptz default now()
+);
+alter table post_rules enable row level security;
+alter table posts add column if not exists fee_pending integer not null default 0;
+insert into post_rules (label, words, fee)
+select 'Selling or pricing (data, bundles, airtime...)', 'data, bundle, bundles, airtime, reseller, resell, selling, package, packages, price, prices, bei, ksh, bob, {money}', 25
+where not exists (select 1 from post_rules);

@@ -1,4 +1,5 @@
-import { json, sb, rows, ago, isAdmin, hasContact, standingBlock, audit } from './lib.js';
+import { json, sb, rows, ago, isAdmin, hasContact, standingBlock, audit, user } from './lib.js';
+import { feeFor } from './postrules.js';
 
 // ---------- Feed ----------
 const CAT_OK = /^[A-Za-z0-9]{2,22}$/;
@@ -38,6 +39,14 @@ export async function feedRoutes(req, env, url, ip) {
     const byAid = await rows(await sb(env, `posts?select=id&aid=eq.${encodeURIComponent(aid)}&created_at=gte.${ago(3600e3)}&limit=10`));
     const byIp = await rows(await sb(env, `posts?select=id&ip=eq.${encodeURIComponent(ip)}&created_at=gte.${ago(3600e3)}&limit=20`));
     if (byAid.length >= 10 || byIp.length >= 20) return json(env, { error: 'Too many posts. Try again later.' }, 429);
+    // A post about money (data bundles, prices, packages...) is kept hidden until its small fee is paid.
+    const due = isAdmin(req, env) ? { fee: 0 } : await feeFor(env, content);
+    if (due.fee > 0) {
+      const u = await user(req, env, true); if (u instanceof Response) return u;       // paying needs a signed-in account
+      const [draft] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid: u.aid, content, category, zone, ip, hidden: true, fee_pending: due.fee }) }));
+      if (!draft) return json(env, { error: 'Could not save your post. Try again.' }, 500);
+      return json(env, { payment_required: true, fee: due.fee, rule: due.rule, post_id: draft.id, error: `Posts about money cost KSh ${due.fee}. Pay to publish it.` }, 402);
+    }
     const [row] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid, content, category, zone, ip, verified: category === 'Notices' }) }));
     return json(env, fmtPost({ ...row, comments: [] }), 201);
   }

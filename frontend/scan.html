@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Door scanner | Comrade Connect</title>
+<style>
+:root{--bg:#07080c;--fg:#f4f4f6;--mut:#9aa0ad;--line:rgba(255,255,255,.14);--ok:#2ecc71;--bad:#ff5a5f}
+@media(prefers-color-scheme:light){:root{--bg:#f6f7fa;--fg:#12141a;--mut:#5b6270;--line:rgba(0,0,0,.14)}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;justify-content:center;padding:20px}
+main{width:100%;max-width:420px}h1{font-size:20px;margin:8px 0 2px}.sub{color:var(--mut);font-size:14px;margin:0 0 16px}
+.card{border:1px solid var(--line);border-radius:20px;padding:18px;background:rgba(127,127,127,.08);margin-bottom:14px}
+.stats{display:flex;gap:10px}.stats div{flex:1;text-align:center;border:1px solid var(--line);border-radius:14px;padding:10px}.stats b{display:block;font-size:24px}
+input{width:100%;font-size:30px;letter-spacing:.25em;text-align:center;padding:14px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--fg)}
+button{width:100%;margin-top:12px;padding:15px;border:0;border-radius:14px;font-size:17px;font-weight:700;background:var(--fg);color:var(--bg);cursor:pointer}button:disabled{opacity:.5}
+#res{display:none;text-align:center;font-weight:700;font-size:20px;padding:18px;border-radius:16px;margin-top:14px}
+#res.ok{display:block;background:rgba(46,204,113,.16);border:1px solid var(--ok);color:var(--ok)}#res.bad{display:block;background:rgba(255,90,95,.14);border:1px solid var(--bad);color:var(--bad)}
+#res small{display:block;font-weight:400;font-size:14px;margin-top:4px;color:var(--mut)}
+</style></head><body><main>
+<h1 id="t">Door scanner</h1><p class="sub" id="s">Loading event...</p>
+<div class="card"><div class="stats"><div><b id="sold">-</b><span class="sub">Sold</span></div><div><b id="in">-</b><span class="sub">Checked in</span></div></div></div>
+<div class="card"><label class="sub" for="c">Type the 8-digit code on the guest's ticket</label>
+<input id="c" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="00000000" aria-label="Ticket code"><button id="go" type="button">Check ticket</button>
+<div id="res" role="status" aria-live="polite"></div></div>
+<p class="sub">Anyone with this link can check tickets for this event. Share it only with the people working your door.</p>
+</main>
+<script src="config.js"></script>
+<script>
+(function(){
+var q=new URLSearchParams(location.search),E=q.get('e')||'',K=q.get('k')||'';
+var $=function(i){return document.getElementById(i)},res=$('res');
+function say(cls,main,small){res.className=cls;res.textContent=main;if(small){var s=document.createElement('small');s.textContent=small;res.appendChild(s)}}
+function info(){
+  fetch(CC_API+'/api/scan/info?e='+encodeURIComponent(E)+'&k='+encodeURIComponent(K)).then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d}})}).then(function(x){
+    if(!x.ok){$('t').textContent='Link not valid';$('s').textContent=x.d.error||'Ask the host for a new link.';$('go').disabled=true;$('c').disabled=true;return}
+    $('t').textContent=x.d.title;$('s').textContent=[x.d.date,x.d.venue].filter(Boolean).join(' \u00b7 ');$('sold').textContent=x.d.sold;$('in').textContent=x.d.scanned;
+  }).catch(function(){$('s').textContent='Could not reach the server. Check your internet.'});
+}
+function check(){
+  var code=$('c').value.replace(/\D/g,'');if(code.length!==8){say('bad','Enter all 8 digits');return}
+  $('go').disabled=true;
+  fetch(CC_API+'/api/scan/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({event_id:E,key:K,code:code})})
+  .then(function(r){return r.json()}).then(function(d){
+    if(d.ok){say('ok','VALID \u2013 let them in','Ticket checked in')}else{say('bad',d.reason==='Already used'?'ALREADY USED':'NOT VALID',d.reason||d.error||'')}
+    if(navigator.vibrate)navigator.vibrate(d.ok?60:[80,60,80]);
+    $('c').value='';$('c').focus();info();
+  }).catch(function(){say('bad','No connection','Check your internet and try again')}).then(function(){$('go').disabled=false});
+}
+$('go').addEventListener('click',check);$('c').addEventListener('keydown',function(e){if(e.key==='Enter')check()});
+info();
+})();
+</script></body></html>

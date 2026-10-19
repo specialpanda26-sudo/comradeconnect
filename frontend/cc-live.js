@@ -10,7 +10,7 @@
   var call = function (p, o) { return window.CC ? CC.call(p, o) : Promise.reject(new Error('Not ready yet. Reload the page and try again.')); };
   var SV = function (p, f) { return '<svg viewBox="0 0 24 24" fill="' + (f ? 'currentColor' : 'none') + '" stroke="' + (f ? 'none' : 'currentColor') + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:20px;height:20px">' + p + '</svg>'; };
   var I = {
-    eye: SV('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+    eye: '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.6c2.2.7 3.5 2.4 3.5 5.4"/></svg>',   // people icon, same line style as the tab icons
     heart: SV('<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>'),
     chat: SV('<path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-5.4A8 8 0 1 1 21 12z"/>'),
     share: SV('<path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/>'),
@@ -102,18 +102,15 @@
   /* ---------- viewers button ---------- */
   function viewersSheet(n) {
     var m = document.createElement('div'); m.className = 'ccl-sh';
-    m.innerHTML = '<div class="box g"><div style="display:grid;place-items:center">' + I.eye.replace('width:20px;height:20px', 'width:34px;height:34px') + '</div><h3 style="margin:10px 0 4px">' + esc(n) + ' watching</h3><p class="sub" style="margin:0 0 14px">Comrades watching this live right now.</p><button class="btn p" style="width:100%">Close</button></div>';
+    m.innerHTML = '<div class="box g"><div style="display:grid;place-items:center">' + I.eye.replace('class="i"', 'class="i" style="width:34px;height:34px"') + '</div><h3 style="margin:10px 0 4px">' + esc(n) + ' watching</h3><p class="sub" style="margin:0 0 14px">Comrades watching this live right now.</p><button class="btn p" style="width:100%">Close</button></div>';
     m.onclick = function (e) { if (e.target === m || e.target.closest('button')) m.remove(); };
     document.body.appendChild(m);
   }
   function numOf(t) { var x = parseInt(String(t || '').replace(/\D/g, ''), 10); return isNaN(x) ? 0 : x; }
   function mountRoomViewers() {
-    var rv = $('#rv'); if (!rv || $('#ccl-rvb')) return;
-    rv.style.display = 'none';
-    rv.insertAdjacentHTML('afterend', '<button type="button" class="ccl-vw" id="ccl-rvb" aria-label="Viewers">' + I.eye + '<span id="ccl-rvn">0</span></button>');
-    var sync = function () { var n = $('#ccl-rvn'); if (n) n.textContent = numOf(rv.textContent); };
-    new MutationObserver(sync).observe(rv, { childList: true, characterData: true, subtree: true }); sync();
-    $('#ccl-rvb').onclick = function () { viewersSheet(numOf(rv.textContent)); };
+    var rv = $('#rv'); if (!rv) return;
+    rv.style.display = 'none';                                  // the banner under the title (#rstats) shows watching, comments and reactions
+    var w = $('#rs-w'); if (w && !w.__ccl) { w.__ccl = 1; w.onclick = function () { viewersSheet(numOf($('#rs-v').textContent)); }; }
     var lh = $('#lheart'); if (lh && !$('#ccl-rsh')) {
       lh.insertAdjacentHTML('afterend', '<button class="act" id="ccl-rsh" aria-label="Share this live" style="margin-left:6px">' + I.share + '</button>');
       $('#ccl-rsh').onclick = function () { if (typeof cur !== 'undefined' && cur) shareLive(cur.id, $('#rt').textContent); };
@@ -128,7 +125,7 @@
   /* ---------- Live tab: go live from this phone, watch inside the site ---------- */
   function mountHost() {
     var set = $('#lvset'); if (!set || $('#ccl-go')) return;
-    var p = $('p', set); if (p) p.textContent = 'Go live straight from your phone camera. Comrades watch right here in the app, send hearts and chat. Only club admins can go live.';
+    var p = $('p', set); if (p) p.textContent = 'Go live straight from your phone camera. Comrades watch right here in the app, send hearts and chat. Anyone with an account can go live.';
     var u = $('#lurl'); if (u && u.parentElement) u.parentElement.style.display = 'none';
     var g = $('#golive'); if (g) g.style.display = 'none';
     set.insertAdjacentHTML('beforeend', '<button class="btn p" id="ccl-go" style="display:flex;align-items:center;justify-content:center;gap:8px">' + I.cam + 'Go live from this phone</button>');

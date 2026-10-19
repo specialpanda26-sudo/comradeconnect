@@ -125,7 +125,7 @@ export async function mediaRoutes(req, env, url, ip) {
   }
   if (path === '/api/live/start' && m === 'POST') {
     let hostAid = 'admin';
-    if (!isAdmin(req, env)) { const u = await user(req, env, true); if (u instanceof Response) return u; if (!['club_admin', 'admin'].includes(u.role)) return err(env, 'Only club admins can go live', 403); hostAid = u.aid; }
+    if (!isAdmin(req, env)) { const u = await user(req, env, true); if (u instanceof Response) return u; if (!(await throttle(env, ip, 'livestart', u.aid, 20, 40))) return tooMany(env); hostAid = u.aid; }   // anyone with an account can go live
     const b = await body(), title = str(b.title, 80) || 'Live', link = liveLink(b.url);
     if (!link) return err(env, 'Paste the live link from YouTube, Facebook, TikTok or Twitch (it must start with https://)');
     await patch(env, `live_streams?host_aid=eq.${enc(hostAid)}&status=eq.live`, { status: 'ended', ended_at: new Date().toISOString() });

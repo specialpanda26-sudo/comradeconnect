@@ -2,11 +2,11 @@
 // The video itself never touches our server; we only keep the stream row, hearts, comments and viewers.
 import { liveEmbed } from './media.js';
 import { viewerCounts } from './live.js';
-import { json, err, sb, rows, one, post, patch, enc, str, randHex, user, isAdmin } from './lib.js';
+import { json, err, sb, rows, one, post, patch, enc, str, randHex, user, isAdmin, throttle, tooMany } from './lib.js';
 
 const AVATAR = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
 
-export async function nativeRoutes(req, env, url) {
+export async function nativeRoutes(req, env, url, ip) {
   const path = url.pathname, m = req.method;
 
   // Same list as before, plus: native streams carry a channel name instead of a link.
@@ -21,14 +21,14 @@ export async function nativeRoutes(req, env, url) {
     }) });
   }
 
-  // Start a live from the phone's own camera. Same rule as before: club admins and admins only.
+  // Start a live from the phone's own camera. Anyone with an account can go live (admins too).
   if (path === '/api/live/start' && m === 'POST') {
     const b = await req.clone().json().catch(() => ({}));
     if (!b.native) return null;                       // link-style lives still use the old route
     let hostAid = 'admin';
     if (!isAdmin(req, env)) {
       const u = await user(req, env, true); if (u instanceof Response) return u;
-      if (!['club_admin', 'admin'].includes(u.role)) return err(env, 'Only club admins can go live', 403);
+      if (!(await throttle(env, ip, 'livestart', u.aid, 20, 40))) return tooMany(env);   // a banned or muted account is stopped by user() above
       hostAid = u.aid;
     }
     const title = str(b.title, 80) || 'Live', channel = 'cc' + randHex(8);

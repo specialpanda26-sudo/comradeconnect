@@ -131,12 +131,11 @@ test('verification details: role badge needs a group link, admin can refuse the 
   assert.equal((await w.call('POST', '/api/verify/submit', { as: b, body: { r2_key: await put(b), full_name: 'Peter Mwangi' } })).status, 201, 'resubmit after rejection');
 });
 
-test('live: only club admins / admin key can start; only real YouTube/Facebook/TikTok/Twitch links; YouTube is embedded', async (t) => {
+test('live: any signed-in account can start; only real YouTube/Facebook/TikTok/Twitch links; YouTube is embedded', async (t) => {
   const w = await fresh(t);
   const a = await w.user('a');
   const yt = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-  assert.equal((await w.call('POST', '/api/live/start', { as: a, body: { title: 'Match day', url: yt } })).status, 403);
-  await w.call('POST', `/api/admin/users/${a.aid}`, { admin: true, body: { action: 'role', role: 'club_admin' } });
+  assert.equal((await w.call('POST', '/api/live/start', { body: { title: 'Match day', url: yt } })).status === 201, false, 'no account, no live');
   for (const bad of ['', 'http://youtube.com/watch?v=abcdefghijk', 'https://evil.example/live', 'javascript:alert(1)', 'https://youtube.com.evil.example/x', 'https://user:pw@youtube.com/x'])
     assert.equal((await w.call('POST', '/api/live/start', { as: a, body: { title: 'x', url: bad } })).status, 400, 'refused: ' + bad);
   const s = await w.call('POST', '/api/live/start', { as: a, body: { title: 'Match day', url: yt } });

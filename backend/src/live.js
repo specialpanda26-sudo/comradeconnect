@@ -29,7 +29,8 @@ export async function liveRoutes(req, env, url, ip) {
     const q = `live_comments?select=id,name,text,created_at&stream_id=eq.${s.id}&hidden=eq.false` + (since ? `&created_at=gt.${enc(since)}&order=created_at.asc&limit=50` : '&order=created_at.desc&limit=30');
     let cs = await rows(await sb(env, q)); if (!since) cs = cs.reverse();
     const viewers = (await viewerCounts(env, [s.id]))[s.id] || 0;
-    return json(env, { status: 'live', viewers, hearts: s.hearts || 0, comments: cs.map((c) => ({ id: c.id, name: c.name, text: c.text, at: c.created_at })) });
+    const comment_count = (await rows(await sb(env, `live_comments?select=id&stream_id=eq.${s.id}&hidden=eq.false&limit=5000`))).length;
+    return json(env, { status: 'live', viewers, hearts: s.hearts || 0, comment_count, comments: cs.map((c) => ({ id: c.id, name: c.name, text: c.text, at: c.created_at })) });
   }
 
   // A comment. Needs an account, like every other write. No phone numbers, handles or links.

@@ -88,7 +88,8 @@ var HELP = [
   ['How does escrow work?', 'Your payment is held, not sent to the seller. After you get the item, give the seller your 6-digit code and they are paid. Never share the code before you have checked the item.'],
   ['Something went wrong with an order', 'Open the order in Market and tap Report a problem before you give the code. An admin reviews both sides and either refunds you or pays the seller.'],
   ['My post was blocked', 'Posts with phone numbers, links, social handles or requests to pay outside the app are blocked. Remove them and post again.'],
-  ['How do I get verified?', 'Go to Me, then Verification, and follow the steps. Only admins see your ID photos.']
+  ['How do I get verified?', 'Go to Me, then Verification, and follow the steps. Only admins see your ID photos.'],
+  ['Who runs Comrade Connect?', 'Comrade Connect was founded by Henry O. Odhiambo, Founder and CEO of Ogolla Tech. Christian N. and Peter M. are the developers. Write to support@comradeconnect.co.ke for help.']
 ];
 function bots(tab) {
   var s = sheet('Support', ['Ask AI', 'Help', 'Contact'], tab || 0), b = s.body;

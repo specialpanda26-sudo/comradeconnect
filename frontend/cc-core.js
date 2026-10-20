@@ -132,6 +132,10 @@ async function mountGoogle(box, onDone, onErr, opts) {
   if (!(await loadGsi())) { box.innerHTML = '<p class="sub">Google sign-in could not load. Check your internet.</p>'; return false; }
   google.accounts.id.initialize({ client_id: CC_GOOGLE_ID, callback: async (resp) => { try { onDone(await googleSignIn(resp.credential)); } catch (e) { onErr(e.message); } } });
   google.accounts.id.renderButton(box, Object.assign({ theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', width: 280 }, opts || {}));
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !(location.protocol === 'https:' && !location.port) && box.parentNode && !box.parentNode.querySelector('.cc-lhint')) {
+    const n = document.createElement('p'); n.className = 'sub cc-lhint'; n.style.cssText = 'font-size:11px;margin-top:8px;text-align:center';
+    n.textContent = 'Local test: Google must list ' + location.origin + ' under Authorized JavaScript origins.'; box.insertAdjacentElement('afterend', n);
+  }
   return true;
 }
 function chooseSignIn() {                                    // resolves 'google' or 'guest'; rejects on cancel

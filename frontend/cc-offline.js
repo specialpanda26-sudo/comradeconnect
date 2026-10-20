@@ -47,7 +47,10 @@
     var method = ((o && o.method) || 'GET').toUpperCase();
     if (method !== 'GET') {                                      // saving, paying, posting: needs the internet, say so clearly
       if (navigator.onLine === false) return Promise.reject(new Error('You are offline. Connect to data or Wi-Fi and try again.'));
-      return prev.apply(self, args);
+      return prev.apply(self, args).catch(function (e) {
+        if (e && e.name === 'AbortError') throw e;
+        throw new Error('Could not reach the server. Check your data or Wi-Fi and try again.');
+      });
     }
     if (!hasCaches || SKIP.test(u.slice(API.length))) return prev.apply(self, args);
     var k = keyFor(u);
@@ -58,7 +61,7 @@
           return r;
         });
         if (!hit) return net.catch(function (e) { if (navigator.onLine === false) show(); throw e; });
-        var wait = new Promise(function (res) { setTimeout(function () { res(null); }, navigator.onLine === false ? 0 : 8000); });
+        var wait = new Promise(function (res) { setTimeout(function () { res(null); }, navigator.onLine === false ? 0 : 5000); });
         return Promise.race([net.catch(function () { return null; }), wait]).then(function (r) {
           if (r && (r.ok || r.status < 500)) return r;
           show(); return hit;                                    // no data, server asleep or failing: the saved copy
@@ -68,7 +71,18 @@
   };
   window.ccClearOffline = function () { try { if (hasCaches) caches.delete(CACHE); } catch (e) {} };
 
-  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  // The Android app also runs on "localhost", but over https with no port. A dev server on a laptop or phone
+  // is http or has a port, and must never keep old files, so it gets no service worker and drops any old one.
+  var devHost = /^(localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)$/.test(location.hostname) && !(location.protocol === 'https:' && !location.port);
+  if ('serviceWorker' in navigator && devHost) {
+    navigator.serviceWorker.getRegistrations().then(function (rs) {
+      if (!rs.length) return;
+      Promise.all(rs.map(function (r) { return r.unregister(); }))
+        .then(function () { return hasCaches ? caches.keys() : []; })
+        .then(function (ks) { return Promise.all(ks.filter(function (k) { return /^cc-(shell|runtime)/.test(k); }).map(function (k) { return caches.delete(k); })); })
+        .then(function () { try { if (!sessionStorage.getItem('cc_sw_off')) { sessionStorage.setItem('cc_sw_off', '1'); location.reload(); } } catch (e) {} });
+    }).catch(function () {});
+  } else if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
   }
 })();

@@ -25,6 +25,16 @@ if (env.PAYMENT_MODE === 'manual' && !env.MPESA_PAY_TO) console.warn('WARNING: M
 if (env.PAYMENT_MODE === 'tinypesa' && (!env.TINYPESA_API_KEY || !env.CALLBACK_SECRET)) { console.error('PAYMENT_MODE=tinypesa needs TINYPESA_API_KEY and CALLBACK_SECRET'); process.exit(1); }
 if (env.ALLOWED_ORIGINS === '*') console.warn('WARNING: ALLOWED_ORIGINS is "*". Set it to your site address before launch.');
 
+// Browsers accept ONE address in Access-Control-Allow-Origin, so a comma list in ALLOWED_ORIGINS is answered per request.
+// The Android app (https://localhost) and a local test site (http://localhost:PORT) are always allowed: they only run on the person's own phone or computer.
+const ORIGINS = String(env.ALLOWED_ORIGINS || '*').split(',').map((x) => x.trim().replace(/\/$/, '')).filter(Boolean);
+const LOCAL = /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|capacitor:\/\/localhost|ionic:\/\/localhost)$/;
+const corsOrigin = (o) => {
+  if (ORIGINS.includes('*')) return '*';
+  if (o && (ORIGINS.includes(o) || LOCAL.test(o))) return o;
+  return ORIGINS[0] || '*';
+};
+
 const MAX_BODY = 1024 * 1024; // 1 MB: photos and clips go straight to Supabase Storage, never through this server
 
 const server = http.createServer(async (nodeReq, nodeRes) => {
@@ -39,6 +49,8 @@ const server = http.createServer(async (nodeReq, nodeRes) => {
     const req = new Request(url, { method: nodeReq.method, headers, body: chunks.length ? Buffer.concat(chunks) : undefined });
     const res = await worker.fetch(req, env);
     const out = {}; res.headers.forEach((v, k) => { out[k] = v; });
+    const allow = corsOrigin(nodeReq.headers.origin);
+    if (allow) { out['access-control-allow-origin'] = allow; if (allow !== '*') out['vary'] = 'Origin'; }
     nodeRes.writeHead(res.status, out);
     nodeRes.end(res.body ? Buffer.from(await res.arrayBuffer()) : undefined);
   } catch (e) {

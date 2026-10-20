@@ -5,10 +5,24 @@
   "backgroundColor": "#000000",
   "server": {
     "androidScheme": "https",
-    "allowNavigation": ["comradeconnect.co.ke", "*.comradeconnect.co.ke", "comradeconnectback.onrender.com"]
+    "allowNavigation": [
+      "comradeconnect.co.ke",
+      "*.comradeconnect.co.ke",
+      "comradeconnectback.onrender.com"
+    ]
   },
   "android": {
     "allowMixedContent": false,
     "backgroundColor": "#000000"
+  },
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": [
+        "profile",
+        "email"
+      ],
+      "serverClientId": "628050649968-umh0eflaigqqet517sj7te2oa9h0bsmq.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": false
+    }
   }
 }

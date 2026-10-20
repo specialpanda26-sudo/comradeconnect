@@ -18,7 +18,27 @@
   var payload = function (t) { try { return JSON.parse(decodeURIComponent(escape(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { return {}; } };
   var done = function (fn, v) { var p = pending; pending = null; if (p) { clearTimeout(p.t); p[fn](v); } };
 
+  // In-app Google account picker: no web page and no redirect. Needs the Android client set up in Google Cloud (see README).
+  var nativeGoogle = function () {
+    if (navigator.onLine === false) return Promise.reject(new Error('You are offline. Connect to data or Wi-Fi to sign in with Google.'));
+    var G = P.GoogleAuth;
+    return Promise.resolve()
+      .then(function () { return G.signOut ? G.signOut().catch(function () {}) : null; })      // so the account list shows every time
+      .then(function () { return G.signIn(); })
+      .then(function (u) {
+        var t = u && u.authentication && u.authentication.idToken;
+        if (!t) throw new Error('Google sign-in failed. Try again.');
+        return t;
+      }, function (e) {
+        var m = String((e && (e.message || e.error || e.code)) || e || '');
+        if (/cancel|12501|12502|popup_closed|dismiss/i.test(m)) throw Object.assign(new Error('cancelled'), { cancelled: true });
+        if (/DEVELOPER_ERROR|10/.test(m)) throw new Error('Google sign-in is not set up for this app build yet. Add the Android client and SHA-1 in Google Cloud.');
+        throw new Error('Google sign-in failed. Try again.');
+      });
+  };
+
   window.ccApp.googleLogin = function () {
+    if (P.GoogleAuth) return nativeGoogle();                                                  // older app builds without the plugin use the browser tab below
     return new Promise(function (res, rej) {
       if (navigator.onLine === false) return rej(new Error('You are offline. Connect to data or Wi-Fi to sign in with Google.'));
       if (!P.Browser) return rej(new Error('Sign-in is not ready in this app version. Please update the app.'));

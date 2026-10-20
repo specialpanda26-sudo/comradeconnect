@@ -11,40 +11,124 @@
             background: #0f172a; 
             color: #ffffff; 
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* App Footer Container */
+        /* App Container */
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: #0b0f19;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            padding-bottom: 90px; /* Space for bottom nav */
+        }
+
+        /* Top Header */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo-area {
+            font-weight: 800;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-icons {
+            display: flex;
+            gap: 14px;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Main Content Wrapper */
+        .content-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+        }
+
+        /* Prominent Download Banner */
+        .download-banner {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .download-info h2 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        .download-info p {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .btn-download {
+            background: #ffffff;
+            color: #1e3a8a;
+            padding: 12px 20px;
+            border-radius: 12px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+        .btn-download:active {
+            transform: scale(0.98);
+            background: #f1f5f9;
+        }
+
+        /* Modern App Footer */
         .app-footer {
-            padding: 24px 16px 100px 16px;
+            padding: 24px 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 16px;
             width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            box-sizing: border-box;
         }
 
-        /* Notice Box */
         .footer-notice {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 12px 16px;
             text-align: center;
             width: 100%;
         }
         .footer-notice p {
-            color: rgba(255, 255, 255, 0.75);
+            color: rgba(255, 255, 255, 0.7);
             font-size: 12px;
             line-height: 1.4;
             margin: 0;
         }
 
-        /* Emergency Pill Button */
         .emergency-card {
             display: flex;
             align-items: center;
@@ -59,23 +143,15 @@
             text-decoration: none;
             font-size: 13px;
             font-weight: 600;
-            backdrop-filter: blur(8px);
-            transition: transform 0.2s ease, background 0.2s ease;
-        }
-        .emergency-card:active {
-            transform: scale(0.98);
-            background: rgba(239, 68, 68, 0.25);
         }
 
-        /* Links Grid */
         .footer-links-grid {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 10px 16px;
-            background: rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             padding: 16px;
             border-radius: 16px;
             width: 100%;
@@ -85,27 +161,24 @@
             text-decoration: none;
             font-size: 12px;
             font-weight: 500;
-            transition: color 0.2s ease;
         }
         .footer-links-grid a:hover {
             color: #3b82f6;
         }
 
-        /* Credits & Copyright */
         .footer-credits {
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            margin-top: 8px;
+            gap: 6px;
         }
         .footer-credits .copyright {
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.45);
             font-size: 11px;
         }
         .footer-credits .author {
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.65);
             font-size: 12px;
         }
         .footer-credits .author a {
@@ -113,58 +186,157 @@
             text-decoration: none;
         }
 
-        /* Powered By Badge */
         .powered-badge {
             display: inline-block;
             padding: 6px 14px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 20px;
             font-size: 11px;
-            color: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 6px;
+        }
+
+        /* Bottom Nav Bar simulation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 16px 0;
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            gap: 4px;
+        }
+        .nav-item.active {
+            color: #ffffff;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
-    <!-- Modern App Footer -->
-    <footer class="app-footer">
-        <div class="footer-notice">
-            <p>Anonymous means anonymous, so keep it kind. No real names, no phone numbers, no hate.</p>
-        </div>
-
-        <a href="#safety" class="emergency-card">
-            <span>🛡️</span>
-            <span>Need help? Safety and emergency contacts</span>
-        </a>
-
-        <div class="footer-links-grid">
-            <a href="#terms">Terms & Conditions</a>
-            <a href="#privacy">Privacy Policy</a>
-            <a href="#cookies">Cookie Policy</a>
-            <a href="#about">About</a>
-            <a href="#refunds">Refunds & disputes</a>
-            <a href="#safety">Safety</a>
-            <a href="#contact">Contact</a>
-        </div>
-
-        <div class="footer-credits">
-            <p class="copyright">© 2026 Comrade Connect Kirinyaga Edition. All rights reserved.</p>
-            <p class="author">Founded and led by <strong>Henry O. Odhiambo</strong>, Founder and CEO. <a href="#team">Meet the team</a></p>
-            
-            <div class="powered-badge">
-                Powered by <strong>Comrade Connect</strong>
+    <div class="app-container">
+        <!-- Top App Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                🛡️ COMRADE CONNECT
             </div>
+            <div class="header-icons">
+                <span>🔍</span>
+                <span>🛡️</span>
+                <span>🔔</span>
+                <span>💻</span>
+                <span>🌙</span>
+            </div>
+        </header>
+
+        <!-- Main Feed / Content Area -->
+        <div class="content-body">
+            <!-- App Download Card -->
+            <div class="download-banner">
+                <div class="download-info">
+                    <h2>Get Comrade Connect App</h2>
+                    <p>Experience lightning-fast speeds, offline access, and instant updates.</p>
+                </div>
+                <a id="download-btn" href="#" class="btn-download">Downloading Latest APK...</a>
+            </div>
+
+            <!-- Footer Section -->
+            <footer class="app-footer">
+                <div class="footer-notice">
+                    <p>Anonymous means anonymous, so keep it kind. No real names, no phone numbers, no hate.</p>
+                </div>
+
+                <a href="#safety" class="emergency-card">
+                    <span>🛡️</span>
+                    <span>Need help? Safety and emergency contacts</span>
+                </a>
+
+                <div class="footer-links-grid">
+                    <a href="#terms">Terms & Conditions</a>
+                    <a href="#privacy">Privacy Policy</a>
+                    <a href="#cookies">Cookie Policy</a>
+                    <a href="#about">About</a>
+                    <a href="#refunds">Refunds & disputes</a>
+                    <a href="#safety">Safety</a>
+                    <a href="#contact">Contact</a>
+                </div>
+
+                <div class="footer-credits">
+                    <p class="copyright">© 2026 Comrade Connect Kirinyaga Edition. All rights reserved.</p>
+                    <p class="author">Founded and led by <strong>Henry O. Odhiambo</strong>, Founder & CEO. <a href="#team">Meet the team</a></p>
+                    
+                    <div class="powered-badge">
+                        Powered by <strong>Comrade Connect</strong>
+                    </div>
+                </div>
+            </footer>
         </div>
-    </footer>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active">
+                <span>🏠</span> Feed
+            </a>
+            <a href="#" class="nav-item">
+                <span>▶️</span> Videos
+            </a>
+            <a href="#" class="nav-item">
+                <span>📡</span> Live
+            </a>
+            <a href="#" class="nav-item">
+                <span>🛍️</span> Market
+            </a>
+            <a href="#" class="nav-item">
+                <span>🧭</span> Explore
+            </a>
+            <a href="#" class="nav-item">
+                <span>⭐</span> Rewards
+            </a>
+            <a href="#" class="nav-item">
+                <span>👤</span> Me
+            </a>
+        </nav>
+    </div>
 
     <script>
+      // Fetch latest APK release from GitHub dynamically
+      fetch('https://api.github.com/repos/specialpanda26-sudo/comradeconnect/releases/latest')
+        .then(response => response.json())
+        .then(data => {
+          const apkAsset = data.assets.find(asset => asset.name.endsWith('.apk'));
+          if (apkAsset) {
+            const btn = document.getElementById('download-btn');
+            btn.href = apkAsset.browser_download_url;
+            btn.textContent = 'Download Comrade Connect (APK)';
+          } else {
+            document.getElementById('download-btn').textContent = 'APK Building Soon';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('download-btn').textContent = 'Direct Download Link';
+        });
+
+      // Service Worker Registration for Offline Capability
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.error('Service Worker registration failed:', err);
-          });
+          navigator.serviceWorker.register('/sw.js').catch(err => console.log(err));
         });
       }
     </script>

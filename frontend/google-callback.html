@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer">
+<title>Comrade Connect</title>
+<style>html,body{height:100%;margin:0;background:#000;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}body{display:grid;place-items:center;text-align:center;padding:24px}img{width:84px;height:84px;border-radius:20px}h1{font-size:20px;margin:16px 0 6px}p{color:#bdbdbd;font-size:14px;margin:6px 0}a.b{display:inline-block;margin-top:18px;padding:13px 26px;border-radius:999px;background:#fff;color:#000;font-weight:600;text-decoration:none}</style></head>
+<body><main><img src="/icon-192.png" alt="" width="84" height="84"><h1 id="t">Signing you in...</h1><p id="m">Returning to the Comrade Connect app.</p><a class="b" id="b" href="#" hidden>Open Comrade Connect</a></main>
+<script>
+(function () {
+  var h = new URLSearchParams(location.hash.slice(1)), tok = h.get('id_token'), st = h.get('state');
+  var t = document.getElementById('t'), m = document.getElementById('m'), b = document.getElementById('b');
+  history.replaceState(null, '', location.pathname);
+  if (!tok) { t.textContent = 'Sign-in did not finish'; m.textContent = 'Close this tab and try again in the app.'; return; }
+  var q = 'id_token=' + encodeURIComponent(tok) + '&state=' + encodeURIComponent(st || '');
+  var plain = 'ke.co.comradeconnect.app://auth?' + q;
+  var intent = 'intent://auth?' + q + '#Intent;scheme=ke.co.comradeconnect.app;package=ke.co.comradeconnect.app;end';
+  var android = /Android/i.test(navigator.userAgent);
+  b.href = android ? intent : plain;
+  setTimeout(function () { t.textContent = 'Almost done'; m.textContent = 'If the app did not open, tap the button.'; b.hidden = false; }, 1500);
+  location.replace(android ? intent : plain);
+})();
+</script></body></html>

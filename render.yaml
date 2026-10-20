@@ -11,7 +11,7 @@ services:
     healthCheckPath: /healthz
     envVars:
       - { key: NODE_VERSION, value: "22" }
-      - { key: ALLOWED_ORIGINS, value: "https://comradeconnect.co.ke,https://www.comradeconnect.co.ke" }
+      - { key: ALLOWED_ORIGINS, value: "https://comradeconnect.co.ke,https://www.comradeconnect.co.ke,https://localhost" }
       - { key: PAYMENT_MODE, value: tinypesa }   # "manual" = free, you confirm codes by hand
       - { key: SUPABASE_URL, sync: false }
       - { key: SUPABASE_SERVICE_KEY, sync: false }

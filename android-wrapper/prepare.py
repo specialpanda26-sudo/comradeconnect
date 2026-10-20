@@ -104,6 +104,20 @@ def icons():
     print('icons ready,', n, 'start-up screens')
 
 
+def patch_deeplink():
+    p = MAIN / 'AndroidManifest.xml'
+    s = p.read_text(encoding='utf-8')
+    if 'ke.co.comradeconnect.app"' in s and 'android:host="auth"' in s:
+        return
+    f = ('        <intent-filter>\n            <action android:name="android.intent.action.VIEW" />\n'
+         '            <category android:name="android.intent.category.DEFAULT" />\n'
+         '            <category android:name="android.intent.category.BROWSABLE" />\n'
+         '            <data android:scheme="ke.co.comradeconnect.app" android:host="auth" />\n        </intent-filter>\n')
+    if '</activity>' not in s: sys.exit('STOP: AndroidManifest.xml has no </activity>')
+    p.write_text(s.replace('</activity>', f + '    </activity>', 1), encoding='utf-8')
+    print('sign-in return link ready')
+
+
 if not (MAIN / 'AndroidManifest.xml').exists():
     sys.exit('STOP: run `npx cap add android` first (no android/ folder found)')
-patch_manifest(); patch_version(); icons()
+patch_manifest(); patch_deeplink(); patch_version(); icons()

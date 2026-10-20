@@ -32,6 +32,9 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Pack the website into the app
+        run: VERSION_NAME=1.0.${{ github.run_number }} python3 bundle.py
+
       - name: Install Capacitor
         run: npm install --no-audit --no-fund
 
@@ -71,4 +74,5 @@ jobs:
           tag_name: apk-${{ github.run_number }}
           name: Comrade Connect app ${{ github.run_number }}
           body: Install comrade-connect.apk on your Android phone. Allow "Install unknown apps" for your browser when asked.
+          make_latest: true
           files: android-wrapper/comrade-connect.apk

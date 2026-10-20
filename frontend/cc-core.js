@@ -128,6 +128,7 @@ async function googleSignIn(credential) {                    // the fetch shim s
 }
 async function mountGoogle(box, onDone, onErr, opts) {
   if (!googleOn()) return false;
+  if (window.ccApp && window.ccApp.native) return window.ccApp.mountGoogle(box, onDone, onErr, opts, googleSignIn);
   if (!(await loadGsi())) { box.innerHTML = '<p class="sub">Google sign-in could not load. Check your internet.</p>'; return false; }
   google.accounts.id.initialize({ client_id: CC_GOOGLE_ID, callback: async (resp) => { try { onDone(await googleSignIn(resp.credential)); } catch (e) { onErr(e.message); } } });
   google.accounts.id.renderButton(box, Object.assign({ theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', width: 280 }, opts || {}));
@@ -1447,6 +1448,7 @@ function signOut() {
       const aid = a && a.aid;
       Object.keys(localStorage).forEach((k) => { if (k === 'cc_auth' || k === 'cc_pending' || k === 'cs_me' || k === 'cs_seen' || (aid && k.endsWith(':' + aid))) localStorage.removeItem(k); });
     } catch (e) {}
+    try { window.ccClearOffline && window.ccClearOffline(); } catch (e) {}
     toast('Signed out');
     setTimeout(() => location.reload(), 400);
   };

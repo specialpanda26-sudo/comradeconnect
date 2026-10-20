@@ -3,7 +3,7 @@
    The fetch shim in <head> adds X-Aid and X-Token to every call to CC_API. */
 (function () {
 'use strict';
-let FEE = 3;                                             // percent; replaced by the server's value (admin > Money and fees) as soon as it loads
+let FEE = 7;                                             // percent; replaced by the server's value (admin > Money and fees) as soon as it loads
 const CFG = { ppk: 10, min: 1, max: 150000, wfp: 0, wff: 0, pmin: 1, pmax: 150000 };
 const kes = (n) => 'KSh ' + Number(n).toLocaleString('en-KE');
 const net = (p) => p - Math.floor((p * FEE) / 100);      // same rounding as the Worker

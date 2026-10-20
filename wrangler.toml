@@ -21,7 +21,7 @@ MPESA_PAY_NAME = ""            # the name M-Pesa shows when buyers type the numb
 REFERRAL_UNLOCK_DAYS = "7"
 REFERRAL_REWARD = "20"
 ESCROW_AUTO_RELEASE_DAYS = "3"
-PLATFORM_FEE_PERCENT = "3"
+PLATFORM_FEE_PERCENT = "7"
 # Google sign-in: the OAuth Web client ID from Google Cloud Console (public value, not a secret). Empty = Google button hidden.
 GOOGLE_CLIENT_ID = ""
 # Files live in Supabase Storage (free). Bucket names must match supabase/schema.sql.

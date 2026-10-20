@@ -4,7 +4,7 @@
 import { json, sb, rows, post } from './lib.js';
 
 export const DEFS = {
-  platform_fee_percent: { env: 'PLATFORM_FEE_PERCENT', def: 3, min: 0, max: 30, dec: true, unit: '%', label: 'Marketplace fee', help: 'Share of every sale the company keeps. The seller gets the rest after the buyer confirms.' },
+  platform_fee_percent: { env: 'PLATFORM_FEE_PERCENT', def: 7, min: 0, max: 30, dec: true, unit: '%', label: 'Platform fee (every sale and ticket)', help: 'Share of every Market sale and every event ticket that the website keeps. The seller or host gets the rest. Example: 7 means a KSh 100 sale pays the seller KSh 93.' },
   boost_price: { env: 'BOOST_PRICE', def: 30, min: 1, max: 5000, unit: 'KSh', label: 'Advert boost, 24 hours', help: 'Price of pinning a Feed story for 1 day.' },
   boost_price_3d: { env: 'BOOST_PRICE_3D', def: 70, min: 1, max: 15000, unit: 'KSh', label: 'Advert boost, 3 days', help: 'Price of pinning a Feed story for 3 days.' },
   withdraw_min: { env: 'WITHDRAW_MIN', def: 1, min: 1, max: 5000, unit: 'KSh', label: 'Smallest withdrawal', help: 'Sellers cannot request less than this.' },

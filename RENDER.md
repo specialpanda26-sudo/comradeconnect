@@ -45,7 +45,7 @@ Render > New > Web Service > connect the GitHub repo.
 | GEMINI_API_KEY | free key from aistudio.google.com (empty = AI helper off) |
 | NODE_VERSION | `22` |
 
-**Optional tuning (defaults are fine)**: AI_MODEL, AI_DAILY_LIMIT, AI_GLOBAL_LIMIT, PLATFORM_FEE_PERCENT (3), ESCROW_AUTO_RELEASE_DAYS (3), REFERRAL_REWARD (20), REFERRAL_UNLOCK_DAYS (7), BOOST_PRICE (20), CLIP_MAX_MB (25), MEDIA_BUDGET_MB (800), WITHDRAW_REQUIRES_VERIFIED (1), MEDIA_BUCKET, PRIVATE_BUCKET.
+**Optional tuning (defaults are fine)**: AI_MODEL, AI_DAILY_LIMIT, AI_GLOBAL_LIMIT, PLATFORM_FEE_PERCENT (7), ESCROW_AUTO_RELEASE_DAYS (3), REFERRAL_REWARD (20), REFERRAL_UNLOCK_DAYS (7), BOOST_PRICE (20), CLIP_MAX_MB (25), MEDIA_BUDGET_MB (800), WITHDRAW_REQUIRES_VERIFIED (1), MEDIA_BUCKET, PRIVATE_BUCKET.
 Only if you ever use TinyPesa: PAYMENT_MODE=tinypesa, TINYPESA_API_KEY, CALLBACK_SECRET.
 
 If PLATFORM_FEE_PERCENT changes, change `FEE` at the top of `frontend/cc-core.js` too so the app shows the same number.

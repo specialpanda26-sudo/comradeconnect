@@ -1455,7 +1455,7 @@ window.ccSignOut = signOut;
 window.ccGoogle = { on: googleOn, mount: mountGoogle };
 
 window.ccMarketTerms = () => S.list.map((l) => l.title);
-window.CC = { needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid };
+window.CC = { needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid, payNow };
 window.ccSteps = { paySteps, withdrawFlow, stepsCss };
 window.ccTools = { sheet, call, toast, copyText, sleep };   // used by cc-tickets.js   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections
 })();

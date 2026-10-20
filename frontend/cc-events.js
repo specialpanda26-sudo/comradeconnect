@@ -4,7 +4,7 @@
 'use strict';
 var CCX = function () { return window.CC; };
 var st = document.createElement('style');
-st.textContent = '.cchost{margin:0 0 14px}.cchost .row,.cchm .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}'
+st.textContent = '.cchips{display:flex;gap:6px;flex-wrap:wrap}.cchc{all:unset;box-sizing:border-box;cursor:pointer;padding:8px 14px;border-radius:999px;font-size:13px;border:1px solid var(--line,rgba(255,255,255,.2));color:var(--fg,#fff)}.cchc.on{background:var(--fg,#fff);color:var(--bg,#000)}.cchr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cchr2>div,.cchr2 input{min-width:0}' + '.cchost{margin:0 0 14px}.cchost .row,.cchm .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}'
   + '.cchb{all:unset;box-sizing:border-box;cursor:pointer;padding:12px 16px;border-radius:14px;font-size:14px;font-weight:700;text-align:center;border:1px solid var(--line,rgba(255,255,255,.2));color:var(--fg,#fff)}'
   + '.cchb.p{background:var(--fg,#fff);color:var(--bg,#000)}.cchb:disabled{opacity:.5}'
   + '.cchm{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow:auto}'
@@ -48,27 +48,42 @@ function shareLink(box, path, title) {
 }
 
 function createForm() {
-  if (!signedIn()) { if (CCX() && CCX().needSignup) CCX().needSignup('host an event'); return; }
-  var m = modal('Host an event');
-  m.box.appendChild(h('p', { text: 'Throwing a party or show? List it here, sell tickets in the app, and check guests in at the door. You keep the ticket price minus the platform fee, paid into your wallet.', style: 'font-size:14px;opacity:.85;margin:4px 0 0' }));
+  if (!signedIn()) { if (CCX() && CCX().needSignup) CCX().needSignup('add an event'); return; }
+  var CATS = ['Party', 'Music', 'Sports', 'Academic', 'Club', 'Faith', 'Other'], cat = 'Party', paid = false;
+  var m = modal('Add an event');
+  m.box.appendChild(h('p', { text: 'Free or paid, a party or a study meet-up. It shows under Explore > Events for every comrade.', style: 'font-size:14px;opacity:.85;margin:4px 0 0' }));
   var title = field(m.box, 'Event name', { maxlength: '100', placeholder: 'e.g. Friday Night Pool Party' });
-  var today = new Date().toISOString().slice(0, 10);
-  var date = field(m.box, 'Date', { type: 'date', min: today, value: today });
+  m.box.appendChild(h('label', { text: 'Category' }));
+  var chips = h('div', { class: 'cchips' });
+  CATS.forEach(function (c) { var b = h('button', { type: 'button', class: 'cchc' + (c === cat ? ' on' : ''), text: c }); b.onclick = function () { cat = c; [].forEach.call(chips.children, function (x) { x.classList.toggle('on', x.textContent === c); }); }; chips.appendChild(b); });
+  m.box.appendChild(chips);
+  var today = new Date().toISOString().slice(0, 10), two = h('div', { class: 'cchr2' }), dw = h('div'), tw = h('div');
+  var date = field(dw, 'Date', { type: 'date', min: today, value: today }), time = field(tw, 'Starts at', { type: 'time', value: '18:00' });
+  two.appendChild(dw); two.appendChild(tw); m.box.appendChild(two);
   var venue = field(m.box, 'Venue', { maxlength: '80', placeholder: 'e.g. Kutus Gardens' });
-  var price = field(m.box, 'Ticket price (KSh)', { type: 'number', inputmode: 'numeric', min: '1', max: '20000', placeholder: '300' });
-  var cap = field(m.box, 'Maximum guests (optional)', { type: 'number', inputmode: 'numeric', min: '1', max: '5000', placeholder: 'Leave empty for no limit' });
-  var det = field(m.box, 'Details (no phone numbers or links)', { maxlength: '400', rows: '3', placeholder: 'Time, dress code, who is playing...' }, 'textarea');
-  var row = h('div', { class: 'row' }), go = h('button', { class: 'cchb p', type: 'button', text: 'Create event' }), x = h('button', { class: 'cchb', type: 'button', text: 'Cancel' });
+  m.box.appendChild(h('label', { text: 'Entry' }));
+  var seg = h('div', { class: 'cchips' }), fb = h('button', { type: 'button', class: 'cchc on', text: 'Free' }), pb = h('button', { type: 'button', class: 'cchc', text: 'Paid tickets' });
+  seg.appendChild(fb); seg.appendChild(pb); m.box.appendChild(seg);
+  var pw = h('div'); pw.style.display = 'none';
+  var price = field(pw, 'Ticket price (KSh)', { type: 'number', inputmode: 'numeric', min: '1', max: '20000', placeholder: '300' });
+  var cap = field(pw, 'Maximum guests (optional)', { type: 'number', inputmode: 'numeric', min: '1', max: '5000', placeholder: 'Leave empty for no limit' });
+  pw.appendChild(h('p', { text: 'Tickets are sold in the app and checked at the door with a private scan link. You keep the price minus the platform fee, paid into your wallet.', style: 'font-size:13px;opacity:.75;margin:8px 0 0' }));
+  m.box.appendChild(pw);
+  function setPaid(v) { paid = v; fb.classList.toggle('on', !v); pb.classList.toggle('on', v); pw.style.display = v ? '' : 'none'; }
+  fb.onclick = function () { setPaid(false); }; pb.onclick = function () { setPaid(true); };
+  var det = field(m.box, 'Details (no phone numbers or links)', { maxlength: '400', rows: '3', placeholder: 'Dress code, who is playing, what to bring...' }, 'textarea');
+  var row = h('div', { class: 'row' }), go = h('button', { class: 'cchb p', type: 'button', text: 'Add event' }), x = h('button', { class: 'cchb', type: 'button', text: 'Cancel' });
   x.onclick = function () { m.wrap.close(); };
   go.onclick = function () {
     go.disabled = true;
-    CCX().call('/api/my/events', { body: { title: title.value, date: date.value, venue: venue.value, ticket_price: price.value, capacity: cap.value, details: det.value } })
+    CCX().call('/api/my/events', { body: { title: title.value, category: cat, date: date.value, time: time.value, venue: venue.value, ticket_price: paid ? price.value : '', capacity: paid ? cap.value : '', details: det.value } })
       .then(function (d) {
+        document.dispatchEvent(new CustomEvent('cc:events-changed'));
         m.box.textContent = ''; m.box.appendChild(h('h3', { text: 'Your event is live', style: 'margin:0 0 4px' }));
-        m.box.appendChild(h('p', { text: 'Comrades can now buy tickets from the Tickets tab.', style: 'font-size:14px;opacity:.85' }));
-        shareLink(m.box, d.scan_path, title.value);
+        m.box.appendChild(h('p', { text: d.free ? 'Comrades can see it now under Explore > Events.' : 'Comrades can see it now and buy tickets under Explore > Events.', style: 'font-size:14px;opacity:.85' }));
+        if (d.scan_path) shareLink(m.box, d.scan_path, title.value);
         var done = h('button', { class: 'cchb', type: 'button', text: 'Done', style: 'margin-top:12px;width:100%' }); done.onclick = function () { m.wrap.close(); }; m.box.appendChild(done);
-      }).catch(function (e) { note(e.message || 'Could not create the event'); go.disabled = false; });
+      }).catch(function (e) { note(e.message || 'Could not add the event'); go.disabled = false; });
   };
   row.appendChild(go); row.appendChild(x); m.box.appendChild(row);
 }
@@ -84,14 +99,16 @@ function myEvents() {
     d.events.forEach(function (e) {
       var card = h('div', { class: 'cchev' }, [
         h('b', { text: e.title + (e.hidden ? ' (cancelled)' : '') }),
-        h('small', { text: e.date + ' \u00b7 ' + (e.venue || '') + ' \u00b7 KSh ' + e.ticket_price }),
-        h('div', { text: e.sold + (e.capacity ? ' / ' + e.capacity : '') + ' tickets sold \u00b7 ' + e.scanned + ' checked in \u00b7 you earn KSh ' + e.you_earn, style: 'font-size:14px;margin-top:6px' })
+        h('small', { text: e.date + (e.time ? ' ' + e.time : '') + ' \u00b7 ' + (e.venue || '') + ' \u00b7 ' + (e.ticket_price ? 'KSh ' + e.ticket_price : 'Free') }),
+        h('div', { text: !e.ticket_price ? 'Free event, no tickets to sell' : e.sold + (e.capacity ? ' / ' + e.capacity : '') + ' tickets sold \u00b7 ' + e.scanned + ' checked in \u00b7 you earn KSh ' + e.you_earn, style: 'font-size:14px;margin-top:6px' })
       ]);
       if (!e.hidden) {
         var row = h('div', { class: 'row' });
-        var cp = h('button', { class: 'cchb p', type: 'button', text: 'Copy door link' }); cp.onclick = function () { copy(full(e.scan_path)); };
-        var op = h('a', { class: 'cchb', href: e.scan_path, target: '_blank', rel: 'noopener', text: 'Open scanner' });
-        row.appendChild(cp); row.appendChild(op);
+        if (e.scan_path) {
+          var cp = h('button', { class: 'cchb p', type: 'button', text: 'Copy door link' }); cp.onclick = function () { copy(full(e.scan_path)); };
+          var op = h('a', { class: 'cchb', href: e.scan_path, target: '_blank', rel: 'noopener', text: 'Open scanner' });
+          row.appendChild(cp); row.appendChild(op);
+        }
         if (!e.sold) { var cx = h('button', { class: 'cchb', type: 'button', text: 'Cancel event' }); cx.onclick = function () { if (!confirm('Cancel this event?')) return; CCX().call('/api/my/events/' + e.id + '/cancel', { body: {} }).then(function () { note('Event cancelled'); m.wrap.close(); }).catch(function (er) { note(er.message); }); }; row.appendChild(cx); }
         card.appendChild(row);
       }
@@ -126,5 +143,6 @@ function mount() {
   ]);
   host.insertBefore(card, host.firstChild);
 }
+window.ccEvents = { create: createForm, mine: myEvents };
 setInterval(mount, 700);
 })();

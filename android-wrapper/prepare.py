@@ -15,7 +15,7 @@ LOGO = HERE.parent / 'frontend' / 'icon-512.png'
 BG = (0, 0, 0)
 
 PERMS = ['INTERNET', 'ACCESS_NETWORK_STATE', 'CAMERA', 'RECORD_AUDIO', 'MODIFY_AUDIO_SETTINGS',
-         'ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'POST_NOTIFICATIONS', 'VIBRATE']
+         'ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'POST_NOTIFICATIONS', 'VIBRATE', 'USE_BIOMETRIC', 'USE_FINGERPRINT']
 FEATURES = ['android.hardware.camera', 'android.hardware.camera.autofocus', 'android.hardware.location.gps', 'android.hardware.microphone']
 
 

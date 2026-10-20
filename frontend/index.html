@@ -364,7 +364,7 @@ window.addEventListener('error',function(e){if(!e.filename&&e.message==='Script 
 window.addEventListener('offline',function(){say('You are offline. Check your internet connection.')});
 window.addEventListener('online',function(){last=0;say('Back online')})})();
 </script>
-<script src="cc-offline.js?v=1"></script><script src="cc-native.js?v=1"></script><style id="ccme-css">
+<script src="cc-offline.js?v=1"></script><script src="cc-native.js?v=2"></script><style id="ccme-css">
 /* Me page: profile card, grouped menu, panels, quick finder */
 #v-me:not(.ccp) .ccset{display:none}
 #v-me.ccp .box:not(.ccsel),#v-me.ccp>.ph,#v-me.ccp>p.sub,#v-me.ccp #ccmenu,#v-me:not(.ccp) #ccpub{display:none}
@@ -1457,10 +1457,12 @@ $('#bds').onclick=async()=>{if(verBusy)return;const role=$('#bdr').value,name=$(
 $('#tb').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.v==='me')drawVer()});drawVer();
 $('#tpill').hidden=!!ST.get('cs_tour',0);$('#tpill').onclick=startTour;
 const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b))),unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0)),rb=n=>crypto.getRandomValues(new Uint8Array(n));
-const bioOK=async()=>{try{return!!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(e){return false}};
-async function bioEnable(){if(!await bioOK()){toast('Face ID lock is not available on this phone or browser');return false}
+const bioOK=async()=>{if(window.ccNativeBio)return await ccNativeBio.available();try{return!!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(e){return false}};
+async function bioEnable(){if(window.ccNativeBio){if(!await ccNativeBio.available()){toast('Set up a fingerprint, face unlock or a screen lock on your phone first');return false}if(await ccNativeBio.verify('Turn on the lock')){ME.bio='native';saveMe();drawSec();return true}toast('Lock was not turned on');return false}
+ if(!await bioOK()){toast('Face ID lock is not available on this phone or browser');return false}
  try{const c=await navigator.credentials.create({publicKey:{challenge:rb(32),rp:{name:'Comrade Connect'},user:{id:new TextEncoder().encode(ME.aid),name:ME.handle,displayName:ME.handle},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},timeout:60000}});ME.bio=b64(c.rawId);saveMe();drawSec();return true}catch(e){toast('Face ID lock could not start. It works on your own https site, but not always inside this preview.');return false}}
-async function bioCheck(){try{await navigator.credentials.get({publicKey:{challenge:rb(32),allowCredentials:[{type:'public-key',id:unb64(ME.bio)}],userVerification:'required',timeout:60000}});return true}catch(e){return false}}
+async function bioCheck(){if(window.ccNativeBio)return await ccNativeBio.verify('Confirm it is really you');
+ try{await navigator.credentials.get({publicKey:{challenge:rb(32),allowCredentials:[{type:'public-key',id:unb64(ME.bio)}],userVerification:'required',timeout:60000}});return true}catch(e){return false}}
 const bioGate=async()=>!ME.bio||await bioCheck();
 function drawSec(){$('#sst').textContent=ME.bio?'Face ID lock is on. Comrade Connect locks when you come back after a minute away, and withdrawals ask for your fingerprint.':'Not locked. Lock Comrade Connect with your phone fingerprint so only you can open it.';$('#sgo').textContent=ME.bio?'Turn off Face ID lock':'Lock with Face ID'}
 $('#sgo').onclick=async()=>{if(ME.bio){if(await bioCheck()){delete ME.bio;saveMe();drawSec();toast('Face ID lock is off')}else toast('Face ID check failed')}else if(await bioEnable())toast('Face ID lock is on')};
@@ -1573,7 +1575,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-getapp.js?v=1"></script><script src="cc-core.js?v=rc4"></script><script src="cc-welcome.js?v=1"></script><script src="cc-scrollbg.js?v=1"></script><script src="cc-receipt.js?v=3"></script><script src="cc-wifi.js?v=1"></script><script src="cc-hostels.js?v=1"></script><script src="cc-profile.js?v=2"></script><script src="cc-me.js?v=1"></script><script src="cc-closex.js?v=1"></script><script src="cc-live.js?v=1"></script><script src="cc-staff.js?v=1" defer></script><script src="cc-site.js?v=4" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-faceid.js?v=2" defer></script><script src="cc-fixes.js?v=1" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1d" defer></script><script src="cc-tickets.js?v=1" defer></script><script src="cc-qr.js?v=1" defer></script><script src="cc-events.js?v=3" defer></script><script src="cc-explore.js?v=1" defer></script>
+<script src="cc-getapp.js?v=2"></script><script src="cc-core.js?v=rc4"></script><script src="cc-welcome.js?v=1"></script><script src="cc-scrollbg.js?v=1"></script><script src="cc-receipt.js?v=3"></script><script src="cc-wifi.js?v=1"></script><script src="cc-hostels.js?v=1"></script><script src="cc-profile.js?v=2"></script><script src="cc-me.js?v=1"></script><script src="cc-closex.js?v=2"></script><script src="cc-panels.js?v=1"></script><script src="cc-live.js?v=1"></script><script src="cc-staff.js?v=1" defer></script><script src="cc-site.js?v=4" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-faceid.js?v=3" defer></script><script src="cc-fixes.js?v=1" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1d" defer></script><script src="cc-tickets.js?v=1" defer></script><script src="cc-qr.js?v=1" defer></script><script src="cc-events.js?v=3" defer></script><script src="cc-explore.js?v=1" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

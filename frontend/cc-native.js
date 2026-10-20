@@ -18,6 +18,56 @@
   var payload = function (t) { try { return JSON.parse(decodeURIComponent(escape(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { return {}; } };
   var done = function (fn, v) { var p = pending; pending = null; if (p) { clearTimeout(p.t); p[fn](v); } };
 
+  // Real phone lock: fingerprint, face unlock or the phone's own PIN / pattern / password (no web page, no fake scan).
+  var bioRecent = 0, bioBusy = false;
+  var BIO = function () { return P.BiometricAuth || (cap.registerPlugin ? cap.registerPlugin('BiometricAuth') : null); };
+  window.ccNativeBio = {
+    available: function () {
+      var B = BIO(); if (!B || !B.checkBiometry) return Promise.resolve(false);
+      return B.checkBiometry().then(function (r) { return !!(r && (r.isAvailable || r.deviceIsSecure)); }, function () { return false; });
+    },
+    verify: function (why) {
+      if (Date.now() - bioRecent < 5000) return Promise.resolve(true);      // one prompt per action, not two
+      var B = BIO(); if (!B || !B.authenticate) return Promise.resolve(false);
+      bioBusy = true;
+      return B.authenticate({
+        reason: why || 'Confirm it is really you', cancelTitle: 'Cancel', allowDeviceCredential: true,
+        androidTitle: 'Comrade Connect', androidSubtitle: why || 'Use your fingerprint, face or phone password', androidConfirmationRequired: false
+      }).then(function () { bioRecent = Date.now(); return true; }, function () { return false; })
+        .then(function (ok) { setTimeout(function () { bioBusy = false; }, 1500); return ok; });
+    }
+  };
+  // when the lock screen appears (app start, or coming back after a minute), ask the phone straight away
+  var autoAsk = function () {
+    var lk = document.getElementById('lk'), b = document.getElementById('lku');
+    if (!bioBusy && lk && b && lk.classList.contains('on')) b.click();
+  };
+  window.addEventListener('load', function () { setTimeout(autoAsk, 900); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(autoAsk, 500); });
+
+  // New version of the app? Show a bar with an Update button (the website itself cannot change the installed app).
+  var REPO = 'specialpanda26-sudo/comradeconnect';
+  var checkUpdate = function () {
+    if (!P.App || !P.App.getInfo || navigator.onLine === false) return;
+    P.App.getInfo().then(function (i) {
+      var cur = parseInt(String((i && i.version) || '').split('.').pop(), 10) || 0;
+      return fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (rel) {
+        if (!rel) return;
+        var n = parseInt(String(rel.tag_name || '').replace(/\D/g, ''), 10) || 0;
+        var a = (rel.assets || []).filter(function (x) { return /\.apk$/i.test(x.name); })[0];
+        var seen = 0; try { seen = +localStorage.getItem('cc_upd_seen') || 0; } catch (e) {}
+        if (!a || n <= cur || n <= seen) return;
+        var bar = document.createElement('div');
+        bar.style.cssText = 'position:fixed;left:10px;right:10px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:9000;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:18px;background:var(--bg,#000);color:var(--fg,#fff);border:1px solid var(--line,rgba(255,255,255,.2));font:500 13px Poppins,system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5)';
+        bar.innerHTML = '<span style="flex:1">A new version of Comrade Connect is ready.</span><button type="button" data-u style="border:0;border-radius:999px;padding:9px 16px;background:var(--fg,#fff);color:var(--bg,#000);font:600 13px Poppins,system-ui,sans-serif">Update</button><button type="button" data-x aria-label="Close" style="border:0;background:none;color:inherit;font-size:20px;padding:0 4px">&times;</button>';
+        bar.querySelector('[data-u]').onclick = function () { try { P.Browser.open({ url: a.browser_download_url }); } catch (e) { location.href = a.browser_download_url; } };
+        bar.querySelector('[data-x]').onclick = function () { try { localStorage.setItem('cc_upd_seen', String(n)); } catch (e) {} bar.remove(); };
+        document.body.appendChild(bar);
+      });
+    }).catch(function () {});
+  };
+  window.addEventListener('load', function () { setTimeout(checkUpdate, 4000); });
+
   // In-app Google account picker: no web page and no redirect. Needs the Android client set up in Google Cloud (see README).
   var nativeGoogle = function () {
     if (navigator.onLine === false) return Promise.reject(new Error('You are offline. Connect to data or Wi-Fi to sign in with Google.'));

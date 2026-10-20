@@ -1,9 +1,20 @@
 name: Build Android APK
 
-# Run it by hand: GitHub > Actions > Build Android APK > Run workflow.
-# The finished app appears under Releases (and as a download on the run page).
+# Runs by itself every time you push a change to the website or the app files,
+# and you can still run it by hand: GitHub > Actions > Build Android APK > Run workflow.
+# The finished app appears under Releases, and the website's Download button always gives the newest one.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'android-wrapper/**'
+      - '.github/workflows/android.yml'
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -73,6 +84,6 @@ jobs:
         with:
           tag_name: apk-${{ github.run_number }}
           name: Comrade Connect app ${{ github.run_number }}
-          body: Install comrade-connect.apk on your Android phone. Allow "Install unknown apps" for your browser when asked.
+          body: Install comrade-connect.apk on your Android phone. Allow "Install unknown apps" for your browser when asked. Built from the latest changes on main.
           make_latest: true
           files: android-wrapper/comrade-connect.apk

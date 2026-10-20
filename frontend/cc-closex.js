@@ -12,10 +12,12 @@ var QUIT = /^(cancel|close|not now|later|no thanks|back|done|dismiss)$/i;
 
 function shut(ov) {
   if (ov.querySelector('.cs-l')) { try { toast('Please wait, this is still going through'); } catch (e) {} return; }     // a payment is in progress
-  var b = Array.prototype.filter.call(ov.querySelectorAll('button'), function (n) { return QUIT.test((n.textContent || '').trim()) && !n.disabled; })[0];
-  if (b) b.click(); else if (typeof ov.close === 'function') ov.close(); else ov.remove();
+  var b = Array.prototype.filter.call(ov.querySelectorAll('button'), function (n) { return QUIT.test((n.textContent || '').trim()) && !n.disabled && n.getClientRects().length; })[0];
+  if (b) b.click(); else if (ov.classList.contains('on')) ov.classList.remove('on'); else if (typeof ov.close === 'function') ov.close(); else ov.remove();
 }
+window.ccShut = shut;
 function addX(ov, onClose) {
+  if (window.__ccPanels && !onClose) return;      // cc-panels.js draws the back + close bar instead
   var box = ov.querySelector('.box, .dsheet, .bx'); if (!box || box.querySelector('.ccx-b')) return;
   box.classList.add('ccx-host');
   var x = document.createElement('button'); x.type = 'button'; x.className = 'ccx-b'; x.setAttribute('aria-label', 'Close'); x.innerHTML = X;

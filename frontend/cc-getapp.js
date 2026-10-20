@@ -5,6 +5,14 @@
   if (window.__ccGetApp) return; window.__ccGetApp = 1;
   if (window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) return;
   var APK = 'https://github.com/specialpanda26-sudo/comradeconnect/releases/latest/download/comrade-connect.apk';
+  var API = 'https://api.github.com/repos/specialpanda26-sudo/comradeconnect/releases/latest';
+  // Asks GitHub for the newest release every time, so the button never hands out an old file.
+  function latest() {
+    return fetch(API, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      var a = j && (j.assets || []).filter(function (x) { return /\.apk$/i.test(x.name); })[0];
+      return a ? { url: a.browser_download_url, tag: j.tag_name || '', name: j.name || '' } : null;
+    }).catch(function () { return null; });
+  }
   var ua = navigator.userAgent || '';
   var ios = /iPhone|iPad|iPod/i.test(ua), android = /Android/i.test(ua);
 
@@ -47,7 +55,7 @@
   function open() {
     var m = document.createElement('div'); m.className = 'ccdl-m'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Get the Comrade Connect app');
     m.innerHTML = '<div class="ccdl-s"><div class="ccdl-h"><img src="/icon-192.png" alt="" width="56" height="56"><div><h3>Comrade Connect</h3><p>' + (ios ? 'Add it to your iPhone' : 'Android app &middot; Free &middot; Works offline') + '</p></div></div>'
-      + (ios ? '' : '<a class="ccdl-go" href="' + APK + '" download rel="noopener">' + DL + ' Download for Android</a>')
+      + (ios ? '' : '<a class="ccdl-go" href="' + APK + '" rel="noopener">' + DL + ' Download for Android</a>')
       + '<ol class="ccdl-st">' + steps() + '</ol>'
       + (ios || android ? '' : '<p class="ccdl-n">You are on a computer. Open this website on your Android phone to install the app.</p>')
       + '<p class="ccdl-n">Update later: download the new file and install it over the old app. Your account stays.</p>'
@@ -58,6 +66,13 @@
     m.querySelector('.ccdl-x').onclick = close;
     document.addEventListener('keydown', esc);
     document.body.appendChild(m);
+    var go = m.querySelector('.ccdl-go');
+    if (go) latest().then(function (l) {
+      if (!l) return;
+      go.href = l.url;
+      var n = document.createElement('p'); n.className = 'ccdl-n'; n.style.textAlign = 'center'; n.style.marginTop = '8px';
+      n.textContent = 'Newest version: ' + (l.name || l.tag); go.insertAdjacentElement('afterend', n);
+    });
   }
 
   function mount() {

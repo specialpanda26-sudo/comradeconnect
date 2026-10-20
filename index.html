@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comrade Connect</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f4f4f9; color: #333; }
+        .download-btn { display: inline-block; background: #2ea44f; color: white; padding: 15px 30px; font-size: 18px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .download-btn:hover { background: #2c974b; }
+    </style>
+</head>
+<body>
+    <h1>Comrade Connect</h1>
+    <p>Stay connected with your campus community. Download the official Android app below.</p>
+    
+    <a id="download-btn" href="#" class="download-btn">Loading Latest APK...</a>
+
+    <script>
+      fetch('https://api.github.com/repos/specialpanda26-sudo/comradeconnect/releases/latest')
+        .then(response => response.json())
+        .then(data => {
+          const apkAsset = data.assets.find(asset => asset.name.endsWith('.apk'));
+          if (apkAsset) {
+            const downloadBtn = document.getElementById('download-btn');
+            downloadBtn.href = apkAsset.browser_download_url;
+            downloadBtn.textContent = 'Download Comrade Connect (APK)';
+          } else {
+            document.getElementById('download-btn').textContent = 'APK Not Found Yet';
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching latest release:', error);
+          document.getElementById('download-btn').textContent = 'Failed to load download link';
+        });
+    </script>
+</body>
+</html>

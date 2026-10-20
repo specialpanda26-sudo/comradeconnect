@@ -47,6 +47,18 @@ def main():
         html = html.replace(url, 'vendor/' + name)
         print('library ', url, '->', 'vendor/' + name)
 
+    # 1b) the Wi-Fi map library (Leaflet) is loaded when the map opens: keep it inside the app too
+    lf = VENDOR / 'leaflet'
+    lf.mkdir(exist_ok=True)
+    LB = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/'
+    for fn in ('leaflet.min.js', 'leaflet.min.css'):
+        (lf / fn).write_bytes(get(LB + fn, binary=True))
+    ww = OUT / 'cc-wifi.js'
+    if ww.exists():
+        t = ww.read_text(encoding='utf-8')
+        ww.write_text(t.replace("var LEAF = '" + LB + "'", "var LEAF = 'vendor/leaflet/'"), encoding='utf-8')
+        print('leaflet  -> vendor/leaflet/')
+
     # 2) Google Fonts: the stylesheet and the font files
     fonts = VENDOR / 'fonts'
     fonts.mkdir(exist_ok=True)

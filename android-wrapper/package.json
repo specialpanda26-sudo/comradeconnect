@@ -1,0 +1,11 @@
+{
+  "name": "comrade-connect-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Android app shell for Comrade Connect. It opens the live website, so website updates reach the app without a rebuild.",
+  "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0"
+  }
+}

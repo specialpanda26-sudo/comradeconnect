@@ -1,0 +1,15 @@
+{
+  "appId": "ke.co.comradeconnect.app",
+  "appName": "Comrade Connect",
+  "webDir": "www",
+  "backgroundColor": "#000000",
+  "server": {
+    "url": "https://comradeconnect.co.ke",
+    "errorPath": "error.html",
+    "allowNavigation": ["comradeconnect.co.ke", "*.comradeconnect.co.ke", "comradeconnectback.onrender.com"]
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#000000"
+  }
+}

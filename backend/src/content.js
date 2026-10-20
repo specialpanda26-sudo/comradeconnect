@@ -41,7 +41,7 @@ const hasDup = (a) => new Set(a.map((x) => x.toLowerCase())).size !== a.length;
 export const HIDE = { room: ['rooms', { hidden: true }, { hidden: false }], group: ['study_groups', { hidden: true }, { hidden: false }], poll: ['polls', { hidden: true }, { hidden: false }],
   hearts: ['hearts_posts', { hidden: true }, { hidden: false }], wifi: ['wifi', { hidden: true }, { hidden: false }], hostel: ['hostels', { hidden: true }, { hidden: false }],
   service: ['services', { hidden: true }, { hidden: false }], tip: ['study_tips', { hidden: true }, { hidden: false }], clip: ['media', { status: 'hidden' }, { status: 'ready' }],
-  listing: ['listings', { status: 'removed' }, { status: 'approved' }] };
+  listing: ['listings', { status: 'removed' }, { status: 'approved' }], event: ['events', { hidden: true }, { hidden: false }] };
 const AUTOHIDE = new Set(['room', 'group', 'poll', 'hearts', 'wifi', 'hostel', 'service', 'tip', 'clip']);   // listings and users wait for an admin
 
 const pub = (r, me) => { const { aid, ip, hidden, ...rest } = r; return { ...rest, createdAt: Date.parse(r.created_at), mine: !!me && me.aid === aid }; };
@@ -64,7 +64,7 @@ export async function contentRoutes(req, env, url, ip) {
     const hosts = [...new Set(r.filter((e) => e.owner_aid).map((e) => e.owner_aid))];
     const names = hosts.length ? await rows(await sb(env, `profiles?select=aid,handle&aid=${inList(hosts)}`)) : [];
     const capped = r.filter((e) => e.capacity), sold = capped.length ? await rows(await sb(env, `tickets?select=event_id&event_id=${inList(capped.map((e) => e.id))}&status=neq.void&limit=5000`)) : [];
-    return json(env, { events: r.map((e) => ({ id: e.id, title: e.title, date: e.starts_on, venue: e.venue, details: e.details, ticket_price: e.ticket_price, hosted: !!e.owner_aid, capacity: e.capacity,
+    return json(env, { events: r.map((e) => ({ id: e.id, title: e.title, date: e.starts_on, time: e.starts_at || undefined, category: e.category || 'Other', venue: e.venue, details: e.details, ticket_price: e.ticket_price, hosted: !!e.owner_aid, capacity: e.capacity,
       organizer: e.owner_aid ? '@' + (names.find((x) => x.aid === e.owner_aid)?.handle || 'comrade') : undefined,
       left: e.capacity ? Math.max(0, e.capacity - sold.filter((t) => t.event_id === e.id).length) : undefined })) });
   }
@@ -78,7 +78,7 @@ export async function contentRoutes(req, env, url, ip) {
   if (path === '/api/report' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const b = await body(), type = String(b.type || ''), id = str(b.id, 64);
-    if (!(type in HIDE) && type !== 'user') return err(env, 'Unknown item');
+    if (!(type in HIDE) && type !== 'user' && type !== 'notice') return err(env, 'Unknown item');
     if (!id) return err(env, 'Unknown item');
     if (!(await throttle(env, ip, 'report', u.aid, 30, 100))) return tooMany(env);
     await post(env, 'content_reports', { target_type: type, target_id: id, reporter_aid: u.aid, reason: str(b.reason, 200) }, 'resolution=ignore-duplicates,return=representation');

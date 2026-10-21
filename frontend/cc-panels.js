@@ -1,5 +1,5 @@
 /* cc-panels.js: every pop-up becomes a wide, full-screen sheet (like the Claude Code app) with a top bar:
-   a back arrow on the left, the title in the middle and a close X on the right.
+   the title on the left and ONE close X on the right (no duplicate back arrow: Back lives on the full pages such as Safety).
    Also handles the phone's Back button (Android app and browser): closes the top panel first, then returns to Feed, then leaves.
    Panels that are mid-payment cannot be closed. The lock screen has no close button on purpose. */
 (function () {
@@ -11,13 +11,12 @@ var SCREEN = '#wfov,#ccrc,.ccr,#hszoom,#ccfind,#ccfid';
 var QUIT = /^(cancel|close|not now|later|no thanks|back|done|dismiss)$/i;
 var native = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
 
-var BACK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
 var X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
 var st = document.createElement('style');
 st.textContent = [
   '.ccpb{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;background:var(--bg,#000);color:var(--fg,#fff);border-bottom:1px solid var(--line,rgba(255,255,255,.14));-webkit-backdrop-filter:none;backdrop-filter:none}',
-  '.ccpb h4{flex:1;min-width:0;margin:0;font:600 15px/1.2 Poppins,system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}',
+  '.ccpb h4{flex:1;min-width:0;margin:0;font:600 15px/1.2 Poppins,system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;padding-left:4px}',
   '.ccpb button,.ccpf button{flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--gb,rgba(255,255,255,.22));background:var(--g,rgba(255,255,255,.07));color:inherit;display:grid;place-items:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}',
   '.ccpb button:active,.ccpf button:active{transform:scale(.94)}',
   '.ccpb svg,.ccpf svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}',
@@ -83,7 +82,7 @@ function dress(ov) {
   if (!bar) {
     bar = document.createElement('div'); bar.className = 'ccpb';
     var h = document.createElement('h4');
-    bar.append(mkBtn('Back', BACK, function () { closeIt(ov); }), h, mkBtn('Close', X, function () { closeIt(ov); }));
+    bar.append(h, mkBtn('Close', X, function () { closeIt(ov); }));
     box.insertBefore(bar, box.firstChild);
     var cs = getComputedStyle(box);                                         // pull the bar to the edges of the box
     bar.style.margin = '-' + cs.paddingTop + ' -' + cs.paddingRight + ' 14px -' + cs.paddingLeft;
@@ -99,7 +98,8 @@ function floaters(ov) {
   var quit = Array.prototype.filter.call(ov.querySelectorAll('button,a'), function (n) { return QUIT.test((n.textContent || '').trim()) && n.getClientRects().length; })[0];
   if (quit) return;
   var f = document.createElement('div'); f.className = 'ccpf';
-  f.append(mkBtn('Back', BACK, function () { closeIt(ov); }), mkBtn('Close', X, function () { closeIt(ov); }));
+  f.style.justifyContent = 'flex-end';
+  f.append(mkBtn('Close', X, function () { closeIt(ov); }));
   ov.appendChild(f);
 }
 

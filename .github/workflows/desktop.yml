@@ -60,7 +60,10 @@ jobs:
           if-no-files-found: error
 
   release:
+    # Publish whatever was built, even if one computer type failed (for example Mac),
+    # so a Mac problem can never stop the Windows download from appearing.
     needs: build
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -75,6 +78,11 @@ jobs:
           pattern: desktop-*
           merge-multiple: true
           path: files
+
+      - name: Check there is something to publish
+        run: |
+          ls -la files || true
+          ls files/* >/dev/null 2>&1 || { echo "No desktop files were built, nothing to publish."; exit 1; }
 
       - uses: softprops/action-gh-release@v2
         with:

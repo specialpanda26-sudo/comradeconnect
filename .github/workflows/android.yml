@@ -33,6 +33,12 @@ jobs:
       KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build number (the same number is used for the phone and computer apps)
+        working-directory: .
+        run: echo "BUILD_N=$(( $(git rev-list --count HEAD) + 100 ))" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v4
         with:
@@ -44,7 +50,7 @@ jobs:
           java-version: 17
 
       - name: Pack the website into the app
-        run: VERSION_NAME=1.0.${{ github.run_number }} python3 bundle.py
+        run: VERSION_NAME=1.0.${{ env.BUILD_N }} python3 bundle.py
 
       - name: Install Capacitor
         run: npm install --no-audit --no-fund
@@ -55,7 +61,7 @@ jobs:
       - name: Permissions, version, icons
         run: |
           pip install --quiet pillow
-          VERSION_CODE=${{ github.run_number }} VERSION_NAME=1.0.${{ github.run_number }} python3 prepare.py
+          VERSION_CODE=${{ env.BUILD_N }} VERSION_NAME=1.0.${{ env.BUILD_N }} python3 prepare.py
 
       - name: Build and sign
         run: |
@@ -82,8 +88,8 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: apk-${{ github.run_number }}
-          name: Comrade Connect app ${{ github.run_number }}
+          tag_name: app-${{ env.BUILD_N }}
+          name: Comrade Connect app ${{ env.BUILD_N }}
           body: Install comrade-connect.apk on your Android phone. Allow "Install unknown apps" for your browser when asked. Built from the latest changes on main.
           make_latest: true
           files: android-wrapper/comrade-connect.apk

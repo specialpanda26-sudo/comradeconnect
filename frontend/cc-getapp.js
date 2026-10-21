@@ -4,17 +4,20 @@
   'use strict';
   if (window.__ccGetApp) return; window.__ccGetApp = 1;
   if (window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) return;
-  var APK = 'https://github.com/specialpanda26-sudo/comradeconnect/releases/latest/download/comrade-connect.apk';
+  var REL = 'https://github.com/specialpanda26-sudo/comradeconnect/releases/latest/download/';
   var API = 'https://api.github.com/repos/specialpanda26-sudo/comradeconnect/releases/latest';
-  // Asks GitHub for the newest release every time, so the button never hands out an old file.
+  var FILES = { apk: 'comrade-connect.apk', win: 'comrade-connect-setup.exe', macA: 'comrade-connect-arm64.dmg', macI: 'comrade-connect-x64.dmg', linux: 'comrade-connect.AppImage' };
+  // Asks GitHub for the newest release every time, so the buttons never hand out an old file.
   function latest() {
     return fetch(API, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
-      var a = j && (j.assets || []).filter(function (x) { return /\.apk$/i.test(x.name); })[0];
-      return a ? { url: a.browser_download_url, tag: j.tag_name || '', name: j.name || '' } : null;
+      if (!j) return null;
+      var m = {}; (j.assets || []).forEach(function (x) { m[x.name] = x.browser_download_url; });
+      return { files: m, tag: j.tag_name || '', name: j.name || '' };
     }).catch(function () { return null; });
   }
   var ua = navigator.userAgent || '';
   var ios = /iPhone|iPad|iPod/i.test(ua), android = /Android/i.test(ua);
+  var mac = /Macintosh|Mac OS X/i.test(ua) && !ios, win = /Windows/i.test(ua), linux = /Linux/i.test(ua) && !android;
 
   var css = document.createElement('style');
   css.textContent = [
@@ -37,41 +40,66 @@
     '.ccdl-st b{font-weight:600}',
     '.ccdl-n{margin:16px 0 0;font-size:12px;color:var(--mut);line-height:1.5}',
     '.ccdl-x{display:block;width:100%;margin-top:10px;padding:10px;background:none;border:0;color:var(--mut);font:500 13px Poppins,system-ui,sans-serif;cursor:pointer}',
+    '.ccdl-tabs{display:flex;gap:6px;margin:16px 0 0;padding:4px;border-radius:999px;border:1px solid var(--line);background:color-mix(in srgb,var(--fg) 6%,transparent)}',
+    '.ccdl-tabs button{flex:1;min-height:38px;border:0;border-radius:999px;background:none;color:var(--fg);font:600 13px Poppins,system-ui,sans-serif;cursor:pointer}',
+    '.ccdl-tabs button.on{background:var(--fg);color:var(--bg)}',
+    '.ccdl-go.off{opacity:.45;pointer-events:none}',
+    '.ccdl-go.alt{background:none;color:var(--fg);border:1px solid var(--line);margin-top:10px}',
     '@keyframes ccdlf{from{opacity:0}}@keyframes ccdlu{from{transform:translateY(30px);opacity:0}}'
   ].join('');
   document.head.appendChild(css);
 
   var DL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>';
 
-  function steps() {
-    if (ios) return '<li><span>Open this page in <b>Safari</b>.</span></li><li><span>Tap the <b>Share</b> button, then <b>Add to Home Screen</b>.</span></li><li><span>Tap <b>Add</b>. Comrade Connect now opens like an app.</span></li>';
-    return '<li><span>Tap <b>Download for Android</b> above. If your browser says the file may be harmful, tap <b>Download anyway</b>. It is our own app.</span></li>'
+  var STEPS = {
+    android: '<li><span>Tap <b>Download for Android</b> above. If your browser says the file may be harmful, tap <b>Download anyway</b>. It is our own app.</span></li>'
       + '<li><span>When it finishes, tap <b>Open</b> on the download notice, or find <b>comrade-connect.apk</b> in <b>Files &gt; Downloads</b>.</span></li>'
       + '<li><span>If Android asks, tap <b>Settings</b> and switch on <b>Allow from this source</b>, then press back.</span></li>'
       + '<li><span>Tap <b>Install</b>. If Play Protect appears, choose <b>Install anyway</b>.</span></li>'
-      + '<li><span>Tap <b>Open</b> and sign in. Once opened, the app keeps working without data.</span></li>';
-  }
+      + '<li><span>Tap <b>Open</b> and sign in. Once opened, the app keeps working without data.</span></li>',
+    ios: '<li><span>Open <b>comradeconnect.co.ke</b> in <b>Safari</b> on your iPhone.</span></li>'
+      + '<li><span>Tap the <b>Share</b> button, then <b>Add to Home Screen</b>.</span></li>'
+      + '<li><span>Tap <b>Add</b>. Comrade Connect now sits on your Home Screen with its own icon and opens full screen, like an app.</span></li>',
+    pc: '<li><span>Pick your computer below and let the file download.</span></li>'
+      + '<li><span><b>Windows:</b> open <b>comrade-connect-setup.exe</b>. If Windows says it protected your PC, tap <b>More info</b>, then <b>Run anyway</b>.</span></li>'
+      + '<li><span><b>Mac:</b> open the <b>.dmg</b>, drag the app to <b>Applications</b>, then right-click it and choose <b>Open</b> the first time.</span></li>'
+      + '<li><span><b>Linux:</b> right-click the <b>.AppImage</b>, allow it to run as a program, then open it.</span></li>'
+  };
+  function btn(k, label, alt) { return '<a class="ccdl-go' + (alt ? ' alt' : '') + '" data-k="' + k + '" href="' + REL + FILES[k] + '" rel="noopener">' + DL + ' ' + label + '</a>'; }
 
   function open() {
+    var first = ios ? 'ios' : android ? 'android' : 'pc';
     var m = document.createElement('div'); m.className = 'ccdl-m'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Get the Comrade Connect app');
-    m.innerHTML = '<div class="ccdl-s"><div class="ccdl-h"><img src="/icon-192.png" alt="" width="56" height="56"><div><h3>Comrade Connect</h3><p>' + (ios ? 'Add it to your iPhone' : 'Android app &middot; Free &middot; Works offline') + '</p></div></div>'
-      + (ios ? '' : '<a class="ccdl-go" href="' + APK + '" rel="noopener">' + DL + ' Download for Android</a>')
-      + '<ol class="ccdl-st">' + steps() + '</ol>'
-      + (ios || android ? '' : '<p class="ccdl-n">You are on a computer. Open this website on your Android phone to install the app.</p>')
-      + '<p class="ccdl-n">Update later: download the new file and install it over the old app. Your account stays.</p>'
+    var macFirst = mac;
+    m.innerHTML = '<div class="ccdl-s"><div class="ccdl-h"><img src="/icon-192.png" alt="" width="56" height="56"><div><h3>Comrade Connect</h3><p>Free &middot; Android, iPhone and computer</p></div></div>'
+      + '<div class="ccdl-tabs" role="tablist"><button type="button" data-t="android">Android</button><button type="button" data-t="ios">iPhone</button><button type="button" data-t="pc">Computer</button></div>'
+      + '<div data-p="android">' + btn('apk', 'Download for Android') + '<ol class="ccdl-st">' + STEPS.android + '</ol><p class="ccdl-n">Update later: download the new file and install it over the old app. Your account stays.</p></div>'
+      + '<div data-p="ios" hidden><ol class="ccdl-st">' + STEPS.ios + '</ol><p class="ccdl-n">Safari is required on iPhone. A listing in the App Store comes later.</p></div>'
+      + '<div data-p="pc" hidden>' + (macFirst ? btn('macA', 'Download for Mac (Apple chip: M1 to M4)') + btn('macI', 'Mac with Intel chip', 1) + btn('win', 'Windows', 1) + btn('linux', 'Linux', 1)
+          : linux ? btn('linux', 'Download for Linux') + btn('win', 'Windows', 1) + btn('macA', 'Mac (Apple chip)', 1) + btn('macI', 'Mac (Intel chip)', 1)
+          : btn('win', 'Download for Windows') + btn('macA', 'Mac (Apple chip: M1 to M4)', 1) + btn('macI', 'Mac (Intel chip)', 1) + btn('linux', 'Linux', 1))
+        + '<ol class="ccdl-st">' + STEPS.pc + '</ol><p class="ccdl-n">The computer app opens the live website, so it is always the newest version, and keeps a copy for when you are offline.</p></div>'
+      + '<p class="ccdl-n" id="ccdl-v" style="text-align:center"></p>'
       + '<button class="ccdl-x" type="button">Close</button></div>';
+    var tab = function (t) {
+      Array.prototype.forEach.call(m.querySelectorAll('[data-t]'), function (b) { b.classList.toggle('on', b.dataset.t === t); });
+      Array.prototype.forEach.call(m.querySelectorAll('[data-p]'), function (d) { d.hidden = d.dataset.p !== t; });
+    };
+    m.querySelector('.ccdl-tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-t]'); if (b) tab(b.dataset.t); });
+    tab(first);
     var close = function () { m.remove(); document.removeEventListener('keydown', esc); };
     var esc = function (e) { if (e.key === 'Escape') close(); };
     m.addEventListener('click', function (e) { if (e.target === m) close(); });
     m.querySelector('.ccdl-x').onclick = close;
     document.addEventListener('keydown', esc);
     document.body.appendChild(m);
-    var go = m.querySelector('.ccdl-go');
-    if (go) latest().then(function (l) {
+    latest().then(function (l) {
       if (!l) return;
-      go.href = l.url;
-      var n = document.createElement('p'); n.className = 'ccdl-n'; n.style.textAlign = 'center'; n.style.marginTop = '8px';
-      n.textContent = 'Newest version: ' + (l.name || l.tag); go.insertAdjacentElement('afterend', n);
+      Array.prototype.forEach.call(m.querySelectorAll('a[data-k]'), function (a) {
+        var u = l.files[FILES[a.dataset.k]];
+        if (u) a.href = u; else { a.classList.add('off'); a.removeAttribute('href'); a.title = 'This file is still being built. Try again in a few minutes.'; }
+      });
+      var v = m.querySelector('#ccdl-v'); if (v) v.textContent = 'Newest version: ' + (l.name || l.tag);
     });
   }
 
@@ -80,7 +108,7 @@
     var host = document.querySelector('#v-feed .hero');
     if (!host) return false;
     var row = document.createElement('div'); row.className = 'ccdl-row';
-    row.innerHTML = '<button class="ccdl" id="ccdl" type="button" aria-label="Download the Comrade Connect app"><i>' + DL + '</i><span>' + (ios ? 'Install the app' : 'Download the app') + '<small>' + (ios ? 'Add to Home Screen' : 'Android &middot; Free') + '</small></span></button>';
+    row.innerHTML = '<button class="ccdl" id="ccdl" type="button" aria-label="Download the Comrade Connect app"><i>' + DL + '</i><span>' + 'Get the app' + '<small>' + 'Android &middot; iPhone &middot; Computer' + '</small></span></button>';
     var cta = host.querySelector('[data-open]'); var after = cta && cta.parentElement;
     if (after && after.parentElement === host) after.insertAdjacentElement('afterend', row); else host.appendChild(row);
     row.querySelector('#ccdl').onclick = open;

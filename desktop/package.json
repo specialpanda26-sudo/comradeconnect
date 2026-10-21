@@ -1,0 +1,23 @@
+{
+  "name": "comrade-connect-desktop",
+  "productName": "Comrade Connect",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Comrade Connect for Windows, Mac and Linux. Opens the live site and keeps an offline copy.",
+  "author": "Ogolla Tech <support@comradeconnect.co.ke>",
+  "homepage": "https://comradeconnect.co.ke",
+  "main": "main.js",
+  "scripts": { "start": "electron .", "dist": "electron-builder --publish never" },
+  "devDependencies": { "electron": "^33.4.0", "electron-builder": "^25.1.8" },
+  "build": {
+    "appId": "ke.co.comradeconnect.desktop",
+    "productName": "Comrade Connect",
+    "files": ["main.js", "preload.js", "icon.png", "site/**/*"],
+    "directories": { "output": "dist" },
+    "protocols": [{ "name": "Comrade Connect", "schemes": ["ke.co.comradeconnect.app"] }],
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "icon.png" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "artifactName": "comrade-connect-setup.exe" },
+    "mac": { "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }], "icon": "icon.png", "category": "public.app-category.social-networking", "artifactName": "comrade-connect-${arch}.dmg", "identity": null },
+    "linux": { "target": [{ "target": "AppImage", "arch": ["x64"] }], "icon": "icon.png", "category": "Network", "artifactName": "comrade-connect.AppImage" }
+  }
+}

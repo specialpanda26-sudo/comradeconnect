@@ -90,6 +90,6 @@ jobs:
         with:
           tag_name: app-${{ env.BUILD_N }}
           name: Comrade Connect app ${{ env.BUILD_N }}
-          body: Install comrade-connect.apk on your Android phone. Allow "Install unknown apps" for your browser when asked. Built from the latest changes on main.
+          body: "Install comrade-connect.apk on your Android phone. ${{ github.event.head_commit.message }}"
           make_latest: true
           files: android-wrapper/comrade-connect.apk

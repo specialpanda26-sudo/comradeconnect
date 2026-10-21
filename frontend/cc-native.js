@@ -46,28 +46,49 @@
   window.addEventListener('load', function () { setTimeout(autoAsk, 900); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(autoAsk, 500); });
 
-  // New version of the app? Show a bar with an Update button (the website itself cannot change the installed app).
+  // New version of the app? Ask the person: "Update now" or "Cancel". The website inside the app cannot change by itself, so every change you push
+  // builds a new APK (GitHub Releases); the app checks for it when it opens, when you come back to it, and when the internet returns.
   var REPO = 'specialpanda26-sudo/comradeconnect';
-  var checkUpdate = function () {
-    if (!P.App || !P.App.getInfo || navigator.onLine === false) return;
+  var updBusy = false, updOpen = false, updLast = 0;
+  var checkUpdate = function (force) {
+    if (updBusy || updOpen || !P.App || !P.App.getInfo || navigator.onLine === false) return;
+    if (force !== true && Date.now() - updLast < 20 * 60 * 1000) return;                 // at most every 20 minutes on its own
+    updBusy = true; updLast = Date.now();
     P.App.getInfo().then(function (i) {
       var cur = parseInt(String((i && i.version) || '').split('.').pop(), 10) || 0;
       return fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (rel) {
-        if (!rel) return;
+        var say = function (t) { if (force === true) { try { if (window.ccTools && ccTools.toast) ccTools.toast(t); else if (typeof toast === 'function') toast(t); } catch (e) {} } };
+        if (!rel) return say('Could not check for updates. Try again later.');
         var n = parseInt(String(rel.tag_name || '').replace(/\D/g, ''), 10) || 0;
         var a = (rel.assets || []).filter(function (x) { return /\.apk$/i.test(x.name); })[0];
-        var seen = 0; try { seen = +localStorage.getItem('cc_upd_seen') || 0; } catch (e) {}
-        if (!a || n <= cur || n <= seen) return;
-        var bar = document.createElement('div');
-        bar.style.cssText = 'position:fixed;left:10px;right:10px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:9000;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:18px;background:var(--bg,#000);color:var(--fg,#fff);border:1px solid var(--line,rgba(255,255,255,.2));font:500 13px Poppins,system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5)';
-        bar.innerHTML = '<span style="flex:1">A new version of Comrade Connect is ready.</span><button type="button" data-u style="border:0;border-radius:999px;padding:9px 16px;background:var(--fg,#fff);color:var(--bg,#000);font:600 13px Poppins,system-ui,sans-serif">Update</button><button type="button" data-x aria-label="Close" style="border:0;background:none;color:inherit;font-size:20px;padding:0 4px">&times;</button>';
-        bar.querySelector('[data-u]').onclick = function () { try { P.Browser.open({ url: a.browser_download_url }); } catch (e) { location.href = a.browser_download_url; } };
-        bar.querySelector('[data-x]').onclick = function () { try { localStorage.setItem('cc_upd_seen', String(n)); } catch (e) {} bar.remove(); };
-        document.body.appendChild(bar);
+        if (!a || n <= cur) return say('You already have the newest version.');
+        var until = 0; try { until = +localStorage.getItem('cc_upd_until_' + n) || 0; } catch (e) {}
+        if (force !== true && Date.now() < until) return;                                 // they tapped Cancel: ask again tomorrow
+        showUpdate(n, String(rel.body || ''), a.browser_download_url);
       });
-    }).catch(function () {});
+    }).catch(function () {}).then(function () { updBusy = false; });
   };
+  var showUpdate = function (n, notes, url) {
+    if (updOpen) return; updOpen = true;
+    var esc = function (t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    notes = notes.replace(/Install comrade-connect\.apk on your (Android )?phone\.?/i, '').replace(/[#*_`>]/g, '').trim().slice(0, 300);
+    var ov = document.createElement('div'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Update available');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10200;display:grid;place-items:center;padding:22px;background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:Poppins,system-ui,sans-serif';
+    ov.innerHTML = '<div style="width:100%;max-width:340px;border-radius:24px;padding:24px 22px 18px;background:var(--bg,#000);color:var(--fg,#fff);border:1px solid var(--gb,rgba(255,255,255,.28));text-align:center">'
+      + '<h2 style="margin:0 0 8px;font-size:21px;font-weight:700">Update available</h2>'
+      + '<p style="margin:0;font-size:14px;line-height:1.55;color:var(--mut,#bdbdbd)">A new version of Comrade Connect is ready.' + (notes ? '<br><span style="display:block;margin-top:10px;color:var(--fg,#fff)">What is new: ' + esc(notes) + '</span>' : '') + '</p>'
+      + '<button type="button" data-u style="width:100%;margin-top:18px;border:0;border-radius:999px;padding:14px;background:var(--fg,#fff);color:var(--bg,#000);font:600 15px Poppins,system-ui,sans-serif;cursor:pointer">Update now</button>'
+      + '<button type="button" data-x style="width:100%;margin-top:8px;border:0;background:none;color:var(--mut,#bdbdbd);padding:12px;font:500 14px Poppins,system-ui,sans-serif;cursor:pointer">Cancel</button>'
+      + '<p style="margin:6px 0 0;font-size:11px;color:var(--mut,#bdbdbd)">Your account and saved data stay as they are. When the download finishes, open it and tap Install.</p></div>';
+    var close = function () { updOpen = false; ov.remove(); };
+    ov.querySelector('[data-u]').onclick = function () { close(); try { P.Browser.open({ url: url }); } catch (e) { location.href = url; } };
+    ov.querySelector('[data-x]').onclick = function () { try { localStorage.setItem('cc_upd_until_' + n, String(Date.now() + 864e5)); } catch (e) {} close(); };
+    document.body.appendChild(ov);
+  };
+  window.ccApp.checkUpdate = function () { checkUpdate(true); };                          // "Check for updates" buttons can call this
   window.addEventListener('load', function () { setTimeout(checkUpdate, 4000); });
+  window.addEventListener('online', function () { setTimeout(checkUpdate, 1500); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(checkUpdate, 1200); });
 
   // In-app Google account picker: no web page and no redirect. Needs the Android client set up in Google Cloud (see README).
   var GA = function () { return P.GoogleAuth || (cap.registerPlugin ? cap.registerPlugin('GoogleAuth') : null); };

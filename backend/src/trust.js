@@ -39,7 +39,7 @@ export async function trustInfo(env, amount = 1000) {
   return {
     updated: TRUST_UPDATED,
     operator: {
-      name: String(env.OPERATOR_NAME || 'comradeconnect'), reg_no: String(env.OPERATOR_REG_NO || '') || null, odpc_no: String(env.ODPC_REG_NO || '') || null,
+      name: String(env.OPERATOR_NAME || 'Ogolla Tech, owned and run by Henry O. Odhiambo'), reg_no: String(env.OPERATOR_REG_NO || '') || null, odpc_no: String(env.ODPC_REG_NO || '') || null,
       address: String(env.OPERATOR_ADDRESS || 'Kerugoya, Kirinyaga, Kenya'), email: String(env.SUPPORT_EMAIL || 'support@comradeconnect.co.ke'), phone: String(env.SUPPORT_PHONE || '0720170794'),
     },
     payments: {

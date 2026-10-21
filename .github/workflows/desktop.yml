@@ -20,6 +20,17 @@ permissions:
   contents: write
 
 jobs:
+  names:
+    # Windows cannot even download a repo that holds a file name with a quote, colon, ? or * in it. This says so in plain words.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check file names are valid on Windows
+        run: |
+          bad=$(git ls-files | grep -E '[":<>|*?]' || true)
+          if [ -n "$bad" ]; then echo "These file names break the Windows build. Rename or delete them:"; echo "$bad"; exit 1; fi
+          echo "All file names are fine."
+
   build:
     strategy:
       fail-fast: false

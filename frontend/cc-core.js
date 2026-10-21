@@ -694,7 +694,7 @@ document.addEventListener('click', async (e) => {
 $('#wd').onclick = async () => {
   const bal = S.wallet ? S.wallet.balance : 0; if (!bal) return;
   if (!idOK()) return needId();
-  if (typeof bioGate === 'function' && !(await bioGate())) return toast('Face ID check failed');
+  if (typeof bioGate === 'function' && !(await bioGate())) return toast('Fingerprint check failed');
   const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. The money is sent straight to your M-Pesa, usually within a minute. Smallest withdrawal: ' + kes(CFG.min) + '. Largest: ' + kes(CFG.max) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
     + '<div class="fld" style="margin-top:10px"><input id="ccwp" inputmode="numeric" maxlength="12" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'
     + '<div class="fld"><input id="ccwa" type="number" inputmode="numeric" value="' + Math.min(bal, CFG.max) + '" aria-label="Amount in KSh"></div>'

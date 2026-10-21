@@ -156,13 +156,13 @@ export async function marketRoutes(req, env, url, ip) {
       return o ? json(env, { paid: 'wallet', order_id: o.id, amount: cash, credit: c.ksh, price: l.price }) : err(env, 'This item was just sold. Your money is back in your wallet.', 409);
     }
     const c = b.use_points ? await creditFor(env, u.aid, l.price) : { ksh: 0, pts: 0 };
-    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'order', ref_id: l.id, amount: l.price - c.ksh, phone: b.phone, credit_ksh: c.ksh });
+    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'order', ref_id: l.id, amount: l.price - c.ksh, phone: b.phone, credit_ksh: c.ksh, method: b.method, email: b.email });
     if (r.res) return r.res;
     if (c.ksh > 0 && !(await spendPoints(env, u.aid, c.pts, r.id))) {
       await patch(env, `payments?id=eq.${r.id}&status=eq.pending`, { status: 'failed' });
       return err(env, 'Not enough points. Try again without points.', 409);
     }
-    return json(env, { id: r.id, amount: l.price - c.ksh, credit: c.ksh, price: l.price });
+    return json(env, { id: r.id, url: r.url, amount: l.price - c.ksh, credit: c.ksh, price: l.price });
   }
 
   // ---- orders ----

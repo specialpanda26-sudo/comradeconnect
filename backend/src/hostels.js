@@ -69,9 +69,9 @@ export async function hostelRoutes(req, env, url, ip) {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const S = await getSettings(env), b = await body();
     if (await isCaretaker(env, u.aid)) return json(env, { registered: true });
-    if (!normPhone(b.phone)) return err(env, 'Enter a Safaricom or Airtel number like 0712345678');
-    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'caretaker', amount: S.hostel_reg_fee, phone: b.phone });
-    return r.res || json(env, { id: r.id, amount: S.hostel_reg_fee });
+    if (b.method !== 'card' && !normPhone(b.phone)) return err(env, 'Enter a Safaricom or Airtel number like 0712345678');
+    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'caretaker', amount: S.hostel_reg_fee, phone: b.phone, method: b.method, email: b.email });
+    return r.res || json(env, { id: r.id, url: r.url, amount: S.hostel_reg_fee });
   }
 
   const mm = path.match(/^\/api\/hostels\/([0-9a-f-]{36})\/(vacancies|remove)$/);

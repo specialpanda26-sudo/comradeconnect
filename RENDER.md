@@ -103,3 +103,9 @@ Runs on its own while you are away. IntaSend sends the prompt, tells us when it 
 4. Optional backup: also set `TINYPESA_API_KEY` and `TINYPESA_USERNAME`. If IntaSend refuses to send a prompt, TinyPesa is tried automatically.
 5. If a webhook is missed, the buyer's app and the 15-minute cron ask IntaSend directly, so nothing stays stuck.
 6. If money arrives after a payment expired, it goes to admin > Confirm M-Pesa for you to approve by hand (compare with your M-Pesa/IntaSend statement first).
+
+### Card payments (Visa and Mastercard) through IntaSend
+Every pay sheet then shows **M-Pesa | Card**. The buyer types the card on IntaSend's own secure page, so card numbers never reach our server.
+1. IntaSend dashboard > Settings > API Keys: also copy the **publishable key** (starts `ISPubKey_`) and set `INTASEND_PUBLISHABLE_KEY` on Render. Ask IntaSend to switch on card collections for your account.
+2. Optional: `INTASEND_CARD_TARIFF=CUSTOMER-PAYS` makes the buyer pay IntaSend's card fee (default `BUSINESS-PAYS`: you pay it). `SITE_URL` if your website is not https://comradeconnect.co.ke. `CARD_PAYMENTS=0` switches cards off.
+3. The same webhook as above confirms card payments. We always check the payment with IntaSend before crediting. Card payments are not retried by the 15-minute cron, so keep the webhook working; a payment that arrives late goes to admin > Confirm M-Pesa.

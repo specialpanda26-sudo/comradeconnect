@@ -65,10 +65,10 @@ export async function clubRoutes(req, env, url, ip) {
     if (took !== true) return err(env, 'Sorry, not enough stock', 409);
     const o = await one(await post(env, 'club_orders', { aid: u.aid, product_id: p.id, qty, amount: p.price * qty }));
     if (!o) { await sb(env, 'rpc/take_stock', { method: 'POST', body: JSON.stringify({ p: p.id, n: -qty }) }); return err(env, 'Could not save the order', 500); }
-    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'club', ref_id: o.id, amount: o.amount, phone: b.phone });
+    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'club', ref_id: o.id, amount: o.amount, phone: b.phone, method: b.method, email: b.email });
     if (r.res) { await restoreClubOrder(env, o.id); return r.res; }
     await patch(env, `club_orders?id=eq.${o.id}`, { payment_id: r.id });
-    return json(env, { id: r.id, order_id: o.id, amount: o.amount }, 201);
+    return json(env, { id: r.id, url: r.url, order_id: o.id, amount: o.amount }, 201);
   }
   if (path === '/api/club/orders/mine' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;
@@ -87,8 +87,8 @@ export async function clubRoutes(req, env, url, ip) {
     const have = await rows(await sb(env, `tickets?select=id&event_id=eq.${ev.id}&aid=eq.${enc(u.aid)}&status=neq.void`));
     if (have.length >= 4) return err(env, 'Maximum 4 tickets per person');
     if (ev.capacity) { const sold = await rows(await sb(env, `tickets?select=id&event_id=eq.${ev.id}&status=neq.void&limit=5000`)); if (sold.length >= ev.capacity) return err(env, 'This event is sold out', 409); }
-    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'ticket', ref_id: ev.id, amount: ev.ticket_price, phone: b.phone });
-    return r.res || json(env, { id: r.id, amount: ev.ticket_price }, 201);
+    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'ticket', ref_id: ev.id, amount: ev.ticket_price, phone: b.phone, method: b.method, email: b.email });
+    return r.res || json(env, { id: r.id, url: r.url, amount: ev.ticket_price }, 201);
   }
   if (path === '/api/tickets/mine' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;

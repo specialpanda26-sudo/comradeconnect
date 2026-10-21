@@ -41,9 +41,9 @@ export async function wholesaleRoutes(req, env, url, ip) {
       }
       return json(env, { active: true, until: await extendWholesale(env, u.aid) });
     }
-    if (!normPhone(b.phone)) return err(env, 'Enter a Safaricom or Airtel number like 0712345678');
-    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'wholesale', amount: S.wholesale_fee, phone: b.phone });
-    return r.res || json(env, { id: r.id, amount: S.wholesale_fee });
+    if (b.method !== 'card' && !normPhone(b.phone)) return err(env, 'Enter a Safaricom or Airtel number like 0712345678');
+    const r = await initPayment(env, ip, { aid: u.aid, purpose: 'wholesale', amount: S.wholesale_fee, phone: b.phone, method: b.method, email: b.email });
+    return r.res || json(env, { id: r.id, url: r.url, amount: S.wholesale_fee });
   }
   return null;
 }

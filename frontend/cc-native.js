@@ -82,7 +82,7 @@
       }, function (e) {
         var m = String((e && (e.message || e.error || e.code)) || e || '');
         if (/cancel|12501|12502|popup_closed|dismiss/i.test(m)) throw Object.assign(new Error('cancelled'), { cancelled: true });
-        if (/DEVELOPER_ERROR|10/.test(m)) throw new Error('Google sign-in is not set up for this app build yet. Add the Android client and SHA-1 in Google Cloud.');
+        if (/DEVELOPER_ERROR|10/.test(m)) throw Object.assign(new Error('Google sign-in is not set up for this app build yet.'), { devError: true });
         throw new Error('Google sign-in failed. Try again.');
       });
   };
@@ -90,7 +90,12 @@
   window.ccApp.googleLogin = function () {
     // The in-app picker is off by default: it crashes the app unless the Android client + SHA-1 are set up in Google Cloud.
     // Turn it on by setting CC_NATIVE_GOOGLE = true in frontend/config.js once that is done.
-    if (P.GoogleAuth && typeof CC_NATIVE_GOOGLE !== 'undefined' && CC_NATIVE_GOOGLE === true) return nativeGoogle();
+    if (P.GoogleAuth && typeof CC_NATIVE_GOOGLE !== 'undefined' && CC_NATIVE_GOOGLE === true) {
+      return nativeGoogle().catch(function (e) { if (e && e.devError) return browserGoogle(); throw e; });   // picker not set up in Google Cloud: use the secure browser tab instead
+    }
+    return browserGoogle();
+  };
+  var browserGoogle = function () {
     return new Promise(function (res, rej) {
       if (navigator.onLine === false) return rej(new Error('You are offline. Connect to data or Wi-Fi to sign in with Google.'));
       if (!P.Browser) return rej(new Error('Sign-in is not ready in this app version. Please update the app.'));

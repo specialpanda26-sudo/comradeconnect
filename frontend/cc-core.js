@@ -126,6 +126,24 @@ async function googleSignIn(credential) {                    // the fetch shim s
   setTimeout(() => { attributeRef(); syncVer(); }, 0);
   return d;
 }
+/* One Tap on the website: signed-out visitors get Google's own account list by itself (like the phone). Not in the app (it has its own picker). */
+async function ccOneTap() {
+  try {
+    if (!googleOn() || (window.ccApp && window.ccApp.native) || navigator.onLine === false) return;
+    const a = window.ccAuth && window.ccAuth();
+    if (ME.google || (a && a.token)) return;
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.protocol !== 'https:') return;   // Google refuses One Tap on plain http
+    let until = 0; try { until = +localStorage.getItem('cc_tap_until') || 0; } catch (e) {}
+    if (Date.now() < until) return;
+    if (!(await loadGsi())) return;
+    google.accounts.id.initialize({ client_id: CC_GOOGLE_ID, auto_select: false, cancel_on_tap_outside: true, use_fedcm_for_prompt: true,
+      callback: async (resp) => { try { await googleSignIn(resp.credential); location.reload(); } catch (e) { toast(e.message || 'Google sign-in failed. Try again.'); } } });
+    google.accounts.id.prompt((n) => {
+      try { if (n.isDismissedMoment() || n.isSkippedMoment()) localStorage.setItem('cc_tap_until', String(Date.now() + 864e5)); } catch (e) {}   // asked once a day at most
+    });
+  } catch (e) {}
+}
+window.addEventListener('load', () => setTimeout(ccOneTap, 3500));
 async function mountGoogle(box, onDone, onErr, opts) {
   if (!googleOn()) return false;
   if (window.ccApp && window.ccApp.native) return window.ccApp.mountGoogle(box, onDone, onErr, opts, googleSignIn);

@@ -26,5 +26,6 @@ services:
       - { key: MPESA_PAY_TYPE, value: send }
       - { key: MPESA_PAY_TO, sync: false }
       - { key: MPESA_PAY_NAME, sync: false }
+      - { key: INTASEND_PUBLISHABLE_KEY, sync: false }     # ISPubKey_... from IntaSend > Settings > API Keys (turns on the Card option)
       - { key: INTASEND_SECRET_KEY, sync: false }          # ISSecretKey_... from IntaSend > Settings > API Keys
       - { key: INTASEND_WEBHOOK_CHALLENGE, sync: false }   # same string you type as "Challenge" in the IntaSend webhook

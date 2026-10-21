@@ -15,6 +15,10 @@
   var android = /Android/i.test(navigator.userAgent);
   b.href = android ? intent : plain;
   setTimeout(function () { t.textContent = 'Almost done'; m.textContent = 'If the app did not open, tap the button.'; b.hidden = false; }, 1500);
-  location.replace(android ? intent : plain);
+  if (!android) {                                            // a computer or iPhone: there is no app to open, so never leave a blank page
+    t.textContent = 'You are signed in with Google'; m.textContent = 'You can close this tab and go back to Comrade Connect.';
+    b.textContent = 'Back to Comrade Connect'; b.href = '/'; b.hidden = false; return;   // fallbackNote
+  }
+  location.replace(intent);
 })();
 </script></body></html>

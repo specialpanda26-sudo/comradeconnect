@@ -117,8 +117,8 @@ function loadGsi() {
   });
   return gsiP;
 }
-async function googleSignIn(credential) {                    // the fetch shim sends the guest token too, so a guest account is linked, not lost
-  const d = await rawPost('/api/auth/google', { credential });
+async function googleSignIn(credential, link) {                    // the fetch shim sends the guest token too, so a guest account is linked, not lost
+  const d = await rawPost('/api/auth/google', { credential, mode: link ? 'link' : 'signin' });
   saveAuth({ aid: d.aid, token: d.token });
   ME.aid = d.aid; ME.google = 1;
   try { const j = JSON.parse(atob(credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); if (j.email) { const [u, dom] = String(j.email).split('@'); ME.gmask = u.slice(0, 2) + '***@' + dom; } } catch (e) {}
@@ -148,7 +148,7 @@ async function mountGoogle(box, onDone, onErr, opts) {
   if (!googleOn()) return false;
   if (window.ccApp && window.ccApp.native) return window.ccApp.mountGoogle(box, onDone, onErr, opts, googleSignIn);
   if (!(await loadGsi())) { box.innerHTML = '<p class="sub">Google sign-in could not load. Check your internet.</p>'; return false; }
-  google.accounts.id.initialize({ client_id: CC_GOOGLE_ID, callback: async (resp) => { try { onDone(await googleSignIn(resp.credential)); } catch (e) { onErr(e.message); } } });
+  google.accounts.id.initialize({ client_id: CC_GOOGLE_ID, callback: async (resp) => { try { onDone(await googleSignIn(resp.credential, !!(opts && opts.link))); } catch (e) { onErr(e.message); } } });
   google.accounts.id.renderButton(box, Object.assign({ theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', width: 280 }, opts || {}));
   if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !(location.protocol === 'https:' && !location.port) && box.parentNode && !box.parentNode.querySelector('.cc-lhint')) {
     const n = document.createElement('p'); n.className = 'sub cc-lhint'; n.style.cssText = 'font-size:11px;margin-top:8px;text-align:center';
@@ -1446,7 +1446,7 @@ window.ccMountSi = async function () {
   box.style.display = 'flex'; box.innerHTML = '<span class="note">Loading Google...</span>';
   const w = Math.max(200, Math.min(360, Math.floor((box.parentElement && box.parentElement.clientWidth) || 300) - 4));
   box.innerHTML = '';
-  const ok = await mountGoogle(box, () => { toast('Signed in with Google'); try { shut(); drawMe(); drawMe2(); } catch (e) {} refreshAll(); }, (msg) => say(msg || 'Google sign-in failed. Try again.'), { theme: 'outline', width: w });
+  const ok = await mountGoogle(box, () => { toast('Signed in with Google'); try { shut(); drawMe(); drawMe2(); } catch (e) {} refreshAll(); }, (msg) => say(msg || 'Google sign-in failed. Try again.'), { theme: 'outline', width: w, link: true });
   if (!ok) say('Google sign-in could not load. Check your internet. If you opened this link inside WhatsApp, Instagram or Facebook, open it in Chrome instead.');
 };
 function signOut() {

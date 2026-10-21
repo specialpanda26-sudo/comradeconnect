@@ -12,6 +12,7 @@
   var SCHEME = 'ke.co.comradeconnect.app';
   var CALLBACK = 'https://comradeconnect.co.ke/google-callback.html';   // must be listed as an Authorized redirect URI in Google Cloud
   var P = cap.Plugins || {};
+  ['Browser', 'App'].forEach(function (n) { try { if (!P[n] && cap.registerPlugin) P[n] = cap.registerPlugin(n); } catch (e) {} });   // plugins that are not listed on Capacitor.Plugins yet
   var pending = null;
 
   var rand = function () { var a = new Uint8Array(16); crypto.getRandomValues(a); return Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); };
@@ -69,9 +70,11 @@
   window.addEventListener('load', function () { setTimeout(checkUpdate, 4000); });
 
   // In-app Google account picker: no web page and no redirect. Needs the Android client set up in Google Cloud (see README).
+  var GA = function () { return P.GoogleAuth || (cap.registerPlugin ? cap.registerPlugin('GoogleAuth') : null); };
   var nativeGoogle = function () {
     if (navigator.onLine === false) return Promise.reject(new Error('You are offline. Connect to data or Wi-Fi to sign in with Google.'));
-    var G = P.GoogleAuth;
+    var G = GA();
+    if (!G || !G.signIn) return Promise.reject(Object.assign(new Error('Google picker missing'), { devError: true }));
     return Promise.resolve()
       .then(function () { return G.signOut ? G.signOut().catch(function () {}) : null; })      // so the account list shows every time
       .then(function () { return G.signIn(); })
@@ -90,7 +93,7 @@
   window.ccApp.googleLogin = function () {
     // The in-app picker is off by default: it crashes the app unless the Android client + SHA-1 are set up in Google Cloud.
     // Turn it on by setting CC_NATIVE_GOOGLE = true in frontend/config.js once that is done.
-    if (P.GoogleAuth && typeof CC_NATIVE_GOOGLE !== 'undefined' && CC_NATIVE_GOOGLE === true) {
+    if (GA() && typeof CC_NATIVE_GOOGLE !== 'undefined' && CC_NATIVE_GOOGLE === true) {
       return nativeGoogle().catch(function (e) { if (e && e.devError) return browserGoogle(); throw e; });   // picker not set up in Google Cloud: use the secure browser tab instead
     }
     return browserGoogle();
@@ -129,7 +132,7 @@
     var b = document.createElement('button'); b.type = 'button'; b.className = 'cc-gbtn'; b.innerHTML = G + '<span>Continue with Google</span>';
     b.onclick = function () {
       b.disabled = true;
-      window.ccApp.googleLogin().then(function (tok) { return sign(tok); }).then(onDone, function (e) { if (!(e && e.cancelled)) onErr((e && e.message) || 'Google sign-in failed. Try again.'); }).then(function () { b.disabled = false; });
+      window.ccApp.googleLogin().then(function (tok) { return sign(tok, !!(opts && opts.link)); }).then(onDone, function (e) { if (!(e && e.cancelled)) onErr((e && e.message) || 'Google sign-in failed. Try again.'); }).then(function () { b.disabled = false; });
     };
     box.appendChild(b);
     return true;

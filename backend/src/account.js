@@ -76,7 +76,8 @@ export async function accountRoutes(req, env, url, ip) {
   if (path === '/api/auth/google' && m === 'POST') {
     if (!env.GOOGLE_CLIENT_ID) return err(env, 'Google sign-in is not set up yet', 503);
     if (!(await throttle(env, ip, 'google', ip, 20, 20))) return tooMany(env);
-    const g = await googleVerify(env, str((await body()).credential, 4000));
+    const gb = await body(), mode = gb.mode === 'link' ? 'link' : 'signin';
+    const g = await googleVerify(env, str(gb.credential, 4000));
     if (!g) return err(env, 'Google sign-in failed. Try again.', 401);
     const cur = await authProfile(req, env);                       // guest account already on this phone, if any
     const token = randHex(24), tokHash = await H(env, 'tok:' + token);
@@ -88,7 +89,8 @@ export async function accountRoutes(req, env, url, ip) {
       await patch(env, `profiles?aid=eq.${enc(existing.aid)}`, { token_hash: tokHash });
       return json(env, { aid: existing.aid, token });
     }
-    if (cur && !cur.banned && !cur.google_sub) {                    // keep the guest account and its history
+    // Sign-in picks the account you chose. The guest account on this phone is only adopted when you asked to add Google to it (mode link) or it already holds orders, money or listings.
+    if (cur && !cur.banned && !cur.google_sub && (mode === 'link' || (await hasActivity(env, cur.aid)))) {
       const res = await patch(env, `profiles?aid=eq.${enc(cur.aid)}`, { google_sub: g.sub, token_hash: tokHash });
       if (res.status === 409) return err(env, 'This Google account is already in use', 409);
       return json(env, { aid: cur.aid, token, linked: true });

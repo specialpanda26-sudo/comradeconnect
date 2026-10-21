@@ -285,8 +285,11 @@ test('google sign-in: verifies the token, creates, links a guest, signs back in,
   assert.equal((await w.call('GET', '/api/me', { as: me })).status, 401, 'old token is dead');
   // a guest with no activity is linked, keeping its aid
   const guest = await w.user('guest');
-  const l = await g('good:sub2', guest);
+  const l = await w.call('POST', '/api/auth/google', { body: { credential: 'good:sub2', mode: 'link' }, as: guest, ip: '7.7.7.7' });
   assert.equal(l.status, 200); assert.equal(l.data.aid, guest.aid); assert.equal(l.data.linked, true);
+  const guest2 = await w.user('guest2');
+  const s2 = await g('good:sub3', guest2);
+  assert.equal(s2.status, 201); assert.notEqual(s2.data.aid, guest2.aid); assert.ok(s2.data.created);
   // a guest with a listing cannot be silently dropped when Google is already linked elsewhere
   const busy = await w.user('busy');
   await w.call('POST', '/api/market/listings', { as: busy, body: { title: 'Calculator Casio', description: 'Good condition', price: 1000, category: 'Electronics', zone: 'Town', contact_phone: '0722000111' } });

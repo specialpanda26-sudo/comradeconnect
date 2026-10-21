@@ -1476,7 +1476,7 @@ function signOut() {
   };
 }
 window.ccSignOut = signOut;
-window.ccGoogle = { on: googleOn, mount: mountGoogle };
+window.ccGoogle = { on: googleOn, mount: mountGoogle, signIn: googleSignIn };
 
 window.ccMarketTerms = () => S.list.map((l) => l.title);
 // Used by the first-open panel. kind 'password' = username + password, 'random' = anonymous account with a recovery code.

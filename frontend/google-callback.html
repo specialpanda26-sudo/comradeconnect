@@ -5,20 +5,26 @@
 <body><main><img src="/icon-192.png" alt="" width="84" height="84"><h1 id="t">Signing you in...</h1><p id="m">Returning to the Comrade Connect app.</p><a class="b" id="b" href="#" hidden>Open Comrade Connect</a></main>
 <script>
 (function () {
-  var h = new URLSearchParams(location.hash.slice(1)), tok = h.get('id_token'), st = h.get('state');
+  var h = new URLSearchParams(location.hash.slice(1)), qs = new URLSearchParams(location.search);
+  var tok = h.get('id_token'), st = h.get('state'), er = h.get('error') || qs.get('error');
   var t = document.getElementById('t'), m = document.getElementById('m'), b = document.getElementById('b');
   history.replaceState(null, '', location.pathname);
-  if (!tok) { t.textContent = 'Sign-in did not finish'; m.textContent = 'Close this tab and try again in the app.'; return; }
+  if (!tok) {
+    t.textContent = er === 'access_denied' ? 'Sign-in cancelled' : 'Sign-in did not finish';
+    m.textContent = 'Close this tab and try again in the app.' + (er && er !== 'access_denied' ? ' (' + String(er).slice(0, 60) + ')' : '');
+    b.textContent = 'Back to Comrade Connect'; b.href = '/'; b.hidden = false; return;
+  }
   var q = 'id_token=' + encodeURIComponent(tok) + '&state=' + encodeURIComponent(st || '');
   var plain = 'ke.co.comradeconnect.app://auth?' + q;
   var intent = 'intent://auth?' + q + '#Intent;scheme=ke.co.comradeconnect.app;package=ke.co.comradeconnect.app;end';
   var android = /Android/i.test(navigator.userAgent);
-  b.href = android ? intent : plain;
-  setTimeout(function () { t.textContent = 'Almost done'; m.textContent = 'If the app did not open, tap the button.'; b.hidden = false; }, 1500);
   if (!android) {                                            // a computer or iPhone: there is no app to open, so never leave a blank page
     t.textContent = 'You are signed in with Google'; m.textContent = 'You can close this tab and go back to Comrade Connect.';
-    b.textContent = 'Back to Comrade Connect'; b.href = '/'; b.hidden = false; return;   // fallbackNote
+    b.textContent = 'Back to Comrade Connect'; b.href = '/'; b.hidden = false; return;
   }
-  location.replace(intent);
+  // Chrome only lets a TAP open the app (a script alone is blocked), so the button is there from the start and the script also tries by itself.
+  b.href = intent; b.hidden = false; t.textContent = 'Almost done'; m.textContent = 'Tap the button to go back to the app.';
+  b.addEventListener('click', function () { setTimeout(function () { m.textContent = 'If nothing happened, close this tab and open Comrade Connect.'; }, 2500); });
+  try { location.replace(intent); } catch (e) {}
 })();
 </script></body></html>

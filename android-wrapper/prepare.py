@@ -107,7 +107,11 @@ def icons():
 def patch_deeplink():
     p = MAIN / 'AndroidManifest.xml'
     s = p.read_text(encoding='utf-8')
-    if 'ke.co.comradeconnect.app"' in s and 'android:host="auth"' in s:
+    # Android 12+ refuses to install/launch an activity with an intent-filter unless android:exported is set
+    if 'android:exported' not in s.split('<activity', 1)[-1].split('>', 1)[0]:
+        s = s.replace('<activity', '<activity android:exported="true"', 1)
+        p.write_text(s, encoding='utf-8')
+    if 'android:host="auth"' in s:
         return
     f = ('        <intent-filter>\n            <action android:name="android.intent.action.VIEW" />\n'
          '            <category android:name="android.intent.category.DEFAULT" />\n'

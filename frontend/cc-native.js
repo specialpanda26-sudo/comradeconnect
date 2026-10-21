@@ -14,10 +14,13 @@
   var P = cap.Plugins || {};
   ['Browser', 'App'].forEach(function (n) { try { if (!P[n] && cap.registerPlugin) P[n] = cap.registerPlugin(n); } catch (e) {} });   // plugins that are not listed on Capacitor.Plugins yet
   var pending = null;
+  var KEEP = 'cc_g_pending';
+  var keep = function (o) { try { if (o) localStorage.setItem(KEEP, JSON.stringify({ n: o.nonce, s: o.state, at: Date.now() })); else localStorage.removeItem(KEEP); } catch (e) {} };
+  var kept = function () { try { var o = JSON.parse(localStorage.getItem(KEEP) || 'null'); return o && Date.now() - o.at < 10 * 60 * 1000 ? o : null; } catch (e) { return null; } };
 
   var rand = function () { var a = new Uint8Array(16); crypto.getRandomValues(a); return Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); };
   var payload = function (t) { try { return JSON.parse(decodeURIComponent(escape(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { return {}; } };
-  var done = function (fn, v) { var p = pending; pending = null; if (p) { clearTimeout(p.t); p[fn](v); } };
+  var done = function (fn, v) { var p = pending; pending = null; keep(null); if (p) { clearTimeout(p.t); p[fn](v); } };
 
   // Real phone lock: fingerprint, face unlock or the phone's own PIN / pattern / password (no web page, no fake scan).
   var bioRecent = 0, bioBusy = false;
@@ -112,17 +115,36 @@
       var url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(CC_GOOGLE_ID)
         + '&redirect_uri=' + encodeURIComponent(CALLBACK) + '&response_type=id_token&scope=' + encodeURIComponent('openid profile')
         + '&nonce=' + nonce + '&state=' + state + '&prompt=select_account';
+      keep(pending);
       P.Browser.open({ url: url }).catch(function () { done('rej', new Error('Could not open Google. Try again.')); });
     });
   };
 
-  if (P.App) P.App.addListener('appUrlOpen', function (ev) {
-    var u = String((ev && ev.url) || ''); if (u.indexOf(SCHEME + '://') !== 0 || !pending) return;
-    var q = new URLSearchParams(u.split('?')[1] || '' ); var tok = q.get('id_token'), st = q.get('state');
+  // The sign-in came back. Normal case: the app was alive and is waiting (pending). Android sometimes closes the app while the
+  // browser tab is open; then the app starts again with no memory of the request, so we check it against the copy kept on the phone.
+  var handleReturn = function (u) {
+    u = String(u || ''); if (u.indexOf(SCHEME + '://') !== 0) return;
+    var q = new URLSearchParams(u.split('?')[1] || ''); var tok = q.get('id_token'), st = q.get('state');
     try { P.Browser && P.Browser.close(); } catch (e) {}
-    if (!tok || st !== pending.state || payload(tok).nonce !== pending.nonce) return done('rej', new Error('Google sign-in failed. Try again.'));
-    done('res', tok);
-  });
+    if (pending) {
+      if (!tok || st !== pending.state || payload(tok).nonce !== pending.nonce) return done('rej', new Error('Google sign-in failed. Try again.'));
+      return done('res', tok);
+    }
+    var k = kept(); keep(null);
+    if (!tok || !k || st !== k.s || payload(tok).nonce !== k.n) return;
+    var say = function (t) { try { if (window.ccTools && ccTools.toast) ccTools.toast(t); else if (typeof toast === 'function') toast(t); } catch (e) {} };
+    var go = function (n) {
+      if (window.ccGoogle && window.ccGoogle.signIn) {
+        window.ccGoogle.signIn(tok, false).then(function () { say('Signed in with Google'); setTimeout(function () { location.reload(); }, 400); },
+          function (e) { say((e && e.message) || 'Google sign-in failed. Try again.'); });
+      } else if (n < 20) setTimeout(function () { go(n + 1); }, 300);
+    };
+    go(0);
+  };
+  if (P.App) {
+    P.App.addListener('appUrlOpen', function (ev) { handleReturn(ev && ev.url); });
+    if (P.App.getLaunchUrl) P.App.getLaunchUrl().then(function (r) { if (r && r.url) handleReturn(r.url); }, function () {});
+  }
   if (P.Browser) P.Browser.addListener('browserFinished', function () {
     setTimeout(function () { if (pending) done('rej', Object.assign(new Error('cancelled'), { cancelled: true })); }, 5000);   // the tab was closed before signing in (long enough for the app link to arrive first)
   });

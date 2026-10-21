@@ -24,3 +24,9 @@ Camera and microphone (Live, ticket scanning), location (Wi-Fi map), notificatio
 
 ## Why there is no in-app Google picker
 The native picker plugin closed the whole app on some phones (Play services or SHA-1 mismatch, and a native crash cannot be caught). The app now always uses the secure browser tab described above, which works on every phone with a browser.
+
+## "App not installed" / "keeps stopping" (fixed)
+- Cause 1: builds without the signing secrets get a NEW random key every time, so Android refuses to update the old app. Run `bash android-wrapper/setup-signing.sh` once, then uninstall the old app ONE last time and install the new APK.
+- Cause 2: a build number lower than the installed one is refused as a downgrade. Build numbers now always go up (they come from the clock).
+- Cause 3: the main activity now always has `android:exported="true"` (needed on Android 12+).
+- Each build prints its package, version and signing fingerprint in the Actions run summary.

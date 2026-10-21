@@ -36,9 +36,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build number (the same number is used for the phone and computer apps)
+      - name: Build number (minutes since 2023-11-14, so every build is higher than the one before, even after a repo reset)
         working-directory: .
-        run: echo "BUILD_N=$(( $(git rev-list --count HEAD) + 100 ))" >> "$GITHUB_ENV"
+        run: echo "BUILD_N=$(( ($(date +%s) - 1700000000) / 60 + 1000 ))" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v4
         with:
@@ -48,6 +48,12 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+
+      - name: Check signing secrets are all set or all empty
+        working-directory: .
+        run: |
+          n=0; for v in "$KS_B64" "$KS_PASS" "$KS_ALIAS" "$KEY_PASS"; do [ -n "$v" ] && n=$((n+1)); done
+          if [ "$n" -ne 0 ] && [ "$n" -ne 4 ]; then echo "Only $n of the 4 signing secrets are set. Set all 4 (see android-wrapper/README.md) or remove them."; exit 1; fi
 
       - name: Pack the website into the app
         run: VERSION_NAME=1.0.${{ env.BUILD_N }} python3 bundle.py
@@ -80,6 +86,13 @@ jobs:
             cp app/build/outputs/apk/debug/app-debug.apk ../comrade-connect.apk
             echo "WARNING: no signing key set, so this APK uses a temporary key. It installs fine, but you must uninstall the old app before installing the next build. See android-wrapper/README.md to set up a permanent key." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Check the APK (package, version, signature)
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/aapt" dump badging comrade-connect.apk | grep -E "^package:|sdkVersion|targetSdkVersion" | tee -a "$GITHUB_STEP_SUMMARY"
+          "$BT/apksigner" verify --print-certs comrade-connect.apk | grep -E "SHA-256|Verified" | tee -a "$GITHUB_STEP_SUMMARY"
+          test "$(stat -c%s comrade-connect.apk)" -gt 1000000 || { echo "APK is too small, something went wrong"; exit 1; }
 
       - uses: actions/upload-artifact@v4
         with:

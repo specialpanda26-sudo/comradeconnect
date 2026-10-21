@@ -92,7 +92,7 @@ nav b{font-weight:700;letter-spacing:-.02em;font-size:16px}
 .cm form{display:flex;gap:8px;margin-top:12px}
 input,textarea,select{width:100%;font:400 14px Poppins,sans-serif;color:var(--fg);background:transparent;border:0;border-bottom:1.5px solid color-mix(in srgb,var(--fg) 30%,transparent);padding:12px 2px;border-radius:0;transition:border-color .3s}
 input:focus,textarea:focus,select:focus{border-bottom-color:var(--fg)}
-select option{background:#111;color:#fff}
+select option{background:var(--bg,#111);color:var(--fg,#fff)}
 .empty{text-align:center;color:var(--mut);font-size:14px;line-height:1.8;padding:50px 10px}
 /* fab + modal + toast */
 #fab{position:fixed;right:20px;bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:60;padding:16px 24px;box-shadow:var(--sh)}
@@ -1589,7 +1589,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
 <script src="cc-getapp.js?v=5"></script><script src="cc-firstrun.js?v=2"></script><script src="cc-core.js?v=rc7"></script><script src="cc-welcome.js?v=2"></script><script src="cc-scrollbg.js?v=2"></script><script src="cc-lockscreen.js?v=3"></script><script src="cc-receipt.js?v=3"></script><script src="cc-wifi.js?v=1"></script><script src="cc-hostels.js?v=1"></script><script src="cc-profile.js?v=2"></script><script src="cc-me.js?v=1"></script><script src="cc-closex.js?v=3"></script><script src="cc-nav.js?v=1"></script>
-<script src="cc-xcancel.js?v=2"></script>
+<script src="cc-xcancel.js?v=2"></script><script src="cc-zones.js?v=1"></script>
 <script src="cc-onewelcome.js?v=1"></script>
 <script src="cc-setup.js?v=1"></script>
 <script src="cc-update.js?v=2"></script>
@@ -1679,31 +1679,7 @@ pub();boost();
 })();
 </script>
 
-<script>
-/* Custom hostels: comrades can type their own hostel when dropping tea. */
-(function(){
-const KEY='cc_zones',sz=$('#sz'),zt=$('#zones');if(!sz||!zt)return;
-let C=ST.get(KEY,[]);if(!Array.isArray(C))C=[];
-const known=n=>ZONES.concat(C).some(z=>z.toLowerCase()===n.toLowerCase());
-function opt(n){return '<option>'+esc(n)+'</option>'}
-function tab(n){return '<button class="tab g" data-z="'+esc(n)+'">@'+esc(n)+'</button>'}
-function paint(){sz.querySelectorAll('[data-cz],[value="__add"]').forEach(o=>o.remove());
-C.forEach(n=>sz.insertAdjacentHTML('beforeend','<option data-cz="1">'+esc(n)+'</option>'));
-sz.insertAdjacentHTML('beforeend','<option value="__add">+ My hostel is not listed</option>');
-zt.querySelectorAll('[data-cz]').forEach(t=>t.remove());
-C.forEach(n=>zt.insertAdjacentHTML('beforeend',tab(n).replace('class="tab g"','class="tab g" data-cz="1"')))}
-sz.closest('.fld').insertAdjacentHTML('afterend','<div id="czw" hidden style="margin:8px 0"><div class="fld"><input id="czi" maxlength="30" placeholder="Type your hostel name, e.g. Sunrise Hostel" aria-label="Your hostel name"></div><div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="btn p" id="cza" style="flex:1">Add hostel</button><button type="button" class="btn g" id="czc" style="flex:1">Cancel</button></div></div>');
-const w=$('#czw');
-sz.addEventListener('change',()=>{w.hidden=sz.value!=='__add';if(!w.hidden)$('#czi').focus()});
-$('#czc').onclick=()=>{w.hidden=true;sz.value=''};
-$('#cza').onclick=()=>{let n=$('#czi').value.trim().replace(/\s+/g,' ');
-if(!/^[A-Za-z0-9 '&.-]{2,30}$/.test(n))return toast('Use 2 to 30 letters or numbers');
-const ex=ZONES.concat(C).find(z=>z.toLowerCase()===n.toLowerCase());
-if(!ex){C.push(n);ST.set(KEY,C)}else n=ex;
-paint();sz.value=n;w.hidden=true;$('#czi').value='';toast(ex?'Already listed, selected for you':'Hostel added')};
-paint();
-})();
-</script>
+<!-- custom zones: see cc-zones.js (adds "+ Add my own zone" to every zone list) -->
 
 <script>
 /* Custom categories for Drop your tea. */

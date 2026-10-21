@@ -32,7 +32,7 @@ def main():
         sys.exit('STOP: no frontend/index.html')
     if OUT.exists():
         shutil.rmtree(OUT)
-    shutil.copytree(SRC, OUT, ignore=shutil.ignore_patterns('bg-4k.mp4', 'admin*.html', 'admin-*.js'))
+    shutil.copytree(SRC, OUT, ignore=shutil.ignore_patterns('bg-4k.mp4'))
     VENDOR.mkdir(parents=True, exist_ok=True)
 
     idx = OUT / 'index.html'

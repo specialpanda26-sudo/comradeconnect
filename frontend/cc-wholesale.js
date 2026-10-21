@@ -11,7 +11,7 @@ var W = null, busy = false;
 var call = function () { return window.CC.call.apply(null, arguments); };
 var phone = function () { try { return localStorage.getItem('cc_phone') || ''; } catch (e) { return ''; } };
 var savePhone = function (v) { try { localStorage.setItem('cc_phone', v); } catch (e) {} };
-var okPhone = function (v) { return /^(07|01)\d{8}$/.test(v); };
+var okPhone = function (v) { return /^(07|01)(?!(\d)\2{7}$)\d{8}$/.test(v); };
 
 function sheet(title, intro) {
   var m = el('div'); m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';

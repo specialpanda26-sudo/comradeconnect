@@ -9,7 +9,7 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var say = function (m) { try { toast(m); } catch (e) {} };
   var kes = function (n) { return 'KSh ' + Number(n || 0).toLocaleString('en-KE'); };
-  var okPhone = function (v) { return /^(07|01)\d{8}$/.test(v); };
+  var okPhone = function (v) { return /^(07|01)(?!(\d)\2{7}$)\d{8}$/.test(v); };
   var MAXP = 8;
   var ROOMS = ['Single', 'Bedsitter', 'Double', 'Shared', 'One bedroom'];
   var AMEN = ['Water', 'Electricity', 'Wi-Fi', 'Security', 'Laundry', 'Parking', 'Gas', 'Furnished', 'CCTV', 'Shower', 'Study room'];

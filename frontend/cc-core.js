@@ -525,7 +525,7 @@ $('#mvbuy').onclick = () => {
 $('#bpay').onclick = async () => {
   if (S.paying || !S.buyL) return;
   const v = $('#bph').value.replace(/\s/g, '');
-  if (!/^(07|01)\d{8}$/.test(v)) return ($('#bpe').textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
+  if (!/^(07|01)(?!(\d)\2{7}$)\d{8}$/.test(v)) return ($('#bpe').textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
   const l = S.buyL; S.paying = true; bs(3);
   const pay = l.price - (S.usePts ? S.ptsKsh : 0), ps = paySteps($('#dm [data-bs="3"]'), v, pay);
   try {
@@ -1255,7 +1255,7 @@ function payNow(o) {
   q('#ccpg').onclick = async () => {
     if (busy) return;
     const v = q('#ccpp').value.replace(/\s/g, '');
-    if (!/^(07|01)\d{8}$/.test(v)) return (q('#ccpe').textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
+    if (!/^(07|01)(?!(\d)\2{7}$)\d{8}$/.test(v)) return (q('#ccpe').textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
     busy = true; q('#ccpe').textContent = ''; show('w');
     const total = o.unit * qty(), ps = paySteps(q('#ccpw'), v, total, o.kind || 'club');
     try {

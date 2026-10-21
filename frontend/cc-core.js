@@ -184,9 +184,9 @@ async function restoreAccount(aid, code) {
   setTimeout(() => { syncVer(); refreshReferral(true); }, 0);
   return d;
 }
-function promptRestore(msg) {
+function promptRestore(msg, title) {
   if (document.getElementById('ccrst')) return;
-  const m = sheet('<h3>Sign in again</h3><p class="sub" style="margin-top:6px">' + esc(msg || 'This phone is not signed in to your account.') + '</p>'
+  const m = sheet('<h3>' + esc(title || 'Sign in again') + '</h3><p class="sub" style="margin-top:6px">' + esc(msg || 'This phone is not signed in to your account.') + '</p>'
     + (googleOn() ? '<div id="ccrg" style="display:flex;justify-content:center;margin-top:12px;min-height:44px"></div><p class="sub" style="text-align:center;margin-top:8px">or use the recovery code you saved</p>' : '<p class="sub">Enter the account ID and recovery code you saved.</p>')
     + '<div class="fld" style="margin-top:10px"><input id="ccrst-a" placeholder="Account ID or username" autocomplete="off" autocapitalize="off" aria-label="Account ID or username"></div>'
     + '<div class="fld"><input id="ccrst-c" type="password" placeholder="Password or recovery code" autocomplete="off" autocapitalize="off" aria-label="Password or recovery code"></div>'
@@ -1461,7 +1461,18 @@ window.ccSignOut = signOut;
 window.ccGoogle = { on: googleOn, mount: mountGoogle };
 
 window.ccMarketTerms = () => S.list.map((l) => l.title);
-window.CC = { needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid, payNow };
+// Used by the first-open panel. kind 'password' = username + password, 'random' = anonymous account with a recovery code.
+async function createAccount(kind) {
+  if (!connected()) throw new Error('We cannot reach the service right now. Please try again in a moment.');
+  const d = kind === 'random' ? await rawPost('/api/auth/register', {}) : await registerFlow();
+  saveAuth({ aid: d.aid, token: d.token });
+  if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
+  ME.aid = d.aid; saveMe();
+  await showRecovery(d);
+  setTimeout(() => { attributeRef(); syncVer(); refreshAll(); }, 0);
+  return { aid: d.aid, token: d.token };
+}
+window.CC = { createAccount, signIn: (msg) => promptRestore(msg || 'Enter your username or account ID and your password or recovery code.', 'Log in'), needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid, payNow };
 window.ccSteps = { paySteps, withdrawFlow, stepsCss };
 window.ccTools = { sheet, call, toast, copyText, sleep };   // used by cc-tickets.js   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections
 })();

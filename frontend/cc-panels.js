@@ -37,9 +37,7 @@ st.textContent = [
   '#feed{max-width:min(1100px,100%)!important}',
   '#feed:not(.grid){grid-template-columns:repeat(auto-fill,minmax(400px,1fr))}',
   '}',
-  '.ccp-ov .ccx-b{display:none!important}',
-  /* a panel's own header X is kept in the page (the bar's X taps it) but made invisible, so there is only ONE X */
-  '.ccp-own{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;padding:0!important;margin:0!important;border:0!important}'
+  '.ccp-ov .ccx-b{display:none!important}'
 ].join('');
 document.head.appendChild(st);
 
@@ -81,6 +79,9 @@ function dress(ov) {
   ov.classList.add('ccp-ov'); box.classList.add('ccp-box');
   Array.prototype.forEach.call(ov.querySelectorAll('.ccx-b'), function (n) { n.remove(); });
   var bar = box.querySelector(':scope > .ccpb');
+  // The panel already has its own X (plain icon in its heading row): keep THAT one and draw no bar, so there is only one X.
+  var own = Array.prototype.filter.call(box.querySelectorAll('button[aria-label="Close"],button.xb,.fid-x,[data-close]'), function (n) { return !n.closest('.ccpb,.ccpf') && shown(n); })[0];
+  if (own) { if (bar) bar.remove(); return; }
   if (!bar) {
     bar = document.createElement('div'); bar.className = 'ccpb';
     var h = document.createElement('h4');
@@ -90,9 +91,6 @@ function dress(ov) {
     bar.style.margin = '-' + cs.paddingTop + ' -' + cs.paddingRight + ' 14px -' + cs.paddingLeft;
     if (parseFloat(cs.paddingTop) < 1) bar.style.margin = '0 0 14px';
   }
-  Array.prototype.forEach.call(box.querySelectorAll('button[aria-label="Close"],button.xb,.fid-x,[data-close]'), function (n) {
-    if (!n.closest('.ccpb,.ccpf')) n.classList.add('ccp-own');            // the panel's own X: the bar already has one
-  });
   var hh = bar.querySelector('h4'), t = titleOf(ov, box); if (hh.textContent !== t) hh.textContent = t;
 }
 

@@ -40,6 +40,7 @@ jobs:
           mkdir -p desktop/site
           cp -r frontend/. desktop/site/
           cp frontend/icon-512.png desktop/icon.png
+          rm -f desktop/site/media/bg-4k.mp4 desktop/site/admin*.html desktop/site/admin-*.js   # keep the installer small
 
       - name: Build the app
         working-directory: desktop
@@ -70,9 +71,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build number
-        run: echo "BUILD_N=$(( $(git rev-list --count HEAD) + 100 ))" >> "$GITHUB_ENV"
-
       - uses: actions/download-artifact@v4
         with:
           pattern: desktop-*
@@ -84,9 +82,13 @@ jobs:
           ls -la files || true
           ls files/* >/dev/null 2>&1 || { echo "No desktop files were built, nothing to publish."; exit 1; }
 
+      # One fixed release, "desktop-latest": the website's Windows/Mac/Linux buttons always point here,
+      # so they never depend on the Android release being ready at the same moment. Files are replaced on every build.
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: app-${{ env.BUILD_N }}
-          name: Comrade Connect app ${{ env.BUILD_N }}
-          make_latest: true
+          tag_name: desktop-latest
+          name: Comrade Connect desktop apps (latest)
+          body: Windows, Mac and Linux apps. The newest build replaces the files here. Android is under the app-NNN releases.
+          make_latest: false
+          overwrite_files: true
           files: files/*

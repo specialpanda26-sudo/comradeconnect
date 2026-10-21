@@ -53,9 +53,16 @@
     $('#ccwb-no', b).onclick = function () { close(true); };
     $('#ccwb-go', b).onclick = async function () {
       if (signedIn()) { close(true); return; }
-      try { if (window.CC && CC.ensureAccount) { await CC.ensureAccount(); close(true); } } catch (e) { /* cancelled: the banner stays */ }
+      if (window.ccAuthPanel) {                                           // the same Log in / Create account panel as first open
+        window.ccAuthPanel();
+        var t = setInterval(function () { if (signedIn()) { clearInterval(t); close(true); } }, 700);
+        setTimeout(function () { clearInterval(t); }, 600000);
+        return;
+      }
+      try { if (window.CC && CC.ensureAccount) { await CC.ensureAccount(); close(true); } }
+      catch (e) { try { toast((e && e.message) || 'Could not create the account. Try again.'); } catch (x) {} }   // cancelled or failed: the banner stays
     };
-  }
+  };
   window.addEventListener('load', function () { setTimeout(show, 80); });
   if (document.readyState === 'complete') setTimeout(show, 80);
 })();

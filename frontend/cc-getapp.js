@@ -5,6 +5,7 @@
   if (window.__ccGetApp) return; window.__ccGetApp = 1;
   if (window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) return;
   var REL = 'https://github.com/specialpanda26-sudo/comradeconnect/releases/latest/download/';
+  var DREL = 'https://github.com/specialpanda26-sudo/comradeconnect/releases/download/desktop-latest/';   // computer apps always live here
   var API = 'https://api.github.com/repos/specialpanda26-sudo/comradeconnect/releases?per_page=20';
   var FILES = { apk: 'comrade-connect.apk', win: 'comrade-connect-setup.exe', macA: 'comrade-connect-arm64.dmg', macI: 'comrade-connect-x64.dmg', linux: 'comrade-connect.AppImage' };
   // Asks GitHub for the recent releases and, for EACH file, uses the newest release that really contains it.
@@ -19,6 +20,7 @@
         if (!head) head = j;
         (j.assets || []).forEach(function (x) { if (!m[x.name]) m[x.name] = x.browser_download_url; });
       });
+      list.forEach(function (j) { if (j.tag_name === 'desktop-latest') (j.assets || []).forEach(function (x) { m[x.name] = x.browser_download_url; }); });   // computer files: always from the fixed release
       return head ? { files: m, tag: head.tag_name || '', name: head.name || '' } : null;
     }).catch(function () { return null; });
   }
@@ -77,7 +79,7 @@
       + '<li><span><b>Mac:</b> open the <b>.dmg</b>, drag the app to <b>Applications</b>, then right-click it and choose <b>Open</b> the first time.</span></li>'
       + '<li><span><b>Linux:</b> right-click the <b>.AppImage</b>, allow it to run as a program, then open it.</span></li>'
   };
-  function btn(k, label, alt) { return '<a class="ccdl-go' + (alt ? ' alt' : '') + '" data-k="' + k + '" href="' + REL + FILES[k] + '" rel="noopener">' + DL + ' ' + label + '</a>'; }
+  function btn(k, label, alt) { return '<a class="ccdl-go' + (alt ? ' alt' : '') + '" data-k="' + k + '" href="' + (k === 'apk' ? REL : DREL) + FILES[k] + '" rel="noopener">' + DL + ' ' + label + '</a>'; }
 
   function open() {
     var first = ios ? 'ios' : android ? 'android' : 'pc';

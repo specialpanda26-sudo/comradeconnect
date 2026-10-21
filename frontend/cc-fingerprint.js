@@ -100,7 +100,7 @@
       root.querySelector('#fpx-cancel').onclick = function () { finish(false); };
       again.onclick = attempt;
       var tap = root.querySelector('#fpx-tap'); if (tap) tap.onclick = function () { if (!again.hidden) attempt(); };
-      var pw = root.querySelector('#fpx-pw'); if (pw) pw.onclick = function () { finish(false); setTimeout(function () { var c = document.getElementById('lkc'); if (c) { c.scrollIntoView({ block: 'center' }); c.focus(); } }, 320); };
+      var pw = root.querySelector('#fpx-pw'); if (pw) pw.onclick = function () { finish(false); setTimeout(function () { var lkk = document.getElementById('lk'); if (lkk) lkk.classList.add('rec'); var c = document.getElementById('lkc'); if (c) { c.scrollIntoView({ block: 'center' }); c.focus(); } }, 320); };
       var sw = root.querySelector('#fpx-sw'); if (sw) sw.onclick = function (e) { e.preventDefault(); finish(false); setTimeout(function () { try { window.ccAuthPanel && window.ccAuthPanel(); } catch (x) {} }, 320); };
       var hp = root.querySelector('#fpx-hp'); if (hp) hp.onclick = function (e) {
         e.preventDefault(); var u = 'https://comradeconnect.co.ke/contact.html', B = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Browser;

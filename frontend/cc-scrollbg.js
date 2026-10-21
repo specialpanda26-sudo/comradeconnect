@@ -5,6 +5,14 @@
   'use strict';
   if (window.__ccBgv) return; window.__ccBgv = 1;
   var bg = document.querySelector('.bg'); if (!bg) return;
+  // The admin can switch the video off (Site editor > App look).
+  try { var _s = JSON.parse(localStorage.getItem('cc_site_v1') || '{}'); if (_s && _s.scroll_video_off) { window.__ccBgv = 0; return; } } catch (e) {}
+  document.addEventListener('cc-site', function (ev) {
+    if (ev.detail && ev.detail.scroll_video_off) {
+      var vv = document.querySelector('.bgv'), sc = document.querySelector('.bgv-scrim');
+      if (vv) vv.remove(); if (sc) sc.remove(); document.body.classList.remove('cc-bgv-on');
+    }
+  });
 
   var BASE = (document.currentScript && document.currentScript.src ? document.currentScript.src.replace(/[^\/]*$/, '') : '') || '';
   var SRC4K = BASE + 'media/bg-4k.mp4?v=1', SRC1080 = BASE + 'media/bg-1080.mp4?v=1', POSTER = BASE + 'media/bg-poster.webp?v=1';

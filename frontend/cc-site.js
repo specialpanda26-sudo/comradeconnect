@@ -47,6 +47,7 @@ function apply() {
     q('p', m).textContent = C.maintenance_text || 'We are fixing something. Please check again in a little while.';
   } else if (m) m.remove();
   links();
+  try { document.dispatchEvent(new CustomEvent('cc-site', { detail: C })); } catch (e) {}
 }
 
 // "Staff sign in" on the maintenance cover: only an admin account gets past it

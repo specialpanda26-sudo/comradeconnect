@@ -22,8 +22,5 @@ On your API host (Render) add `https://localhost` to `ALLOWED_ORIGINS` (comma se
 ## What the app can do
 Camera and microphone (Live, ticket scanning), location (Wi-Fi map), notifications, and opening WhatsApp, calls and maps outside the app.
 
-## In-app Google sign-in (no web page)
-The app shows the phone's own Google account picker and stays inside the app. One-time setup in Google Cloud > Credentials:
-1. Create credentials > OAuth client ID > type **Android**. Package name `ke.co.comradeconnect.app`. SHA-1 = the SHA-1 of the key that signs your APK (the one from make-keystore.sh: `keytool -list -v -keystore YOUR.jks -alias YOUR_ALIAS`). Without your own signing key the SHA-1 changes every build and sign-in will not work.
-2. Keep your existing **Web** client as it is. The app uses its ID (frontend/config.js) and your server needs no change.
-3. Build the APK again. Old builds keep using the browser-tab sign-in.
+## Why there is no in-app Google picker
+The native picker plugin closed the whole app on some phones (Play services or SHA-1 mismatch, and a native crash cannot be caught). The app now always uses the secure browser tab described above, which works on every phone with a browser.

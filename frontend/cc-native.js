@@ -90,34 +90,18 @@
   window.addEventListener('online', function () { setTimeout(checkUpdate, 1500); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(checkUpdate, 1200); });
 
-  // In-app Google account picker: no web page and no redirect. Needs the Android client set up in Google Cloud (see README).
-  var GA = function () { return P.GoogleAuth || (cap.registerPlugin ? cap.registerPlugin('GoogleAuth') : null); };
-  var nativeGoogle = function () {
-    if (navigator.onLine === false) return Promise.reject(new Error('You are offline. Connect to data or Wi-Fi to sign in with Google.'));
-    var G = GA();
-    if (!G || !G.signIn) return Promise.reject(Object.assign(new Error('Google picker missing'), { devError: true }));
-    return Promise.resolve()
-      .then(function () { return G.signOut ? G.signOut().catch(function () {}) : null; })      // so the account list shows every time
-      .then(function () { return G.signIn(); })
-      .then(function (u) {
-        var t = u && u.authentication && u.authentication.idToken;
-        if (!t) throw new Error('Google sign-in failed. Try again.');
-        return t;
-      }, function (e) {
-        var m = String((e && (e.message || e.error || e.code)) || e || '');
-        if (/cancel|12501|12502|popup_closed|dismiss/i.test(m)) throw Object.assign(new Error('cancelled'), { cancelled: true });
-        if (/DEVELOPER_ERROR|10/.test(m)) throw Object.assign(new Error('Google sign-in is not set up for this app build yet.'), { devError: true });
-        throw new Error('Google sign-in failed. Try again.');
-      });
-  };
+  // Google sign-in uses the phone's secure browser tab (Chrome Custom Tab). The old in-app picker plugin was removed: it closed the whole app
+  // ("Unfortunately, Comrade Connect has stopped") on phones where Google Play services or the SHA-1 key did not match, and a native crash cannot be caught.
+  window.ccApp.googleLogin = function () { return browserGoogle(); };
 
-  window.ccApp.googleLogin = function () {
-    // The in-app picker is off by default: it crashes the app unless the Android client + SHA-1 are set up in Google Cloud.
-    // Turn it on by setting CC_NATIVE_GOOGLE = true in frontend/config.js once that is done.
-    if (GA() && typeof CC_NATIVE_GOOGLE !== 'undefined' && CC_NATIVE_GOOGLE === true) {
-      return nativeGoogle().catch(function (e) { if (e && e.devError) return browserGoogle(); throw e; });   // picker not set up in Google Cloud: use the secure browser tab instead
-    }
-    return browserGoogle();
+  // Open any link in the secure tab (card page, update download, etc). Resolves true if the tab opened.
+  window.ccApp.open = function (url) {
+    return new Promise(function (res) {
+      try {
+        if (P.Browser && P.Browser.open) { P.Browser.open({ url: url }).then(function () { res(true); }, function () { res(false); }); return; }
+      } catch (e) {}
+      res(false);
+    });
   };
   var browserGoogle = function () {
     return new Promise(function (res, rej) {
@@ -128,7 +112,7 @@
       var url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(CC_GOOGLE_ID)
         + '&redirect_uri=' + encodeURIComponent(CALLBACK) + '&response_type=id_token&scope=' + encodeURIComponent('openid profile')
         + '&nonce=' + nonce + '&state=' + state + '&prompt=select_account';
-      P.Browser.open({ url: url, presentationStyle: 'popover' }).catch(function () { done('rej', new Error('Could not open Google. Try again.')); });
+      P.Browser.open({ url: url }).catch(function () { done('rej', new Error('Could not open Google. Try again.')); });
     });
   };
 
@@ -140,7 +124,7 @@
     done('res', tok);
   });
   if (P.Browser) P.Browser.addListener('browserFinished', function () {
-    setTimeout(function () { if (pending) done('rej', Object.assign(new Error('cancelled'), { cancelled: true })); }, 2500);   // the tab was closed before signing in (long enough for the app link to arrive first)
+    setTimeout(function () { if (pending) done('rej', Object.assign(new Error('cancelled'), { cancelled: true })); }, 5000);   // the tab was closed before signing in (long enough for the app link to arrive first)
   });
 
   var G = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.9 2.3-8.5 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>';

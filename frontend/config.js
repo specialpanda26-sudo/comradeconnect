@@ -3,5 +3,5 @@
    CC_GOOGLE_ID: the OAuth Web client ID from Google Cloud (public value, not a secret). Empty = Google button hidden. */
 const CC_API = 'https://comradeconnectback.onrender.com';
 const CC_GOOGLE_ID = '628050649968-umh0eflaigqqet517sj7te2oa9h0bsmq.apps.googleusercontent.com';
-const CC_NATIVE_GOOGLE = true;    // true = in-app Google account picker (needs the Android client + SHA-1 in Google Cloud, see android-wrapper/README.md)
+const CC_NATIVE_GOOGLE = false;   // the in-app picker plugin was removed (it crashed some phones); the app signs in through the phone's secure browser tab
 const CC_AGORA_ID = '79e2fffbbb174dc68ef55905a227d9f8';

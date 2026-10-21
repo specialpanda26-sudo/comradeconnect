@@ -65,19 +65,33 @@ new MutationObserver(queue).observe(document.documentElement, { childList: true,
 var isCard = function () { return states.some(function (s) { return s.on && s.input.isConnected; }); };
 
 // open the card page without losing the sheet that is waiting for the result
+var closePre = function () { try { if (pre && !pre.closed) pre.close(); } catch (e) {} pre = null; };
 document.addEventListener('click', function (e) {
   if (native || !isCard()) return;
   var b = e.target.closest && e.target.closest('button[data-cc-card]'); if (!b) return;
-  pre = window.open('', '_blank');
-  if (pre) { try { pre.document.write('<p style="font:16px system-ui;padding:24px">Opening the secure card page...</p>'); } catch (x) {} setTimeout(function () { try { if (pre && !pre.closed && pre.location.href === 'about:blank') pre.close(); } catch (y) {} }, 25000); }
+  closePre();
+  try { pre = window.open('', '_blank'); } catch (x) { pre = null; }
+  if (pre) {
+    try { pre.document.write('<meta name="viewport" content="width=device-width,initial-scale=1"><body style="background:#000;color:#fff;font:16px system-ui;padding:24px"><p>Opening the secure card page...</p>'); } catch (x) {}
+    // the server can take a while to wake up, so wait a full 90 seconds before giving up on the blank tab
+    setTimeout(function () { try { if (pre && !pre.closed) { var h = ''; try { h = pre.location.href; } catch (c) { h = 'x'; } if (h === 'about:blank') pre.close(); } } catch (y) {} }, 90000);
+  }
 }, true);
 function openCard(url) {
-  if (!/^https:\/\//.test(url)) return;
-  var B = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Browser;
-  if (native && B) { try { B.open({ url: url }); return; } catch (e) {} }
+  if (!/^https:\/\//.test(url)) return closePre();
+  if (native) {                                                    // inside the app: the phone's secure browser tab
+    var A = window.ccApp;
+    if (A && A.open) { A.open(url).then(function (ok) { if (!ok) location.href = url; }); return; }
+    var B = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Browser;
+    if (B) { try { B.open({ url: url }); return; } catch (e) {} }
+    location.href = url; return;
+  }
   if (pre && !pre.closed) { try { pre.location.href = url; pre = null; return; } catch (e) {} }
-  if (!window.open(url, '_blank')) location.href = url;
+  closePre();
+  var w = null; try { w = window.open(url, '_blank'); } catch (e) {}
+  if (!w) location.href = url;                                     // pop-up blocked: open the card page in this tab
 }
+function cardFailed() { closePre(); }
 
 var realFetch = window.fetch.bind(window);
 window.fetch = function (input, init) {
@@ -92,9 +106,9 @@ window.fetch = function (input, init) {
   var p = realFetch(input, init);
   if (!want) return p;
   return p.then(function (res) {
-    res.clone().json().then(function (j) { if (j && j.url) openCard(String(j.url)); }, function () {});
+    res.clone().json().then(function (j) { if (j && j.url) openCard(String(j.url)); else cardFailed(); }, cardFailed);
     return res;
-  });
+  }, function (e) { cardFailed(); throw e; });
 };
 load();
 })();

@@ -103,8 +103,7 @@
           ? '<div class="fpx-tabs" role="tablist" aria-label="Choose how to confirm">' + kinds.map(function (x) {
               return '<button type="button" class="fpx-tab" role="tab" data-k="' + x + '" aria-selected="' + (x === k) + '">' + (x === 'face' ? FACE.replace('class="fpx-ic fpx-fci"', 'width="20" height="20"') : FP.replace('class="fpx-ic fpx-fpi"', 'width="20" height="20"')) + '<span>' + NAMES[x] + '</span></button>';
             }).join('') + '</div>' : '';
-        root.innerHTML = '<button type="button" class="fpx-x" aria-label="Cancel">' + XS + '</button>'
-          + '<h2 class="fpx-hi">' + (enable ? 'Secure your account' : (h ? 'Hi, <b>' + esc(h.toUpperCase()) + '</b>' : 'Welcome')) + '</h2>'
+        root.innerHTML = '<h2 class="fpx-hi">' + (enable ? 'Secure your account' : (h ? 'Hi, <b>' + esc(h.toUpperCase()) + '</b>' : 'Welcome')) + '</h2>'
           + '<p class="fpx-sub fpx-wb">' + (enable ? 'Confirm it is you to turn the lock on.' : 'Welcome Back!') + '</p>'
           + tabs
           + '<p class="fpx-ct" id="fpx-ct"></p>'
@@ -164,7 +163,7 @@
           [].forEach.call(root.querySelectorAll('.fpx-tab'), function (t) { t.setAttribute('aria-selected', String(t.getAttribute('data-k') === x)); });
           attempt();
         }
-        root.querySelector('.fpx-x').onclick = function () { finish(false); };
+        /* the Cancel button (#fpx-cancel) is the only way out: no second X */
         root.querySelector('#fpx-cancel').onclick = function () { finish(false); };
         again.onclick = attempt;
         if (pin) pin.onclick = function () { using = 'credential'; attempt(); };

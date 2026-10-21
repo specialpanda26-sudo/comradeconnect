@@ -40,7 +40,8 @@ st.textContent = [
   '.ccpb.ccpb-x{position:sticky;top:0;z-index:6;height:0;min-height:0;padding:0;margin:0;background:none;border:0;display:flex;justify-content:flex-end;overflow:visible}',
   '.ccpb.ccpb-x button{margin:calc(8px + env(safe-area-inset-top,0px)) 8px 0 0;background:var(--bg,#000)}',
   '.ccp-box>h2:first-of-type,.ccp-box>h3:first-of-type{padding-right:48px}',
-  '.ccp-ov .ccx-b{display:none!important}'
+  '.ccp-ov .ccx-b{display:none!important}',
+  '.ccx-off{display:none!important}'
 ].join('');
 document.head.appendChild(st);
 
@@ -75,12 +76,29 @@ function mkBtn(label, svg, fn) {
   b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); fn(); }; return b;
 }
 
+/* One close control per panel: when a panel has a visible Cancel button, it gets NO X. */
+var CANCEL = /^cancel$/i;
+var XSEL = 'button[aria-label="Close"],button.xb,.fid-x,[data-close],.ccx-b,.ccx-plain,.ccpb-x,.ccpf';
+function hasCancel(ov) {
+  return Array.prototype.some.call(ov.querySelectorAll('button,a,[role=button]'), function (n) {
+    return CANCEL.test((n.textContent || '').trim()) && !n.closest('.ccpb,.ccpf') && shown(n);
+  });
+}
+function xs(ov) { return Array.prototype.slice.call(ov.querySelectorAll(XSEL)).filter(function (n) { return !CANCEL.test((n.textContent || '').trim()); }); }
+function syncX(ov) {                                                          // true when the panel has a Cancel (and so no X)
+  var c = hasCancel(ov);
+  xs(ov).forEach(function (n) { if (c !== n.classList.contains('ccx-off')) n.classList.toggle('ccx-off', c); });
+  return c;
+}
+
 function dress(ov) {
   var box = ov.querySelector(':scope > .bx,:scope > .box,:scope > .dsheet,:scope > .ccdl-s') || ov.querySelector('.bx,.box,.dsheet,.ccdl-s') || ov.firstElementChild;
   if (!box || box.nodeType !== 1) return;
-  ov.classList.add('ccp-ov'); box.classList.add('ccp-box');
+  if (!ov.classList.contains('ccp-ov')) ov.classList.add('ccp-ov');            // only when missing: re-adding a class still counts as a change
+  if (!box.classList.contains('ccp-box')) box.classList.add('ccp-box');          // and would make this scan re-trigger itself forever
   Array.prototype.forEach.call(ov.querySelectorAll('.ccx-b'), function (n) { n.remove(); });
   var bar = box.querySelector(':scope > .ccpb');
+  if (syncX(ov)) return;                                                      // has a Cancel button: no X (any X it had is hidden)
   // The panel already has its own X (plain icon in its heading row): keep THAT one and draw no bar, so there is only one X.
   var own = Array.prototype.filter.call(box.querySelectorAll('button[aria-label="Close"],button.xb,.fid-x,[data-close]'), function (n) { return !n.closest('.ccpb,.ccpf') && shown(n); })[0];
   if (own) { if (bar) bar.remove(); return; }
@@ -92,6 +110,7 @@ function dress(ov) {
 }
 
 function floaters(ov) {
+  if (syncX(ov)) return;
   if (ov.querySelector('.ccpf')) return;
   var has = ov.querySelector('.ccx-b,.fid-x,[data-close],[aria-label*="lose" i],[aria-label*="ack" i]');
   if (has && shown(has)) return;

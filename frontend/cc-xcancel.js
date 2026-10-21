@@ -67,7 +67,16 @@
     b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); cancel(ov); };
     h.appendChild(b);
   }
+  // a panel that has a visible Cancel button gets no X: take back any X we drew earlier (it comes back if the Cancel goes away)
+  function prune() {
+    [].forEach.call(document.querySelectorAll('.ccx-plain'), function (x) {
+      var p = x.parentElement; if (!p) return;
+      var c = [].some.call(p.querySelectorAll('button,a,[role=button]'), function (n) { return n !== x && /^cancel$/i.test((n.textContent || '').trim()) && vis(n); });
+      if (c) x.remove();
+    });
+  }
   function scan() {
+    prune();
     var vw = innerWidth, vh = innerHeight, min = 0.12 * vw * vh;
     var list = document.querySelectorAll('body *');
     for (var i = 0; i < list.length; i++) {

@@ -18,6 +18,7 @@ window.ccShut = shut;
 function addX(ov, onClose) {
   if (window.__ccPanels && !onClose) return;      // cc-panels.js draws the back + close bar instead
   var box = ov.querySelector('.box, .dsheet, .bx'); if (!box || box.querySelector('.ccx-b')) return;
+  if (Array.prototype.some.call(box.querySelectorAll('button'), function (n) { return /^cancel$/i.test((n.textContent || '').trim()) && n.getClientRects().length; })) return;   // has its own Cancel: no X
   box.classList.add('ccx-host');
   var x = document.createElement('button'); x.type = 'button'; x.className = 'ccx-b'; x.setAttribute('aria-label', 'Close'); x.innerHTML = X;
   x.onclick = function (e) { e.stopPropagation(); if (onClose) onClose(); else shut(ov); };

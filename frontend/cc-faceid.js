@@ -54,7 +54,7 @@ document.head.appendChild(s);
 }
 var running = false;
 function flow(mode) {
-if (window.ccNativeBio) return window.ccNativeBio.verify(mode === 'enable' ? 'Turn on the biometric lock' : 'Confirm it is really you');   // app: real fingerprint / face unlock / phone password
+if (window.ccNativeBio) { var why = mode === 'enable' ? 'Turn on the biometric lock' : 'Confirm it is really you'; return window.ccFp ? window.ccFp.scan(why, mode) : window.ccNativeBio.verify(why); }   // app: real fingerprint / face unlock / phone password
 return new Promise(function (resolve) {
 if (running) return resolve(false); running = true; css();
 var stream = null, timers = [], done = false, detector = null, T = function (f, ms) { timers.push(setTimeout(f, reduce ? Math.min(ms, 60) : ms)); };

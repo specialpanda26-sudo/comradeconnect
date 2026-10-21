@@ -427,7 +427,6 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
 <div class="view on" id="v-feed">
 <header class="hero">
   <p class="gr" data-cc="hero_greeting">Niaje comrade,</p><h1 data-cc="hero_title">Spill it. Nobody will know it was you.</h1>
-  <h3 id="typed" aria-live="off"></h3>
   <p data-cc="hero_text">The anonymous campus feed for Kirinyaga University. No login, no name, no trace. Drop the tea, read what the hostels are saying, and share the juicy ones to WhatsApp.</p>
   <div style="margin-top:28px"><button class="btn p" data-open data-cc="cta_primary">Drop Tea / Spill Secret</button> <button class="btn g" id="tpill" style="margin-top:10px" data-cc="cta_tour">Take the 1-minute tour</button></div>
   <div class="chips" id="cd" aria-label="Semester countdown"></div>
@@ -1564,10 +1563,6 @@ async function shareCard(p){
 $('#pvx').onclick=()=>$('#pv').classList.remove('on');$('#pv').onclick=e=>{if(e.target.id==='pv')$('#pv').classList.remove('on')};
 
 /* ---------- motion ---------- */
-const words=['#HostelTea','#Crush','#StrikeUpdates'];let w=0,c=0,del=false;
-(function type(){const t=$('#typed'),s=words[w];t.textContent=s.slice(0,c);
- if(!del&&c<s.length){c++;return setTimeout(type,90)}if(!del){del=true;return setTimeout(type,1600)}
- if(c>0){c--;return setTimeout(type,45)}del=false;w=(w+1)%words.length;setTimeout(type,300)})();
 $('#mq').innerHTML='<span>'+'Drop the tea &nbsp; Kirinyaga Edition &nbsp; '.repeat(8)+'</span>';
 addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math.max(document.body.scrollHeight-innerHeight,1),1)),{passive:true});
 (function(){let cur,tm;const pos=(e,t)=>{const r=t.getBoundingClientRect();t.style.setProperty('--x',e.clientX-r.left+'px');t.style.setProperty('--y',e.clientY-r.top+'px')};
@@ -1575,7 +1570,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-getapp.js?v=5"></script><script src="cc-firstrun.js?v=1"></script><script src="cc-core.js?v=rc5"></script><script src="cc-welcome.js?v=2"></script><script src="cc-scrollbg.js?v=1"></script><script src="cc-receipt.js?v=3"></script><script src="cc-wifi.js?v=1"></script><script src="cc-hostels.js?v=1"></script><script src="cc-profile.js?v=2"></script><script src="cc-me.js?v=1"></script><script src="cc-closex.js?v=2"></script><script src="cc-panels.js?v=4"></script><script src="cc-card.js?v=1" defer></script><script src="cc-live.js?v=1"></script><script src="cc-staff.js?v=1" defer></script><script src="cc-site.js?v=4" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-faceid.js?v=3" defer></script><script src="cc-fixes.js?v=1" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1d" defer></script><script src="cc-qr.js?v=1" defer></script><script src="cc-events.js?v=3" defer></script><script src="cc-explore.js?v=1" defer></script>
+<script src="cc-getapp.js?v=5"></script><script src="cc-firstrun.js?v=1"></script><script src="cc-core.js?v=rc5"></script><script src="cc-welcome.js?v=2"></script><script src="cc-scrollbg.js?v=1"></script><script src="cc-receipt.js?v=3"></script><script src="cc-wifi.js?v=1"></script><script src="cc-hostels.js?v=1"></script><script src="cc-profile.js?v=2"></script><script src="cc-me.js?v=1"></script><script src="cc-closex.js?v=2"></script><script src="cc-panels.js?v=4"></script><script src="cc-card.js?v=1" defer></script><script src="cc-live.js?v=1"></script><script src="cc-staff.js?v=1" defer></script><script src="cc-site.js?v=4" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-fingerprint.js?v=1" defer></script><script src="cc-faceid.js?v=4" defer></script><script src="cc-fixes.js?v=1" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1d" defer></script><script src="cc-qr.js?v=1" defer></script><script src="cc-events.js?v=3" defer></script><script src="cc-explore.js?v=1" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

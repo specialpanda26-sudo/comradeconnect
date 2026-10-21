@@ -20,31 +20,62 @@
 
   var rand = function () { var a = new Uint8Array(16); crypto.getRandomValues(a); return Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); };
   var payload = function (t) { try { return JSON.parse(decodeURIComponent(escape(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { return {}; } };
-  var done = function (fn, v) { var p = pending; pending = null; keep(null); if (p) { clearTimeout(p.t); p[fn](v); } };
+  var done = function (fn, v) {
+    var p = pending; pending = null; keep(null);
+    setTimeout(function () { if (!pending) window.ccAwayOK = false; }, 4000);         // the lock may come back a moment after the sign-in is finished
+    if (p) { clearTimeout(p.t); if (fn === 'res') { try { sessionStorage.setItem('cc_just', String(Date.now())); } catch (e) {} } p[fn](v); }
+  };
+  var oops = function (e) { var m = String((e && e.message) || ''); return /failed to fetch|networkerror|load failed|network request/i.test(m) ? 'Could not reach Comrade Connect. Check your data and try again.' : (m || 'Google sign-in failed. Try again.'); };
 
-  // Real phone lock: fingerprint, face unlock or the phone's own PIN / pattern / password (no web page, no fake scan).
+  // Real phone lock. Nothing here is drawn or pretended: every "true" comes from Android's own BiometricPrompt.
+  //   kind 'fingerprint' -> STRONG biometrics only (that is the fingerprint sensor on almost every phone)
+  //   kind 'face'        -> any enrolled biometric class, which is what lets the phone's face unlock in (Android rates most face unlock as "weak")
+  //   kind 'credential'  -> the phone's own PIN / pattern / password
+  //   no kind            -> reuse a check that just succeeded (one prompt per action), otherwise ask with everything allowed
+  // Android decides the exact sensor on phones that have both, so the picker on screen only offers what checkBiometry() says exists.
   var bioRecent = 0, bioBusy = false;
   var BIO = function () { return P.BiometricAuth || (cap.registerPlugin ? cap.registerPlugin('BiometricAuth') : null); };
+  var caps = function () {
+    var B = BIO(), none = { fingerprint: false, face: false, credential: false, any: false };
+    if (!B || !B.checkBiometry) return Promise.resolve(none);
+    return B.checkBiometry().then(function (r) {
+      r = r || {};
+      var t = r.biometryTypes || (r.biometryType ? [r.biometryType] : []), has = function (n) { return t.indexOf(n) > -1; };
+      var strong = !!r.strongBiometryIsAvailable, weak = !!r.isAvailable;
+      var fp = strong || (weak && (has(3) || has(1)));
+      var face = weak && (has(4) || has(2) || (!strong && !has(3) && !has(1)));       // some phones do not list face unlock, but report a weak biometric
+      var cred = !!r.deviceIsSecure;
+      return { fingerprint: fp, face: face, credential: cred, any: fp || face || cred, reason: r.reason || '' };
+    }, function () { return none; });
+  };
+  var WHY = { userCancel: 'cancelled', systemCancel: 'cancelled', appCancel: 'cancelled', authenticationFailed: 'nomatch', biometryLockout: 'locked',
+              biometryNotEnrolled: 'notenrolled', biometryNotAvailable: 'unavailable', noDeviceCredential: 'nolock' };
   window.ccNativeBio = {
-    available: function () {
-      var B = BIO(); if (!B || !B.checkBiometry) return Promise.resolve(false);
-      return B.checkBiometry().then(function (r) { return !!(r && (r.isAvailable || r.deviceIsSecure)); }, function () { return false; });
-    },
-    verify: function (why) {
-      if (Date.now() - bioRecent < 5000) return Promise.resolve(true);      // one prompt per action, not two
-      var B = BIO(); if (!B || !B.authenticate) return Promise.resolve(false);
+    last: '',
+    caps: caps,
+    available: function () { return caps().then(function (c) { return c.any; }); },
+    pref: function () { try { return localStorage.getItem('cc_bio_kind') || ''; } catch (e) { return ''; } },
+    setPref: function (k) { try { localStorage.setItem('cc_bio_kind', k); } catch (e) {} },
+    verify: function (why, kind) {
+      var self = window.ccNativeBio; self.last = '';
+      if (!kind && Date.now() - bioRecent < 8000) { bioRecent = 0; return Promise.resolve(true); }   // the screen just confirmed it: use that once, never twice
+      var B = BIO(); if (!B || !B.authenticate) { self.last = 'unavailable'; return Promise.resolve(false); }
+      var o = { reason: why || 'Confirm it is really you', cancelTitle: 'Cancel', allowDeviceCredential: true, androidTitle: 'Comrade Connect',
+                androidSubtitle: why || 'Use your fingerprint, face or phone password', androidConfirmationRequired: false, androidBiometryStrength: 0 };
+      if (kind === 'fingerprint') { o.allowDeviceCredential = false; o.androidBiometryStrength = 1; o.androidSubtitle = 'Touch the fingerprint sensor'; }
+      else if (kind === 'face') { o.allowDeviceCredential = false; o.androidBiometryStrength = 0; o.androidSubtitle = 'Look at your phone'; }
       bioBusy = true;
-      return B.authenticate({
-        reason: why || 'Confirm it is really you', cancelTitle: 'Cancel', allowDeviceCredential: true,
-        androidTitle: 'Comrade Connect', androidSubtitle: why || 'Use your fingerprint, face or phone password', androidConfirmationRequired: false
-      }).then(function () { bioRecent = Date.now(); return true; }, function () { return false; })
+      return B.authenticate(o).then(function () { bioRecent = kind ? Date.now() : 0; return true; },
+        function (e) { self.last = WHY[e && e.code] || 'nomatch'; return false; })
         .then(function (ok) { setTimeout(function () { bioBusy = false; }, 1500); return ok; });
     }
   };
+  // after a sign-in the lock must not pop up on top of it
+  try { var jt = +sessionStorage.getItem('cc_just') || 0; if (Date.now() - jt < 30000) window.ccJustAuthed = true; sessionStorage.removeItem('cc_just'); } catch (e) {}
   // when the lock screen appears (app start, or coming back after a minute), ask the phone straight away
   var autoAsk = function () {
     var lk = document.getElementById('lk'), b = document.getElementById('lku');
-    if (!bioBusy && lk && b && lk.classList.contains('on')) b.click();
+    if (!bioBusy && !window.ccAwayOK && lk && b && lk.classList.contains('on')) b.click();
   };
   window.addEventListener('load', function () { setTimeout(autoAsk, 900); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(autoAsk, 500); });
@@ -115,7 +146,7 @@
       var url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(CC_GOOGLE_ID)
         + '&redirect_uri=' + encodeURIComponent(CALLBACK) + '&response_type=id_token&scope=' + encodeURIComponent('openid profile')
         + '&nonce=' + nonce + '&state=' + state + '&prompt=select_account';
-      keep(pending);
+      keep(pending); window.ccAwayOK = true;
       P.Browser.open({ url: url }).catch(function () { done('rej', new Error('Could not open Google. Try again.')); });
     });
   };
@@ -125,28 +156,59 @@
   var handleReturn = function (u) {
     u = String(u || ''); if (u.indexOf(SCHEME + '://') !== 0) return;
     var q = new URLSearchParams(u.split('?')[1] || ''); var tok = q.get('id_token'), st = q.get('state');
-    try { P.Browser && P.Browser.close(); } catch (e) {}
+    try { var cl = P.Browser && P.Browser.close && P.Browser.close(); if (cl && cl.catch) cl.catch(function () {}); } catch (e) {}
     if (pending) {
       if (!tok || st !== pending.state || payload(tok).nonce !== pending.nonce) return done('rej', new Error('Google sign-in failed. Try again.'));
       return done('res', tok);
     }
     var k = kept(); keep(null);
     if (!tok || !k || st !== k.s || payload(tok).nonce !== k.n) return;
+    finishKept(tok);
+  };
+  var finishKept = function (tok) {
     var say = function (t) { try { if (window.ccTools && ccTools.toast) ccTools.toast(t); else if (typeof toast === 'function') toast(t); } catch (e) {} };
     var go = function (n) {
       if (window.ccGoogle && window.ccGoogle.signIn) {
+        try { sessionStorage.setItem('cc_just', String(Date.now())); } catch (e) {}
         window.ccGoogle.signIn(tok, false).then(function () { say('Signed in with Google'); setTimeout(function () { location.reload(); }, 400); },
-          function (e) { say((e && e.message) || 'Google sign-in failed. Try again.'); });
+          function (e) { say(oops(e)); });
       } else if (n < 20) setTimeout(function () { go(n + 1); }, 300);
     };
     go(0);
   };
+  // The app was closed by Android while the browser tab was open and the app link did not arrive: ask the server relay once when the app starts again.
+  var resumeKept = function () {
+    var k = kept(); if (!k || pending) return;
+    fetch(CC_API + '/api/auth/relay?state=' + encodeURIComponent(k.s), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (d) {
+      if (!d || !d.ready || !d.credential || pending || !kept()) return;
+      if (payload(d.credential).nonce !== k.n) return;
+      keep(null); finishKept(d.credential);
+    });
+  };
+  window.addEventListener('load', function () { setTimeout(resumeKept, 1500); });
   if (P.App) {
     P.App.addListener('appUrlOpen', function (ev) { handleReturn(ev && ev.url); });
     if (P.App.getLaunchUrl) P.App.getLaunchUrl().then(function (r) { if (r && r.url) handleReturn(r.url); }, function () {});
   }
+  // Backup way back. The callback page also hands the sign-in to our server (keyed by the secret "state" only this app knows). If Android blocked the
+  // app link, closing the tab (or coming back to the app) picks the sign-in up from there. Same checks as the app link: state and nonce must match.
+  var relayPoll = function (left) {
+    var p = pending; if (!p) return;
+    fetch(CC_API + '/api/auth/relay?state=' + encodeURIComponent(p.state), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (d) {
+      if (pending !== p) return;
+      if (d && d.ready && d.credential) {
+        if (payload(d.credential).nonce !== p.nonce) return done('rej', new Error('Google sign-in failed. Try again.'));
+        return done('res', d.credential);
+      }
+      if (left > 0) setTimeout(function () { relayPoll(left - 1); }, 1200);
+      else done('rej', Object.assign(new Error('cancelled'), { cancelled: true }));                      // really closed before signing in
+    });
+  };
   if (P.Browser) P.Browser.addListener('browserFinished', function () {
-    setTimeout(function () { if (pending) done('rej', Object.assign(new Error('cancelled'), { cancelled: true })); }, 5000);   // the tab was closed before signing in (long enough for the app link to arrive first)
+    setTimeout(function () { if (pending) relayPoll(4); }, 1500);               // long enough for the app link to arrive first
+  });
+  if (P.App) P.App.addListener('appStateChange', function (st) {
+    if (st && st.isActive && pending) setTimeout(function () { if (pending) relayPoll(4); }, 2500);
   });
 
   var G = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.9 2.3-8.5 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>';
@@ -159,7 +221,7 @@
     var b = document.createElement('button'); b.type = 'button'; b.className = 'cc-gbtn'; b.innerHTML = G + '<span>Continue with Google</span>';
     b.onclick = function () {
       b.disabled = true;
-      window.ccApp.googleLogin().then(function (tok) { return sign(tok, !!(opts && opts.link)); }).then(onDone, function (e) { if (!(e && e.cancelled)) onErr((e && e.message) || 'Google sign-in failed. Try again.'); }).then(function () { b.disabled = false; });
+      window.ccApp.googleLogin().then(function (tok) { return sign(tok, !!(opts && opts.link)); }).then(onDone, function (e) { if (!(e && e.cancelled)) onErr(oops(e)); }).then(function () { b.disabled = false; });
     };
     box.appendChild(b);
     return true;

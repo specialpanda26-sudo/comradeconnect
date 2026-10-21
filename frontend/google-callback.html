@@ -1,30 +1,42 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer">
 <title>Comrade Connect</title>
-<style>html,body{height:100%;margin:0;background:#000;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}body{display:grid;place-items:center;text-align:center;padding:24px}img{width:84px;height:84px;border-radius:20px}h1{font-size:20px;margin:16px 0 6px}p{color:#bdbdbd;font-size:14px;margin:6px 0}a.b{display:inline-block;margin-top:18px;padding:13px 26px;border-radius:999px;background:#fff;color:#000;font-weight:600;text-decoration:none}</style></head>
-<body><main><img src="/icon-192.png" alt="" width="84" height="84"><h1 id="t">Signing you in...</h1><p id="m">Returning to the Comrade Connect app.</p><a class="b" id="b" href="#" hidden>Open Comrade Connect</a></main>
+<style>html,body{height:100%;margin:0;background:#000;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}body{display:grid;place-items:center;text-align:center;padding:24px}img{width:84px;height:84px;border-radius:20px}h1{font-size:20px;margin:16px 0 6px}p{color:#bdbdbd;font-size:14px;margin:6px 0;line-height:1.5;max-width:320px}a.b{display:inline-block;margin-top:18px;padding:13px 26px;border-radius:999px;background:#ff5a00;color:#fff;font-weight:600;text-decoration:none}a.s{display:block;margin-top:14px;color:#bdbdbd;font-size:13px}</style></head>
+<body><main><img src="/icon-192.png" alt="" width="84" height="84"><h1 id="t">Signing you in...</h1><p id="m">Returning to the Comrade Connect app.</p><a class="b" id="b" href="#" hidden>Open Comrade Connect</a><a class="s" id="s" href="#" hidden></a></main>
+<script src="/config.js"></script>
 <script>
 (function () {
   var h = new URLSearchParams(location.hash.slice(1)), qs = new URLSearchParams(location.search);
-  var tok = h.get('id_token'), st = h.get('state'), er = h.get('error') || qs.get('error');
-  var t = document.getElementById('t'), m = document.getElementById('m'), b = document.getElementById('b');
+  var tok = h.get('id_token'), st = h.get('state'), er = h.get('error') || qs.get('error'), ed = h.get('error_description') || qs.get('error_description') || '';
+  var t = document.getElementById('t'), m = document.getElementById('m'), b = document.getElementById('b'), s = document.getElementById('s');
   history.replaceState(null, '', location.pathname);
   if (!tok) {
     t.textContent = er === 'access_denied' ? 'Sign-in cancelled' : 'Sign-in did not finish';
-    m.textContent = 'Close this tab and try again in the app.' + (er && er !== 'access_denied' ? ' (' + String(er).slice(0, 60) + ')' : '');
+    m.textContent = 'Close this tab and try again in the app.' + (er && er !== 'access_denied' ? ' Google said: ' + String(er).slice(0, 60) + (ed ? ' (' + String(ed).slice(0, 100) + ')' : '') : '');
     b.textContent = 'Back to Comrade Connect'; b.href = '/'; b.hidden = false; return;
   }
   var q = 'id_token=' + encodeURIComponent(tok) + '&state=' + encodeURIComponent(st || '');
-  var plain = 'ke.co.comradeconnect.app://auth?' + q;
   var intent = 'intent://auth?' + q + '#Intent;scheme=ke.co.comradeconnect.app;package=ke.co.comradeconnect.app;end';
   var android = /Android/i.test(navigator.userAgent);
   if (!android) {                                            // a computer or iPhone: there is no app to open, so never leave a blank page
     t.textContent = 'You are signed in with Google'; m.textContent = 'You can close this tab and go back to Comrade Connect.';
     b.textContent = 'Back to Comrade Connect'; b.href = '/'; b.hidden = false; return;
   }
-  // Chrome only lets a TAP open the app (a script alone is blocked), so the button is there from the start and the script also tries by itself.
-  b.href = intent; b.hidden = false; t.textContent = 'Almost done'; m.textContent = 'Tap the button to go back to the app.';
-  b.addEventListener('click', function () { setTimeout(function () { m.textContent = 'If nothing happened, close this tab and open Comrade Connect.'; }, 2500); });
-  try { location.replace(intent); } catch (e) {}
+  // 1) The backup way back: hand the sign-in to our own server, keyed by the secret "state" that only the app knows. The app collects it by itself
+  //    when this tab is closed, so sign-in finishes even if Android blocks the app link below.
+  var relayed = false;
+  try {
+    if (st && typeof CC_API === 'string') fetch(CC_API + '/api/auth/relay', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state: st, credential: tok }), keepalive: true })
+      .then(function (r) { relayed = r.ok; }, function () {});
+  } catch (e) {}
+  // 2) The fast way back: Chrome only lets a TAP open the app (a script alone is blocked), so the button is there from the start and the script also tries by itself.
+  b.href = intent; b.hidden = false; t.textContent = 'You are signed in'; m.textContent = 'Tap the button to go back to the app.';
+  b.addEventListener('click', function () {
+    setTimeout(function () {
+      m.textContent = 'If the app did not open, just close this tab (the X, or the back button). Comrade Connect finishes signing you in by itself.';
+      s.textContent = 'Close this tab'; s.href = '#'; s.hidden = false; s.onclick = function (e) { e.preventDefault(); try { window.close(); } catch (x) {} history.length > 1 ? history.back() : (location.href = '/'); };
+    }, 2200);
+  });
+  setTimeout(function () { try { location.replace(intent); } catch (e) {} }, 700);      // a moment first, so the hand-over to the server above gets out
 })();
 </script></body></html>

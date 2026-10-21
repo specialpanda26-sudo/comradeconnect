@@ -455,16 +455,19 @@ function paySteps(box, phone, amount, kind) {
   stepsCss();
   const K = PAYKIND[kind] || PAYKIND.escrow;
   let at = 0, manual = false, tm = 0, t0 = Date.now(), dead = false;
-  const T = () => manual
+  const card = () => !!(window.ccCardMode && window.ccCardMode());
+  const T = () => card()
+    ? [['Opening secure card page', 'Visa or Mastercard'], ['Pay on the card page', 'Your card details never reach Comrade Connect'], ['Verifying payment', 'Confirming with the bank'], [K[1], K[2](amount)]]
+    : manual
     ? [['Starting your payment', 'Reference created for ' + kes(amount)], ['Pay with M-Pesa, then enter the code', 'Waiting for your M-Pesa code'], ['Checking your payment', 'An admin confirms it, usually within a few minutes'], [K[3], K[2](amount)]]
     : [['Sending M-Pesa prompt', 'To ' + esc(phone)], ['Prompt sent. Enter your PIN', 'Check your phone'], ['Verifying payment', 'Confirming with M-Pesa'], [K[1], K[2](amount)]];
   const draw = (bad) => {
     box.innerHTML = '<p class="cs-h">' + K[0] + '<b>' + kes(amount) + '</b></p><div class="cs-l" role="status" aria-live="polite">'
-      + T().map((x, i) => stepLi(bad && i === at ? 'f' : i < at || at === 4 ? 'd' : i === at ? 'a' : '', x[0], i === 1 && i === at && !bad ? '<span id="cs-t">Check your phone</span>' : x[1])).join('') + '</div>';
+      + T().map((x, i) => stepLi(bad && i === at ? 'f' : i < at || at === 4 ? 'd' : i === at ? 'a' : '', x[0], i === 1 && i === at && !bad ? '<span id="cs-t">' + (card() ? 'Finish on the card page' : 'Check your phone') + '</span>' : x[1])).join('') + '</div>';
   };
   const tick = () => { const n = box.querySelector('#cs-t'); if (!n) return; const s = Math.floor((Date.now() - t0) / 1000);
-    n.textContent = (manual ? 'Waiting for your M-Pesa code' : 'Check your phone') + ' (' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ')'
-      + (!manual && s > 40 ? '. No prompt? Check the number you entered.' : ''); };
+    n.textContent = (card() ? 'Finish on the card page' : manual ? 'Waiting for your M-Pesa code' : 'Check your phone') + ' (' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ')'
+      + (!manual && !card() && s > 40 ? '. No prompt? Check the number you entered.' : ''); };
   const api = {
     go(st) {
       if (dead) return;
@@ -538,7 +541,7 @@ $('#mvbuy').onclick = () => {
     row.querySelector('input').onchange = (e) => { S.usePts = e.target.checked; $('#bp').textContent = kes(l.price - (S.usePts ? c : 0)); };
     $('#bn').after(row);
   }).catch(() => {});
-  bs(1); $('#bph').value = ST.get('cc_phone', ''); $('#bpe').textContent = ''; openDm('buy');
+  bs(1); $('#bph').value = ''; $('#bpe').textContent = ''; openDm('buy');
 };
 $('#bpay').onclick = async () => {
   if (S.paying || !S.buyL) return;
@@ -548,7 +551,6 @@ $('#bpay').onclick = async () => {
   const pay = l.price - (S.usePts ? S.ptsKsh : 0), ps = paySteps($('#dm [data-bs="3"]'), v, pay);
   try {
     const d = await call('/api/market/buy', { body: { listing_id: l.id, phone: v, use_points: !!S.usePts } });
-    ST.set('cc_phone', v);                                   // remembered on this phone for the next purchase and withdrawal
     try { localStorage.setItem('cc_pending', JSON.stringify({ id: d.id, amount: d.amount, t: Date.now() })); } catch (e) {}
     ps.go('prompt');
     await waitPaid(d.id, (st) => ps.go(st));
@@ -700,7 +702,7 @@ $('#wd').onclick = async () => {
     + '<div class="fld"><input id="ccwa" type="number" inputmode="numeric" value="' + Math.min(bal, CFG.max) + '" aria-label="Amount in KSh"></div>'
     + '<p class="sub" id="ccw-e" style="color:#f87171;min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
   m.querySelector('#ccw-x').onclick = () => m.close();
-  m.querySelector('#ccwp').value = ST.get('cc_phone', '');
+  m.querySelector('#ccwp').value = '';
   m.querySelector('#ccw-go').onclick = async () => {
     const amount = Math.floor(+m.querySelector('#ccwa').value), phone = m.querySelector('#ccwp').value.replace(/\s/g, ''), er = m.querySelector('#ccw-e');
     if (!(amount >= CFG.min && amount <= Math.min(bal, CFG.max))) return (er.textContent = 'Enter an amount from ' + kes(CFG.min) + ' up to ' + kes(Math.min(bal, CFG.max)));
@@ -711,8 +713,8 @@ $('#wd').onclick = async () => {
     try {
       const r = await withdrawFlow(box.querySelector('#ccw-prog'), amount, phone, () => call('/api/wallet/withdraw', { body: { amount, phone } }),
         async (id) => ((await call('/api/wallet')).withdrawals || []).find((x) => x.id === id));
-      ST.set('cc_phone', phone); ok.hidden = false; r.ws.stop(); loadOrders();
-    } catch (err) { ST.set('cc_phone', phone); ok.hidden = false; ok.textContent = 'Close'; }
+      ok.hidden = false; r.ws.stop(); loadOrders();
+    } catch (err) { ok.hidden = false; ok.textContent = 'Close'; }
   };
 };
 
@@ -1266,7 +1268,7 @@ function payNow(o) {
     + '<div id="ccpd" hidden><p class="tot" style="font-size:18px;margin-top:14px" id="ccpm"></p><button class="btn p" id="ccpo" style="width:100%;margin-top:14px">Done</button></div>');
   const q = (s) => m.querySelector(s), qty = () => (mx > 1 ? +q('#ccqty').value : 1), show = (w) => { ['f', 'w', 'd'].forEach((k) => { q('#ccp' + k).hidden = k !== w; }); };
   const tot = () => { q('#cctot').textContent = kes(o.unit * qty()); };
-  tot(); q('#ccpp').value = ST.get('cc_phone', '');
+  tot(); q('#ccpp').value = '';
   if (mx > 1) q('#ccqty').onchange = tot;
   q('#ccpx').onclick = () => m.close(); q('#ccpo').onclick = () => m.close();
   let busy = false;
@@ -1277,7 +1279,7 @@ function payNow(o) {
     busy = true; q('#ccpe').textContent = ''; show('w');
     const total = o.unit * qty(), ps = paySteps(q('#ccpw'), v, total, o.kind || 'club');
     try {
-      const d = await o.start(v, qty()); ST.set('cc_phone', v);
+      const d = await o.start(v, qty());
       ps.go('prompt');
       await waitPaid(d.id, (st) => ps.go(st));
       ps.go('done'); await sleep(1100);

@@ -4,11 +4,12 @@
 'use strict';
 if (window.__ccCard) return; window.__ccCard = 1;
 var native = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
-var DUMMY = '0700000000';                      // lets each sheet's phone check pass; the server ignores it for cards
+var DUMMY = '0712345678';                      // lets each sheet's phone check pass; the server ignores it for cards
 var cardOn = false, states = [], pre = null, queued = false;
 var api = function () { return typeof CC_API !== 'undefined' ? CC_API : ''; };
 
 function load() {
+  try { localStorage.removeItem('cc_phone'); } catch (e) {}                 // old remembered number: forget it
   if (!api()) return;
   fetch(api() + '/api/pay/methods', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; })
     .then(function (j) { cardOn = !!(j && j.card); queue(); }).catch(function () {});
@@ -56,6 +57,7 @@ function mount(input) {
 function scan() {
   queued = false;
   states = states.filter(function (s) { return s.input.isConnected; });
+  Array.prototype.forEach.call(document.querySelectorAll('#ccpp,#bph,#ph,#fph,#hs_rph,#ccwp'), function (i) { i.setAttribute('autocomplete', 'off'); });
   if (!cardOn) return;
   Array.prototype.forEach.call(document.querySelectorAll('input[placeholder*="M-Pesa" i],input[aria-label*="M-Pesa" i],#ccpp,#bph,#ph,#fph,#hs_rph'), mount);
 }
@@ -63,6 +65,7 @@ function queue() { if (!queued) { queued = true; requestAnimationFrame(scan); } 
 new MutationObserver(queue).observe(document.documentElement, { childList: true, subtree: true });
 
 var isCard = function () { return states.some(function (s) { return s.on && s.input.isConnected; }); };
+window.ccCardMode = isCard;
 
 // open the card page without losing the sheet that is waiting for the result
 var closePre = function () { try { if (pre && !pre.closed) pre.close(); } catch (e) {} pre = null; };

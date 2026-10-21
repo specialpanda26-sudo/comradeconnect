@@ -11,7 +11,6 @@ var X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 
 var QUIT = /^(cancel|close|not now|later|no thanks|back|done|dismiss)$/i;
 
 function shut(ov) {
-  if (ov.querySelector('.cs-l')) { try { toast('Please wait, this is still going through'); } catch (e) {} return; }     // a payment is in progress
   var b = Array.prototype.filter.call(ov.querySelectorAll('button'), function (n) { return QUIT.test((n.textContent || '').trim()) && !n.disabled && n.getClientRects().length; })[0];
   if (b) b.click(); else if (ov.classList.contains('on')) ov.classList.remove('on'); else if (typeof ov.close === 'function') ov.close(); else ov.remove();
 }
@@ -42,3 +41,4 @@ document.addEventListener('keydown', function (e) {
   shut(all[all.length - 1]);
 });
 })();
+/* MIDPAY_OK: closing a payment sheet is allowed, the server keeps confirming the payment */

@@ -37,6 +37,9 @@ st.textContent = [
   '#feed{max-width:min(1100px,100%)!important}',
   '#feed:not(.grid){grid-template-columns:repeat(auto-fill,minmax(400px,1fr))}',
   '}',
+  '.ccpb.ccpb-x{position:sticky;top:0;z-index:6;height:0;min-height:0;padding:0;margin:0;background:none;border:0;display:flex;justify-content:flex-end;overflow:visible}',
+  '.ccpb.ccpb-x button{margin:calc(8px + env(safe-area-inset-top,0px)) 8px 0 0;background:var(--bg,#000)}',
+  '.ccp-box>h2:first-of-type,.ccp-box>h3:first-of-type{padding-right:48px}',
   '.ccp-ov .ccx-b{display:none!important}'
 ].join('');
 document.head.appendChild(st);
@@ -55,7 +58,6 @@ function openList() {
 function locked() { var l = document.getElementById('lk'); return !!(l && l.classList.contains('on')); }
 
 function closeIt(ov) {
-  if (ov.querySelector('.cs-l')) { try { toast('Please wait, this is still going through'); } catch (e) {} return; }
   var own = ov.querySelector('.fid-x,.ccx-b,[aria-label="Close"]');
   if (own && shown(own) && !own.closest('.ccpb,.ccpf')) { own.click(); return; }
   if (window.ccShut) return window.ccShut(ov);
@@ -83,15 +85,10 @@ function dress(ov) {
   var own = Array.prototype.filter.call(box.querySelectorAll('button[aria-label="Close"],button.xb,.fid-x,[data-close]'), function (n) { return !n.closest('.ccpb,.ccpf') && shown(n); })[0];
   if (own) { if (bar) bar.remove(); return; }
   if (!bar) {
-    bar = document.createElement('div'); bar.className = 'ccpb';
-    var h = document.createElement('h4');
-    bar.append(h, mkBtn('Close', X, function () { closeIt(ov); }));
+    bar = document.createElement('div'); bar.className = 'ccpb ccpb-x';      // no second title: the panel's own heading stays, we only add the X
+    bar.append(mkBtn('Close', X, function () { closeIt(ov); }));
     box.insertBefore(bar, box.firstChild);
-    var cs = getComputedStyle(box);                                         // pull the bar to the edges of the box
-    bar.style.margin = '-' + cs.paddingTop + ' -' + cs.paddingRight + ' 14px -' + cs.paddingLeft;
-    if (parseFloat(cs.paddingTop) < 1) bar.style.margin = '0 0 14px';
   }
-  var hh = bar.querySelector('h4'), t = titleOf(ov, box); if (hh.textContent !== t) hh.textContent = t;
 }
 
 function floaters(ov) {

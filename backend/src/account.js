@@ -24,6 +24,7 @@ export async function unlockReferrals(env, aid) {
   return n;
 }
 
+const RELAY = new Map();   // state -> { cred, at }  (one API instance, see render.yaml)
 // Verify a Google ID token with Google's tokeninfo endpoint. Returns { sub } or null.
 async function googleVerify(env, credential) {
   if (!env.GOOGLE_CLIENT_ID || !credential) return null;
@@ -71,6 +72,29 @@ export async function accountRoutes(req, env, url, ip) {
     if (res.status === 409) return err(env, 'This account already exists. Use your recovery code.', 409);
     if (!res.ok) return err(env, 'Could not create the account', 500);
     return json(env, { aid, token, recovery_code: recovery, referral_code: refcode }, 201);
+  }
+  // Google sign-in relay for the Android app. The callback page drops the Google sign-in here, keyed by the secret "state" that only the app knows,
+  // and the app collects it once (about 3 minutes max). It is the backup way back when Android blocks the app link from the browser tab.
+  if (path === '/api/auth/relay') {
+    const nowMs = Date.now();
+    for (const [k, v] of RELAY) if (nowMs - v.at > 180000) RELAY.delete(k);
+    if (RELAY.size > 2000) RELAY.clear();
+    if (m === 'POST') {
+      if (!(await throttle(env, ip, 'relay', ip, 30, 30))) return tooMany(env);
+      const rb = await body(), st = str(rb.state, 64), cred = str(rb.credential, 4000);
+      if (!/^[a-f0-9]{32}$/.test(st) || !cred) return err(env, 'Bad request', 400);
+      if (!(await googleVerify(env, cred))) return err(env, 'Google sign-in failed. Try again.', 401);
+      RELAY.set(st, { cred, at: nowMs });
+      return json(env, { ok: true });
+    }
+    if (m === 'GET') {
+      const st = String(url.searchParams.get('state') || '').slice(0, 64);
+      if (!/^[a-f0-9]{32}$/.test(st)) return err(env, 'Bad request', 400);
+      const hit = RELAY.get(st);
+      if (!hit) return json(env, { ready: false });
+      RELAY.delete(st);
+      return json(env, { ready: true, credential: hit.cred });
+    }
   }
   // One-tap Google sign-in. Creates an account, links Google to the guest account on this phone, or signs in to the linked account.
   if (path === '/api/auth/google' && m === 'POST') {

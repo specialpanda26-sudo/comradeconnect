@@ -365,7 +365,7 @@ window.addEventListener('error',function(e){if(!e.filename&&e.message==='Script 
 window.addEventListener('offline',function(){say('You are offline. Check your internet connection.')});
 window.addEventListener('online',function(){last=0;say('Back online')})})();
 </script>
-<script src="cc-offline.js?v=1"></script><script src="cc-native.js?v=7"></script><style id="ccme-css">
+<script src="cc-offline.js?v=1"></script><script src="cc-native.js?v=9"></script><style id="ccme-css">
 /* Me page: profile card, grouped menu, panels, quick finder */
 #v-me:not(.ccp) .ccset{display:none}
 #v-me.ccp .box:not(.ccsel),#v-me.ccp>.ph,#v-me.ccp>p.sub,#v-me.ccp #ccmenu,#v-me:not(.ccp) #ccpub{display:none}
@@ -574,7 +574,7 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
   <div class="box g"><h3>Recovery code</h3><p class="sub" style="margin:6px 0 12px">It is the only way back into this account on a new phone. Save it somewhere safe and never share it.</p><div class="code" id="mcode"></div><div class="two" style="margin-top:12px"><button class="btn g" id="mshow">Show code</button><button class="btn g" id="mcopy">Copy code</button></div></div>
   <div class="box g"><h3>Account</h3><p class="sub" id="acs"></p><div class="acl"><button class="btn g" id="acb">Sign-in options</button><button class="btn g" id="atour">Take the tour</button><button class="btn g" id="ckre">Cookie settings</button></div><div class="acl so"><button class="btn g" id="acso"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg>Sign out</button><p class="sub">Signing out removes this account from this phone.</p></div></div>
   <div class="box g"><h3>Notifications</h3><div id="nl"></div><button class="act" id="nread" style="margin-top:10px">Mark all as read</button></div>
-  <div class="box g"><h3>Secure my account</h3><p class="sub" id="sst"></p><button class="btn g" id="sgo" style="width:100%;margin-top:12px">Lock with fingerprint or face unlock</button></div>
+  <div class="box g"><h3>Secure my account</h3><p class="sub" id="sst"></p><button class="btn g" id="sgo" style="width:100%;margin-top:12px">Lock with fingerprint or Face ID</button></div>
   <div class="box g"><h3>Verification</h3><p class="sub" id="vst"></p><button class="btn g" id="vgo" style="width:100%;margin-top:12px">Get verified</button><a class="btn g" href="/student-verify.html" style="display:block;width:100%;margin-top:10px;text-align:center;text-decoration:none">Verify with student email (optional)</a><p class="sub" style="margin-top:8px"><a href="/trust.html" style="color:inherit">How we protect your money and identity</a></p></div>
   <div class="box g"><h3>Club</h3><button class="btn g" id="mclub" style="width:100%">Open the Club</button><button id="madm" hidden style="display:none" aria-hidden="true" tabindex="-1"></button></div>
   <div class="box g"><h3>Restore an account</h3><div class="fld"><input id="raid" placeholder="Account ID or username" autocomplete="off" autocapitalize="off" aria-label="Account ID or username"></div><div class="fld" style="margin-top:8px"><input id="rcode" type="password" placeholder="Password or recovery code" autocomplete="off" autocapitalize="off" aria-label="Password or recovery code"></div><button class="btn g" id="rrs" style="width:100%;margin-top:14px">Restore</button><p class="sub" style="margin-top:10px">Use the account ID and recovery code you saved.</p></div>
@@ -872,7 +872,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(!S('cc_tk')){menu(true);S(
   <section data-v="sec" hidden>
     <div class="flex items-center justify-between"><h2>Secure your account?</h2><button class="ib xb" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <p class="note">Lock Comrade Connect with your fingerprint or face unlock so only you can open it, even if someone borrows your phone. Your face and fingerprint never leave your phone.</p>
-    <div class="stk"><button class="btn p" id="secY">Lock with fingerprint</button><button class="btn g" id="secN">Maybe later</button></div>
+    <div class="stk"><button class="btn p" id="secY">Lock with fingerprint or Face ID</button><button class="btn g" id="secN">Maybe later</button></div>
   </section>
   <section data-v="wl" hidden>
     <div class="flex items-center justify-between"><h2>You are in, comrade</h2><button class="ib xb" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -1481,14 +1481,14 @@ async function bioEnable(){if(window.ccNativeBio){if(!await ccNativeBio.availabl
 async function bioCheck(){if(window.ccNativeBio)return await ccNativeBio.verify('Confirm it is really you');
  try{await navigator.credentials.get({publicKey:{challenge:rb(32),allowCredentials:[{type:'public-key',id:unb64(ME.bio)}],userVerification:'required',timeout:60000}});return true}catch(e){return false}}
 const bioGate=async()=>!ME.bio||await bioCheck();
-function drawSec(){$('#sst').textContent=ME.bio?'Fingerprint lock is on. Comrade Connect locks when you come back after a minute away, and withdrawals ask for your fingerprint.':'Not locked. Lock Comrade Connect with your phone fingerprint so only you can open it.';$('#sgo').textContent=ME.bio?'Turn off Fingerprint lock':'Lock with fingerprint'}
+function drawSec(){$('#sst').textContent=ME.bio?'The lock is on (fingerprint or Face ID). Comrade Connect locks when you come back after a minute away, and withdrawals ask for your fingerprint.':'Not locked. Lock Comrade Connect with your fingerprint or Face ID so only you can open it.';$('#sgo').textContent=ME.bio?'Turn off the lock':'Lock with fingerprint or Face ID'}
 $('#sgo').onclick=async()=>{if(ME.bio){if(await bioCheck()){delete ME.bio;saveMe();drawSec();toast('Fingerprint lock is off')}else toast('Fingerprint check failed')}else if(await bioEnable())toast('Fingerprint lock is on')};
 $('#secY').onclick=async()=>{await bioEnable();openDm('wl')};$('#secN').onclick=()=>openDm('wl');
 const unlock=()=>{$('#lk').classList.remove('on');$('#lkc').value=''};let hidAt=0;
 $('#lku').onclick=async()=>{if(await bioCheck())unlock();else toast('Not recognised')};
 $('#lkr').onclick=()=>{if($('#lkc').value.trim().toUpperCase()===ME.code){unlock();toast('Unlocked. You can change the lock in Me.')}else toast('That recovery code is not right')};
-document.addEventListener('visibilitychange',()=>{if(document.hidden)hidAt=Date.now();else if(ME.bio&&Date.now()-hidAt>60000)$('#lk').classList.add('on')});
-if(ME.bio)$('#lk').classList.add('on');
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hidAt=Date.now();else if(ME.bio&&!window.ccAwayOK&&Date.now()-hidAt>60000)$('#lk').classList.add('on')});
+if(ME.bio&&!window.ccJustAuthed)$('#lk').classList.add('on');
 $('#tb').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.v==='me')drawSec()});drawSec();
 function resetSi(){$('#siC').hidden=true;$('#siA').hidden=false;$('#siGb').style.display='flex';$('#siGn').hidden=true;if(window.ccMountSi)window.ccMountSi()}
 $('#siA').onclick=()=>{$('#siH').textContent='@'+ME.handle;$('#siR').textContent=ME.code;$('#siC').hidden=false;$('#siA').hidden=true;$('#siGb').style.display='none';$('#siGn').hidden=true};
@@ -1588,7 +1588,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-getapp.js?v=5"></script><script src="cc-firstrun.js?v=1"></script><script src="cc-core.js?v=rc7"></script><script src="cc-welcome.js?v=2"></script><script src="cc-scrollbg.js?v=2"></script><script src="cc-lockscreen.js?v=2"></script><script src="cc-receipt.js?v=3"></script><script src="cc-wifi.js?v=1"></script><script src="cc-hostels.js?v=1"></script><script src="cc-profile.js?v=2"></script><script src="cc-me.js?v=1"></script><script src="cc-closex.js?v=3"></script><script src="cc-panels.js?v=6"></script><script src="cc-card.js?v=3" defer></script><script src="cc-live.js?v=1"></script><script src="cc-staff.js?v=2" defer></script><script src="cc-site.js?v=4" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-fingerprint.js?v=2" defer></script><script src="cc-faceid.js?v=5" defer></script><script src="cc-fixes.js?v=1" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1e" defer></script><script src="cc-qr.js?v=1" defer></script><script src="cc-events.js?v=3" defer></script><script src="cc-explore.js?v=1" defer></script><script src="cc-welcome.js?v=1" defer></script>
+<script src="cc-getapp.js?v=5"></script><script src="cc-firstrun.js?v=2"></script><script src="cc-core.js?v=rc7"></script><script src="cc-welcome.js?v=2"></script><script src="cc-scrollbg.js?v=2"></script><script src="cc-lockscreen.js?v=3"></script><script src="cc-receipt.js?v=3"></script><script src="cc-wifi.js?v=1"></script><script src="cc-hostels.js?v=1"></script><script src="cc-profile.js?v=2"></script><script src="cc-me.js?v=1"></script><script src="cc-closex.js?v=3"></script><script src="cc-panels.js?v=6"></script><script src="cc-card.js?v=3" defer></script><script src="cc-live.js?v=1"></script><script src="cc-staff.js?v=2" defer></script><script src="cc-site.js?v=4" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-fingerprint.js?v=3" defer></script><script src="cc-faceid.js?v=6" defer></script><script src="cc-fixes.js?v=1" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1e" defer></script><script src="cc-qr.js?v=1" defer></script><script src="cc-events.js?v=3" defer></script><script src="cc-explore.js?v=1" defer></script><script src="cc-welcome.js?v=1" defer></script>
 <script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){

@@ -88,7 +88,9 @@
   };
 
   window.ccApp.googleLogin = function () {
-    if (P.GoogleAuth) return nativeGoogle();                                                  // older app builds without the plugin use the browser tab below
+    // The in-app picker is off by default: it crashes the app unless the Android client + SHA-1 are set up in Google Cloud.
+    // Turn it on by setting CC_NATIVE_GOOGLE = true in frontend/config.js once that is done.
+    if (P.GoogleAuth && typeof CC_NATIVE_GOOGLE !== 'undefined' && CC_NATIVE_GOOGLE === true) return nativeGoogle();
     return new Promise(function (res, rej) {
       if (navigator.onLine === false) return rej(new Error('You are offline. Connect to data or Wi-Fi to sign in with Google.'));
       if (!P.Browser) return rej(new Error('Sign-in is not ready in this app version. Please update the app.'));

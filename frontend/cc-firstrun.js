@@ -29,7 +29,15 @@
     '#ccfrst .ccfrst-g{display:flex;justify-content:center;margin-top:10px;min-height:44px}',
     '#ccfrst .ccfrst-or{margin:14px 0 0;text-align:center;font-size:12px;color:var(--mut,#bdbdbd)}',
     '#ccfrst .ccfrst-sk{display:block;width:100%;margin-top:14px;padding:10px;background:none;border:0;color:var(--mut,#bdbdbd);font:500 14px Poppins,system-ui,sans-serif;cursor:pointer}',
-    '#ccfrst .ccfrst-n{margin:14px 0 0;font-size:11.5px;line-height:1.5;color:var(--mut,#bdbdbd);text-align:center}'
+    '#ccfrst .ccfrst-n{margin:14px 0 0;font-size:11.5px;line-height:1.5;color:var(--mut,#bdbdbd);text-align:center}',
+    '#ccfrst .ccfrst-f{position:relative;margin-top:12px}',
+    '#ccfrst .ccfrst-f label{display:block;margin:0 0 6px 4px;font-size:12px;font-weight:600;color:var(--mut,#bdbdbd);text-align:left}',
+    '#ccfrst .ccfrst-f input{width:100%;box-sizing:border-box;border-radius:14px;border:1px solid var(--line,rgba(255,255,255,.28));background:rgba(127,127,127,.12);color:inherit;padding:15px 16px;font:500 16px Poppins,system-ui,sans-serif;outline:0}',
+    '#ccfrst .ccfrst-f input:focus{border-color:#ff5a00;box-shadow:0 0 0 3px rgba(255,90,0,.22)}',
+    '#ccfrst .ccfrst-f .ccfrst-eye{position:absolute;right:6px;bottom:6px;width:40px;height:40px;border:0;background:none;color:var(--mut,#bdbdbd);display:grid;place-items:center;cursor:pointer}',
+    '#ccfrst #ccfrst-in{background:#ff5a00;border-color:#ff5a00;color:#fff;min-height:52px;font-weight:700}',
+    '#ccfrst .ccfrst-row{display:flex;gap:8px}#ccfrst .ccfrst-row .btn{margin-top:10px;font-size:13.5px;padding-left:8px;padding-right:8px}',
+    '#ccfrst .ccfrst-hint{margin:8px 4px 0;font-size:11.5px;color:var(--mut,#bdbdbd);text-align:left}'
   ].join('');
   document.head.appendChild(css);
 
@@ -45,14 +53,19 @@
   function open() {
     if (document.getElementById('ccfrst')) return;
     var m = document.createElement('div'); m.id = 'ccfrst'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Welcome to Comrade Connect');
+    var EYE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
     m.innerHTML = '<div class="ccfrst-b"><button type="button" class="ccfrst-x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'
       + '<img src="/icon-192.png" alt="" width="64" height="64">'
-      + '<h2>Welcome to Comrade Connect</h2>'
-      + '<p class="ccfrst-s">The anonymous campus feed for Kirinyaga comrades. Log in, or make an account in a minute. Your stories always stay anonymous.</p>'
-      + '<button type="button" class="btn p" id="ccfrst-in">Log in</button>'
-      + '<button type="button" class="btn g" id="ccfrst-new">Create account</button>'
-      + '<button type="button" class="btn g" id="ccfrst-anon">Create anonymous account</button>'
+      + '<h2>Welcome back</h2>'
+      + '<p class="ccfrst-s">Log in to Comrade Connect. Your stories always stay anonymous.</p>'
+      + '<form id="ccfrst-form" autocomplete="on" novalidate>'
+      + '<div class="ccfrst-f"><label for="ccfrst-u">Username or account ID</label><input id="ccfrst-u" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Enter your username"></div>'
+      + '<div class="ccfrst-f"><label for="ccfrst-p">Password</label><input id="ccfrst-p" name="password" type="password" autocomplete="current-password" autocapitalize="off" placeholder="Enter your password"><button type="button" class="ccfrst-eye" id="ccfrst-eye" aria-label="Show password">' + EYE + '</button></div>'
+      + '<p class="ccfrst-hint">Lost your password? Type the recovery code you saved instead.</p>'
+      + '<button type="submit" class="btn p" id="ccfrst-in">Log in</button></form>'
       + '<div id="ccfrst-gw" hidden><p class="ccfrst-or">or</p><div class="ccfrst-g" id="ccfrst-gb"></div></div>'
+      + '<p class="ccfrst-or">New here?</p>'
+      + '<div class="ccfrst-row"><button type="button" class="btn g" id="ccfrst-new">Create account</button><button type="button" class="btn g" id="ccfrst-anon">Anonymous account</button></div>'
       + '<p class="ccfrst-n" id="ccfrst-e" role="alert" hidden></p>'
       + '<button type="button" class="ccfrst-sk" id="ccfrst-skip">Skip for now</button>'
       + '<p class="ccfrst-n">By continuing you agree to our <a href="/terms.html" style="color:inherit;text-decoration:underline">Terms</a> and <a href="/privacy.html" style="color:inherit;text-decoration:underline">Privacy Policy</a>.</p></div>';
@@ -67,7 +80,15 @@
         if (r && r.then) { btn.disabled = true; r.then(function () { btn.disabled = false; }, function (e) { btn.disabled = false; if (e && e.message && !/sign in to continue/i.test(e.message)) err(e.message); }); }
       };
     };
-    $('#ccfrst-in').onclick = run($('#ccfrst-in'), function () { return CC.signIn(); });
+    $('#ccfrst-eye').onclick = function () { var i = $('#ccfrst-p'), show = i.type === 'password'; i.type = show ? 'text' : 'password'; this.setAttribute('aria-label', show ? 'Hide password' : 'Show password'); };
+    $('#ccfrst-form').onsubmit = function (ev) {
+      ev.preventDefault(); if (!ready()) return; err('');
+      var u = $('#ccfrst-u').value.trim(), p = $('#ccfrst-p').value, b = $('#ccfrst-in');
+      if (!u || !p) return err('Enter your username and password');
+      b.disabled = true; b.textContent = 'Logging in...';
+      CC.restoreAccount(u, p).then(function () { say('Welcome back, comrade'); close(true); setTimeout(function () { location.reload(); }, 350); },
+        function (e) { b.disabled = false; b.textContent = 'Log in'; err((e && e.message) || 'That username or password is not right'); });
+    };
     $('#ccfrst-new').onclick = run($('#ccfrst-new'), function () { return CC.createAccount('password'); });
     $('#ccfrst-anon').onclick = run($('#ccfrst-anon'), function () { return CC.createAccount('random'); });
     $('.ccfrst-x', m).onclick = $('#ccfrst-skip').onclick = function () { close(true); };

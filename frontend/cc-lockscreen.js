@@ -41,18 +41,53 @@
     ].join('');
     document.head.appendChild(st);
 
-    // wording follows what the phone really has: fingerprint, face unlock, or both
+    // The lock shows only what this phone really has: a Fingerprint button, a Face ID button, or both (the phone's own lock if neither).
+    // Each button opens the banking-style screen, which then opens the phone's real prompt.
     var cap = window.Capacitor, native = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+    var FACEI = '<svg viewBox="0 0 48 48" width="52" height="52" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="fb" d="M6 15V10a4 4 0 0 1 4-4h5"/><path class="fb" d="M33 6h5a4 4 0 0 1 4 4v5"/><path class="fb" d="M42 33v5a4 4 0 0 1-4 4h-5"/><path class="fb" d="M15 42h-5a4 4 0 0 1-4-4v-5"/><path d="M17 19v4"/><path d="M31 19v4"/><path d="M24 19v8.5a1.6 1.6 0 0 1-1.6 1.6H21.5"/><path d="M17 33.5c2 2.2 4.2 3.2 7 3.2s5-1 7-3.2"/></svg>';
+    var st2 = document.createElement('style');
+    st2.textContent = '#lk .lkrow{display:flex;justify-content:center;gap:26px;margin:16px auto 20px}#lk .lkrow .lkb{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--fg,#fff)}'
+      + '#lk .lkrow .lkfp{margin:0;width:84px;height:84px}#lk .lkfp.lkface{border-radius:30px}#lk .lkface svg path{stroke-dasharray:none;stroke-dashoffset:0;animation:none}#lk .lkface svg .fb{animation:lkp 2.4s ease-in-out infinite}'
+      + '#lk .lkface:after{border-radius:30px;left:22%;right:22%}#lk .lkface:before{border-radius:30px}';
+    document.head.appendChild(st2);
+    var fpBtn = document.getElementById('lku');
+    if (native && fpBtn && window.ccNativeBio) window.ccNativeBio.caps().then(function (c) {
+      if (!c.any) return;
+      if (c.fingerprint && c.face) lab && (lab.textContent = 'Continue with Fingerprint or Face ID');
+      else if (c.face) lab && (lab.textContent = 'Continue with Face ID');
+      else if (c.fingerprint) lab && (lab.textContent = 'Continue with Fingerprint');
+      else lab && (lab.textContent = 'Continue with your phone lock');
+      if (note) note.textContent = c.fingerprint && c.face ? 'Choose how to unlock' : c.face ? 'Look at your phone to unlock' : c.fingerprint ? 'Touch the sensor to unlock' : 'Use your PIN, pattern or password';
+      if (document.getElementById('lkf')) return;
+      var row = document.createElement('div'); row.className = 'lkrow';
+      fpBtn.parentNode.insertBefore(row, fpBtn);
+      var cap1 = function (btn, text) { var w = document.createElement('div'); w.className = 'lkb'; w.appendChild(btn); var t = document.createElement('span'); t.textContent = text; w.appendChild(t); row.appendChild(w); };
+      if (c.face) {
+        var fb = document.createElement('button'); fb.type = 'button'; fb.id = 'lkf'; fb.className = 'lkfp lkface'; fb.setAttribute('aria-label', 'Unlock with Face ID'); fb.innerHTML = FACEI;
+        if (c.fingerprint) { cap1(fpBtn, 'Fingerprint'); cap1(fb, 'Face ID'); }
+        else { fpBtn.hidden = true; fpBtn.style.display = 'none'; cap1(fb, 'Face ID'); row.appendChild(fpBtn); }       // #lku stays in the page: the app's own unlock code clicks it
+      } else cap1(fpBtn, c.fingerprint ? 'Fingerprint' : 'Phone lock');
+    }, function () {});
     var lab = document.querySelector('#lk .lkh'), note = document.querySelector('#lk .note');
-    if (native && lab) try {
-      var B = cap.Plugins && (cap.Plugins.BiometricAuth || (cap.registerPlugin && cap.registerPlugin('BiometricAuth')));
-      B.checkBiometry().then(function (r) {
-        var t = (r && (r.biometryTypes || [r.biometryType])) || [], fp = t.indexOf(3) > -1 || t.indexOf(1) > -1, face = t.indexOf(4) > -1 || t.indexOf(2) > -1;
-        if (face && !fp) { lab.textContent = 'Continue with face unlock'; if (note) note.textContent = 'Look at your phone to unlock'; }
-        else if (face && fp) { lab.textContent = 'Continue with fingerprint or face'; if (note) note.textContent = 'Touch the sensor or look at your phone'; }
-        else if (r && r.deviceIsSecure && !fp) { lab.textContent = 'Continue with your phone lock'; if (note) note.textContent = 'Use your PIN, pattern or password'; }
-      }, function () {});
-    } catch (e) {}
+
+    // "Sign in with my password": a real check. The password is sent to the server and only a yes unlocks. The old recovery code still works.
+    var pwb = document.getElementById('lkpw'), lkc = document.getElementById('lkc'), lkr = document.getElementById('lkr');
+    if (pwb) pwb.textContent = 'Sign in with my password';
+    if (lkc) { lkc.type = 'password'; lkc.placeholder = 'Your password or recovery code'; lkc.setAttribute('aria-label', 'Password or recovery code'); }
+    if (lkr) {
+      lkr.textContent = 'Unlock';
+      lkr.addEventListener('click', function (e) {
+        var v = lkc ? lkc.value : '';
+        if (!v.trim() || !(window.CC && CC.restoreAccount)) return;                     // empty or app still starting: the page's own check answers
+        try { if (v.trim().toUpperCase() === String(ME.code || '').toUpperCase()) return; } catch (x) {}   // the saved recovery code: the page's own check
+        e.preventDefault(); e.stopImmediatePropagation();
+        var who = ''; try { who = ME.handle || ME.aid || ''; } catch (x) {}
+        lkr.disabled = true; var old = lkr.textContent; lkr.textContent = 'Checking...';
+        CC.restoreAccount(who, v).then(function () { lk.classList.remove('on'); if (lkc) lkc.value = ''; try { toast('Unlocked'); } catch (x) {} },
+          function (er) { try { toast((er && er.message) || 'That password is not right'); } catch (x) {} })
+          .then(function () { lkr.disabled = false; lkr.textContent = old; });
+      }, true);
+    }
 
     // "sign in with my account": the Google account you used before opens the app again (the app keeps the account on this phone)
     var pw = document.getElementById('lkpw');

@@ -90,7 +90,7 @@
     updBusy = true; updLast = Date.now();
     P.App.getInfo().then(function (i) {
       var cur = parseInt(String((i && i.version) || '').split('.').pop(), 10) || 0;
-      return fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (rel) {
+      return fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=15', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (list) { var rel = (Array.isArray(list) ? list : []).filter(function (x) { return /^app-\d+/.test(x.tag_name || '') && !x.draft; })[0] || null;
         var say = function (t) { if (force === true) { try { if (window.ccTools && ccTools.toast) ccTools.toast(t); else if (typeof toast === 'function') toast(t); } catch (e) {} } };
         if (!rel) return say('Could not check for updates. Try again later.');
         var n = parseInt(String(rel.tag_name || '').replace(/\D/g, ''), 10) || 0;

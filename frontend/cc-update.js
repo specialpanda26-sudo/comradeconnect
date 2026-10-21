@@ -48,7 +48,7 @@
     state.checking = true; state.last = Date.now(); render();
     P.App.getInfo().then(function (i) {
       state.cur = parseInt(String((i && i.version) || '').split('.').pop(), 10) || 0;
-      return fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (rel) {
+      return fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=15', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (list) { var rel = (Array.isArray(list) ? list : []).filter(function (x) { return /^app-\d+/.test(x.tag_name || '') && !x.draft; })[0] || null;
         if (!rel) { state.msg = 'Could not check right now. Try again later.'; return; }
         var a = (rel.assets || []).filter(function (x) { return /\.apk$/i.test(x.name); })[0];
         state.n = parseInt(String(rel.tag_name || '').replace(/\D/g, ''), 10) || 0;

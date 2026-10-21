@@ -40,6 +40,11 @@
       '#ccfp .fpx-b{width:100%;border:1px solid var(--gb,rgba(255,255,255,.3));background:transparent;color:inherit;border-radius:999px;padding:14px 20px;font:600 15px Poppins,system-ui,sans-serif;cursor:pointer}',
       '#ccfp .fpx-b.p{background:var(--ink,#fff);color:var(--inkfg,#000);border-color:var(--ink,#fff)}',
       '#ccfp .fpx-b.t{border:0;color:var(--mut,#bdbdbd);font-weight:500}',
+      '#ccfp{--fpa:#ff5a00}#ccfp .fpx-hi b{color:var(--fpa)}#ccfp .fpx-wb{font-size:16px;color:var(--fg,#fff);margin-top:10px}',
+      '#ccfp .fpx-ct{margin:34px 0 0;font-size:16px;font-weight:700}#ccfp .fpx-st{font-weight:400;color:var(--mut,#bdbdbd);margin-top:4px}',
+      '#ccfp button.fpx-stage{border:0;background:none;color:var(--fpa);padding:0;cursor:pointer;margin:18px 0 10px}#ccfp .fpx-ic{color:var(--fpa)}',
+      '#ccfp .fpx-b.p{background:var(--fpa);border-color:var(--fpa);color:#fff;min-height:50px}',
+      '#ccfp .fpx-ln2{margin:18px 0 0;font-size:15px;font-weight:600}#ccfp .fpx-ln2 a{color:var(--fpa);text-decoration:underline}',
       '#ccfp[data-rm] *{animation:none!important;transition-duration:.01s!important}'
     ].join('');
     document.head.appendChild(s);
@@ -56,13 +61,18 @@
       var h = handle(), enable = mode === 'enable';
       var root = document.createElement('div'); root.id = 'ccfp'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Fingerprint');
       if (reduce) root.setAttribute('data-rm', '1');
+      var locked = !enable && !!(document.getElementById('lk') && document.getElementById('lk').classList.contains('on'));
       root.innerHTML = '<button type="button" class="fpx-x" aria-label="Cancel">' + XS + '</button>'
-        + '<h2 class="fpx-hi">' + (enable ? 'Secure your account' : (h ? 'Hi, <b>' + esc(h) + '</b>' : 'Welcome back')) + '</h2>'
-        + '<p class="fpx-sub">' + (enable ? 'Confirm it is you to turn the lock on.' : 'Welcome back!') + '</p>'
-        + '<div class="fpx-stage"><i class="fpx-r"></i><i class="fpx-r b"></i><div class="fpx-disc">' + FP + CHECK + '<i class="fpx-ln"></i></div></div>'
+        + '<h2 class="fpx-hi">' + (enable ? 'Secure your account' : (h ? 'Hi, <b>' + esc(h.toUpperCase()) + '</b>' : 'Welcome')) + '</h2>'
+        + '<p class="fpx-sub fpx-wb">' + (enable ? 'Confirm it is you to turn the lock on.' : 'Welcome Back!') + '</p>'
+        + '<p class="fpx-ct">' + (enable ? 'Turn on fingerprint lock' : 'Continue with Fingerprint') + '</p>'
         + '<p class="fpx-st" aria-live="polite">Scan your fingerprint</p>'
+        + '<button type="button" class="fpx-stage" id="fpx-tap" aria-label="Scan fingerprint"><i class="fpx-r"></i><i class="fpx-r b"></i><span class="fpx-disc">' + FP + CHECK + '<i class="fpx-ln"></i></span></button>'
         + '<p class="fpx-sub" id="fpx-h">Use your fingerprint, face unlock or phone password.</p>'
-        + '<div class="fpx-bar"><button type="button" class="fpx-b p" id="fpx-again" hidden>Try again</button><button type="button" class="fpx-b t" id="fpx-cancel">Cancel</button></div>';
+        + '<div class="fpx-bar"><button type="button" class="fpx-b" id="fpx-again" hidden>Try again</button>'
+        + (locked ? '<button type="button" class="fpx-b p" id="fpx-pw">Sign in with my Password</button>' : '')
+        + '<button type="button" class="fpx-b t" id="fpx-cancel">Cancel</button></div>'
+        + (locked ? '<p class="fpx-ln2"><a href="#" id="fpx-sw">Switch Account</a> &nbsp;&middot;&nbsp; <a href="#" id="fpx-hp">Need Help?</a></p>' : '');
       document.body.appendChild(root);
       requestAnimationFrame(function () { root.classList.add('on'); });
       var st = root.querySelector('.fpx-st'), hint = root.querySelector('#fpx-h'), again = root.querySelector('#fpx-again'), gone = false, timer = 0;
@@ -89,6 +99,13 @@
       root.querySelector('.fpx-x').onclick = function () { finish(false); };
       root.querySelector('#fpx-cancel').onclick = function () { finish(false); };
       again.onclick = attempt;
+      var tap = root.querySelector('#fpx-tap'); if (tap) tap.onclick = function () { if (!again.hidden) attempt(); };
+      var pw = root.querySelector('#fpx-pw'); if (pw) pw.onclick = function () { finish(false); setTimeout(function () { var c = document.getElementById('lkc'); if (c) { c.scrollIntoView({ block: 'center' }); c.focus(); } }, 320); };
+      var sw = root.querySelector('#fpx-sw'); if (sw) sw.onclick = function (e) { e.preventDefault(); finish(false); setTimeout(function () { try { window.ccAuthPanel && window.ccAuthPanel(); } catch (x) {} }, 320); };
+      var hp = root.querySelector('#fpx-hp'); if (hp) hp.onclick = function (e) {
+        e.preventDefault(); var u = 'https://comradeconnect.co.ke/contact.html', B = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Browser;
+        try { if (B) B.open({ url: u }); else window.open(u, '_blank'); } catch (x) {}
+      };
       document.addEventListener('keydown', key);
       attempt();
     });

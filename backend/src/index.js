@@ -6,6 +6,7 @@ import { accountRoutes, unlockReferrals } from './account.js';
 import { ratingRoutes } from './ratings.js';
 import { marketRoutes, createOrderFromPayment, autoReleaseOrders } from './market.js';
 import { messageRoutes } from './messages.js';
+import { campusRoutes } from './campus.js';
 import { contentRoutes } from './content.js';
 import { hostelRoutes, caretakerPaid } from './hostels.js';
 import { mediaRoutes } from './media.js';
@@ -55,7 +56,7 @@ hooks.onFailed = async (env, p) => {
   if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
 };
 
-const ROUTES = [engageRoutes, storyRoutes, notificationRoutes, settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, myEventRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
+const ROUTES = [campusRoutes, engageRoutes, storyRoutes, notificationRoutes, settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, myEventRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

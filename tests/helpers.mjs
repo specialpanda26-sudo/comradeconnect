@@ -11,9 +11,10 @@ export function world(opts = {}) {
   let ipn = 0;
   const w = {
     db, env, calls: f.calls, restore: f.restore,
-    async call(method, path, { body, as, admin, ip } = {}) {
+    async call(method, path, { body, as, admin, ip, campus } = {}) {
       const headers = { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip || '10.0.0.' + (as?.ipn || 1) };
       if (as) { headers['X-Aid'] = as.aid; headers['X-Token'] = as.token; }
+      if (campus) headers['X-Campus'] = campus;
       if (admin) headers['X-Admin-Key'] = admin === true ? env.ADMIN_KEY : admin;
       const res = await worker.fetch(new Request('https://api.test' + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) }), env);
       return { status: res.status, data: await res.json().catch(() => null), res };

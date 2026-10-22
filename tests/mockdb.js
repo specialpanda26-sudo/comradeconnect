@@ -42,6 +42,8 @@ SCHEMA.notifications = T(['id']);
 SCHEMA.notif_state = T(['aid']);
 SCHEMA.media_comments = T(['id'], { defaults: { hidden: false } });
 SCHEMA.story_views = T(['media_id', 'viewer_aid']);
+SCHEMA.spots = T(['id'], { defaults: { hidden: false, likes: 0, campus: 'kirinyaga' } });
+SCHEMA.spot_likes = T(['spot_id', 'aid']);
 export class MockDB {
   constructor() { this.t = Object.fromEntries(Object.keys(SCHEMA).map((k) => [k, []])); this.log = []; }
   rows(name) { return this.t[name]; }

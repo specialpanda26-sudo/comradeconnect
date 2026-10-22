@@ -1,6 +1,7 @@
 import { json, sb, rows, ago, isAdmin, hasContact, standingBlock, audit, user } from './lib.js';
 import { feeFor } from './postrules.js';
 import { notify, notifySnippet } from './notifications.js';
+import { campusRow, campusQuery } from './campus.js';
 
 // ---------- Feed ----------
 const CAT_OK = /^[A-Za-z0-9]{2,22}$/;
@@ -23,6 +24,7 @@ export async function feedRoutes(req, env, url, ip) {
     const cat = url.searchParams.get('category'), zone = url.searchParams.get('zone');
     if (cat && cat !== 'All' && CAT_OK.test(cat)) q += `&category=eq.${cat}`;
     if (zone && zone !== 'All') q += `&zone=eq.${encodeURIComponent(zone.slice(0, 30))}`;
+    q += campusQuery(req);                                  // the campus you picked
     const r = await rows(await sb(env, q));
     const posts = r.slice(0, limit).map(fmtPost).sort((a, b) => (b.boosted ? 1 : 0) - (a.boosted ? 1 : 0));
     return json(env, { posts, hasMore: r.length > limit });
@@ -44,11 +46,11 @@ export async function feedRoutes(req, env, url, ip) {
     const due = isAdmin(req, env) ? { fee: 0 } : await feeFor(env, content);
     if (due.fee > 0) {
       const u = await user(req, env, true); if (u instanceof Response) return u;       // paying needs a signed-in account
-      const [draft] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid: u.aid, content, category, zone, ip, hidden: true, fee_pending: due.fee }) }));
+      const [draft] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid: u.aid, content, category, zone, ip, hidden: true, fee_pending: due.fee, ...campusRow(req) }) }));
       if (!draft) return json(env, { error: 'Could not save your post. Try again.' }, 500);
       return json(env, { payment_required: true, fee: due.fee, rule: due.rule, post_id: draft.id, error: `Posts about money cost KSh ${due.fee}. Pay to publish it.` }, 402);
     }
-    const [row] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid, content, category, zone, ip, verified: category === 'Notices' }) }));
+    const [row] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid, content, category, zone, ip, verified: category === 'Notices', ...campusRow(req) }) }));
     return json(env, fmtPost({ ...row, comments: [] }), 201);
   }
   const m = path.match(/^\/api\/posts\/([0-9a-f-]{36})\/(like|view|comments|report)$/);

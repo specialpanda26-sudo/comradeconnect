@@ -1,10 +1,12 @@
 // Community content: roommates, study groups, polls, Hearts (18+), Wi-Fi, hostels, services, study tips, zone ratings,
 // plus public notices/events/sponsors and the shared report endpoint.
 import { wifiParse, wifiMask, WIFI_TEXT } from './wifi.js';
+import { campusRow, campusQuery } from './campus.js';
 import { hostelParse, hostelText, decorateHostels, isCaretaker } from './hostels.js';
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, throttle, tooMany, user, authProfile, contactBlock } from './lib.js';
 
 const ok = (v) => v !== null && v !== undefined;
+const CAMPUS_TABLES = new Set(['wifi', 'hostels', 'rooms', 'services']);   // these follow the campus you picked
 // Each resource: table, text fields (contact-filtered), a parser that returns the row to insert or an error string.
 const R = {
   rooms: { table: 'rooms', per: 5, rtype: 'room', text: ['title', 'details', 'zone'], parse: (b) => {
@@ -40,9 +42,9 @@ const R = {
 const hasDup = (a) => new Set(a.map((x) => x.toLowerCase())).size !== a.length;
 export const HIDE = { room: ['rooms', { hidden: true }, { hidden: false }], group: ['study_groups', { hidden: true }, { hidden: false }], poll: ['polls', { hidden: true }, { hidden: false }],
   hearts: ['hearts_posts', { hidden: true }, { hidden: false }], wifi: ['wifi', { hidden: true }, { hidden: false }], hostel: ['hostels', { hidden: true }, { hidden: false }],
-  service: ['services', { hidden: true }, { hidden: false }], tip: ['study_tips', { hidden: true }, { hidden: false }], clip: ['media', { status: 'hidden' }, { status: 'ready' }],
+  service: ['services', { hidden: true }, { hidden: false }], spot: ['spots', { hidden: true }, { hidden: false }], tip: ['study_tips', { hidden: true }, { hidden: false }], clip: ['media', { status: 'hidden' }, { status: 'ready' }],
   listing: ['listings', { status: 'removed' }, { status: 'approved' }], event: ['events', { hidden: true }, { hidden: false }] };
-const AUTOHIDE = new Set(['room', 'group', 'poll', 'hearts', 'wifi', 'hostel', 'service', 'tip', 'clip']);   // listings and users wait for an admin
+const AUTOHIDE = new Set(['room', 'group', 'poll', 'hearts', 'wifi', 'hostel', 'service', 'tip', 'clip', 'spot']);   // listings and users wait for an admin
 
 const pub = (r, me) => { const { aid, ip, hidden, ...rest } = r; return { ...rest, createdAt: Date.parse(r.created_at), mine: !!me && me.aid === aid }; };
 
@@ -60,7 +62,7 @@ export async function contentRoutes(req, env, url, ip) {
   }
   if (m === 'GET' && path === '/api/events') {
     const today = new Date().toISOString().slice(0, 10);
-    const r = await rows(await sb(env, `events?hidden=eq.false&starts_on=gte.${today}&order=starts_on.asc&limit=50`));
+    const r = await rows(await sb(env, `events?hidden=eq.false&starts_on=gte.${today}${campusQuery(req)}&order=starts_on.asc&limit=50`));
     const hosts = [...new Set(r.filter((e) => e.owner_aid).map((e) => e.owner_aid))];
     const names = hosts.length ? await rows(await sb(env, `profiles?select=aid,handle&aid=${inList(hosts)}`)) : [];
     const capped = r.filter((e) => e.capacity), sold = capped.length ? await rows(await sb(env, `tickets?select=event_id&event_id=${inList(capped.map((e) => e.id))}&status=neq.void&limit=5000`)) : [];
@@ -109,7 +111,7 @@ export async function contentRoutes(req, env, url, ip) {
   if (path === '/api/c/wifi/map' && req.method === 'GET') {            // every shared network that has a real location, for the map
     const me = req.headers.get('X-Token') ? await authProfile(req, env) : null;
     const kd = url.searchParams.get('kind');
-    const r = await rows(await sb(env, `wifi?hidden=eq.false&lat=not.is.null&order=created_at.desc&limit=500${['spot', 'share', 'reseller'].includes(kd) ? '&kind=eq.' + kd : ''}`));
+    const r = await rows(await sb(env, `wifi?hidden=eq.false&lat=not.is.null${campusQuery(req)}&order=created_at.desc&limit=500${['spot', 'share', 'reseller'].includes(kd) ? '&kind=eq.' + kd : ''}`));
     const v = r.length ? await rows(await sb(env, `wifi_votes?select=wifi_id,value&wifi_id=${inList(r.map((x) => x.id))}`)) : [];
     const items = r.map((x) => {
       const sc = v.filter((y) => y.wifi_id === x.id), p = wifiMask(pub(x, me), me);
@@ -131,6 +133,7 @@ export async function contentRoutes(req, env, url, ip) {
     const zone = url.searchParams.get('zone'); if (zone && zone !== 'All' && res.table !== 'polls' && res.table !== 'study_tips' && res.table !== 'study_groups') q += mm[1] === 'services' ? `&or=(zone.eq.${enc(zone.slice(0, 30))},zone.eq.)` : `&zone=eq.${enc(zone.slice(0, 30))}`;
     const kd = url.searchParams.get('kind'); if (res.table === 'wifi' && ['spot', 'share', 'reseller'].includes(kd)) q += '&kind=eq.' + kd;
     if (res.table === 'hostels' && ['vacancy', 'review'].includes(kd)) q += '&kind=eq.' + kd;
+    if (CAMPUS_TABLES.has(res.table)) q += campusQuery(req);
     let lr = await sb(env, q); if (!lr.ok && q.includes('featured.desc,')) lr = await sb(env, q.replace('featured.desc,', ''));
     const r = await rows(lr); const list = r.slice(0, limit), ids = list.map((x) => x.id);
     let items = list.map((x) => pub(x, me));
@@ -164,7 +167,7 @@ export async function contentRoutes(req, env, url, ip) {
     const { text_extra, ...rowData } = parsed;
     const blk = contactBlock(env, ...res.text.map((f) => rowData[f]), ...(text_extra || [])); if (blk) return blk;
     if (!(await throttle(env, ip, 'c:' + mm[1], u.aid, res.per, res.per * 4))) return tooMany(env);
-    const r = await one(await post(env, res.table, { ...rowData, aid: u.aid, ip }));
+    const r = await one(await post(env, res.table, { ...rowData, ...(CAMPUS_TABLES.has(res.table) ? campusRow(req) : {}), aid: u.aid, ip }));
     return r ? json(env, pub(r, u), 201) : err(env, 'Could not save', 500);
   }
 

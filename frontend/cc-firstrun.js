@@ -8,11 +8,13 @@
   var KEY = 'cc_fr';
   var native = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
   var signedIn = function () { try { var a = window.ccAuth && window.ccAuth(); return !!(a && a.token); } catch (e) { return false; } };
-  var seen = function () { try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; } };
-  var mark = function () { try { localStorage.setItem(KEY, '1'); } catch (e) {} };
+  // Shown when you open the app or site signed out, then never again during that visit (X, Skip, back button or signing in all count).
+  // It comes back the next time you open the app or site, until you are signed in.
+  var seen = function () { try { return sessionStorage.getItem(KEY) === '1'; } catch (e) { return window.__ccFrSeen === 1; } };
+  var mark = function () { window.__ccFrSeen = 1; try { sessionStorage.setItem(KEY, '1'); } catch (e) {} };
   var say = function (t) { try { if (window.ccTools && ccTools.toast) ccTools.toast(t); else if (typeof toast === 'function') toast(t); } catch (e) {} };
 
-  window.ccFirstRunOpen = native && !seen();      // read by the cookie banner timer: wait for this panel first
+  window.ccFirstRunOpen = !seen() && !signedIn();      // read by the cookie banner timer: wait for this panel first
 
   var css = document.createElement('style');
   css.textContent = [
@@ -102,6 +104,6 @@
   }
   window.ccAuthPanel = open;
 
-  function first() { if (native && !seen() && !signedIn()) open(); else if (window.ccFirstRunOpen) close(false); }
+  function first() { if (!seen() && !signedIn()) open(); else if (window.ccFirstRunOpen) close(false); }
   if (document.readyState === 'complete') setTimeout(first, 250); else window.addEventListener('load', function () { setTimeout(first, 250); });
 })();

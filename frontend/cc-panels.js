@@ -8,7 +8,7 @@ if (window.__ccPanels) return; window.__ccPanels = 1;
 
 var MODAL = '#md,#dm,#pv,#dcm,#ccp,.cchm,.cxm,.ccl-sh,.ccrp,.ccm-sh,.ccp-sheet,.ccdl-m,#cchp';
 var SCREEN = '#wfov,#ccrc,.ccr,#hszoom,#ccfind,#ccfid';
-var QUIT = /^(cancel|close|not now|later|no thanks|back|done|dismiss)$/i;
+var QUIT = /^(cancel|close|not now|later|no thanks|done|dismiss)$/i;
 var native = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
 
 var X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
@@ -41,7 +41,8 @@ st.textContent = [
   '.ccpb.ccpb-x button{margin:calc(8px + env(safe-area-inset-top,0px)) 8px 0 0;background:var(--bg,#000)}',
   '.ccp-box>h2:first-of-type,.ccp-box>h3:first-of-type{padding-right:48px}',
   '.ccp-ov .ccx-b{display:none!important}',
-  '.ccx-off{display:none!important}'
+  '.ccx-off{display:none!important}',
+  'button,a,[role=button],input,select,textarea,label{touch-action:manipulation}'
 ].join('');
 document.head.appendChild(st);
 
@@ -139,6 +140,7 @@ queue();
 
 function goBack() {
   if (locked()) return false;
+  var fr = document.getElementById('ccfrst'); if (fr) { var fx = fr.querySelector('.ccfrst-x'); if (fx) { fx.click(); return true; } }
   var o = openList();
   if (o.length) { closeIt(o[o.length - 1]); return true; }
   var on = document.querySelector('#tb button.on');

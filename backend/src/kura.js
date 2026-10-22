@@ -11,23 +11,40 @@ const PHOTO_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'we
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
 const arr = (v) => (Array.isArray(v) ? v : []);
 
-export async function getSeason(env) {
-  const s = (await one(await sb(env, 'kura_season?id=eq.1'))) || {};
+const sidOf = (v) => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n > 0 ? n : null; };
+async function seasonList(env) { return rows(await sb(env, 'kura_season?select=*&order=id.asc&limit=100')); }
+async function defaultSeasonId(env) {
+  const l = (await seasonList(env)).filter((x) => !x.archived);
+  const live = l.find((x) => x.voting_open !== false && (!x.ends_at || Date.parse(x.ends_at) > Date.now()));
+  return (live || l[0] || { id: 1 }).id;
+}
+export async function getSeason(env, sid) {
+  const id = sidOf(sid) || await defaultSeasonId(env);
+  const s = (await one(await sb(env, `kura_season?id=eq.${id}`))) || {};
   return {
+    id: s.id || id, archived: !!s.archived,
     title: s.title || 'Campus Star Awards', tagline: s.tagline || '', voting_open: s.voting_open !== false, entries_open: s.entries_open !== false,
     ends_at: s.ends_at || null, starts_at: s.starts_at || null, reveal_at: s.reveal_at || null, prize_mystery: !!s.prize_mystery, prize_image_key: s.prize_image_key || '', prize_image_url: s.prize_image_key ? store.mediaUrl(env, s.prize_image_key) : '', prize_title: s.prize_title || '', prize_text: s.prize_text || '', prizes: arr(s.prizes), packs: arr(s.packs), campuses: arr(s.campuses), divisions: arr(s.divisions),
   };
 }
 const votingOpen = (S) => S.voting_open && (!S.starts_at || Date.parse(S.starts_at) <= Date.now()) && (!S.ends_at || Date.parse(S.ends_at) > Date.now());
 const myst = (S) => !!S.prize_mystery && !(S.reveal_at && Date.parse(S.reveal_at) <= Date.now());
+async function resolveSeason(env, raw) {
+  const want = sidOf(raw);
+  if (want && (await one(await sb(env, `kura_season?select=id&id=eq.${want}`)))) return getSeason(env, want);
+  return getSeason(env);
+}
+async function publicSeasons(env) {
+  return (await seasonList(env)).filter((x) => !x.archived).map((x) => ({ id: x.id, title: x.title || 'Competition', voting_open: votingOpen({ ...x, voting_open: x.voting_open !== false }) }));
+}
 const photoOf = (env, c) => (c.photo_key ? store.mediaUrl(env, c.photo_key) : null);
 const rankSort = (a, b) => b.votes - a.votes || String(a.approved_at || a.created_at).localeCompare(String(b.approved_at || b.created_at)) || String(a.id).localeCompare(String(b.id));
 const pub = (env, c) => ({ id: c.id, name: c.name, photo: photoOf(env, c), campus: c.campus, gender: c.gender, division: c.division, category: c.category, tagline: c.tagline || '', votes: c.votes || 0, followers: c.followers || 0, verified: !!c.verified });
 const LIST = 'id,name,photo_key,campus,gender,division,category,tagline,votes,followers,verified,created_at,approved_at';
-const approved = async (env) => (await rows(await sb(env, `kura_contestants?select=${LIST}&status=eq.approved&limit=3000`))).sort(rankSort);
+const approved = async (env, sid) => (await rows(await sb(env, `kura_contestants?select=${LIST}&status=eq.approved&season_id=eq.${sid || 1}&limit=3000`))).sort(rankSort);
 
 function publicSeason(S) {
-  return { title: S.title, tagline: S.tagline, voting_open: votingOpen(S), entries_open: S.entries_open, ends_at: S.ends_at, starts_at: S.starts_at, reveal_at: S.reveal_at, prize_mystery: myst(S), prize_image: myst(S) ? null : (S.prize_image_url || null), prize_title: S.prize_title, prize_text: S.prize_text, prizes: S.prizes, packs: S.packs, campuses: S.campuses, divisions: S.divisions, now: new Date().toISOString() };
+  return { id: S.id, title: S.title, tagline: S.tagline, voting_open: votingOpen(S), entries_open: S.entries_open, ends_at: S.ends_at, starts_at: S.starts_at, reveal_at: S.reveal_at, prize_mystery: myst(S), prize_image: myst(S) ? null : (S.prize_image_url || null), prize_title: S.prize_title, prize_text: S.prize_text, prizes: S.prizes, packs: S.packs, campuses: S.campuses, divisions: S.divisions, now: new Date().toISOString() };
 }
 
 // Races = contestants who share a campus, category and gender. Each race has a leader and a chaser.
@@ -43,13 +60,13 @@ function races(env, list) {
   return out;
 }
 
-async function buildHome(env) {
-  const S = await getSeason(env), list = await approved(env), all = races(env, list);
+async function buildHome(env, raw) {
+  const S = await resolveSeason(env, raw), list = await approved(env, S.id), all = races(env, list);
   const contested = all.filter((r) => r.chaser);
   const closest = contested.filter((r) => r.lead.votes > 0).sort((a, b) => a.gap - b.gap || b.lead.votes - a.lead.votes).slice(0, 3);
   const live = [...contested].sort((a, b) => b.total - a.total).slice(0, 12);
   return {
-    season: publicSeason(S),
+    season: publicSeason(S), seasons: await publicSeasons(env),
     stats: { contestants: list.length, campuses: new Set(list.map((c) => c.campus)).size, votes: list.reduce((s, c) => s + (c.votes || 0), 0) },
     top: list.slice(0, 3).map((c) => pub(env, c)), closest, live,
   };
@@ -57,7 +74,8 @@ async function buildHome(env) {
 
 async function buildBoard(env, url) {
   const q = url.searchParams, campus = str(q.get('campus'), 80), division = str(q.get('division'), 30), gender = str(q.get('gender'), 10), term = str(q.get('q'), 40).toLowerCase();
-  let list = await approved(env);
+  const S = await resolveSeason(env, q.get('season'));
+  let list = await approved(env, S.id);
   if (campus) list = list.filter((c) => c.campus === campus);
   if (GENDERS.includes(gender)) list = list.filter((c) => c.gender === gender);
   if (term) list = list.filter((c) => c.name.toLowerCase().includes(term) || c.category.toLowerCase().includes(term));
@@ -70,7 +88,7 @@ async function buildBoard(env, url) {
 async function buildProfile(env, id, aid) {
   const c = await one(await sb(env, `kura_contestants?id=eq.${id}&status=eq.approved`));
   if (!c) return null;
-  const list = await approved(env), rank = list.findIndex((x) => x.id === c.id) + 1, above = rank > 1 ? list[rank - 2] : null;
+  const list = await approved(env, c.season_id || 1), rank = list.findIndex((x) => x.id === c.id) + 1, above = rank > 1 ? list[rank - 2] : null;
   const vs = await rows(await sb(env, `kura_votes?select=supporter_name,votes,created_at&contestant_id=eq.${c.id}&status=eq.paid&order=created_at.desc&limit=2000`));
   const tally = new Map();
   for (const v of vs) { const n = (v.supporter_name || '').trim(); if (!n) continue; const k = n.toLowerCase(); const t = tally.get(k) || { name: n, votes: 0 }; t.votes += v.votes; tally.set(k, t); }
@@ -80,7 +98,7 @@ async function buildProfile(env, id, aid) {
   if (aid) following = !!(await one(await sb(env, `kura_follows?select=aid&contestant_id=eq.${c.id}&aid=eq.${enc(aid)}`)));
   const socials = {};
   for (const [k, v] of Object.entries(c.socials || {})) if (SOCIALS[k] && /^[A-Za-z0-9._-]{1,40}$/.test(v)) socials[k] = { handle: v, url: SOCIALS[k] + encodeURIComponent(v) };
-  return { contestant: { ...pub(env, c), bio: c.bio || '', socials }, rank, total: list.length, gap: above ? above.votes - c.votes + 1 : 0, above: above ? above.name : null, supporters, squad, following };
+  return { season_id: c.season_id || 1, contestant: { ...pub(env, c), bio: c.bio || '', socials }, rank, total: list.length, gap: above ? above.votes - c.votes + 1 : 0, above: above ? above.name : null, supporters, squad, following };
 }
 
 // A payment for votes was confirmed: count them once.
@@ -90,7 +108,7 @@ export async function kuraPaid(env, p) {
   if (v) { votes = v.votes; cid = v.contestant_id; }
   else {
     if (await one(await sb(env, `kura_votes?select=id&payment_id=eq.${p.id}`))) return;      // already counted
-    const S = await getSeason(env), pack = S.packs.find((x) => Number(x.price) === Number(p.amount));
+    const cs0 = UUID.test(String(p.ref_id)) ? await one(await sb(env, `kura_contestants?select=season_id&id=eq.${p.ref_id}`)) : null, S = await getSeason(env, cs0 && cs0.season_id), pack = S.packs.find((x) => Number(x.price) === Number(p.amount));
     cid = p.ref_id; votes = pack ? Math.floor(Number(pack.votes)) : Math.floor(Number(p.amount) / 10);
     if (UUID.test(String(cid)) && votes > 0) await post(env, 'kura_votes', { contestant_id: cid, aid: p.aid, payment_id: p.id, votes, amount: p.amount, status: 'paid', paid_at: new Date().toISOString() });
   }
@@ -117,7 +135,7 @@ export async function kuraRoutes(req, env, url, ip) {
   const body = async () => (await req.json().catch(() => ({})));
 
   // ================= public =================
-  if (path === '/api/kura/home' && m === 'GET') return json(env, await buildHome(env));
+  if (path === '/api/kura/home' && m === 'GET') return json(env, await buildHome(env, url.searchParams.get('season')));
   if (path === '/api/kura/board' && m === 'GET') return json(env, await buildBoard(env, url));
   let mm = path.match(/^\/api\/kura\/c\/([0-9a-f-]{36})$/);
   if (mm && m === 'GET') {
@@ -131,7 +149,7 @@ export async function kuraRoutes(req, env, url, ip) {
     if (!(await throttle(env, ip, 'kurastatus', ip, 30, 30))) return tooMany(env);
     const b = await body(), email = str(b.email, 200).toLowerCase(), phone = normPhone(b.phone);
     if (!EMAIL.test(email) || !phone) return err(env, 'Enter the email and the M-Pesa or mobile number you applied with');
-    const c = (await rows(await sb(env, `kura_contestants?select=id,name,status,note,payout_phone,email&email=eq.${enc(email)}&limit=5`))).find((x) => normPhone(x.payout_phone) === phone && String(x.email).toLowerCase() === email);
+    const c = (await rows(await sb(env, `kura_contestants?select=id,name,status,note,payout_phone,email&email=eq.${enc(email)}&order=created_at.desc&limit=5`))).find((x) => normPhone(x.payout_phone) === phone && String(x.email).toLowerCase() === email);
     if (!c) return json(env, { found: false });
     return json(env, { found: true, status: c.status, name: c.name, note: c.status === 'rejected' ? c.note || '' : '', id: c.status === 'approved' ? c.id : null });
   }
@@ -139,7 +157,7 @@ export async function kuraRoutes(req, env, url, ip) {
   // ================= signed in =================
   if (path === '/api/kura/me' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;
-    const mine = await rows(await sb(env, `kura_contestants?select=id,name,status,note,votes,category,campus&aid=eq.${enc(u.aid)}&order=created_at.desc&limit=5`));
+    const mine = await rows(await sb(env, `kura_contestants?select=id,name,status,note,votes,category,campus,season_id&aid=eq.${enc(u.aid)}&order=created_at.desc&limit=5`));
     return json(env, { applications: mine });
   }
   if (path === '/api/kura/photo-url' && m === 'POST') {
@@ -155,9 +173,9 @@ export async function kuraRoutes(req, env, url, ip) {
   }
   if (path === '/api/kura/apply' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
-    const S = await getSeason(env);
-    if (!S.entries_open) return err(env, 'Entries are closed for this season');
     const b = await body();
+    const S = await resolveSeason(env, b.season_id);
+    if (!S.entries_open) return err(env, 'Entries are closed for this season');
     const name = str(b.name, 40), tagline = str(b.tagline, 80), bio = str(b.bio, 300), email = str(b.email, 200).toLowerCase(), phone = normPhone(b.phone);
     const campus = str(b.campus, 80), gender = str(b.gender, 10), division = str(b.division, 30), category = str(b.category, 40), key = str(b.photo_key, 120);
     if (name.length < 2) return err(env, 'Add your stage or creator name');
@@ -176,7 +194,7 @@ export async function kuraRoutes(req, env, url, ip) {
     if (store.sniff(await store.peek(env, bucket, key)) !== want) { await store.remove(env, bucket, key); return err(env, 'That file is not a real photo'); }
     if (await one(await sb(env, `kura_contestants?select=id&photo_key=eq.${enc(key)}`))) return err(env, 'Pick the photo again');
     if (!(await throttle(env, ip, 'kuraapply', u.aid, 3, 6))) return tooMany(env);
-    const r = await post(env, 'kura_contestants', { aid: u.aid, name, photo_key: key, campus, gender, division, category, tagline: tagline || null, bio: bio || null, socials: soc.out, email, payout_phone: phone });
+    const r = await post(env, 'kura_contestants', { aid: u.aid, season_id: S.id, name, photo_key: key, campus, gender, division, category, tagline: tagline || null, bio: bio || null, socials: soc.out, email, payout_phone: phone });
     if (r.status === 409) return err(env, 'This email has already applied. Use Check my application.', 409);
     const row = await one(r);
     if (!row) { console.error('kura apply failed', r.status); return err(env, 'Could not save your application', 500); }
@@ -184,12 +202,12 @@ export async function kuraRoutes(req, env, url, ip) {
   }
   if (path === '/api/kura/vote' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
-    const S = await getSeason(env);
-    if (!votingOpen(S)) return err(env, 'Voting is closed');
     const b = await body();
     if (!UUID.test(String(b.contestant_id || ''))) return err(env, 'Pick a contestant');
-    const c = await one(await sb(env, `kura_contestants?select=id,name&id=eq.${b.contestant_id}&status=eq.approved`));
+    const c = await one(await sb(env, `kura_contestants?select=id,name,season_id&id=eq.${b.contestant_id}&status=eq.approved`));
     if (!c) return err(env, 'Contestant not found', 404);
+    const S = await getSeason(env, c.season_id || 1);
+    if (!votingOpen(S)) return err(env, 'Voting is closed');
     const idx = Math.floor(Number(b.pack)), pack = S.packs[idx];
     if (!pack || !(Number(pack.price) >= 1) || !(Number(pack.votes) >= 1)) return err(env, 'Choose a vote pack');
     const supporter = str(b.name, 24);
@@ -220,12 +238,13 @@ export async function kuraRoutes(req, env, url, ip) {
     if (!isAdmin(req, env)) return err(env, 'Not allowed', 403);
     const A = (action, id, detail) => audit(env, action, 'kura', id, detail, ip);
     if (path === '/api/admin/kura' && m === 'GET') {
-      const S = await getSeason(env);
-      const all = await rows(await sb(env, 'kura_contestants?select=*&order=created_at.desc&limit=1000'));
+      const S = await resolveSeason(env, url.searchParams.get('season'));
+      const all = await rows(await sb(env, `kura_contestants?select=*&season_id=eq.${S.id}&order=created_at.desc&limit=1000`));
       const full = (c) => ({ ...pub(env, c), status: c.status, bio: c.bio || '', socials: c.socials || {}, email: c.email, phone: c.payout_phone, note: c.note || '', created_at: c.created_at });
-      const paid = await rows(await sb(env, 'kura_votes?select=amount,votes&status=eq.paid&limit=100000'));
+      const ids = new Set(all.map((c) => c.id));
+      const paid = (await rows(await sb(env, 'kura_votes?select=amount,votes,contestant_id&status=eq.paid&limit=100000'))).filter((v) => ids.has(v.contestant_id));
       return json(env, {
-        season: S, pending: all.filter((c) => c.status === 'pending').map(full), contestants: all.filter((c) => c.status !== 'pending').map(full),
+        season: S, seasons: (await seasonList(env)).map((x) => ({ id: x.id, title: x.title || 'Competition', archived: !!x.archived })), pending: all.filter((c) => c.status === 'pending').map(full), contestants: all.filter((c) => c.status !== 'pending').map(full),
         money: { paid: paid.reduce((s, v) => s + (v.amount || 0), 0), votes: paid.reduce((s, v) => s + (v.votes || 0), 0), payments: paid.length },
       });
     }
@@ -254,6 +273,9 @@ export async function kuraRoutes(req, env, url, ip) {
     }
     if (path === '/api/admin/kura/season' && m === 'POST') {
       const b = await body(), has = (k) => b[k] !== undefined, row = { updated_at: new Date().toISOString() };
+      const sid = sidOf(b.id) || await defaultSeasonId(env);
+      if (!(await one(await sb(env, `kura_season?select=id&id=eq.${sid}`)))) return err(env, 'Competition not found', 404);
+      if (has('archived')) row.archived = !!b.archived;
       if (has('title')) { row.title = str(b.title, 60); if (!row.title) return err(env, 'Add a title'); }
       if (has('tagline')) row.tagline = str(b.tagline, 200);
       if (has('voting_open')) row.voting_open = !!b.voting_open;
@@ -275,9 +297,21 @@ export async function kuraRoutes(req, env, url, ip) {
         if (p.length < 1 || p.length > 8 || p.some((x) => !(x.votes >= 1 && x.votes <= 100000 && x.price >= 1 && x.price <= 100000))) return err(env, 'Vote packs: 1 to 8 packs with votes and a price in KSh');
         row.packs = p;
       }
-      await patch(env, 'kura_season?id=eq.1', row);
-      await A('kura_season', '1', Object.keys(row).join(','));
+      await patch(env, `kura_season?id=eq.${sid}`, row);
+      await A('kura_season', String(sid), Object.keys(row).join(','));
       return json(env, { ok: true });
+    }
+    if (path === '/api/admin/kura/season/new' && m === 'POST') {
+      const b = await body(), title = str(b.title, 60);
+      if (!title) return err(env, 'Add a title');
+      const all = await seasonList(env);
+      if (all.length >= 30) return err(env, 'That is enough competitions. Archive an old one first.');
+      const src = await getSeason(env, sidOf(b.copy_from));
+      const id = Math.max(0, ...all.map((x) => Number(x.id) || 0)) + 1;
+      const r = await post(env, 'kura_season', { id, title, tagline: src.tagline, voting_open: false, entries_open: true, packs: src.packs, campuses: src.campuses, divisions: src.divisions, prizes: [] });
+      if (!(await one(r))) { console.error('kura season create failed', r.status); return err(env, 'Could not create the competition', 500); }
+      await A('kura_season_new', String(id), title);
+      return json(env, { id }, 201);
     }
     return err(env, 'Not found', 404);
   }

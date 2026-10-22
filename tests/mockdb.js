@@ -41,7 +41,7 @@ SCHEMA.profiles.uniques.push(nn('student_email_hash'));
 
 // Kura (campus voting)
 SCHEMA.kura_season = T(['id']);
-SCHEMA.kura_contestants = T(['id'], { defaults: { status: 'pending', verified: false, votes: 0, followers: 0, socials: {}, approved_at: null }, uniques: [(r) => (r.email ? String(r.email).toLowerCase() : null)] });
+SCHEMA.kura_contestants = T(['id'], { defaults: { status: 'pending', verified: false, votes: 0, followers: 0, socials: {}, approved_at: null, season_id: 1 }, uniques: [(r) => (r.email ? (r.season_id || 1) + '|' + String(r.email).toLowerCase() : null)] });
 SCHEMA.kura_votes = T(['id'], { defaults: { status: 'pending', supporter_name: null }, uniques: [nn('payment_id')] });
 SCHEMA.kura_follows = T(['contestant_id', 'aid']);
 

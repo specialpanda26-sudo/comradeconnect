@@ -70,3 +70,28 @@ test('failed payment adds nothing; follow toggles; closest race is reported', as
   const hid = await w.call('POST', `/api/admin/kura/c/${r2.data.id}`, { admin: true, body: { action: 'hide' } }); assert.equal(hid.status, 200);
   assert.equal((await w.call('GET', `/api/kura/c/${r2.data.id}`)).status, 404);
 });
+
+test('two competitions run side by side: own contestants, own boards, own voting switch', async (t) => {
+  const w = world(); t.after(w.restore); w.db.rows('kura_season').push({ ...SEASON });
+  const a = await w.user('a'), b = await w.user('b'), fan = await w.user('fan');
+  const mk = await w.call('POST', '/api/admin/kura/season/new', { admin: true, body: { title: 'Miss Campus', copy_from: 1 } });
+  assert.equal(mk.status, 201, JSON.stringify(mk.data)); assert.equal(mk.data.id, 2);
+  assert.equal((await w.call('POST', '/api/admin/kura/season/new', { body: { title: 'x' } })).status, 403);
+  const r1 = await apply(w, a);                                                                      // no season given: goes to the default one
+  const r2 = await apply(w, b, { email: 'one@example.com', name: 'Star Two', season_id: 2 });        // same email, other competition: allowed
+  assert.equal(r1.status, 201); assert.equal(r2.status, 201, JSON.stringify(r2.data));
+  assert.equal(w.row('kura_contestants', (c) => c.id === r1.data.id).season_id, 1); assert.equal(w.row('kura_contestants', (c) => c.id === r2.data.id).season_id, 2);
+  for (const r of [r1, r2]) await w.call('POST', `/api/admin/kura/c/${r.data.id}`, { admin: true, body: { action: 'approve' } });
+  assert.equal((await w.call('GET', '/api/kura/board?season=1')).data.items.map((x) => x.name).join(), 'Star One');
+  assert.equal((await w.call('GET', '/api/kura/board?season=2')).data.items.map((x) => x.name).join(), 'Star Two');
+  const home = await w.call('GET', '/api/kura/home?season=2'); assert.equal(home.data.season.id, 2); assert.equal(home.data.seasons.length, 2); assert.equal(home.data.stats.contestants, 1);
+  assert.equal((await w.call('POST', '/api/kura/vote', { as: fan, body: { contestant_id: r2.data.id, pack: 0, phone: '0711222333' } })).status, 400);   // competition 2 starts with voting off
+  await w.call('POST', '/api/admin/kura/season', { admin: true, body: { id: 2, voting_open: true } });
+  const v = await w.call('POST', '/api/kura/vote', { as: fan, body: { contestant_id: r2.data.id, pack: 0, phone: '0711222333' } }); assert.equal(v.status, 201, JSON.stringify(v.data));
+  await w.callback(w.row('payments', (p) => p.id === v.data.id));
+  assert.equal(w.row('kura_contestants', (c) => c.id === r2.data.id).votes, 1); assert.equal(w.row('kura_contestants', (c) => c.id === r1.data.id).votes, 0);
+  const ad = await w.call('GET', '/api/admin/kura?season=2', { admin: true }); assert.equal(ad.data.contestants.length, 1); assert.equal(ad.data.money.paid, 10); assert.equal(ad.data.seasons.length, 2);
+  assert.equal((await w.call('GET', '/api/admin/kura?season=1', { admin: true })).data.money.paid, 0);
+  await w.call('POST', '/api/admin/kura/season', { admin: true, body: { id: 2, archived: true } });
+  assert.equal((await w.call('GET', '/api/kura/home')).data.seasons.length, 1);                      // archived ones leave the voter picker
+});

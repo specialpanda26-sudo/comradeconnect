@@ -10,6 +10,20 @@ load = async function () {
   render();
 };
 LABEL.kura = 'Kura';
+async function kuSave(p) {
+  const g = (i) => ($('#' + i).value || '').trim(), iso = (i) => (g(i) ? new Date(g(i)).toISOString() : '');
+  p.starts_at = iso('ku_s'); p.reveal_at = iso('ku_rv'); p.prize_mystery = $('#ku_pm').checked;
+  const f = $('#ku_pi').files[0];
+  if (f) {
+    if (!/^image\/(jpeg|png|webp)$/.test(f.type) || f.size > 5242880) throw new Error('Prize image: JPG, PNG or WebP under 5 MB');
+    const u = await api('/api/admin/kura/prize-url', { content_type: f.type }), fd = new FormData();
+    fd.append('cacheControl', '3600'); fd.append('', f);
+    const r = await fetch(u.upload_url, { method: 'PUT', body: fd });
+    if (!r.ok) throw new Error('The prize image did not upload. Try again.');
+    p.prize_image_key = u.key;
+  } else if ($('#ku_pr') && $('#ku_pr').checked) p.prize_image_key = '';
+  return api('/api/admin/kura/season', p);
+}
 const sw = (id, label, note, on) => '<label class="sw"><span>' + label + '<small>' + note + '</small></span><input type="checkbox" id="' + id + '"' + (on ? ' checked' : '') + '><i></i></label>';
 const fld = (id, label, ph, v, max, note) => '<label class="fl" for="' + id + '">' + label + (note ? '<small>' + note + '</small>' : '') + '</label><input id="' + id + '" placeholder="' + esc(ph) + '" maxlength="' + max + '" value="' + esc(v == null ? '' : v) + '">';
 const local = (iso) => { if (!iso) return ''; const d = new Date(iso), p = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes()); };
@@ -28,6 +42,10 @@ SECTIONS.kura = () => {
   const form = '<div class="card"><h3>Season settings</h3><p class="sub">Raised so far from votes: <b>' + kes(m.paid || 0) + '</b> (' + (m.votes || 0) + ' votes, ' + (m.payments || 0) + ' payments).</p>'
     + fld('ku_t', 'Title', 'Campus Star Awards', s.title, 60) + fld('ku_g', 'Tagline', 'One line under the title', s.tagline, 200)
     + '<label class="fl" for="ku_e">Voting closes<small>Leave empty for no closing time.</small></label><input type="datetime-local" id="ku_e" value="' + local(s.ends_at) + '">'
+    + '<label class="fl" for="ku_s">Competition starts<small>Voters see a countdown to this time. Leave empty to start now.</small></label><input type="datetime-local" id="ku_s" value="' + local(s.starts_at) + '">'
+    + sw('ku_pm', 'Mystery prize', 'On: voters see a mystery card instead of the real prize', s.prize_mystery)
+    + '<label class="fl" for="ku_rv">Prize reveal time<small>The real image shows automatically then. Leave empty to reveal by turning Mystery off.</small></label><input type="datetime-local" id="ku_rv" value="' + local(s.reveal_at) + '">'
+    + '<label class="fl" for="ku_pi">Prize image<small>JPG, PNG or WebP under 5 MB. Voters only see it after the mystery ends.</small></label>' + (s.prize_image_url ? '<img src="' + esc(s.prize_image_url) + '" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:16px;margin:8px 0">' + sw('ku_pr', 'Remove current image', '', false) : '') + '<input type="file" id="ku_pi" accept="image/jpeg,image/png,image/webp">'
     + sw('ku_v', 'Voting open', 'Turn off to stop all vote sales', s.voting_open) + sw('ku_n', 'Entries open', 'Turn off to stop new applications', s.entries_open)
     + fld('ku_pt', 'Prize headline', 'e.g. Win a brand-new phone', s.prize_title, 80) + fld('ku_px', 'Prize details', 'One or two lines', s.prize_text, 240)
     + '<label class="fl" for="ku_pz">Prize boxes<small>One per line: Label | small text. Leave empty to hide the prize card.</small></label><textarea id="ku_pz" rows="3" maxlength="500">' + esc((s.prizes || []).map((x) => x.label + (x.sub ? ' | ' + x.sub : '')).join('\n')) + '</textarea>'
@@ -46,7 +64,7 @@ document.addEventListener('click', (e) => {
     if (packs.some((p) => !(p.votes >= 1 && p.price >= 1))) { $('#ku_er').textContent = 'Each vote pack line needs votes and a price, like: 10 | 100 | 0 | popular'; return; }
     const prizes = lines('ku_pz').map((l) => { const a = l.split('|'); return { label: (a[0] || '').trim(), sub: (a[1] || '').trim() }; });
     const ends = v('ku_e');
-    return act(sv, () => api('/api/admin/kura/season', { title: v('ku_t'), tagline: v('ku_g'), ends_at: ends ? new Date(ends).toISOString() : '', voting_open: $('#ku_v').checked, entries_open: $('#ku_n').checked, prize_title: v('ku_pt'), prize_text: v('ku_px'), prizes, packs, campuses: lines('ku_cp') }), 'Saved');
+    return act(sv, () => kuSave({ title: v('ku_t'), tagline: v('ku_g'), ends_at: ends ? new Date(ends).toISOString() : '', voting_open: $('#ku_v').checked, entries_open: $('#ku_n').checked, prize_title: v('ku_pt'), prize_text: v('ku_px'), prizes, packs, campuses: lines('ku_cp') }), 'Saved');
   }
   const b = e.target.closest('[data-ku]'); if (!b) return;
   const card = b.closest('.card'), id = card && card.dataset.id, a = b.dataset.ku;

@@ -15,10 +15,11 @@ export async function getSeason(env) {
   const s = (await one(await sb(env, 'kura_season?id=eq.1'))) || {};
   return {
     title: s.title || 'Campus Star Awards', tagline: s.tagline || '', voting_open: s.voting_open !== false, entries_open: s.entries_open !== false,
-    ends_at: s.ends_at || null, prize_title: s.prize_title || '', prize_text: s.prize_text || '', prizes: arr(s.prizes), packs: arr(s.packs), campuses: arr(s.campuses), divisions: arr(s.divisions),
+    ends_at: s.ends_at || null, starts_at: s.starts_at || null, reveal_at: s.reveal_at || null, prize_mystery: !!s.prize_mystery, prize_image_key: s.prize_image_key || '', prize_image_url: s.prize_image_key ? store.mediaUrl(env, s.prize_image_key) : '', prize_title: s.prize_title || '', prize_text: s.prize_text || '', prizes: arr(s.prizes), packs: arr(s.packs), campuses: arr(s.campuses), divisions: arr(s.divisions),
   };
 }
-const votingOpen = (S) => S.voting_open && (!S.ends_at || Date.parse(S.ends_at) > Date.now());
+const votingOpen = (S) => S.voting_open && (!S.starts_at || Date.parse(S.starts_at) <= Date.now()) && (!S.ends_at || Date.parse(S.ends_at) > Date.now());
+const myst = (S) => !!S.prize_mystery && !(S.reveal_at && Date.parse(S.reveal_at) <= Date.now());
 const photoOf = (env, c) => (c.photo_key ? store.mediaUrl(env, c.photo_key) : null);
 const rankSort = (a, b) => b.votes - a.votes || String(a.approved_at || a.created_at).localeCompare(String(b.approved_at || b.created_at)) || String(a.id).localeCompare(String(b.id));
 const pub = (env, c) => ({ id: c.id, name: c.name, photo: photoOf(env, c), campus: c.campus, gender: c.gender, division: c.division, category: c.category, tagline: c.tagline || '', votes: c.votes || 0, followers: c.followers || 0, verified: !!c.verified });
@@ -26,7 +27,7 @@ const LIST = 'id,name,photo_key,campus,gender,division,category,tagline,votes,fo
 const approved = async (env) => (await rows(await sb(env, `kura_contestants?select=${LIST}&status=eq.approved&limit=3000`))).sort(rankSort);
 
 function publicSeason(S) {
-  return { title: S.title, tagline: S.tagline, voting_open: votingOpen(S), entries_open: S.entries_open, ends_at: S.ends_at, prize_title: S.prize_title, prize_text: S.prize_text, prizes: S.prizes, packs: S.packs, campuses: S.campuses, divisions: S.divisions, now: new Date().toISOString() };
+  return { title: S.title, tagline: S.tagline, voting_open: votingOpen(S), entries_open: S.entries_open, ends_at: S.ends_at, starts_at: S.starts_at, reveal_at: S.reveal_at, prize_mystery: myst(S), prize_image: myst(S) ? null : (S.prize_image_url || null), prize_title: S.prize_title, prize_text: S.prize_text, prizes: S.prizes, packs: S.packs, campuses: S.campuses, divisions: S.divisions, now: new Date().toISOString() };
 }
 
 // Races = contestants who share a campus, category and gender. Each race has a leader and a chaser.
@@ -244,6 +245,13 @@ export async function kuraRoutes(req, env, url, ip) {
       await A('kura_' + act, id);
       return json(env, { ok: true });
     }
+    if (path === '/api/admin/kura/prize-url' && m === 'POST') {
+      const b = await body(), ct = String(b.content_type || '').toLowerCase(), ext = PHOTO_TYPES[ct];
+      if (!ext) return err(env, 'Prize image must be JPG, PNG or WebP');
+      const key = `kura/prize/${randHex(12)}.${ext}`, upload_url = await store.signUpload(env, store.MEDIA_BUCKET(env), key);
+      if (!upload_url) return err(env, 'File storage is not ready', 503);
+      return json(env, { key, upload_url, content_type: ct }, 201);
+    }
     if (path === '/api/admin/kura/season' && m === 'POST') {
       const b = await body(), has = (k) => b[k] !== undefined, row = { updated_at: new Date().toISOString() };
       if (has('title')) { row.title = str(b.title, 60); if (!row.title) return err(env, 'Add a title'); }
@@ -253,6 +261,9 @@ export async function kuraRoutes(req, env, url, ip) {
       if (has('ends_at')) { if (b.ends_at === '' || b.ends_at === null) row.ends_at = null; else { const t = Date.parse(b.ends_at); if (!Number.isFinite(t)) return err(env, 'The closing time is not a valid date'); row.ends_at = new Date(t).toISOString(); } }
       if (has('prize_title')) row.prize_title = str(b.prize_title, 80);
       if (has('prize_text')) row.prize_text = str(b.prize_text, 240);
+      for (const k of ['starts_at', 'reveal_at']) if (has(k)) { if (b[k] === '' || b[k] === null) row[k] = null; else { const t = Date.parse(b[k]); if (!Number.isFinite(t)) return err(env, 'Check the ' + k.replace('_', ' ') + ' date'); row[k] = new Date(t).toISOString(); } }
+      if (has('prize_mystery')) row.prize_mystery = !!b.prize_mystery;
+      if (has('prize_image_key')) { const pk = str(b.prize_image_key, 120); if (pk && !/^kura\/[\w\/.-]+$/.test(pk)) return err(env, 'Bad prize image'); row.prize_image_key = pk || null; }
       if (has('prizes')) {
         const p = arr(b.prizes).map((x) => ({ label: str(x && x.label, 40), sub: str(x && x.sub, 60) })).filter((x) => x.label);
         if (p.length > 6) return err(env, 'Up to 6 prize boxes');

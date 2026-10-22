@@ -18,3 +18,13 @@ html #tb button.on{background:#FE813C;color:#0E0F0B;box-shadow:0 6px 18px rgba(2
 html nav.g{border-radius:34px}
 html #fab{box-shadow:0 12px 30px rgba(254,129,60,.45)}
 html #toast{border:1px solid rgba(254,129,60,.5)}
+/* Kura prize card: real image or mystery */
+.kpa{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:16/10;margin-bottom:14px}
+.kpa img{width:100%;height:100%;object-fit:cover;display:block}
+.kpa::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 45%,rgba(14,15,11,.6))}
+.kpq{display:grid;place-content:center;justify-items:center;gap:6px;border:1px solid var(--gb);background:radial-gradient(circle at 28% 22%,rgba(254,129,60,.6),transparent 60%),radial-gradient(circle at 78% 82%,rgba(188,101,106,.6),transparent 60%),#727E6E}
+.kpq>*{position:relative;z-index:1}
+.kpq b{font:800 64px Unbounded,Poppins,sans-serif;color:#fff;text-shadow:0 8px 30px rgba(0,0,0,.35);animation:kpq 2.6s ease-in-out infinite}
+.kpq span{font:600 11px Poppins,sans-serif;letter-spacing:.22em;color:#fff}
+.kpq small{padding:5px 12px;border-radius:99px;background:rgba(14,15,11,.5);color:#fff;font:500 11px Poppins,sans-serif}
+@keyframes kpq{50%{transform:scale(1.08) rotate(-4deg)}}

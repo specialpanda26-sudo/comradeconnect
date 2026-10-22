@@ -187,15 +187,23 @@ function paint() {
 function photo(c) { return c && c.photo ? '<img src="' + esc(c.photo) + '" alt="" loading="lazy">' : '<span class="kph">' + esc(((c && c.name) || '?').charAt(0).toUpperCase()) + '</span>'; }
 function accent(t) { var w = String(t || '').trim().split(/\s+/); if (w.length < 2) return esc(t); return esc(w.slice(0, -1).join(' ')) + ' <span class="ka">' + esc(w[w.length - 1]) + '</span>'; }
 function prizeHtml(t) { return esc(t).replace(/(iPhone\s?\d+\w*|KES\s?[\d,]+|KSh\s?[\d,]+)/g, '<span class="ka">$1</span>'); }
+function cdTarget() {
+  var s = season(), n = Date.now();
+  if (s.starts_at && Date.parse(s.starts_at) > n) return { t: s.starts_at, l: 'Competition starts in' };
+  if (s.ends_at && Date.parse(s.ends_at) > n) return { t: s.ends_at, l: 'Voting closes in' };
+  return null;
+}
 function countdown() {
-  var s = season(); if (!s.ends_at || Date.parse(s.ends_at) <= Date.now()) return '';
-  return '<div class="kcd"><div class="keb">' + I.clock + ' Voting closes in</div><div class="kcb"><div><b data-cd="d">0</b><small>DAYS</small></div><div><b data-cd="h">0</b><small>HRS</small></div><div><b data-cd="m">0</b><small>MIN</small></div><div><b data-cd="s">0</b><small>SEC</small></div></div></div>';
+  var c = cdTarget(); if (!c) return '';
+  return '<div class="kcd"><div class="keb">' + I.clock + ' ' + c.l + '</div><div class="kcb"><div><b data-cd="d">0</b><small>DAYS</small></div><div><b data-cd="h">0</b><small>HRS</small></div><div><b data-cd="m">0</b><small>MIN</small></div><div><b data-cd="s">0</b><small>SEC</small></div></div></div>';
 }
 function startTick() {
-  clearInterval(S.tick); var s = season(); if (!s.ends_at) return;
+  clearInterval(S.tick); var s = season(); if (!cdTarget() && !s.reveal_at) return;
   var run = function () {
-    var ms = Math.max(0, Date.parse(s.ends_at) - Date.now()), v = { d: Math.floor(ms / 864e5), h: Math.floor(ms / 36e5) % 24, m: Math.floor(ms / 6e4) % 60, s: Math.floor(ms / 1e3) % 60 };
+    var c = cdTarget(), ms = Math.max(0, c ? Date.parse(c.t) - Date.now() : 0), v = { d: Math.floor(ms / 864e5), h: Math.floor(ms / 36e5) % 24, m: Math.floor(ms / 6e4) % 60, s: Math.floor(ms / 1e3) % 60 };
     ['d', 'h', 'm', 's'].forEach(function (k) { var els = document.querySelectorAll('[data-cd="' + k + '"]'); for (var i = 0; i < els.length; i++) els[i].textContent = k === 'd' ? v[k] : ('0' + v[k]).slice(-2); });
+    var rv = document.querySelectorAll('[data-rv]');
+    if (rv.length && s.reveal_at) { var r = Math.max(0, Date.parse(s.reveal_at) - Date.now()); for (var j = 0; j < rv.length; j++) rv[j].textContent = 'Reveals in ' + Math.floor(r / 864e5) + 'd ' + Math.floor(r / 36e5) % 24 + 'h ' + Math.floor(r / 6e4) % 60 + 'm ' + Math.floor(r / 1e3) % 60 + 's'; if (!r && !S.rvd) { S.rvd = 1; loadHome().then(paint); } }
   };
   run(); S.tick = setInterval(run, 1000);
 }
@@ -217,9 +225,15 @@ function packsStrip() {
   return '<div class="kh3">' + I.heart + 'A little love goes a long way <span class="ksub" style="margin-left:auto;font-weight:400;font-size:11px">1 vote = ' + kes(unit) + '</span></div><div class="kpk">'
     + p.map(function (k) { return '<div class="kcard' + (k.popular ? ' pop' : '') + '"><b>' + k.votes + '</b><small>vote' + (k.votes > 1 ? 's' : '') + '</small><div style="font-weight:600;font-size:13px;margin-top:6px">' + kes(k.price) + '</div>' + (k.bonus ? '<i>+' + k.bonus + ' bonus included</i>' : '') + (k.popular ? '<i>Most popular</i>' : '') + '</div>'; }).join('') + '</div>';
 }
+function prizeArt() {
+  var s = season();
+  if (s.prize_image) return '<div class="kpa"><img alt="Prize" src="' + esc(s.prize_image) + '"></div>';
+  if (s.prize_mystery) return '<div class="kpa kpq"><b>?</b><span>MYSTERY PRIZE</span>' + (s.reveal_at && Date.parse(s.reveal_at) > Date.now() ? '<small data-rv>Revealing soon</small>' : '') + '</div>';
+  return '';
+}
 function prizeCard(compact) {
   var s = season(); if (!s.prize_title) return '';
-  return '<div class="kcard kpz"><div class="kpza"><span>GRAND PRIZE · EVERY CATEGORY</span>' + I.trophy + '</div><div class="kpzb"><div class="kh1">' + prizeHtml(s.prize_title) + '</div>' + (s.prize_text ? '<p class="ksub" style="margin:0">' + esc(s.prize_text) + '</p>' : '')
+  return '<div class="kcard kpz">' + prizeArt() + '<div class="kpza"><span>GRAND PRIZE · EVERY CATEGORY</span>' + I.trophy + '</div><div class="kpzb"><div class="kh1">' + prizeHtml(s.prize_title) + '</div>' + (s.prize_text ? '<p class="ksub" style="margin:0">' + esc(s.prize_text) + '</p>' : '')
     + (s.prizes && s.prizes.length ? '<div class="kpt">' + s.prizes.map(function (p) { return '<div>' + I.trophy + '<b>' + esc(p.label) + '</b><small>' + esc(p.sub || '') + '</small></div>'; }).join('') + '</div>' : '')
     + (compact || s.entries_open === false ? '' : '<div class="krow"><button class="kb" data-k="tab" data-t="apply">Enter free now ' + I.arrow + '</button><span class="ksub" style="font-size:11px">Free to enter · Open to every campus</span></div>') + '</div></div>';
 }

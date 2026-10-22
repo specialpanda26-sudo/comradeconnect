@@ -1,0 +1,40 @@
+/* cc-glass.css v2 */
+:root{--gl-a:rgba(255,255,255,.13);--gl-b:rgba(255,255,255,.03);--gl-br:rgba(255,255,255,.30);--gl-hi:rgba(255,255,255,.6);--gl-lo:rgba(255,255,255,.08);--gl-blur:28px}
+:root[data-theme="light"]{--gl-a:rgba(255,255,255,.72);--gl-b:rgba(255,255,255,.34);--gl-br:rgba(255,255,255,.9);--gl-hi:#fff;--gl-lo:rgba(255,255,255,.4)}
+.g,.box,.card,.bx,.dsheet,.savebar,#tb,#tkb,.ccwb,.toast,#toast{
+  background:linear-gradient(135deg,var(--gl-a),var(--gl-b)) !important;
+  -webkit-backdrop-filter:blur(var(--gl-blur)) saturate(190%) !important;backdrop-filter:blur(var(--gl-blur)) saturate(190%) !important;
+  border:1px solid var(--gl-br) !important;
+  box-shadow:0 18px 38px -14px color-mix(in srgb,var(--tint,#A8DCE7) 55%,transparent),0 3px 10px color-mix(in srgb,var(--tint,#A8DCE7) 16%,transparent),
+    inset 0 1px 0 var(--gl-hi),inset 1px 0 0 var(--gl-lo),inset 0 -1px 0 var(--gl-lo),inset 0 0 26px color-mix(in srgb,var(--tint,#A8DCE7) 9%,transparent) !important}
+.card:hover,.box:hover{box-shadow:0 22px 44px -12px color-mix(in srgb,var(--tint,#A8DCE7) 66%,transparent),0 4px 12px color-mix(in srgb,var(--tint,#A8DCE7) 22%,transparent),inset 0 1px 0 var(--gl-hi),inset 0 0 30px color-mix(in srgb,var(--tint,#A8DCE7) 12%,transparent) !important}
+.btn:not(.p):not([data-gs]),html.cc-adm button:not(.p):not(.on):not([data-gs]),.ib:not(.on):not([data-gs]):not(.ccx-b){
+  background:linear-gradient(135deg,var(--gl-a),var(--gl-b)) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(180%) !important;backdrop-filter:blur(14px) saturate(180%) !important;
+  border:1px solid var(--gl-br) !important;
+  box-shadow:0 8px 20px -8px color-mix(in srgb,var(--tint,#A8DCE7) 55%,transparent),inset 0 1px 0 var(--gl-hi),inset 0 -1px 0 var(--gl-lo) !important}
+.btn:not(.p):hover,html.cc-adm button:not(.p):not(.on):hover{box-shadow:0 12px 26px -8px color-mix(in srgb,var(--tint,#A8DCE7) 70%,transparent),inset 0 1px 0 var(--gl-hi) !important}
+.btn.p,button.p,.btnp.p,#fab,.ib.on,html.cc-adm button.on,#tb button.on,[data-gs]{
+  background-color:color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 70%,transparent) !important;
+  background-image:linear-gradient(180deg,rgba(255,255,255,.38),rgba(255,255,255,0) 55%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(190%) !important;backdrop-filter:blur(16px) saturate(190%) !important;
+  border:1px solid color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 50%,rgba(255,255,255,.7)) !important;
+  box-shadow:0 12px 28px -8px color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 75%,transparent),0 2px 6px color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 30%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 8px color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 35%,transparent) !important}
+.btn.p:active,button.p:active,#fab:active{transform:scale(.97)}
+#ccl .go{background:linear-gradient(100deg,rgba(254,129,60,.8),rgba(245,160,106,.6)) !important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.45) !important;box-shadow:0 14px 34px -8px rgba(254,129,60,.65),inset 0 1px 0 rgba(255,255,255,.6),inset 0 -3px 8px rgba(188,101,106,.25)}
+:is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]){
+  background:linear-gradient(135deg,rgba(255,255,255,.11),rgba(255,255,255,.03)) !important;
+  border:1px solid var(--gl-br) !important;border-radius:14px !important;padding:12px 14px !important;
+  -webkit-backdrop-filter:blur(10px) !important;backdrop-filter:blur(10px) !important;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.22),0 8px 18px -10px color-mix(in srgb,var(--tint,#A8DCE7) 45%,transparent) !important}
+:is(input,textarea,select):focus{border-color:var(--tint,#A8DCE7) !important;box-shadow:inset 0 2px 7px rgba(0,0,0,.18),0 0 0 3px color-mix(in srgb,var(--tint,#A8DCE7) 30%,transparent),0 10px 24px -8px color-mix(in srgb,var(--tint,#A8DCE7) 60%,transparent) !important}
+.cc-orbs{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.bg>.cc-orbs{position:absolute;z-index:1}#ccbgi{z-index:0}
+.cc-orbs i{position:absolute;border-radius:50%;animation:ccfl 16s ease-in-out infinite alternate}
+.cc-orbs .o1{width:64vmin;height:64vmin;left:50%;bottom:-20vmin;margin-left:-32vmin;background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.5),transparent 22%),radial-gradient(circle at 40% 38%,#FE813C 0,#d9531e 62%,#8a2f10 100%);box-shadow:0 0 100px 12px rgba(254,129,60,.35)}
+.cc-orbs .o2{width:30vmin;height:30vmin;left:5%;top:9%;animation-duration:12s;background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.6),transparent 24%),radial-gradient(circle at 40% 38%,#A8DCE7 0,#5aa6bd 62%,#2b5f73 100%);box-shadow:0 0 80px 8px rgba(168,220,231,.35)}
+.cc-orbs .o3{width:19vmin;height:19vmin;right:7%;top:46%;animation-duration:19s;background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.55),transparent 24%),radial-gradient(circle at 40% 38%,#BC656A 0,#92454a 65%,#5e2a2e 100%);box-shadow:0 0 70px 6px rgba(188,101,106,.35)}
+@keyframes ccfl{to{transform:translate3d(0,-26px,0) rotate(8deg)}}
+@media(prefers-reduced-motion:reduce){.cc-orbs i{animation:none}}
+@supports not (backdrop-filter:blur(1px)){.g,.box,.card,.bx,.savebar,#tb{background:color-mix(in srgb,var(--bg,#101422) 88%,transparent) !important}}

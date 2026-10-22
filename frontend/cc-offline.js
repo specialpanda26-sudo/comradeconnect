@@ -35,7 +35,7 @@
 
   function keyFor(u) {
     var a = window.ccAuth && window.ccAuth();
-    return new Request(u + (u.indexOf('?') < 0 ? '?' : '&') + '__u=' + encodeURIComponent((a && a.aid) || 'guest'));
+    return new Request(u + (u.indexOf('?') < 0 ? '?' : '&') + '__u=' + encodeURIComponent(((a && a.aid) || 'guest') + '|' + (function () { try { return localStorage.getItem('cc_campus') || ''; } catch (e) { return ''; } })()));   // each campus keeps its own saved copy
   }
   function trim(c) {
     c.keys().then(function (ks) { if (ks.length > MAX) ks.slice(0, ks.length - MAX).forEach(function (k) { c.delete(k); }); });

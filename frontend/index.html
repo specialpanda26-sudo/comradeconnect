@@ -356,7 +356,7 @@ window.ccErr=function(status,msg,fb){
  if(status===404)return 'We could not find that.';
  if(status===413)return 'That file is too large.';
  return fb||'Something went wrong. Please try again.'};
-window.fetch=function(u,o){try{if(typeof u==='string'&&typeof CC_API!=='undefined'&&u.indexOf(CC_API)===0){o=Object.assign({},o);var a=window.ccAuth();if(a&&a.token){o.headers=Object.assign({},o.headers,{'X-Aid':a.aid,'X-Token':a.token})}
+window.fetch=function(u,o){try{if(typeof u==='string'&&typeof CC_API!=='undefined'&&u.indexOf(CC_API)===0){o=Object.assign({},o);try{var cp=localStorage.getItem('cc_campus');if(cp)o.headers=Object.assign({},o.headers,{'X-Campus':cp})}catch(e){}var a=window.ccAuth();if(a&&a.token){o.headers=Object.assign({},o.headers,{'X-Aid':a.aid,'X-Token':a.token})}
  if(!o.signal&&typeof AbortController!=='undefined'){var ac=new AbortController();o.signal=ac.signal;setTimeout(function(){ac.abort()},60000)}}}catch(e){}return f.call(this,u,o)}})();
 /* Safety net: anything unexpected shows a short message instead of a frozen screen. */
 (function(){var last=0;function say(m){var n=Date.now();if(n-last<4000)return;last=n;try{if(typeof toast==='function')toast(m)}catch(e){}}
@@ -1906,6 +1906,7 @@ document.head.appendChild(s);
 <script src="cc-reelcomments.js?v=1"></script>
 <script src="cc-pass.js?v=1"></script>
 <script src="cc-streak.js?v=1"></script>
+<script src="cc-campus.js?v=1"></script>
 <script src="cc-invite.js?v=1"></script>
 <script src="cc-topsales.js?v=1"></script>
 </body>

@@ -38,6 +38,13 @@ SCHEMA.post_rules = T(['id']);
 SCHEMA.email_verifications = T(['aid']);
 SCHEMA.profiles.defaults.student_verified = false;
 SCHEMA.profiles.uniques.push(nn('student_email_hash'));
+
+// Kura (campus voting)
+SCHEMA.kura_season = T(['id']);
+SCHEMA.kura_contestants = T(['id'], { defaults: { status: 'pending', verified: false, votes: 0, followers: 0, socials: {}, approved_at: null }, uniques: [(r) => (r.email ? String(r.email).toLowerCase() : null)] });
+SCHEMA.kura_votes = T(['id'], { defaults: { status: 'pending', supporter_name: null }, uniques: [nn('payment_id')] });
+SCHEMA.kura_follows = T(['contestant_id', 'aid']);
+
 SCHEMA.notifications = T(['id']);
 SCHEMA.notif_state = T(['aid']);
 SCHEMA.media_comments = T(['id'], { defaults: { hidden: false } });
@@ -137,6 +144,7 @@ export class MockDB {
     if (fn === 'inc_post') { const r = find('posts', (x) => x.id === a.p); if (!r) return { status: 200, body: [] }; r[a.col]++; return { status: 200, body: [{ ...r }] }; }
     if (fn === 'inc_likes') { const r = find(a.t === 'media' ? 'media' : 'study_tips', (x) => x.id === a.p); if (r) r.likes++; return { status: 200, body: r ? r.likes : null }; }
     if (fn === 'live_heart') { const r = find('live_streams', (x) => x.id === a.p); if (r && r.status === 'live') r.hearts = (r.hearts || 0) + a.n; return { status: 200, body: r ? r.hearts : null }; }
+    if (fn === 'kura_add_votes') { const r = find('kura_contestants', (x) => x.id === a.p); if (r) r.votes += a.n; return { status: 200, body: r ? r.votes : 0 }; }
     if (fn === 'take_stock') { const r = find('club_stock', (x) => x.product_id === a.p); if (r && r.qty >= a.n) { r.qty -= a.n; return { status: 200, body: true }; } return { status: 200, body: false }; }
     if (fn === 'wallet_balance') return { status: 200, body: this.t.wallet_ledger.filter((x) => x.aid === a.p && x.status === 'available').reduce((s, x) => s + x.delta, 0) };
     throw new Error('mock: unknown rpc ' + fn);

@@ -38,3 +38,8 @@
 @keyframes ccfl{to{transform:translate3d(0,-26px,0) rotate(8deg)}}
 @media(prefers-reduced-motion:reduce){.cc-orbs i{animation:none}}
 @supports not (backdrop-filter:blur(1px)){.g,.box,.card,.bx,.savebar,#tb{background:color-mix(in srgb,var(--bg,#101422) 88%,transparent) !important}}
+/* lock screen glass v3 */
+#lk.lkg.on .bx.lkcard{box-shadow:0 30px 70px -22px rgba(168,220,231,.5),0 4px 14px rgba(168,220,231,.18),inset 0 1.5px 0 var(--lg-hi),inset 0 -1px 0 rgba(255,255,255,.14),inset 0 0 40px rgba(168,220,231,.08)!important}
+#lk.lkg.on .lkfp,#lk.lkg.on .lkfp2{box-shadow:0 14px 32px -10px rgba(168,220,231,.6),inset 0 1.5px 0 var(--lg-hi)!important}
+#lk.lkg.on .lkpw,#lk.lkg.on .lkgo{box-shadow:0 12px 28px -10px rgba(168,220,231,.5),inset 0 1.5px 0 var(--lg-hi)!important}
+#lk.lkg.on .lkrec .fld{box-shadow:0 10px 24px -12px rgba(168,220,231,.5),inset 0 1.5px 0 var(--lg-hi)!important}

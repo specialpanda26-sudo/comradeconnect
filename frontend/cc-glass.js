@@ -23,3 +23,9 @@ function go() { orbs(); tint(); try { new MutationObserver(q).observe(document.b
 if (document.readyState === 'complete') go(); else window.addEventListener('load', go);
 document.addEventListener('cc-site', q); document.addEventListener('cc-ready', q);
 })();
+/* lock orbs: the same glossy orbs behind the lock screen card */
+(function () {
+  var lk = document.getElementById('lk'); if (!lk || lk.querySelector('.cc-orbs')) return;
+  var o = document.createElement('div'); o.className = 'cc-orbs'; o.setAttribute('aria-hidden', 'true'); o.innerHTML = '<i class="o1"></i><i class="o2"></i><i class="o3"></i>';
+  lk.insertBefore(o, lk.firstChild);
+})();

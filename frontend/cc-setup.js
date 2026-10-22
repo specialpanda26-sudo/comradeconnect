@@ -15,7 +15,7 @@
 
   var css = document.createElement('style');
   css.textContent = [
-    '#ccsu{position:fixed;inset:0;z-index:9100;display:flex;align-items:center;justify-content:center;background:var(--bg,#000);color:var(--fg,#fff);overflow:auto;font-family:Poppins,system-ui,sans-serif;animation:ccsuin .3s ease}',
+    '#ccsu{position:fixed;inset:0;z-index:9100;display:flex;align-items:center;justify-content:center;background:var(--bg,#0E0F0B);color:var(--fg,#fff);overflow:auto;font-family:Poppins,system-ui,sans-serif;animation:ccsuin .3s ease}',
     '@keyframes ccsuin{from{opacity:0;transform:translateY(14px)}}',
     '#ccsu .b{position:relative;width:100%;max-width:440px;min-height:100%;margin:0 auto;padding:calc(40px + env(safe-area-inset-top,0px)) 22px calc(26px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;justify-content:center;box-sizing:border-box}',
     '#ccsu h2{margin:0;font-size:clamp(26px,7.5vw,34px);line-height:1.1;letter-spacing:-.03em;font-weight:700}',
@@ -23,10 +23,10 @@
     '#ccsu .f{position:relative;margin-top:12px}',
     '#ccsu label{display:block;margin:0 0 6px 4px;font-size:12px;font-weight:600;color:var(--mut,#bdbdbd)}',
     '#ccsu input{width:100%;box-sizing:border-box;border-radius:14px;border:1px solid var(--line,rgba(255,255,255,.28));background:rgba(127,127,127,.12);color:inherit;padding:15px 16px;font:500 16px Poppins,system-ui,sans-serif;outline:0}',
-    '#ccsu input:focus{border-color:#ff5a00;box-shadow:0 0 0 3px rgba(255,90,0,.22)}',
+    '#ccsu input:focus{border-color:#FE813C;box-shadow:0 0 0 3px rgba(254,129,60,.22)}',
     '#ccsu .eye{position:absolute;right:6px;bottom:6px;width:40px;height:40px;border:0;background:none;color:var(--mut,#bdbdbd);display:grid;place-items:center;cursor:pointer}',
     '#ccsu .h{margin:6px 4px 0;font-size:11.5px;color:var(--mut,#bdbdbd)}',
-    '#ccsu .go{width:100%;margin-top:18px;border:0;border-radius:999px;background:#ff5a00;color:#fff;min-height:52px;font:700 16px Poppins,system-ui,sans-serif;cursor:pointer}',
+    '#ccsu .go{width:100%;margin-top:18px;border:0;border-radius:999px;background:#FE813C;color:#0E0F0B;min-height:52px;font:700 16px Poppins,system-ui,sans-serif;cursor:pointer}',
     '#ccsu .go:disabled{opacity:.6}',
     '#ccsu .sk{display:block;width:100%;margin-top:8px;padding:12px;background:none;border:0;color:var(--mut,#bdbdbd);font:500 14px Poppins,system-ui,sans-serif;cursor:pointer}',
     '#ccsu .e{margin:12px 0 0;font-size:13px;color:#ff6b6b;text-align:center}'

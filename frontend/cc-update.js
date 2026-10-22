@@ -14,12 +14,12 @@
 
   var css = document.createElement('style');
   css.textContent = '#ccupd{margin:12px 14px 0;padding:14px 16px;border-radius:18px;border:1px solid var(--gb,rgba(255,255,255,.25));background:var(--g,rgba(255,255,255,.07));color:var(--fg,#fff);font-family:Poppins,system-ui,sans-serif}'
-    + '#ccupd.new{border-color:#ff5a00;background:rgba(255,90,0,.12)}'
+    + '#ccupd.new{border-color:#FE813C;background:rgba(254,129,60,.12)}'
     + '#ccupd b{display:block;font-size:15px;font-weight:700}#ccupd p{margin:4px 0 0;font-size:13px;line-height:1.5;color:var(--mut,#bdbdbd)}'
     + '#ccupd .r{display:flex;gap:8px;margin-top:12px}'
     + '#ccupd button{flex:1;border:0;border-radius:999px;padding:12px 14px;font:600 14px Poppins,system-ui,sans-serif;cursor:pointer}'
-    + '#ccupd .p{background:#ff5a00;color:#fff}#ccupd .g{background:transparent;border:1px solid var(--gb,rgba(255,255,255,.3));color:inherit}#ccupd button:disabled{opacity:.6}'
-    + '#tb button[data-v="me"]{position:relative}#tb button[data-v="me"].ccupd-dot::after{content:"";position:absolute;top:6px;right:calc(50% - 20px);width:9px;height:9px;border-radius:50%;background:#ff5a00;box-shadow:0 0 0 2px var(--bg,#000)}';
+    + '#ccupd .p{background:#FE813C;color:#0E0F0B}#ccupd .g{background:transparent;border:1px solid var(--gb,rgba(255,255,255,.3));color:inherit}#ccupd button:disabled{opacity:.6}'
+    + '#tb button[data-v="me"]{position:relative}#tb button[data-v="me"].ccupd-dot::after{content:"";position:absolute;top:6px;right:calc(50% - 20px);width:9px;height:9px;border-radius:50%;background:#FE813C;box-shadow:0 0 0 2px var(--bg,#0E0F0B)}';
   document.head.appendChild(css);
 
   function render() {

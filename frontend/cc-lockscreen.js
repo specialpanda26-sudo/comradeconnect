@@ -26,8 +26,8 @@
   (function () {
     var st = document.createElement('style');
     st.textContent = [
-      '#lk .lkhero{position:relative}#lk .lkhero:after{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(to bottom,transparent,var(--bg,#000))}',
-      '#lk .bx.lkcard{background:color-mix(in srgb,var(--bg,#000) 82%,transparent)!important;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);color:var(--fg,#fff)}',
+      '#lk .lkhero{position:relative}#lk .lkhero:after{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(to bottom,transparent,var(--bg,#0E0F0B))}',
+      '#lk .bx.lkcard{background:color-mix(in srgb,var(--bg,#0E0F0B) 82%,transparent)!important;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);color:var(--fg,#fff)}',
       '#lk .lkfp{position:relative;overflow:visible;width:92px;height:92px;box-shadow:0 0 0 1px var(--gb,rgba(255,255,255,.3)) inset}',
       '#lk .lkfp svg{position:relative;z-index:1}#lk .lkfp svg path{stroke-dasharray:90;stroke-dashoffset:90;animation:lkd 1.1s ease forwards,lkp 2.8s ease-in-out 1.3s infinite}',
       '#lk .lkfp svg path:nth-child(2){animation-delay:.12s,1.4s}#lk .lkfp svg path:nth-child(3){animation-delay:.24s,1.5s}#lk .lkfp svg path:nth-child(4){animation-delay:.36s,1.6s}#lk .lkfp svg path:nth-child(5){animation-delay:.48s,1.7s}#lk .lkfp svg path:nth-child(6){animation-delay:.6s,1.8s}',
@@ -36,7 +36,7 @@
       '@keyframes lkw{0%{transform:scale(.8);opacity:.5}100%{transform:scale(1.45);opacity:0}}',
       '#lk .lkfp:after{content:"";position:absolute;left:18%;right:18%;top:16%;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,var(--fg,#fff),transparent);opacity:0;animation:lks 2.3s ease-in-out 1.2s infinite}',
       '@keyframes lks{0%{top:16%;opacity:0}15%{opacity:.85}85%{opacity:.85}100%{top:80%;opacity:0}}',
-      '#lk .lkfp.ok{color:#3ddc84}@media(prefers-reduced-motion:reduce){#lk .lkfp *,#lk .lkfp:before,#lk .lkfp:after{animation-duration:.01s!important;animation-iteration-count:1!important}}',
+      '#lk .lkfp.ok{color:#A8BBA3}@media(prefers-reduced-motion:reduce){#lk .lkfp *,#lk .lkfp:before,#lk .lkfp:after{animation-duration:.01s!important;animation-iteration-count:1!important}}',
       '#lk .lkgo{width:100%;max-width:420px;margin:10px auto 0;display:flex;align-items:center;justify-content:center;gap:10px}'
     ].join('');
     document.head.appendChild(st);

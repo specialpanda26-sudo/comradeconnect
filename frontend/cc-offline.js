@@ -15,7 +15,7 @@
   function css() {
     if (document.getElementById('ccoff-css')) return;
     var s = document.createElement('style'); s.id = 'ccoff-css';
-    s.textContent = '#ccoff{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:9998;display:flex;align-items:center;gap:10px;padding:9px 12px 9px 16px;border-radius:999px;background:var(--fg,#fff);color:var(--bg,#000);font:600 12.5px Poppins,system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.45);max-width:92vw}#ccoff button{border:0;border-radius:999px;padding:6px 12px;background:var(--bg,#000);color:var(--fg,#fff);font:600 12px Poppins,system-ui,sans-serif}';
+    s.textContent = '#ccoff{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:9998;display:flex;align-items:center;gap:10px;padding:9px 12px 9px 16px;border-radius:999px;background:var(--fg,#fff);color:var(--bg,#0E0F0B);font:600 12.5px Poppins,system-ui,sans-serif;box-shadow:0 8px 30px rgba(14,15,11,.45);max-width:92vw}#ccoff button{border:0;border-radius:999px;padding:6px 12px;background:var(--bg,#0E0F0B);color:var(--fg,#fff);font:600 12px Poppins,system-ui,sans-serif}';
     (document.head || document.documentElement).appendChild(s);
   }
   function show() {

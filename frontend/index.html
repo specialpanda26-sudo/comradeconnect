@@ -365,7 +365,7 @@ window.addEventListener('error',function(e){if(!e.filename&&e.message==='Script 
 window.addEventListener('offline',function(){say('You are offline. Check your internet connection.')});
 window.addEventListener('online',function(){last=0;say('Back online')})})();
 </script>
-<script src="cc-offline.js?v=1"></script><script src="cc-native.js?v=10"></script><style id="ccme-css">
+<script src="cc-offline.js?v=2"></script><script src="cc-native.js?v=11"></script><style id="ccme-css">
 /* Me page: profile card, grouped menu, panels, quick finder */
 #v-me:not(.ccp) .ccset{display:none}
 #v-me.ccp .box:not(.ccsel),#v-me.ccp>.ph,#v-me.ccp>p.sub,#v-me.ccp #ccmenu,#v-me:not(.ccp) #ccpub{display:none}
@@ -1590,12 +1590,12 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-getapp.js?v=5"></script><script src="cc-firstrun.js?v=2"></script><script src="cc-core.js?v=rc7"></script><script src="cc-welcome.js?v=2"></script><script src="cc-scrollbg.js?v=2"></script><script src="cc-lockscreen.js?v=3"></script><script src="cc-receipt.js?v=3"></script><script src="cc-wifi.js?v=1"></script><script src="cc-hostels.js?v=1"></script><script src="cc-profile.js?v=2"></script><script src="cc-me.js?v=1"></script><script src="cc-closex.js?v=4"></script><script src="cc-nav.js?v=1"></script>
-<script src="cc-xcancel.js?v=3"></script><script src="cc-zones.js?v=1"></script>
+<script src="cc-getapp.js?v=6"></script><script src="cc-firstrun.js?v=3"></script><script src="cc-core.js?v=rc7"></script><script src="cc-welcome.js?v=2"></script><script src="cc-scrollbg.js?v=3"></script><script src="cc-lockscreen.js?v=4"></script><script src="cc-receipt.js?v=4"></script><script src="cc-wifi.js?v=2"></script><script src="cc-hostels.js?v=2"></script><script src="cc-profile.js?v=3"></script><script src="cc-me.js?v=2"></script><script src="cc-closex.js?v=4"></script><script src="cc-nav.js?v=1"></script>
+<script src="cc-xcancel.js?v=3"></script><script src="cc-zones.js?v=2"></script>
 <script src="cc-onewelcome.js?v=1"></script>
-<script src="cc-setup.js?v=1"></script>
-<script src="cc-update.js?v=2"></script>
-<script src="cc-panels.js?v=7"></script><script src="cc-card.js?v=3" defer></script><script src="cc-live.js?v=1"></script><script src="cc-staff.js?v=2" defer></script><script src="cc-site.js?v=4" defer></script><script src="cc-suggest.js?v=1" defer></script><script src="cc-help.js?v=4" defer></script><script src="cc-alerts.js?v=1" defer></script><script src="cc-fingerprint.js?v=4" defer></script><script src="cc-faceid.js?v=6" defer></script><script src="cc-fixes.js?v=1" defer></script><script src="cc-market-plus.js?v=2" defer></script><script src="cc-wholesale.js?v=1e" defer></script><script src="cc-qr.js?v=1" defer></script><script src="cc-events.js?v=3" defer></script><script src="cc-explore.js?v=1" defer></script><script src="cc-kura.js?v=2" defer></script><script src="cc-pick.js?v=1" defer></script><script>
+<script src="cc-setup.js?v=2"></script>
+<script src="cc-update.js?v=3"></script>
+<script src="cc-panels.js?v=8"></script><script src="cc-card.js?v=4" defer></script><script src="cc-live.js?v=2"></script><script src="cc-staff.js?v=2" defer></script><script src="cc-site.js?v=4" defer></script><script src="cc-suggest.js?v=2" defer></script><script src="cc-help.js?v=5" defer></script><script src="cc-alerts.js?v=2" defer></script><script src="cc-fingerprint.js?v=5" defer></script><script src="cc-faceid.js?v=6" defer></script><script src="cc-fixes.js?v=2" defer></script><script src="cc-market-plus.js?v=3" defer></script><script src="cc-wholesale.js?v=2e" defer></script><script src="cc-qr.js?v=1" defer></script><script src="cc-events.js?v=4" defer></script><script src="cc-explore.js?v=2" defer></script><script src="cc-kura.js?v=3" defer></script><script src="cc-pick.js?v=2" defer></script><script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){
 const PL={wa:'WhatsApp Channel',wg:'WhatsApp Group',ig:'Instagram',tt:'TikTok',x:'X (Twitter)',yt:'YouTube',tg:'Telegram',fb:'Facebook',web:'Website'};
@@ -1796,12 +1796,12 @@ document.head.appendChild(st);
 const P=(d,x)=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+d+'</svg>';
 const IH=P('<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7z"/>'),IC=P('<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/>'),IS=P('<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>'),IB=P('<path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>'),IP=P('<path d="M5 12h14M12 5v14"/>'),IL=P('<path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/>'),IPL=P('<circle cx="12" cy="12" r="10"/><path d="M10 8.5l5.5 3.5-5.5 3.5z"/>');
 const IX=P('<path d="M6 6l12 12M18 6L6 18"/>');
-const G=['linear-gradient(160deg,#3a1c71,#d76d77)','linear-gradient(160deg,#134e5e,#71b280)','linear-gradient(160deg,#41295a,#2f0743)','linear-gradient(160deg,#614385,#516395)'];
+const G=['linear-gradient(160deg,#BC656A,#FE813C)','linear-gradient(160deg,#727E6E,#A8BBA3)','linear-gradient(160deg,#727E6E,#0E0F0B)','linear-gradient(160deg,#727E6E,#BC656A)'];
 const R=document.createElement('div');R.id='rlroot';R.hidden=true;
 R.innerHTML='<div class="rlw"><div id="rlh"><button id="rlx" aria-label="Close">'+IX+'</button><b>Reels</b><button id="rla" aria-label="Add a clip">'+IP+'</button></div><div id="rls"></div><div class="rlsh" id="rlcm"><b>Comments</b><div id="rlcl"></div><input id="rlci" maxlength="200" placeholder="Add a comment" aria-label="Add a comment"><button class="rlbtn" id="rlcs">Post</button><button class="rlbtn" id="rlcx">Close</button></div><div class="rlsh" id="rlad"><b>New clip</b><input id="rlcp" maxlength="140" placeholder="Add a caption (optional)" aria-label="Clip caption" style="margin-top:10px"><button class="rlbtn" id="rlrec">Record</button><button class="rlbtn" id="rlup">Upload clip</button><button class="rlbtn" id="rlax">Close</button></div></div>';
 document.body.appendChild(R);
 const lk=window.ccLk=new Set(),sv=new Set(),fl=new Set(ST.get('cc_follow',[])),cm={};let cur=null,tap=0,tt=0,io=null;
-const hd=v=>v.ex?'@kirinyaga_updates':v.mine===false?'@comrade':'@'+ME.handle;const VCK='<svg viewBox="0 0 24 24" aria-label="Verified" style="width:16px;height:16px;vertical-align:-3px;margin-left:4px;display:inline"><circle cx="12" cy="12" r="10" fill="#0095f6"/><path d="M7.5 12.5l3 3 6-7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';const vchk=v=>(v.ex||(ME.ver&&ME.ver.st!=='pending'))?VCK:'';
+const hd=v=>v.ex?'@kirinyaga_updates':v.mine===false?'@comrade':'@'+ME.handle;const VCK='<svg viewBox="0 0 24 24" aria-label="Verified" style="width:16px;height:16px;vertical-align:-3px;margin-left:4px;display:inline"><circle cx="12" cy="12" r="10" fill="#FE813C"/><path d="M7.5 12.5l3 3 6-7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';const vchk=v=>(v.ex||(ME.ver&&ME.ver.st!=='pending'))?VCK:'';
 function render(){const s=$('#rls');s.innerHTML=VIDS.map((v,i)=>'<section class="rl" data-id="'+v.id+'" style="'+(v.url?'background:#000':'background:'+G[i%G.length])+'">'+(v.url?'<video src="'+v.url+'" loop muted playsinline preload="metadata"></video>':'<div class="rlp">'+IPL+'</div>')+'<div class="rlr"><button data-a="like" class="'+(lk.has(v.id)?'on':'')+'" aria-label="Like">'+IH+'<span>'+v.likes+'</span></button><button data-a="cmt" aria-label="Comments">'+IC+'<span>'+((cm[v.id]||[]).length)+'</span></button><button data-a="shr" aria-label="Share">'+IS+'<span>Share</span></button><button data-a="sav" class="sv '+(sv.has(v.id)?'on':'')+'" aria-label="Save">'+IB+'<span>'+(sv.has(v.id)?'Saved':'Save')+'</span></button></div><div class="rlb"><div class="rlu"><span class="rlaw"><span class="rlav"></span><button data-a="add" class="rlpl" aria-label="Upload a video">'+IP+'</button></span><b style="font-size:15px">'+hd(v)+'</b>'+vchk(v)+'<button data-a="fol" class="rlf">'+(fl.has(hd(v))?'Following':'Follow')+'</button></div><p class="rlc">'+esc(v.cap)+'</p></div></section>').join('');
 if(io)io.disconnect();io=new IntersectionObserver(es=>es.forEach(e=>{const m=e.target.querySelector('video');if(!m)return;if(e.isIntersecting){m.play().catch(()=>{})}else m.pause()}),{root:s,threshold:.6});s.querySelectorAll('.rl').forEach(x=>io.observe(x))}
 const vid=id=>VIDS.find(v=>v.id===id);
@@ -1837,7 +1837,7 @@ sync();
 /* Plus badge on every profile avatar: opens the video upload sheet. */
 (function(){
 const st=document.createElement('style');
-st.textContent='.rlaw,.ccpw{position:relative;display:inline-flex;flex:none}#rlroot .rlpl,.ccpl{position:absolute;right:-4px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:#0095f6;color:#fff;border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}.ccpl{border-color:var(--bg,#0b0b10)}#rlroot .rlpl::after,.ccpl::after{content:"";position:absolute;inset:-12px}#rlroot .rlpl svg,.ccpl svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;filter:none}';
+st.textContent='.rlaw,.ccpw{position:relative;display:inline-flex;flex:none}#rlroot .rlpl,.ccpl{position:absolute;right:-4px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:#FE813C;color:#fff;border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}.ccpl{border-color:var(--bg,#0b0b10)}#rlroot .rlpl::after,.ccpl::after{content:"";position:absolute;inset:-12px}#rlroot .rlpl svg,.ccpl svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;filter:none}';
 document.head.appendChild(st);
 const PL='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>';
 window.ccAddClip=()=>{const a=$('#rlad');if(a)a.classList.add('on')};
@@ -1851,12 +1851,12 @@ w.querySelector('.ccpl').onclick=()=>{go('videos');setTimeout(ccAddClip,60)}}
 <script>
 /* Instagram-style profiles: stats, bio, verified check, clips grid, and a poster profile sheet in Reels. */
 (function(){
-const VC='<svg viewBox="0 0 24 24" aria-label="Verified" style="width:16px;height:16px;vertical-align:-3px;margin-left:4px;display:inline"><circle cx="12" cy="12" r="10" fill="#0095f6"/><path d="M7.5 12.5l3 3 6-7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const VC='<svg viewBox="0 0 24 24" aria-label="Verified" style="width:16px;height:16px;vertical-align:-3px;margin-left:4px;display:inline"><circle cx="12" cy="12" r="10" fill="#FE813C"/><path d="M7.5 12.5l3 3 6-7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const ver=()=>!!(ME.ver&&ME.ver.st==='approved');
 const fol=()=>ST.get('cc_follow',[]);
 const bio=()=>ST.get('cc_bio','');
 const st=document.createElement('style');
-st.textContent='.ccst{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin:16px 0 4px}.ccst b{display:block;font-size:20px}.ccst span{font-size:12px;opacity:.7}.ccgr{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:14px}.ccgr button{position:relative;aspect-ratio:9/14;border:0;border-radius:6px;color:#fff;font-size:12px;background:linear-gradient(160deg,#3a1c71,#d76d77);display:flex;align-items:flex-end;padding:6px;text-align:left}#rlpf{max-height:78%}#rlpf .ccst{margin-top:12px}#rlpf .rlbtn{margin-top:8px}';
+st.textContent='.ccst{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin:16px 0 4px}.ccst b{display:block;font-size:20px}.ccst span{font-size:12px;opacity:.7}.ccgr{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:14px}.ccgr button{position:relative;aspect-ratio:9/14;border:0;border-radius:6px;color:#fff;font-size:12px;background:linear-gradient(160deg,#BC656A,#FE813C);display:flex;align-items:flex-end;padding:6px;text-align:left}#rlpf{max-height:78%}#rlpf .ccst{margin-top:12px}#rlpf .rlbtn{margin-top:8px}';
 document.head.appendChild(st);
 function stats(p,f,g){return '<div class="ccst"><div><b>'+p+'</b><span>Posts</span></div><div><b>'+f+'</b><span>Followers</span></div><div><b>'+g+'</b><span>Following</span></div></div>'}
 function grid(list){return list.length?list.map(v=>'<button type="button" data-g="1" aria-label="Open clip">'+esc(v.cap).slice(0,28)+'</button>').join(''):''}
@@ -1896,20 +1896,20 @@ refresh();
 /* Videos tab: grid of thumbnails. Tap one to open the viewer there, then swipe to see the rest. */
 (function(){
 const s=document.createElement('style');
-s.textContent='#vl.vgrid{grid-template-columns:repeat(3,1fr);gap:3px}#vl .vcard{position:relative;padding:0!important;border-radius:8px;overflow:hidden;aspect-ratio:9/14;cursor:pointer;-webkit-tap-highlight-color:transparent}#vl .vcard::after{content:"";position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(transparent,rgba(0,0,0,.7));pointer-events:none}#vl .vcard>div:nth-child(2){margin:0!important;height:100%}#vl .vcard video,#vl .vcard .poster{width:100%;height:100%;aspect-ratio:auto;max-height:none;border-radius:0;pointer-events:none;object-fit:cover}#vl .vcard .poster{position:relative;font-size:0;background:linear-gradient(160deg,#3a1c71,#d76d77)}#vl .vcard:nth-child(4n+2) .poster{background:linear-gradient(160deg,#134e5e,#71b280)}#vl .vcard:nth-child(4n+3) .poster{background:linear-gradient(160deg,#41295a,#2f0743)}#vl .vcard:nth-child(4n+4) .poster{background:linear-gradient(160deg,#614385,#516395)}#vl .vcard .poster::after{content:"";position:absolute;left:50%;top:40%;transform:translate(-35%,-50%);border-left:18px solid rgba(255,255,255,.85);border-top:11px solid transparent;border-bottom:11px solid transparent}#vl .vcard>div:first-child{position:absolute;top:6px;left:6px;z-index:2}#vl .vcard>div:first-child time{display:none}#vl .vcard>div:first-child .badge{font-size:10px;padding:2px 6px}#vl .vcard>p{position:absolute;left:6px;right:6px;bottom:24px;margin:0!important;z-index:2;font-size:11px!important;line-height:1.3!important;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}#vl .vcard .bar{position:absolute;left:6px;bottom:5px;z-index:2;margin:0;pointer-events:none}#vl .vcard .bar .wa{display:none}#vl .vcard .vlk{color:#fff;font-size:11px;padding:0;min-height:0;gap:4px}#vl .vcard .vlk svg{width:13px;height:13px}';
+s.textContent='#vl.vgrid{grid-template-columns:repeat(3,1fr);gap:3px}#vl .vcard{position:relative;padding:0!important;border-radius:8px;overflow:hidden;aspect-ratio:9/14;cursor:pointer;-webkit-tap-highlight-color:transparent}#vl .vcard::after{content:"";position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(transparent,rgba(0,0,0,.7));pointer-events:none}#vl .vcard>div:nth-child(2){margin:0!important;height:100%}#vl .vcard video,#vl .vcard .poster{width:100%;height:100%;aspect-ratio:auto;max-height:none;border-radius:0;pointer-events:none;object-fit:cover}#vl .vcard .poster{position:relative;font-size:0;background:linear-gradient(160deg,#BC656A,#FE813C)}#vl .vcard:nth-child(4n+2) .poster{background:linear-gradient(160deg,#727E6E,#A8BBA3)}#vl .vcard:nth-child(4n+3) .poster{background:linear-gradient(160deg,#727E6E,#0E0F0B)}#vl .vcard:nth-child(4n+4) .poster{background:linear-gradient(160deg,#727E6E,#BC656A)}#vl .vcard .poster::after{content:"";position:absolute;left:50%;top:40%;transform:translate(-35%,-50%);border-left:18px solid rgba(255,255,255,.85);border-top:11px solid transparent;border-bottom:11px solid transparent}#vl .vcard>div:first-child{position:absolute;top:6px;left:6px;z-index:2}#vl .vcard>div:first-child time{display:none}#vl .vcard>div:first-child .badge{font-size:10px;padding:2px 6px}#vl .vcard>p{position:absolute;left:6px;right:6px;bottom:24px;margin:0!important;z-index:2;font-size:11px!important;line-height:1.3!important;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}#vl .vcard .bar{position:absolute;left:6px;bottom:5px;z-index:2;margin:0;pointer-events:none}#vl .vcard .bar .wa{display:none}#vl .vcard .vlk{color:#fff;font-size:11px;padding:0;min-height:0;gap:4px}#vl .vcard .vlk svg{width:13px;height:13px}';
 document.head.appendChild(s);
 })();
 </script>
 
-<script src="cc-notify.js?v=1"></script>
-<script src="cc-stories.js?v=1"></script>
+<script src="cc-notify.js?v=2"></script>
+<script src="cc-stories.js?v=2"></script>
 <script src="cc-reelcomments.js?v=1"></script>
-<script src="cc-pass.js?v=1"></script>
-<script src="cc-streak.js?v=1"></script>
-<script src="cc-campus.js?v=1"></script>
+<script src="cc-pass.js?v=2"></script>
+<script src="cc-streak.js?v=2"></script>
+<script src="cc-campus.js?v=2"></script>
 <script src="cc-spots.js?v=1"></script>
-<script src="cc-invite.js?v=1"></script>
-<script src="cc-topsales.js?v=1"></script>
+<script src="cc-invite.js?v=2"></script>
+<script src="cc-topsales.js?v=2"></script>
 </body>
 </html>
 

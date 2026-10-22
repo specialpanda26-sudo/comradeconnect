@@ -16,7 +16,7 @@
 
   var css = document.createElement('style');
   css.textContent = '#mav.ccm-has{padding:0;overflow:hidden}#mav.ccm-has img{width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit}'
-    + '.ccm-sh{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}'
+    + '.ccm-sh{position:fixed;inset:0;z-index:9999;background:rgba(14,15,11,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}'
     + '.ccm-pic{width:96px;height:96px;border-radius:50%;margin:0 auto;display:grid;place-items:center;overflow:hidden;border:1.5px solid var(--line,rgba(255,255,255,.25))}'
     + '.ccm-pic img{width:100%;height:100%;object-fit:cover}'
     + '.ccm-r{display:flex;justify-content:center;gap:8px;margin-top:10px}';
@@ -66,7 +66,7 @@
       + '<div class="fld"><input id="ccm-u" maxlength="20" autocapitalize="off" autocomplete="off" aria-label="Username" placeholder="3 to 20 letters, numbers or _"></div>'
       + '<label class="sub" style="display:block;margin-top:6px">Bio</label>'
       + '<div class="fld"><textarea id="ccm-b" maxlength="100" style="height:72px;resize:none" placeholder="Write a short bio (no numbers or links)" aria-label="Bio"></textarea></div>'
-      + '<p class="sub" id="ccm-e" style="color:#f87171;min-height:18px;margin:0"></p>'
+      + '<p class="sub" id="ccm-e" style="color:var(--bad,#E58A90);min-height:18px;margin:0"></p>'
       + '<div class="two" style="margin-top:8px"><button class="btn g" id="ccm-x">Cancel</button><button class="btn p" id="ccm-s">Save</button></div></div>';
     document.body.appendChild(m);
     var u = $('#ccm-u', m), b = $('#ccm-b', m), p = $('#ccm-p', m);

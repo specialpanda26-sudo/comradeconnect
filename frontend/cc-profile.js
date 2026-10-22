@@ -18,7 +18,7 @@
   /* ---------- styles ---------- */
   var css = document.createElement('style');
   css.textContent = [
-    '.ccp-sheet{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}',
+    '.ccp-sheet{position:fixed;inset:0;z-index:9999;background:rgba(14,15,11,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}',
     '.ccp-card{max-width:360px;width:100%}',
     'body.cc-out #ccso,body.cc-out .acl.so{display:none!important}',
     'body.cc-out .mgrp:has(#ccso){display:none!important}',
@@ -30,28 +30,28 @@
     '.ccp-bio{margin:2px 0 0;overflow-wrap:anywhere}',
     '.ccp-act{display:grid;grid-template-columns:1fr 1fr;gap:10px}',
     '.ccp-gr{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:12px}',
-    '.ccp-gr button{position:relative;aspect-ratio:9/14;border:0;border-radius:8px;color:#fff;font-size:11px;background:linear-gradient(160deg,#3a1c71,#d76d77);display:flex;align-items:flex-end;padding:6px;text-align:left;line-height:1.3;overflow:hidden}',
-    '.ccp-gr button:nth-child(4n+2){background:linear-gradient(160deg,#134e5e,#71b280)}',
-    '.ccp-gr button:nth-child(4n+3){background:linear-gradient(160deg,#41295a,#2f0743)}',
-    '.ccp-gr button:nth-child(4n+4){background:linear-gradient(160deg,#614385,#516395)}',
+    '.ccp-gr button{position:relative;aspect-ratio:9/14;border:0;border-radius:8px;color:#fff;font-size:11px;background:linear-gradient(160deg,#BC656A,#FE813C);display:flex;align-items:flex-end;padding:6px;text-align:left;line-height:1.3;overflow:hidden}',
+    '.ccp-gr button:nth-child(4n+2){background:linear-gradient(160deg,#727E6E,#A8BBA3)}',
+    '.ccp-gr button:nth-child(4n+3){background:linear-gradient(160deg,#727E6E,#0E0F0B)}',
+    '.ccp-gr button:nth-child(4n+4){background:linear-gradient(160deg,#727E6E,#BC656A)}',
     '.ccp-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}',
     '.ccp-row:first-of-type{border-top:0}',
     '.ccp-row span{color:var(--mut);font-size:13px}',
     '.ccp-row b{font-size:14px;overflow-wrap:anywhere;text-align:right}',
     /* camera recorder */
-    '.ccr{position:fixed;inset:0;z-index:10001;background:#000;color:#fff;display:flex;flex-direction:column}',
-    '.ccr video{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}',
+    '.ccr{position:fixed;inset:0;z-index:10001;background:#0E0F0B;color:#fff;display:flex;flex-direction:column}',
+    '.ccr video{flex:1;min-height:0;width:100%;object-fit:cover;background:#0E0F0B}',
     '.ccr video.mir{transform:scaleX(-1)}',
-    '.ccr-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px;background:linear-gradient(rgba(0,0,0,.55),transparent)}',
+    '.ccr-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px;background:linear-gradient(rgba(14,15,11,.55),transparent)}',
     '.ccr-top button,.ccr-bot button.ccr-ic{width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;display:grid;place-items:center;padding:0}',
     '.ccr-top svg,.ccr-bot svg{width:22px;height:22px}',
-    '#ccrt{font-weight:600;font-variant-numeric:tabular-nums;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.45)}',
+    '#ccrt{font-weight:600;font-variant-numeric:tabular-nums;padding:6px 12px;border-radius:999px;background:rgba(14,15,11,.45)}',
     '#ccrt.on{background:#e11d48}',
-    '.ccr-bot{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;padding:16px 14px calc(env(safe-area-inset-bottom,0px) + 22px);background:linear-gradient(transparent,rgba(0,0,0,.6))}',
+    '.ccr-bot{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;padding:16px 14px calc(env(safe-area-inset-bottom,0px) + 22px);background:linear-gradient(transparent,rgba(14,15,11,.6))}',
     '.ccr-rec{width:74px;height:74px;border-radius:50%;border:4px solid #fff;background:transparent;padding:0;display:grid;place-items:center}',
     '.ccr-rec i{display:block;width:54px;height:54px;border-radius:50%;background:#e11d48;transition:all .15s}',
     '.ccr-rec.on i{width:28px;height:28px;border-radius:8px}',
-    '.ccr-rev{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 14px calc(env(safe-area-inset-bottom,0px) + 18px);background:linear-gradient(transparent,rgba(0,0,0,.7))}',
+    '.ccr-rev{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 14px calc(env(safe-area-inset-bottom,0px) + 18px);background:linear-gradient(transparent,rgba(14,15,11,.7))}',
     '.ccr-note{position:absolute;left:0;right:0;bottom:120px;text-align:center;font-size:13px;opacity:.85;padding:0 20px}'
   ].join('');
   document.head.appendChild(css);
@@ -134,7 +134,7 @@
     var m = sheet('<h3>Create your account</h3><p class="sub" style="margin-top:6px">Pick a username and a password. You will use them to sign in on any phone. Other people only see your username.</p>'
       + '<div class="fld" style="margin-top:10px"><input id="ccp-u" placeholder="Username" maxlength="20" autocomplete="username" autocapitalize="off" aria-label="Username"></div>'
       + pwField('ccp-p1', 'Password (8 or more characters)', 'Password') + pwField('ccp-p2', 'Repeat the password', 'Repeat the password') + SHOWPW
-      + '<p class="sub" id="ccp-e" style="color:#f87171;min-height:18px"></p>'
+      + '<p class="sub" id="ccp-e" style="color:var(--bad,#E58A90);min-height:18px"></p>'
       + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-go">Create account</button></div>');
     showToggle(m, ['ccp-p1', 'ccp-p2']);
     $('#ccp-x', m).onclick = function () { m.close(); };
@@ -159,7 +159,7 @@
       + (has ? '<div style="margin-top:10px">' + pwField('ccp-cur', 'Current password', 'Current password', 'current-password') + '</div>' : '')
       + '<div class="fld" style="margin-top:10px"><input id="ccp-u" placeholder="Username" maxlength="20" autocomplete="username" autocapitalize="off" aria-label="Username" value="' + esc((info && info.handle) || '') + '"></div>'
       + pwField('ccp-p1', has ? 'New password' : 'Password (8 or more characters)', 'Password') + pwField('ccp-p2', 'Repeat the password', 'Repeat the password') + SHOWPW
-      + '<p class="sub" id="ccp-e" style="color:#f87171;min-height:18px"></p>'
+      + '<p class="sub" id="ccp-e" style="color:var(--bad,#E58A90);min-height:18px"></p>'
       + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-go">Save</button></div>');
     showToggle(m, ['ccp-p1', 'ccp-p2', 'ccp-cur']);
     $('#ccp-x', m).onclick = function () { m.close(); };
@@ -181,7 +181,7 @@
     var m = sheet('<h3>Sign in</h3><p class="sub" style="margin-top:6px">Enter your username and password. If you made your account before usernames, use your account ID and the recovery code you saved.</p>'
       + '<div class="fld" style="margin-top:10px"><input id="ccp-a" placeholder="Username or account ID" autocomplete="username" autocapitalize="off" aria-label="Username or account ID"></div>'
       + pwField('ccp-c', 'Password or recovery code', 'Password or recovery code', 'current-password') + SHOWPW
-      + '<p class="sub" id="ccp-e" style="color:#f87171;min-height:18px"></p>'
+      + '<p class="sub" id="ccp-e" style="color:var(--bad,#E58A90);min-height:18px"></p>'
       + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-r">Sign in</button></div>');
     showToggle(m, ['ccp-c']);
     $('#ccp-x', m).onclick = function () { m.close(); };
@@ -239,7 +239,7 @@
       '<div class="box g" id="ccsi"><b class="t">Sign in</b>'
       + '<p class="sub" style="margin:0">You are not signed in on this phone. Create an account or sign in to keep your points, orders and wallet on any phone.</p>'
       + '<div id="ccsig" style="display:flex;justify-content:center;min-height:44px"></div>'
-      + '<p class="sub" id="ccsie" style="color:#f87171;min-height:18px;margin:0"></p>'
+      + '<p class="sub" id="ccsie" style="color:var(--bad,#E58A90);min-height:18px;margin:0"></p>'
       + '<button class="btn p" id="ccsiC" style="width:100%">Create account</button>'
       + '<button class="btn g" id="ccsiR" style="width:100%">I already have an account</button>'
       + '<button class="btn g" id="ccsiG" style="width:100%">Continue without a username</button></div>');

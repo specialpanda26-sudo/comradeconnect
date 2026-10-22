@@ -10,7 +10,7 @@ if (window.__ccPass) return; window.__ccPass = 1;
 var COMMON = 'password,password1,password12,password123,passw0rd,p@ssw0rd,qwerty,qwerty12,qwerty123,qwertyui,qwertyuiop,asdfghjk,asdfghjkl,zxcvbnm,zxcvbnm1,12345678,123456789,1234567890,11111111,00000000,87654321,abc12345,abcd1234,abcdefgh,iloveyou,iloveyou1,letmein1,welcome1,welcome123,admin123,administrator,monkey123,dragon123,football,football1,baseball,superman,princess,sunshine,master123,shadow123,trustno1,whatever,freedom1,comrade,comrade1,comrade123,comrades,comradeconnect,connect123,kirinyaga,kirinyaga1,kirinyaga123,kyu12345,kenya123,kenya254,kenya2024,kenya2025,kenya2026,nairobi1,nairobi123,mombasa1,kisumu123,nakuru123,mpesa123,mpesa1234,safaricom,harambee,harambee1,jambo123,hakuna123,mamamia1,god12345,jesus123,blessed1,blessing,student1,student123,university,campus123,school123,jomo1234,0722000000,0712345678,0700000000,qazwsxedc,1q2w3e4r,1qaz2wsx,q1w2e3r4,zaq12wsx,pass1234,test1234,user1234'.split(',');
 var COMMON_SET = {}; COMMON.forEach(function (w) { COMMON_SET[w] = 1; });
 var LABELS = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'];
-var COLORS = ['#f87171', '#f87171', '#fbbf24', '#4ade80', '#4ade80'];
+var COLORS = ['var(--bad,#E58A90)', 'var(--bad,#E58A90)', '#fbbf24', '#4ade80', '#4ade80'];
 
 /* same rules as backend/src/passwords.js */
 function score(pw, handle) {

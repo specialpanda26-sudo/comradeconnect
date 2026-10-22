@@ -14,7 +14,7 @@ var savePhone = function (v) {};
 var okPhone = function (v) { return /^(07|01)(?!(\d)\2{7}$)\d{8}$/.test(v); };
 
 function sheet(title, intro) {
-  var m = el('div'); m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';
+  var m = el('div'); m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(14,15,11,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';
   var b = el('div', 'box g'); b.style.cssText = 'max-width:360px;width:100%';
   b.appendChild(el('h3', '', title)); var p = el('p', 'sub', intro); p.style.marginTop = '6px'; b.appendChild(p);
   m.appendChild(b); document.body.appendChild(m); m.box = b; m.close = function () { m.remove(); }; return m;
@@ -23,7 +23,7 @@ function field(m, ph, val, mode) {
   var f = el('div', 'fld'); f.style.marginTop = '10px'; var i = el('input'); i.placeholder = ph; i.value = val || ''; i.setAttribute('aria-label', ph);
   if (mode) i.inputMode = mode; f.appendChild(i); m.box.appendChild(f); return i;
 }
-function errLine(m) { var e = el('p', 'sub'); e.style.cssText = 'color:#f87171;min-height:18px'; m.box.appendChild(e); return e; }
+function errLine(m) { var e = el('p', 'sub'); e.style.cssText = 'color:var(--bad,#E58A90);min-height:18px'; m.box.appendChild(e); return e; }
 function btn(label, cls, fn) { var b = el('button', 'btn ' + cls, label); b.onclick = fn; return b; }
 function row2(m, a, b) { var d = el('div', 'two'); d.appendChild(a); d.appendChild(b); m.box.appendChild(d); }
 
@@ -50,7 +50,7 @@ function draw() {
   var two = el('div', 'two'); two.style.marginTop = '12px';
   two.appendChild(btn('Deposit', 'btn p', deposit)); two.appendChild(btn('Withdraw', 'btn g', withdraw)); host.appendChild(two);
   var n = el('p', 'note', 'Deposit with M-Pesa, then pay for items and your wholesaler plan straight from your wallet. Sales money lands here too.'); n.style.marginTop = '8px'; host.appendChild(n);
-  var hr = el('div'); hr.style.cssText = 'height:1px;background:rgba(255,255,255,.12);margin:14px 0'; host.appendChild(hr);
+  var hr = el('div'); hr.style.cssText = 'height:1px;background:var(--line,rgba(255,255,255,.12));margin:14px 0'; host.appendChild(hr);
   if (W.active) {
     host.appendChild(el('b', '', 'Wholesaler \u2713'));
     var s = el('p', 'sub', 'Active for ' + days(W.until) + ' more day' + (days(W.until) === 1 ? '' : 's') + '. Post as many items as you want, up to ' + W.photos + ' photos each.'); s.style.marginTop = '4px'; host.appendChild(s);

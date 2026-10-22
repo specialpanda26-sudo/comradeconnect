@@ -37,7 +37,7 @@ var css = [
 '.mu-ban .tag{display:inline-flex;gap:6px;align-items:center;font-size:10.5px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.6);color:var(--mut)}',
 '.mu-ban h4{margin:10px 0 4px;font-size:22px;font-weight:600;color:#14281a;max-width:60%}',
 '.mu-ban p{margin:0 0 12px;font-size:12px;color:#4d5f50;max-width:58%;line-height:1.4}',
-'.mu-ban button{all:unset;cursor:pointer;background:#0e0f0b;color:#fff;font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px}',
+'.mu-ban button{all:unset;cursor:pointer;background:#101422;color:#fff;font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px}',
 '.mu-ban .art{position:absolute;right:10px;bottom:2px;font-size:62px;line-height:1;letter-spacing:-8px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.18));transform:rotate(6deg)}',
 '.mu-h{display:flex;justify-content:space-between;align-items:baseline;margin:4px 2px 0}.mu-h b{font-size:16px;font-weight:600}.mu-h span{font-size:12px;color:var(--mut)}',
 /* escrow strip, filter bar, segmented */
@@ -63,7 +63,7 @@ var css = [
 '.mu-heart{top:16px;left:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(0,0,0,.12);color:#14281a}',
 '.mu-heart svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}',
 '.mu-heart.on{color:#d6335a}.mu-heart.on svg{fill:currentColor}',
-'.mu-add{right:12px;bottom:12px;width:40px;height:40px;border-radius:50%;background:#0e0f0b;color:#fff;font-size:24px;line-height:1;transition:transform .12s}.mu-add:active{transform:scale(.88)}',
+'.mu-add{right:12px;bottom:12px;width:40px;height:40px;border-radius:50%;background:#101422;color:#fff;font-size:24px;line-height:1;transition:transform .12s}.mu-add:active{transform:scale(.88)}',
 '#v-market .mgrid .mc.mu-hide{display:none!important}',
 'html[data-lay="desktop"] #v-market{padding:24px 22px 30px}'
 ].join('\n');

@@ -1,5 +1,5 @@
 /* cc-fixes.js v1: small fixes for things that stayed hidden until tapped.
-1. Market product photos sat behind a dark #0E0F0B box and a blur layer, so they looked like a black sheet until you tapped them.
+1. Market product photos sat behind a dark #101422 box and a blur layer, so they looked like a black sheet until you tapped them.
 2. Feed cards start invisible and only appear when a scroll watcher fires; if it is late they stay hidden. This reveals them after a short wait no matter what. */
 (function () {
 'use strict';

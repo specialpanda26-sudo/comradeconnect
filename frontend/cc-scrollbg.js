@@ -22,14 +22,14 @@
   /* ---- clearer glass: the video shows through the panels ---- */
   var css = document.createElement('style');
   css.textContent = [
-    '.bgv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;pointer-events:none;background:#0E0F0B}',
-    '.bgv-scrim{position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(14,15,11,.34),rgba(14,15,11,.46))}',
+    '.bgv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;pointer-events:none;background:#101422}',
+    '.bgv-scrim{position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(16,20,34,.34),rgba(16,20,34,.46))}',
     ':root[data-theme="light"] .bgv-scrim{background:linear-gradient(rgba(255,255,255,.14),rgba(255,255,255,.24))}',
     ':root{--g:rgba(14,16,22,.22);--gb:rgba(255,255,255,.32);--gh:rgba(255,255,255,.55)}',
-    ':root[data-theme="light"]{--g:rgba(255,255,255,.26);--gb:rgba(14,15,11,.12);--gh:rgba(255,255,255,.9)}',
+    ':root[data-theme="light"]{--g:rgba(255,255,255,.26);--gb:rgba(16,20,34,.12);--gh:rgba(255,255,255,.9)}',
     '.g{-webkit-backdrop-filter:blur(5px) saturate(135%);backdrop-filter:blur(5px) saturate(135%)}',
-    ':root:not([data-theme="light"]) :where(.g,h1,h2,h3,p,.sub,b){text-shadow:0 1px 10px rgba(14,15,11,.5)}',
-    'body.cc-bgv-on .bg{background:#0E0F0B}'
+    ':root:not([data-theme="light"]) :where(.g,h1,h2,h3,p,.sub,b){text-shadow:0 1px 10px rgba(16,20,34,.5)}',
+    'body.cc-bgv-on .bg{background:#101422}'
   ].join('');
   document.head.appendChild(css);
 

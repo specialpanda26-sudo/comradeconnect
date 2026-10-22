@@ -77,7 +77,7 @@ css.textContent = [
   '.gbar .b{position:absolute;top:2px;right:calc(50% - 22px);margin:0;min-width:17px;font-size:9.5px;line-height:17px;padding:0 4px}.gbar button.on .b{background:var(--inkfg);color:var(--ink)}',
   '.savebar{bottom:calc(86px + env(safe-area-inset-bottom,0px))!important}#toast{bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}',
   /* sheets */
-  '.dov{position:fixed;inset:0;z-index:200;background:rgba(14,15,11,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;animation:fadein .25s both}',
+  '.dov{position:fixed;inset:0;z-index:200;background:rgba(16,20,34,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;animation:fadein .25s both}',
   '@keyframes fadein{from{opacity:0}}@keyframes sheetup{from{transform:translateY(40px);opacity:0}}',
   '.dsheet{width:min(560px,100%);max-height:92vh;overflow-y:auto;border-radius:28px 28px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--bg) 94%,var(--fg));border:1px solid var(--gb);box-shadow:var(--sh);animation:sheetup .4s cubic-bezier(.2,.9,.3,1) both;position:relative}',
   '@media(min-width:700px){.dov{align-items:center}.dsheet{border-radius:28px}}',

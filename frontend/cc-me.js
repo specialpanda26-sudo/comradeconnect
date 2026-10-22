@@ -16,7 +16,7 @@
 
   var css = document.createElement('style');
   css.textContent = '#mav.ccm-has{padding:0;overflow:hidden}#mav.ccm-has img{width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit}'
-    + '.ccm-sh{position:fixed;inset:0;z-index:9999;background:rgba(14,15,11,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}'
+    + '.ccm-sh{position:fixed;inset:0;z-index:9999;background:rgba(16,20,34,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}'
     + '.ccm-pic{width:96px;height:96px;border-radius:50%;margin:0 auto;display:grid;place-items:center;overflow:hidden;border:1.5px solid var(--line,rgba(255,255,255,.25))}'
     + '.ccm-pic img{width:100%;height:100%;object-fit:cover}'
     + '.ccm-r{display:flex;justify-content:center;gap:8px;margin-top:10px}';

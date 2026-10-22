@@ -19,7 +19,7 @@ window.addEventListener('online', load);
 var st = document.createElement('style');
 st.textContent = '.ccm-sw{display:flex;gap:6px;margin:12px 0 4px;padding:4px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.18));background:var(--g,rgba(255,255,255,.06))}'
   + '.ccm-sw button{flex:1;min-height:38px;border:0;border-radius:999px;background:none;color:inherit;font:600 13px Poppins,system-ui,sans-serif;cursor:pointer}'
-  + '.ccm-sw button.on{background:var(--fg,#fff);color:var(--bg,#0E0F0B)}'
+  + '.ccm-sw button.on{background:var(--fg,#fff);color:var(--bg,#101422)}'
   + '.ccm-note{margin:6px 2px 0;font-size:12px;opacity:.75}';
 document.head.appendChild(st);
 
@@ -75,7 +75,7 @@ document.addEventListener('click', function (e) {
   closePre();
   try { pre = window.open('', '_blank'); } catch (x) { pre = null; }
   if (pre) {
-    try { pre.document.write('<meta name="viewport" content="width=device-width,initial-scale=1"><body style="background:#0E0F0B;color:#fff;font:16px system-ui;padding:24px"><p>Opening the secure card page...</p>'); } catch (x) {}
+    try { pre.document.write('<meta name="viewport" content="width=device-width,initial-scale=1"><body style="background:#101422;color:#fff;font:16px system-ui;padding:24px"><p>Opening the secure card page...</p>'); } catch (x) {}
     // the server can take a while to wake up, so wait a full 90 seconds before giving up on the blank tab
     setTimeout(function () { try { if (pre && !pre.closed) { var h = ''; try { h = pre.location.href; } catch (c) { h = 'x'; } if (h === 'about:blank') pre.close(); } } catch (y) {} }, 90000);
   }

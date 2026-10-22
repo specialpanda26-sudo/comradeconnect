@@ -28,7 +28,7 @@ if (typeof CC_API === 'string' && CC_API.indexOf('YOUR-SUBDOMAIN') < 0) loadConf
 /* ---------- small popup sheet ---------- */
 function sheet(html) {
   const m = document.createElement('div');
-  m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(14,15,11,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';
+  m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(16,20,34,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';
   m.innerHTML = '<div class="box g" style="max-width:360px;width:100%">' + html + '</div>';
   document.body.appendChild(m);
   m.close = () => m.remove();
@@ -1389,7 +1389,7 @@ function showBanner(text) {
   let b = $('#ccbn');
   if (!b) {
     b = document.createElement('div'); b.id = 'ccbn'; b.setAttribute('role', 'status'); b.setAttribute('aria-live', 'polite');
-    b.style.cssText = 'position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:9000;max-width:420px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--bg,#0E0F0B);color:var(--fg,#fff);border:1px solid var(--gb,rgba(254,129,60,.5));box-shadow:0 8px 30px rgba(14,15,11,.5);font-size:14px';
+    b.style.cssText = 'position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:9000;max-width:420px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--bg,#101422);color:var(--fg,#fff);border:1px solid var(--gb,rgba(168,220,231,.5));box-shadow:0 8px 30px rgba(16,20,34,.5);font-size:14px';
     b.innerHTML = '<span id="ccbt" style="flex:1"></span><button type="button" id="ccbv" class="btn p" style="padding:8px 14px;min-height:0">View</button><button type="button" id="ccbx" aria-label="Dismiss" class="act" style="padding:6px 10px">x</button>';
     document.body.appendChild(b);
     b.querySelector('#ccbx').onclick = () => { b.hidden = true; };
@@ -1403,7 +1403,7 @@ function setUnread(n) {
   document.title = (n ? '(' + n + ') ' : '') + AL.base;
   const t = $('#tb [data-v=me]'); if (!t) return;
   let d = t.querySelector('.ccdot');
-  if (n && !d) { t.style.position = 'relative'; d = document.createElement('i'); d.className = 'ccdot'; d.setAttribute('aria-label', 'Unread messages'); d.style.cssText = 'position:absolute;top:6px;right:calc(50% - 16px);width:9px;height:9px;border-radius:50%;background:#BC656A'; t.appendChild(d); }
+  if (n && !d) { t.style.position = 'relative'; d = document.createElement('i'); d.className = 'ccdot'; d.setAttribute('aria-label', 'Unread messages'); d.style.cssText = 'position:absolute;top:6px;right:calc(50% - 16px);width:9px;height:9px;border-radius:50%;background:#A8DCE7'; t.appendChild(d); }
   if (!n && d) d.remove();
 }
 async function pollAlerts() {

@@ -20,7 +20,7 @@ css.textContent =
 '#ccstk .sk-d .on{background:var(--fg,#fff);border-color:var(--fg,#fff)}#ccstk .sk-d .td{border-color:var(--fg,#fff)}' +
 '#ccstk .sk-t{margin:12px 0 0;font-size:13px;line-height:1.6;color:var(--mut,#bdbdbd)}' +
 '#ccstk .sk-m{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}#ccstk .sk-m span{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.3));color:var(--mut,#bdbdbd)}' +
-'#ccstk .sk-m .on{background:var(--fg,#fff);border-color:var(--fg,#fff);color:var(--bg,#0E0F0B);font-weight:600}';
+'#ccstk .sk-m .on{background:var(--fg,#fff);border-color:var(--fg,#fff);color:var(--bg,#101422);font-weight:600}';
 document.head.appendChild(css);
 
 function draw() {

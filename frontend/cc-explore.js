@@ -13,7 +13,7 @@ var toast = function (t) { try { window.toast ? window.toast(t) : null; } catch 
 var EV = { list: [], at: 0, busy: false, err: '', cat: 'All' }, NC = { cat: 'All' };
 var css = document.createElement('style');
 css.textContent = '.cxe,.cxn{cursor:pointer}.cxe:active,.cxn:active{transform:scale(.99)}.cxc{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}'
-  + '.cxm{position:fixed;inset:0;z-index:9999;background:rgba(14,15,11,.82);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}.cxm>.box{max-width:380px;width:100%;margin:auto}'
+  + '.cxm{position:fixed;inset:0;z-index:9999;background:rgba(16,20,34,.82);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}.cxm>.box{max-width:380px;width:100%;margin:auto}'
   + '.cxr{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.cxr>*{flex:1 1 120px}.cxl{margin:8px 0 0;font-size:14px;overflow-wrap:anywhere}.cxl small{opacity:.65;display:block;font-size:12px}';
 document.head.appendChild(css);
 

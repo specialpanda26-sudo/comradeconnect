@@ -19,12 +19,12 @@ function label() { var b = $('#nen'); if (b && !signed()) b.textContent = 'Sign 
 function sheet() {
   if (asking || !signed() || !can() || asked() || $('#ccal')) return; asking = true;
   var w = document.createElement('div'); w.id = 'ccal'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true'); w.setAttribute('aria-label', 'Turn on alerts');
-  w.style.cssText = 'position:fixed;inset:0;z-index:10150;display:grid;place-items:center;padding:22px;background:rgba(14,15,11,.72)';
-  var b = document.createElement('div'); b.style.cssText = 'position:relative;width:100%;max-width:340px;border-radius:24px;padding:26px 22px 18px;background:var(--bg,#0E0F0B);color:var(--fg,#fff);border:1px solid var(--gb,rgba(255,255,255,.28));text-align:center;font-family:Poppins,system-ui,sans-serif';
+  w.style.cssText = 'position:fixed;inset:0;z-index:10150;display:grid;place-items:center;padding:22px;background:rgba(16,20,34,.72)';
+  var b = document.createElement('div'); b.style.cssText = 'position:relative;width:100%;max-width:340px;border-radius:24px;padding:26px 22px 18px;background:var(--bg,#101422);color:var(--fg,#fff);border:1px solid var(--gb,rgba(255,255,255,.28));text-align:center;font-family:Poppins,system-ui,sans-serif';
   var x = document.createElement('button'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.textContent = '\u00d7'; x.style.cssText = 'position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:1px solid var(--gb,rgba(255,255,255,.28));background:transparent;color:inherit;font-size:20px;cursor:pointer';
   var h = document.createElement('h2'); h.textContent = 'Turn on alerts?'; h.style.cssText = 'margin:0 0 8px;font-size:21px';
   var p = document.createElement('p'); p.textContent = 'Get a ping for replies, messages and verified campus notices. You can change this any time in Me, Notifications.'; p.style.cssText = 'margin:0;font-size:14px;line-height:1.55;color:var(--mut,#bdbdbd)';
-  var y = document.createElement('button'); y.type = 'button'; y.textContent = 'Turn on'; y.style.cssText = 'width:100%;margin-top:18px;border:0;border-radius:999px;padding:14px;background:var(--fg,#fff);color:var(--bg,#0E0F0B);font:600 15px Poppins,system-ui,sans-serif;cursor:pointer';
+  var y = document.createElement('button'); y.type = 'button'; y.textContent = 'Turn on'; y.style.cssText = 'width:100%;margin-top:18px;border:0;border-radius:999px;padding:14px;background:var(--fg,#fff);color:var(--bg,#101422);font:600 15px Poppins,system-ui,sans-serif;cursor:pointer';
   var n = document.createElement('button'); n.type = 'button'; n.textContent = 'Not now'; n.style.cssText = 'width:100%;margin-top:8px;border:0;background:none;color:var(--mut,#bdbdbd);padding:12px;font:500 14px Poppins,system-ui,sans-serif;cursor:pointer';
   function done() { asking = false; document.removeEventListener('keydown', esc); w.remove(); }
   function esc(e) { if (e.key === 'Escape') { mark(); done(); } }

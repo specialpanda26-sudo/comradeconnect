@@ -5,7 +5,7 @@
 'use strict';
 var SRC = { sq: 'ccSearchTerms', mkq: 'ccMarketTerms' };
 var st = document.createElement('style');
-st.textContent = '.ccsg{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;display:grid;border-radius:16px;overflow:hidden;background:var(--bg,#0E0F0B);border:1px solid var(--line,rgba(255,255,255,.2));box-shadow:0 14px 34px rgba(14,15,11,.45)}' +
+st.textContent = '.ccsg{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;display:grid;border-radius:16px;overflow:hidden;background:var(--bg,#101422);border:1px solid var(--line,rgba(255,255,255,.2));box-shadow:0 14px 34px rgba(16,20,34,.45)}' +
   '.ccsg button{all:unset;box-sizing:border-box;cursor:pointer;padding:12px 16px;font-size:14px;color:var(--fg,#fff);border-bottom:1px solid var(--line,rgba(255,255,255,.12));overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
   '.ccsg button:last-child{border-bottom:0}.ccsg button:hover,.ccsg button:focus-visible{background:var(--g,rgba(255,255,255,.09))}.ccsg mark{background:none;color:inherit;font-weight:700}';
 document.head.appendChild(st);

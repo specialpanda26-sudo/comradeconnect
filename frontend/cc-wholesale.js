@@ -14,7 +14,7 @@ var savePhone = function (v) {};
 var okPhone = function (v) { return /^(07|01)(?!(\d)\2{7}$)\d{8}$/.test(v); };
 
 function sheet(title, intro) {
-  var m = el('div'); m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(14,15,11,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';
+  var m = el('div'); m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(16,20,34,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';
   var b = el('div', 'box g'); b.style.cssText = 'max-width:360px;width:100%';
   b.appendChild(el('h3', '', title)); var p = el('p', 'sub', intro); p.style.marginTop = '6px'; b.appendChild(p);
   m.appendChild(b); document.body.appendChild(m); m.box = b; m.close = function () { m.remove(); }; return m;

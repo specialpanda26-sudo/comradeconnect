@@ -108,11 +108,11 @@
     var esc = function (t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
     notes = notes.replace(/Install comrade-connect\.apk on your (Android )?phone\.?/i, '').replace(/[#*_`>]/g, '').trim().slice(0, 300);
     var ov = document.createElement('div'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Update available');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:10200;display:grid;place-items:center;padding:22px;background:rgba(14,15,11,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:Poppins,system-ui,sans-serif';
-    ov.innerHTML = '<div style="width:100%;max-width:340px;border-radius:24px;padding:24px 22px 18px;background:var(--bg,#0E0F0B);color:var(--fg,#fff);border:1px solid var(--gb,rgba(255,255,255,.28));text-align:center">'
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10200;display:grid;place-items:center;padding:22px;background:rgba(16,20,34,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:Poppins,system-ui,sans-serif';
+    ov.innerHTML = '<div style="width:100%;max-width:340px;border-radius:24px;padding:24px 22px 18px;background:var(--bg,#101422);color:var(--fg,#fff);border:1px solid var(--gb,rgba(255,255,255,.28));text-align:center">'
       + '<h2 style="margin:0 0 8px;font-size:21px;font-weight:700">Update available</h2>'
       + '<p style="margin:0;font-size:14px;line-height:1.55;color:var(--mut,#bdbdbd)">A new version of Comrade Connect is ready.' + (notes ? '<br><span style="display:block;margin-top:10px;color:var(--fg,#fff)">What is new: ' + esc(notes) + '</span>' : '') + '</p>'
-      + '<button type="button" data-u style="width:100%;margin-top:18px;border:0;border-radius:999px;padding:14px;background:var(--fg,#fff);color:var(--bg,#0E0F0B);font:600 15px Poppins,system-ui,sans-serif;cursor:pointer">Update now</button>'
+      + '<button type="button" data-u style="width:100%;margin-top:18px;border:0;border-radius:999px;padding:14px;background:var(--fg,#fff);color:var(--bg,#101422);font:600 15px Poppins,system-ui,sans-serif;cursor:pointer">Update now</button>'
       + '<button type="button" data-x style="width:100%;margin-top:8px;border:0;background:none;color:var(--mut,#bdbdbd);padding:12px;font:500 14px Poppins,system-ui,sans-serif;cursor:pointer">Cancel</button>'
       + '<p style="margin:6px 0 0;font-size:11px;color:var(--mut,#bdbdbd)">Your account and saved data stay as they are. When the download finishes, open it and tap Install.</p></div>';
     var close = function () { updOpen = false; ov.remove(); };

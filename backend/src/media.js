@@ -22,10 +22,14 @@ export async function mediaRoutes(req, env, url, ip) {
   if (path === '/api/media/upload-url' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const b = await body(), kind = b.kind, ct = String(b.content_type || '').toLowerCase(), bytes = int(b.bytes, 1, 1e9);
-    if (!['clip', 'listing_photo', 'video', 'hostel_photo'].includes(kind)) return err(env, 'Unknown media type');
-    const photo = kind === 'listing_photo' || kind === 'hostel_photo', ext = (photo ? PHOTO_TYPES : VIDEO_TYPES)[ct];
+    if (!['clip', 'listing_photo', 'video', 'hostel_photo', 'story_photo', 'story_video'].includes(kind)) return err(env, 'Unknown media type');
+    const photo = kind === 'listing_photo' || kind === 'hostel_photo' || kind === 'story_photo', ext = (photo ? PHOTO_TYPES : VIDEO_TYPES)[ct];
     if (!ext) return err(env, photo ? 'Photos must be JPG, PNG or WebP' : 'Videos must be MP4 or WebM');
     if (!bytes || bytes > (photo ? limits(env).photo : limits(env).clip)) return err(env, `File too large (max ${photo ? 5 : Number(env.CLIP_MAX_MB || 25)} MB)`);
+    if (/^story_/.test(kind)) {                                       // at most 10 live stories per person
+      const live = await rows(await sb(env, `media?select=id&aid=eq.${enc(u.aid)}&kind=in.(story_photo,story_video)&status=in.(pending,ready)&created_at=gte.${new Date(Date.now() - DAY).toISOString()}`));
+      if (live.length >= 10) return err(env, 'You can have up to 10 stories at a time. They disappear after 24 hours.');
+    }
     let listing_id = null, hostel_id = null;
     if (kind === 'hostel_photo') {                                   // room photos: only the caretaker who posted the vacancy
       if (!UUID.test(String(b.hostel_id || ''))) return err(env, 'Pick a hostel');
@@ -34,7 +38,7 @@ export async function mediaRoutes(req, env, url, ip) {
       const have = await rows(await sb(env, `media?select=id&hostel_id=eq.${h.id}&kind=eq.hostel_photo&status=in.(pending,ready)`));
       if (have.length >= HOSTEL_PHOTOS) return err(env, `Up to ${HOSTEL_PHOTOS} photos per hostel`, 400);
       hostel_id = h.id;
-    } else if (photo) {
+    } else if (photo && kind === 'listing_photo') {
       if (!UUID.test(String(b.listing_id || ''))) return err(env, 'Pick a listing');
       const l = await one(await sb(env, `listings?select=id&id=eq.${b.listing_id}&seller_aid=eq.${enc(u.aid)}&status=in.(pending,approved)`));
       if (!l) return err(env, 'Listing not found', 404);
@@ -60,10 +64,10 @@ export async function mediaRoutes(req, env, url, ip) {
     if (!row) return err(env, 'Upload not found', 404);
     const head = await store.head(env, MEDIA_BUCKET(env), row.r2_key);
     if (!head) return err(env, 'The file did not arrive. Try again.', 409);
-    const max = row.kind === 'listing_photo' || row.kind === 'hostel_photo' ? limits(env).photo : limits(env).clip;
+    const max = /photo$/.test(row.kind) ? limits(env).photo : limits(env).clip;
     if (head.size > max) { await store.remove(env, MEDIA_BUCKET(env), row.r2_key); await patch(env, `media?id=eq.${row.id}`, { status: 'hidden' }); return err(env, 'File too large', 413); }
     // The first bytes must match the type that was declared, so a renamed script or document is never published.
-    if (store.sniff(await store.peek(env, MEDIA_BUCKET(env), row.r2_key)) !== row.content_type) { await store.remove(env, MEDIA_BUCKET(env), row.r2_key); await patch(env, `media?id=eq.${row.id}`, { status: 'hidden' }); return err(env, 'That file is not a real ' + (row.kind === 'listing_photo' || row.kind === 'hostel_photo' ? 'photo' : 'video'), 415); }
+    if (store.sniff(await store.peek(env, MEDIA_BUCKET(env), row.r2_key)) !== row.content_type) { await store.remove(env, MEDIA_BUCKET(env), row.r2_key); await patch(env, `media?id=eq.${row.id}`, { status: 'hidden' }); return err(env, 'That file is not a real ' + (/photo$/.test(row.kind) ? 'photo' : 'video'), 415); }
     await patch(env, `media?id=eq.${row.id}`, { status: 'ready', bytes: head.size });
     return json(env, { id: row.id, url: mediaUrl(env, row.r2_key), status: 'ready' });
   }
@@ -74,7 +78,8 @@ export async function mediaRoutes(req, env, url, ip) {
     const r = await rows(await sb(env, `media?kind=in.(clip,video)&status=eq.ready&order=created_at.desc&limit=${limit + 1}&offset=${(page - 1) * limit}`));
     const list = r.slice(0, limit), me = req.headers.get('X-Token') ? await authProfile(req, env) : null;
     const liked = me && list.length ? await rows(await sb(env, `media_likes?select=media_id&aid=eq.${enc(me.aid)}&media_id=${inList(list.map((x) => x.id))}`)) : [];
-    return json(env, { clips: list.map((x) => ({ id: x.id, url: mediaUrl(env, x.r2_key), kind: x.kind, caption: x.caption, likes: x.likes, liked: liked.some((l) => l.media_id === x.id), mine: !!me && me.aid === x.aid, createdAt: Date.parse(x.created_at) })), hasMore: r.length > limit });
+    const cc = list.length ? await rows(await sb(env, `media_comments?select=media_id&media_id=${inList(list.map((x) => x.id))}&hidden=eq.false&limit=5000`)) : [];
+    return json(env, { clips: list.map((x) => ({ comments: cc.filter((c) => c.media_id === x.id).length, id: x.id, url: mediaUrl(env, x.r2_key), kind: x.kind, caption: x.caption, likes: x.likes, liked: liked.some((l) => l.media_id === x.id), mine: !!me && me.aid === x.aid, createdAt: Date.parse(x.created_at) })), hasMore: r.length > limit });
   }
   mm = path.match(/^\/api\/clips\/([0-9a-f-]{36})\/like$/);
   if (mm && m === 'POST') {

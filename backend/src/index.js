@@ -28,6 +28,7 @@ import { postRuleRoutes, dropUnpaidDrafts } from './postrules.js';
 import { sqlRoutes } from './sqlpanel.js';
 import { giveBack } from './points.js';
 import { pruneMedia } from './media.js';
+import { storyRoutes, pruneStories } from './stories.js';
 import * as store from './storage.js';
 import { PRIVATE_BUCKET } from './storage.js';
 
@@ -53,7 +54,7 @@ hooks.onFailed = async (env, p) => {
   if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
 };
 
-const ROUTES = [notificationRoutes, settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, myEventRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
+const ROUTES = [storyRoutes, notificationRoutes, settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, myEventRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);
@@ -108,6 +109,7 @@ export async function runCron(env) {
   for (const v of purge) { await store.remove(env, PRIVATE_BUCKET(env), v.r2_key); await patch(env, `verifications?id=eq.${v.id}`, { r2_key: null }); }
   out.purged = purge.length;
   out.media = await pruneMedia(env);
+  out.stories = await pruneStories(env).catch(() => -1);
   await patch(env, `live_streams?status=eq.live&created_at=lte.${ago(8 * 3600e3)}`, { status: 'ended', ended_at: new Date().toISOString() });
   await sb(env, `live_viewers?seen_at=lt.${ago(3600e3)}`, { method: 'DELETE' });
   await sb(env, `live_comments?created_at=lt.${ago(3 * 86400e3)}`, { method: 'DELETE' });

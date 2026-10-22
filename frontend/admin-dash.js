@@ -17,6 +17,7 @@ const ICON = {
   bag: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
   wallet: '<rect x="3" y="6" width="18" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>',
   sliders: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  star: '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9-4.3-4.1 5.9-.8z"/>',
   plus: '<path d="M12 5v14M5 12h14"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>', arrow: '<path d="M9 6l6 6-6 6"/>',
 };
 const svg = (k, s) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:' + (s || 20) + 'px;height:' + (s || 20) + 'px" aria-hidden="true">' + ICON[k] + '</svg>';
@@ -26,7 +27,8 @@ const GROUPS = [
   { n: 'Overview', icon: 'grid', h: 'Dashboard', lead: 'How Comrade Connect is doing right now.', tabs: ['dashboard'] },
   { n: 'Users', icon: 'users', h: 'Users', lead: 'Find anyone and control their account.', tabs: ['users', 'grant'] },
   { n: 'Review', icon: 'inbox', h: 'Waiting for you', lead: 'Everything that needs a decision from you.', tabs: ['listings', 'confirm', 'withdrawals', 'verifications', 'disputes', 'reports', 'payments'] },
-  { n: 'Market', icon: 'bag', h: 'Market and campus', lead: 'Items, events, notices, sponsors and the club shop.', tabs: ['live', 'events', 'notices', 'sponsors', 'club', 'kura'] },
+  { n: 'Market', icon: 'bag', h: 'Market and campus', lead: 'Items, events, notices, sponsors and the club shop.', tabs: ['live', 'events', 'notices', 'sponsors', 'club'] },
+  { n: 'Kura', icon: 'star', h: 'Kura', lead: 'Contestants, votes and the season.', tabs: ['kura'] },
   { n: 'Money', icon: 'wallet', h: 'Money', lead: 'Earnings, fees and payouts.', tabs: ['settings', 'payouts'] },
   { n: 'Site', icon: 'sliders', h: 'Site', lead: 'Change the words and switches on the public site, and read the log.', tabs: ['site', 'zones', 'postrules', 'audit'] },
 ];

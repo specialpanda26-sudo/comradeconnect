@@ -8,7 +8,7 @@ css.textContent = '.ccx-host{position:relative}.ccx-host>h2:first-child,.ccx-hos
   + '.ccx-b:hover{background:color-mix(in srgb,currentColor 12%,transparent)}.ccx-b svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}';
 document.head.appendChild(css);
 var X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-var QUIT = /^(cancel|close|not now|later|no thanks|back|done|dismiss)$/i;
+var QUIT = /^(cancel|close|not now|later|no thanks|done|dismiss)$/i;   // not "Back": that steps back inside a panel instead of closing it, which made the X flash and close late
 
 function shut(ov) {
   var b = Array.prototype.filter.call(ov.querySelectorAll('button'), function (n) { return QUIT.test((n.textContent || '').trim()) && !n.disabled && n.getClientRects().length; })[0];

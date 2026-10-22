@@ -72,7 +72,7 @@
     var b = e.target.closest && e.target.closest('button,a,[role=button],' + CLOSE_SEL);
     if (!b || !isCloseEl(b)) return;
     var ov = overlayOf(b); if (!ov) return;
-    setTimeout(function () { if (ov.isConnected && vis(ov)) forceHide(ov); }, 380);
+    setTimeout(function () { if (ov.isConnected && vis(ov)) forceHide(ov); }, 90);
   }, true);
 
   // 2) Phone back button
@@ -86,7 +86,7 @@
   function act(s, A) {
     if (s.top) {
       var b = closeBtnIn(s.top); if (b) b.click();
-      setTimeout(function () { if (s.top.isConnected && vis(s.top)) forceHide(s.top); }, 400);
+      setTimeout(function () { if (s.top.isConnected && vis(s.top)) forceHide(s.top); }, 120);
       return;
     }
     if (s.me) { var bk = document.getElementById('ccback'); if (bk) { bk.click(); return; } }
@@ -100,7 +100,7 @@
     var A = (cap.Plugins && cap.Plugins.App) || (cap.registerPlugin ? cap.registerPlugin('App') : null);
     if (A && A.addListener) A.addListener('backButton', function () {
       var s = snap();                                                              // taken before the page's own back handler changes anything
-      setTimeout(function () { if (!changed(s, snap())) act(s, A); setTimeout(unloader, 600); }, 400);
+      setTimeout(function () { if (!changed(s, snap())) act(s, A); setTimeout(unloader, 600); }, 120);
     });
   }
 

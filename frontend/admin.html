@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Comrade Connect admin</title>
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#0E0F0B">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
 <style>
@@ -108,7 +108,7 @@ a{color:var(--fg);text-underline-offset:3px}
 .savebar span{font-size:12.5px;color:var(--mut)}.savebar button{flex:none!important}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rise .card,.rise .stat{opacity:1}}
 </style>
-<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"></head>
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="stylesheet" href="cc-theme.css?v=1"></head>
 <body class="out">
 <div class="bg"><i></i><i></i><span class="bw" aria-hidden="true">ADMIN</span></div>
 <header class="top g"><div style="display:flex;align-items:center"><span class="wm">Comrade Connect</span><span class="tag">Admin</span></div>
@@ -323,7 +323,7 @@ document.addEventListener('click', async (e) => {
     return act(b, () => api('/api/admin/reports/' + kind + '/' + id, body), 'Done');
   }
 });
-function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem('cc_admin_theme', t); } catch (e) {} const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = t === 'light' ? '#ffffff' : '#000000'; }
+function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem('cc_admin_theme', t); } catch (e) {} const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = t === 'light' ? '#ffffff' : '#0E0F0B'; }
 (function () { let t = 'dark'; try { t = localStorage.getItem('cc_admin_theme') || 'dark'; } catch (e) {} setTheme(t === 'light' ? 'light' : 'dark'); })();
 // pointer light: on cards (soft spotlight) and on tab pills (glow under the finger)
 document.addEventListener('pointermove', (e) => {

@@ -176,7 +176,7 @@
   var meta = document.querySelector('meta[name="theme-color"]');
   function theme() {
     var light = document.documentElement.dataset.theme === 'light';
-    if (meta) meta.setAttribute('content', light ? '#ffffff' : '#000000');
+    if (meta) meta.setAttribute('content', light ? '#ffffff' : '#0E0F0B');
   }
   theme();
   new MutationObserver(theme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });

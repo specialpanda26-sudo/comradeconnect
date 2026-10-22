@@ -56,6 +56,7 @@ export async function refundOrder(env, id, by) {
 }
 
 // Called when an 'order' payment is confirmed by the M-Pesa callback.
+import { notify } from './notifications.js';
 export async function createOrderFromPayment(env, p) {
   const [l] = await rows(await patch(env, `listings?id=eq.${p.ref_id}&status=eq.approved`, { status: 'sold' }));   // claim the listing atomically
   if (!l) { await credit(env, p.aid, p.amount, 'refund', 'pay:' + p.id, 'Item no longer available'); if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id); return null; }
@@ -70,6 +71,7 @@ export async function createOrderFromPayment(env, p) {
   await patch(env, `referrals?referred_aid=eq.${enc(p.aid)}&status=eq.pending&order_id=is.null`, {
     order_id: id, unlock_at: ahead(Number(env.REFERRAL_UNLOCK_DAYS || 7) * DAY),
   });
+  await notify(env, l.seller_aid, 'order', 'You have a new order', 'Someone paid for "' + String(l.title || 'your item').slice(0, 60) + '". Hand it over and enter the buyer\'s code to get paid.', 'order', id);
   return o;
 }
 

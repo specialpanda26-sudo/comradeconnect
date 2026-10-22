@@ -22,6 +22,7 @@ import { settingsRoutes } from './settings.js';
 import { siteContentRoutes } from './sitecontent.js';
 import { trustRoutes } from './trust.js';
 import { pointsRoutes } from './points.js';
+import { notificationRoutes } from './notifications.js';
 import { reconcilePayouts } from './payouts.js';
 import { postRuleRoutes, dropUnpaidDrafts } from './postrules.js';
 import { sqlRoutes } from './sqlpanel.js';
@@ -52,7 +53,7 @@ hooks.onFailed = async (env, p) => {
   if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
 };
 
-const ROUTES = [settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, myEventRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
+const ROUTES = [notificationRoutes, settingsRoutes, trustRoutes, siteContentRoutes, feedRoutes, payRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, myEventRoutes, adminUserRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

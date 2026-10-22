@@ -1,5 +1,6 @@
 import { json, sb, rows, ago, isAdmin, hasContact, standingBlock, audit, user } from './lib.js';
 import { feeFor } from './postrules.js';
+import { notify, notifySnippet } from './notifications.js';
 
 // ---------- Feed ----------
 const CAT_OK = /^[A-Za-z0-9]{2,22}$/;
@@ -67,7 +68,9 @@ export async function feedRoutes(req, env, url, ip) {
       const ins = await rows(await sb(env, 'post_likes', { method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates,return=representation' }, body: JSON.stringify({ post_id: id, aid }) }));
       if (!ins.length) return json(env, fmtPost(post));                        // already liked
       const [u] = await rows(await sb(env, 'rpc/inc_post', { method: 'POST', body: JSON.stringify({ p: id, col: 'likes' }) }));
-      return json(env, fmtPost({ ...post, likes: u?.likes ?? post.likes + 1 }));
+      const nl = u?.likes ?? post.likes + 1;
+      if (post.aid && post.aid !== aid && [10, 25, 50, 100, 250, 500].includes(nl)) await notify(env, post.aid, 'like_milestone', 'Your story reached ' + nl + ' likes', notifySnippet(post.content), 'post', id);
+      return json(env, fmtPost({ ...post, likes: nl }));
     }
     if (act === 'comments') {
       const text = String(b.text || '').trim().slice(0, 200);
@@ -76,6 +79,7 @@ export async function feedRoutes(req, env, url, ip) {
       const recent = await rows(await sb(env, `comments?select=id&aid=eq.${encodeURIComponent(aid)}&created_at=gte.${ago(3600e3)}&limit=30`));
       if (recent.length >= 30) return json(env, { error: 'Too many comments. Try again later.' }, 429);
       const [c] = await rows(await sb(env, 'comments', { method: 'POST', body: JSON.stringify({ post_id: id, aid, text }) }));
+      if (post.aid && post.aid !== aid) await notify(env, post.aid, 'comment', 'New comment on your story', '\u201c' + notifySnippet(text) + '\u201d', 'post', id);
       return json(env, fmtPost({ ...post, comments: [...(post.comments || []), c || { text, created_at: new Date().toISOString() }] }));
     }
     if (act === 'report') {

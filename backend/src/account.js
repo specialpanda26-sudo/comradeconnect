@@ -3,6 +3,7 @@ import { json, err, sb, rows, one, post, patch, enc, str, int, UUID, H, tsEqual,
 import { credit } from './pay.js';
 import { getSettings, withdrawFee, publicConfig } from './settings.js';
 import { trySendNow, reconcilePayouts } from './payouts.js';
+import { notify } from './notifications.js';
 
 export async function balance(env, aid) {
   const r = await sb(env, 'rpc/wallet_balance', { method: 'POST', body: JSON.stringify({ p: aid }) });
@@ -19,7 +20,7 @@ export async function unlockReferrals(env, aid) {
     if (!o || o.status === 'refunded') { await patch(env, `referrals?id=eq.${r.id}&status=eq.pending`, { status: 'void' }); continue; }
     if (o.status === 'disputed' || o.dispute_status === 'open') continue;          // wait for the dispute to end
     const done = await rows(await patch(env, `referrals?id=eq.${r.id}&status=eq.pending`, { status: 'unlocked' }));
-    if (done.length) { await credit(env, r.referrer_aid, r.reward, 'referral', r.id, 'Referral reward'); n++; }
+    if (done.length) { await credit(env, r.referrer_aid, r.reward, 'referral', r.id, 'Referral reward'); await notify(env, r.referrer_aid, 'reward', 'Referral reward unlocked', 'KSh ' + r.reward + ' was added to your wallet.', 'referral', null); n++; }
   }
   return n;
 }
@@ -239,6 +240,7 @@ export async function accountRoutes(req, env, url, ip) {
     if (paid.length) return err(env, 'Referral codes only work before your first purchase', 400);
     const res = await post(env, 'referrals', { referrer_aid: ref.aid, referred_aid: u.aid, reward: (await getSettings(env)).referral_reward });
     if (res.status === 409) return err(env, 'You already used a referral code', 409);
+    if (res.ok) await notify(env, ref.aid, 'referral', 'A friend joined with your code', 'Your reward unlocks after their first Market purchase and the refund window.', 'referral', null);
     return json(env, { ok: true }, 201);
   }
   if (path === '/api/referral/me' && m === 'GET') {

@@ -12,7 +12,7 @@ function stars(r) { return r && r.count ? '\u2605 ' + r.avg + ' (' + r.count + '
 var st = el('style'); st.textContent =
 '.cce{padding:14px 16px}.cce summary{cursor:pointer;font-weight:700;font-size:14px}.cce ol{margin:10px 0 4px;padding-left:20px;font-size:13px;line-height:1.6;opacity:.9}.cce p{margin:6px 0 0;font-size:13px;font-weight:600}' +
 '.ccf{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ccf input,.ccf select{font:inherit;font-size:16px;min-width:0;padding:11px 14px;border-radius:14px;border:1px solid var(--line,rgba(255,255,255,.25));background:transparent;color:inherit}.ccf select{grid-column:1/3}.ccf option{color:#0E0F0B}' +
-'.ccr{display:block;margin-top:2px;font-weight:600}.ccr2{margin:2px 0 8px;font-size:13px;font-weight:600}' +
+'.ccrt{display:block;margin-top:2px;font-weight:600}.ccr2{margin:2px 0 8px;font-size:13px;font-weight:600}' +
 '.cct{display:flex;align-items:center;gap:6px;margin:10px 0 2px;font-size:11px}.cct span{display:flex;align-items:center;gap:5px;white-space:nowrap;opacity:.5}.cct span:before{content:"";width:12px;height:12px;border-radius:50%;border:2px solid currentColor;flex:none}' +
 '.cct span.on{opacity:1}.cct span.on:before{background:currentColor}.cct i{flex:1;height:2px;min-width:8px;background:var(--line,rgba(255,255,255,.25));border-radius:2px}' +
 '.ccst{margin:10px 0 0;font-size:13px}.ccst button{all:unset;cursor:pointer;font-size:26px;padding:2px 3px;opacity:.35}.ccst button.on{opacity:1}.ccst .go{font-size:13px;font-weight:700;padding:7px 14px;margin-left:8px;border-radius:999px;background:var(--fg,#fff);color:var(--bg,#0E0F0B);opacity:1}' +
@@ -70,7 +70,7 @@ function runGrid() {
     var cards = [].slice.call(grid.children).filter(function (c) { return c.classList.contains('mc'); }), shown = 0;
     cards.forEach(function (c) {
       var l = L[c.dataset.id], m = c.querySelector('.mb');
-      if (l && m && !m.querySelector('.ccr')) m.appendChild(el('small', 'ccr', stars(l.seller && l.seller.rating)));
+      if (l && m && !m.querySelector('.ccrt')) m.appendChild(el('small', 'ccrt', stars(l.seller && l.seller.rating)));
       var hide = !!l && ((F.min != null && l.price < F.min) || (F.max != null && l.price > F.max));
       c.style.display = hide ? 'none' : ''; if (!hide) shown++;
     });

@@ -1332,7 +1332,7 @@ function loadClips(more) {
   CLIPS.job = (async () => {
     try {
       const d = await call('/api/clips?limit=20&page=' + CLIPS.page, { auth: false });
-      const fresh = (d.clips || []).map((c) => ({ id: c.id, cap: c.caption || 'Clip', url: c.url, likes: c.likes || 0, at: c.createdAt, srv: true, liked: !!c.liked, mine: !!c.mine }));
+      const fresh = (d.clips || []).map((c) => ({ id: c.id, cap: c.caption || 'Clip', url: c.url, likes: c.likes || 0, at: c.createdAt, srv: true, liked: !!c.liked, mine: !!c.mine, comments: c.comments || 0 }));
       if (CLIPS.page === 1) VIDS.splice(0, VIDS.length, ...fresh); else fresh.forEach((v) => { if (!VIDS.some((x) => x.id === v.id)) VIDS.push(v); });
       fresh.forEach((v) => { if (v.liked) { vl.add(v.id); if (window.ccLk) window.ccLk.add(v.id); } });
       CLIPS.more = !!d.hasMore; CLIPS.at = Date.now();

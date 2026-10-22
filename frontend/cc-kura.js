@@ -13,7 +13,7 @@ var toast = function (t) { try { if (window.toast) window.toast(t); } catch (e) 
 function call(path, body) { var c = CCx(); if (!c) return Promise.reject(new Error('Still loading. Try again in a moment.')); return c.call(path, body ? { body: body } : { auth: false }); }
 function callAuth(path) { return CCx().call(path, {}); }
 
-var S = { home: null, tab: 'compete', f: { campus: '', gender: '', division: '', q: '' }, board: null, busy: false, cur: null, pack: 0, tick: 0 };
+var S = { home: null, tab: 'compete', f: { campus: '', gender: '', division: '', q: '' }, board: null, sid: null, busy: false, cur: null, pack: 0, tick: 0 };
 var season = function () { return (S.home && S.home.season) || {}; };
 var divName = function (d) { return d.name || d.label || d.id; };
 
@@ -109,18 +109,22 @@ function hero() {
 }
 function daysLeft(iso) { if (!iso) return ''; var d = Math.ceil((Date.parse(iso) - Date.now()) / 864e5); return d > 0 ? ' · closes in ' + d + ' day' + (d > 1 ? 's' : '') : ' · voting closed'; }
 function loadHome() {
-  return call('/api/kura/home').then(function (d) {
+  return call('/api/kura/home' + (S.sid ? '?season=' + S.sid : '')).then(function (d) {
+    if (d && d.season && d.season.id) S.sid = d.season.id;
     S.home = d; var st = d.stats || {}, sub = $('kuraSub');
     if (sub && st.contestants) sub.textContent = st.contestants + ' contestants · ' + (st.votes || 0) + ' votes' + daysLeft(d.season && d.season.ends_at);
   }).catch(function () {});
 }
 
 /* ---------- shell: header, tabs, page ---------- */
+var kst = document.createElement('style');
+kst.textContent = '#kseas{padding:6px 14px 2px}#kseas select{width:100%;font:inherit;font-size:14px;font-weight:600;padding:10px 14px;border-radius:14px;border:1px solid var(--gb,rgba(255,255,255,.2));background:var(--g,rgba(255,255,255,.07));color:inherit}';
+document.head.appendChild(kst);
 function shell() {
   var o = $('kura'); if (o) return o;
   o = document.createElement('div'); o.id = 'kura'; o.hidden = true;
   o.innerHTML = '<div class="kbar"><div class="kbr"><div class="kbrand">' + I.star + 'Kura</div><button class="kx" data-k="close" aria-label="Close">' + I.x + '</button></div>'
-    + '<div class="kts" id="ktabs"></div></div><div id="ktick"></div><div class="kw" id="kbody"></div>';
+    + '<div class="kts" id="ktabs"></div><div id="kseas"></div></div><div id="ktick"></div><div class="kw" id="kbody"></div>';
   document.body.appendChild(o); o.addEventListener('click', onClick); o.addEventListener('change', onChange); o.addEventListener('input', onInput);
   return o;
 }
@@ -135,6 +139,8 @@ function go(t) { S.tab = t; closePage(); $('kura').scrollTop = 0; paint(); }
 function paint() {
   var s = season(), t = S.tab;
   $('ktabs').innerHTML = [['compete', 'Compete'], ['board', 'Leaderboard'], ['apply', 'Enter competition']].map(function (x) { return '<button data-k="tab" data-t="' + x[0] + '" class="' + (t === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('');
+  var se = $('kseas'), ss = (S.home && S.home.seasons) || [];
+  if (se) se.innerHTML = ss.length > 1 ? '<select id="kseason" aria-label="Competition">' + ss.map(function (x) { return '<option value="' + esc(x.id) + '"' + (Number(x.id) === Number(S.sid) ? ' selected' : '') + '>' + esc(x.title) + (x.voting_open ? '' : ' (voting not open)') + '</option>'; }).join('') + '</select>' : '';
   $('ktick').innerHTML = s.prize_title ? '<div class="ktick"><b>' + (s.voting_open === false ? 'VOTING CLOSED' : 'NOW LIVE') + '</b>' + esc(s.prize_title) + (s.entries_open === false ? '' : '<a data-k="tab" data-t="apply">Enter free</a>') + '</div>' : '';
   clearInterval(S.tick);
   if (t === 'board') paintBoard(); else if (t === 'apply') paintApply(); else paintCompete();
@@ -152,7 +158,8 @@ function hero() {
 }
 function daysLeft(iso) { if (!iso) return ''; var d = Math.ceil((Date.parse(iso) - Date.now()) / 864e5); return d > 0 ? ' · closes in ' + d + ' day' + (d > 1 ? 's' : '') : ' · voting closed'; }
 function loadHome() {
-  return call('/api/kura/home').then(function (d) {
+  return call('/api/kura/home' + (S.sid ? '?season=' + S.sid : '')).then(function (d) {
+    if (d && d.season && d.season.id) S.sid = d.season.id;
     S.home = d; var st = d.stats || {}, sub = $('kuraSub');
     if (sub && st.contestants) sub.textContent = st.contestants + ' contestants · ' + (st.votes || 0) + ' votes' + daysLeft(d.season && d.season.ends_at);
   }).catch(function () {});
@@ -163,7 +170,7 @@ function shell() {
   var o = $('kura'); if (o) return o;
   o = document.createElement('div'); o.id = 'kura'; o.hidden = true;
   o.innerHTML = '<div class="kbar"><div class="kbr"><div class="kbrand">' + I.star + 'Kura</div><button class="kx" data-k="close" aria-label="Close">' + I.x + '</button></div>'
-    + '<div class="kts" id="ktabs"></div></div><div id="ktick"></div><div class="kw" id="kbody"></div>';
+    + '<div class="kts" id="ktabs"></div><div id="kseas"></div></div><div id="ktick"></div><div class="kw" id="kbody"></div>';
   document.body.appendChild(o); o.addEventListener('click', onClick); o.addEventListener('change', onChange); o.addEventListener('input', onInput);
   return o;
 }
@@ -178,6 +185,8 @@ function go(t) { S.tab = t; closePage(); $('kura').scrollTop = 0; paint(); }
 function paint() {
   var s = season(), t = S.tab;
   $('ktabs').innerHTML = [['compete', 'Compete'], ['board', 'Leaderboard'], ['apply', 'Enter competition']].map(function (x) { return '<button data-k="tab" data-t="' + x[0] + '" class="' + (t === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('');
+  var se = $('kseas'), ss = (S.home && S.home.seasons) || [];
+  if (se) se.innerHTML = ss.length > 1 ? '<select id="kseason" aria-label="Competition">' + ss.map(function (x) { return '<option value="' + esc(x.id) + '"' + (Number(x.id) === Number(S.sid) ? ' selected' : '') + '>' + esc(x.title) + (x.voting_open ? '' : ' (voting not open)') + '</option>'; }).join('') + '</select>' : '';
   $('ktick').innerHTML = s.prize_title ? '<div class="ktick"><b>' + (s.voting_open === false ? 'VOTING CLOSED' : 'NOW LIVE') + '</b>' + esc(s.prize_title) + (s.entries_open === false ? '' : '<a data-k="tab" data-t="apply">Enter free</a>') + '</div>' : '';
   clearInterval(S.tick);
   if (t === 'board') paintBoard(); else if (t === 'apply') paintApply(); else paintCompete();
@@ -275,7 +284,7 @@ function paintBoard() {
   startTick(); loadBoard();
 }
 function loadBoard() {
-  var f = S.f, q = '?campus=' + encodeURIComponent(f.campus) + '&division=' + encodeURIComponent(f.division) + '&gender=' + encodeURIComponent(f.gender) + '&q=' + encodeURIComponent(f.q);
+  var f = S.f, q = '?campus=' + encodeURIComponent(f.campus) + '&division=' + encodeURIComponent(f.division) + '&gender=' + encodeURIComponent(f.gender) + '&q=' + encodeURIComponent(f.q) + (S.sid ? '&season=' + S.sid : '');
   call('/api/kura/board' + q).then(function (d) {
     if (S.tab !== 'board') return; S.board = d; var l = $('klist'); if (!l) return;
     var c = $('kcnt'); if (c) c.textContent = d.total + ' contestant' + (d.total === 1 ? '' : 's');
@@ -307,7 +316,7 @@ function paintBoard() {
   startTick(); loadBoard();
 }
 function loadBoard() {
-  var f = S.f, q = '?campus=' + encodeURIComponent(f.campus) + '&division=' + encodeURIComponent(f.division) + '&gender=' + encodeURIComponent(f.gender) + '&q=' + encodeURIComponent(f.q);
+  var f = S.f, q = '?campus=' + encodeURIComponent(f.campus) + '&division=' + encodeURIComponent(f.division) + '&gender=' + encodeURIComponent(f.gender) + '&q=' + encodeURIComponent(f.q) + (S.sid ? '&season=' + S.sid : '');
   call('/api/kura/board' + q).then(function (d) {
     if (S.tab !== 'board') return; S.board = d; var l = $('klist'); if (!l) return;
     var c = $('kcnt'); if (c) c.textContent = d.total + ' contestant' + (d.total === 1 ? '' : 's');
@@ -427,7 +436,7 @@ function submit() {
       return call('/api/kura/photo-url', { content_type: 'image/jpeg', bytes: blob.size }).then(function (u) {
         return CCx().putFile(u.upload_url, blob, 'image/jpeg').then(function (r) { if (!r.ok) throw new Error('The photo did not upload. Try again.'); say('Sending your entry...');
           var soc = {}; [['ig', 'instagram'], ['tt', 'tiktok'], ['yt', 'youtube'], ['x', 'x'], ['fb', 'facebook'], ['sc', 'snapchat']].forEach(function (p) { if (v('ka_' + p[0])) soc[p[1]] = v('ka_' + p[0]); });
-          return call('/api/kura/apply', { name: v('ka_name'), tagline: v('ka_tag'), bio: v('ka_bio'), email: v('ka_email'), phone: v('ka_phone'), campus: v('ka_campus'), gender: S.gender, division: v('ka_div'), category: v('ka_cat'), photo_key: u.key, socials: soc }); });
+          return call('/api/kura/apply', { name: v('ka_name'), tagline: v('ka_tag'), bio: v('ka_bio'), email: v('ka_email'), phone: v('ka_phone'), campus: v('ka_campus'), gender: S.gender, division: v('ka_div'), category: v('ka_cat'), photo_key: u.key, socials: soc, season_id: S.sid }); });
       });
     }).then(function () { toast('Entry sent. We will review it soon.'); S.gender = ''; paintApply(); var mm = $('kcm'); if (mm) mm.textContent = 'Entry sent. Use Check to see its status.'; $('kura').scrollTop = 0; })
       .catch(function (e) { say(e.message); }).then(function () { S.busy = false; var g = $('ka_go'); if (g) g.disabled = false; });
@@ -476,7 +485,8 @@ function onClick(e) {
 }
 function onChange(e) {
   var t = e.target.id;
-  if (t === 'kcamp') { S.f.campus = e.target.value; paintBoard(); }
+  if (t === 'kseason') { S.sid = Number(e.target.value) || null; S.f = { campus: '', gender: '', division: '', q: '' }; S.board = null; closePage(); loadHome().then(function () { paint(); }); }
+  else if (t === 'kcamp') { S.f.campus = e.target.value; paintBoard(); }
   else if (t === 'ka_div') fillCats();
   else if (t === 'ka_photo') {
     var f = e.target.files[0], ic = $('kpic'), sm = $('kpsm'); if (!f) return;

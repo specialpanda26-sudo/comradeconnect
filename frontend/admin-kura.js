@@ -2,11 +2,11 @@
    Loaded before admin-dash.js. Uses api, load, render, SECTIONS, LABEL, esc, kes, when, act, toast, $ from admin.html. */
 (function () {
 'use strict';
-let K = null;
+let K = null, KS = null;
 const _load = load;
 load = async function () {
   await _load();
-  try { K = await api('/api/admin/kura'); } catch (e) { K = null; }
+  try { K = await api('/api/admin/kura' + (KS ? '?season=' + KS : '')); if (K && K.season && K.season.id) KS = K.season.id; } catch (e) { K = null; }
   render();
 };
 LABEL.kura = 'Kura';
@@ -51,12 +51,22 @@ SECTIONS.kura = () => {
     + '<label class="fl" for="ku_pz">Prize boxes<small>One per line: Label | small text. Leave empty to hide the prize card.</small></label><textarea id="ku_pz" rows="3" maxlength="500">' + esc((s.prizes || []).map((x) => x.label + (x.sub ? ' | ' + x.sub : '')).join('\n')) + '</textarea>'
     + '<label class="fl" for="ku_pk">Vote packs<small>One per line: votes | price in KSh | bonus (optional) | popular (optional). Votes is the total the fan gets, bonus included.</small></label><textarea id="ku_pk" rows="6" maxlength="600">' + esc((s.packs || []).map((p) => [p.votes, p.price, p.bonus || 0, p.popular ? 'popular' : ''].join(' | ').replace(/ \| 0 \| $/, '').replace(/ \| $/, '')).join('\n')) + '</textarea>'
     + '<label class="fl" for="ku_cp">Campuses<small>One per line. Contestants pick from this list.</small></label><textarea id="ku_cp" rows="6" maxlength="4000">' + esc((s.campuses || []).join('\n')) + '</textarea>'
-    + '<p class="err" id="ku_er"></p><div class="row"><button class="p" id="ku_save">Save settings</button></div></div>';
-  return [form, '<div class="card"><h3>Waiting for review (' + K.pending.length + ')</h3><p class="sub">Check the photo and details, then approve. Approved pages go live straight away.</p></div>']
+    + sw('ku_ar', 'Archived', 'On: hidden from the voter picker', s.archived) + '<p class="err" id="ku_er"></p><div class="row"><button class="p" id="ku_save">Save settings</button></div></div>';
+  const pick = '<div class="card"><h3>Competitions</h3><p class="sub">Each competition has its own contestants, votes, prizes and closing time. Voters pick one at the top of Kura. Editing: <b>' + esc(s.title || '') + '</b></p>'
+    + '<select id="ku_sel" aria-label="Competition">' + (K.seasons || []).map((x) => '<option value="' + esc(x.id) + '"' + (Number(x.id) === Number(KS) ? ' selected' : '') + '>' + esc(x.title) + (x.archived ? ' (archived)' : '') + '</option>').join('') + '</select>'
+    + '<div class="row"><button id="ku_new">New competition</button></div></div>';
+  return [pick, form, '<div class="card"><h3>Waiting for review (' + K.pending.length + ')</h3><p class="sub">Check the photo and details, then approve. Approved pages go live straight away.</p></div>']
     .concat(K.pending.map((c) => person(c, true)), ['<div class="card"><h3>All contestants (' + K.contestants.length + ')</h3></div>'], K.contestants.map((c) => person(c, false)));
 };
 
+document.addEventListener('change', (e) => { if (e.target && e.target.id === 'ku_sel') { KS = Number(e.target.value) || null; load(); } });
 document.addEventListener('click', (e) => {
+  const nw = e.target.closest('#ku_new');
+  if (nw) {
+    const t = (prompt('Name of the new competition (it copies the packs, campuses and categories of the one you are editing, and starts with voting off)', '') || '').trim();
+    if (!t) return;
+    return act(nw, () => api('/api/admin/kura/season/new', { title: t, copy_from: KS }).then((r) => { KS = r.id; }), 'Created. Set it up, then turn Voting open on.');
+  }
   const sv = e.target.closest('#ku_save');
   if (sv) {
     const v = (id) => ($('#' + id).value || '').trim(), lines = (id) => $('#' + id).value.split('\n').map((x) => x.trim()).filter(Boolean);
@@ -64,7 +74,7 @@ document.addEventListener('click', (e) => {
     if (packs.some((p) => !(p.votes >= 1 && p.price >= 1))) { $('#ku_er').textContent = 'Each vote pack line needs votes and a price, like: 10 | 100 | 0 | popular'; return; }
     const prizes = lines('ku_pz').map((l) => { const a = l.split('|'); return { label: (a[0] || '').trim(), sub: (a[1] || '').trim() }; });
     const ends = v('ku_e');
-    return act(sv, () => kuSave({ title: v('ku_t'), tagline: v('ku_g'), ends_at: ends ? new Date(ends).toISOString() : '', voting_open: $('#ku_v').checked, entries_open: $('#ku_n').checked, prize_title: v('ku_pt'), prize_text: v('ku_px'), prizes, packs, campuses: lines('ku_cp') }), 'Saved');
+    return act(sv, () => kuSave({ title: v('ku_t'), tagline: v('ku_g'), ends_at: ends ? new Date(ends).toISOString() : '', voting_open: $('#ku_v').checked, entries_open: $('#ku_n').checked, prize_title: v('ku_pt'), prize_text: v('ku_px'), prizes, packs, campuses: lines('ku_cp'), id: KS, archived: $('#ku_ar').checked }), 'Saved');
   }
   const b = e.target.closest('[data-ku]'); if (!b) return;
   const card = b.closest('.card'), id = card && card.dataset.id, a = b.dataset.ku;

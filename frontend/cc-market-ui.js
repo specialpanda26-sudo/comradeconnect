@@ -12,8 +12,8 @@ var V = $('#v-market'); if (!V) return;
 
 /* ================= PART 1: LOOK ================= */
 var css = [
-'#v-market{--fg:#14281a;--mut:#5d6f60;--line:rgba(20,40,26,.1);--gb:rgba(20,40,26,.12);--ink:#245c2c;--inkfg:#fff;--g:#fff;--mg:#245c2c;',
-' color:var(--fg);border-radius:34px;padding:18px 14px 26px;margin-top:6px;background:linear-gradient(180deg,#c9d9c3 0,#e6eee2 170px,#f6f8f4 420px);box-shadow:0 18px 50px rgba(0,0,0,.28),inset 0 1px 0 #fff}',
+'#v-market{--fg:#101422;--mut:rgba(16,20,34,.62);--line:rgba(20,40,26,.1);--gb:rgba(20,40,26,.12);--ink:#101422;--inkfg:#fff;--g:#fff;--mg:#101422;',
+' color:var(--fg);border-radius:34px;padding:18px 14px 26px;margin-top:6px;background:linear-gradient(180deg,#A8DCE7 0,rgba(168,220,231,.35) 170px,#FFFFFF 420px);box-shadow:0 18px 50px rgba(0,0,0,.28),inset 0 1px 0 #fff}',
 '#v-market>.ph,#v-market>.sub:first-of-type{display:none}',
 '#v-market .g{background:#fff;border:0;box-shadow:0 6px 22px rgba(36,92,44,.08);-webkit-backdrop-filter:none;backdrop-filter:none;color:var(--fg)}',
 '#v-market .sub,#v-market small{color:var(--mut)}',
@@ -31,12 +31,12 @@ var css = [
 /* search */
 '#v-market #mbrowse>.fld{display:flex;align-items:center;gap:10px;background:#fff;border-radius:999px;padding:0 16px;box-shadow:0 4px 14px rgba(36,92,44,.08)}',
 '#v-market #mbrowse>.fld::before{content:"\\2726";color:var(--mg);font-size:15px}',
-'#v-market #mkq{flex:1;border:0;background:transparent;color:var(--fg);padding:14px 0;font-size:14px;outline:none}#v-market #mkq::placeholder{color:#8a9a8c}',
+'#v-market #mkq{flex:1;border:0;background:transparent;color:var(--fg);padding:14px 0;font-size:14px;outline:none}#v-market #mkq::placeholder{color:rgba(16,20,34,.5)}',
 /* promo banner */
-'.mu-ban{position:relative;overflow:hidden;border-radius:24px;padding:18px;min-height:150px;background:linear-gradient(135deg,#e9e7b9,#cfd9a0 60%,#b9cf8e);box-shadow:0 8px 24px rgba(36,92,44,.14)}',
+'.mu-ban{position:relative;overflow:hidden;border-radius:24px;padding:18px;min-height:150px;background:linear-gradient(135deg,#A8DCE7,#A8DCE7 60%,#FFFFFF);box-shadow:0 8px 24px rgba(36,92,44,.14)}',
 '.mu-ban .tag{display:inline-flex;gap:6px;align-items:center;font-size:10.5px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.6);color:var(--mut)}',
-'.mu-ban h4{margin:10px 0 4px;font-size:22px;font-weight:600;color:#14281a;max-width:60%}',
-'.mu-ban p{margin:0 0 12px;font-size:12px;color:#4d5f50;max-width:58%;line-height:1.4}',
+'.mu-ban h4{margin:10px 0 4px;font-size:22px;font-weight:600;color:#101422;max-width:60%}',
+'.mu-ban p{margin:0 0 12px;font-size:12px;color:rgba(16,20,34,.68);max-width:58%;line-height:1.4}',
 '.mu-ban button{all:unset;cursor:pointer;background:#101422;color:#fff;font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px}',
 '.mu-ban .art{position:absolute;right:10px;bottom:2px;font-size:62px;line-height:1;letter-spacing:-8px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.18));transform:rotate(6deg)}',
 '.mu-h{display:flex;justify-content:space-between;align-items:baseline;margin:4px 2px 0}.mu-h b{font-size:16px;font-weight:600}.mu-h span{font-size:12px;color:var(--mut)}',
@@ -50,19 +50,19 @@ var css = [
 '#v-market .mgrid{gap:12px}',
 '#v-market .mgrid .mc{position:relative;background:#fff!important;border-radius:24px;box-shadow:0 6px 22px rgba(36,92,44,.1);padding:10px 10px 12px;overflow:hidden;isolation:auto;color:var(--fg)}',
 '#v-market .mgrid .mc::before,#v-market .mgrid .mc::after{display:none!important}',
-'#v-market .mgrid .mc .mm{position:relative;width:100%;aspect-ratio:1/1!important;object-fit:cover;border-radius:18px;background:#eef3ea!important}',
-'#v-market .mgrid .mc .mm.poster{background:#eef3ea!important;color:var(--mut);align-content:center;text-align:center}',
+'#v-market .mgrid .mc .mm{position:relative;width:100%;aspect-ratio:1/1!important;object-fit:cover;border-radius:18px;background:rgba(168,220,231,.28)!important}',
+'#v-market .mgrid .mc .mm.poster{background:rgba(168,220,231,.28)!important;color:var(--mut);align-content:center;text-align:center}',
 '#v-market .mgrid .mc .mb{position:static;background:none!important;border:0;backdrop-filter:none;-webkit-backdrop-filter:none;padding:10px 2px 0;color:var(--fg);display:block;min-height:76px}',
 '#v-market .mgrid .mc .mb b{color:var(--fg);font-size:14px;font-weight:600;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}',
 '#v-market .mgrid .mc .mb small{color:var(--mut);font-size:10.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}',
 '#v-market .mgrid .mc .mb small.mtl{display:none!important}',
-'#v-market .mgrid .mc .mb .ccrt{color:#b7791f;font-size:11px}',
+'#v-market .mgrid .mc .mb .ccrt{color:#101422;font-size:11px}',
 '#v-market .mgrid .mc .mb em{position:absolute;left:12px;bottom:12px;font-style:normal;font-size:16px;font-weight:700;color:var(--fg);margin:0}',
 '#v-market .mgrid .mc .ccpr,#v-market .mgrid .mc .badge{background:var(--mg);color:#fff;border:0;font-size:9.5px}',
 '.mu-heart,.mu-add{position:absolute;z-index:4;border:0;cursor:pointer;display:grid;place-items:center;padding:0}',
-'.mu-heart{top:16px;left:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(0,0,0,.12);color:#14281a}',
+'.mu-heart{top:16px;left:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(0,0,0,.12);color:#101422}',
 '.mu-heart svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}',
-'.mu-heart.on{color:#d6335a}.mu-heart.on svg{fill:currentColor}',
+'.mu-heart.on{color:var(--ink)}.mu-heart.on svg{fill:currentColor}',
 '.mu-add{right:12px;bottom:12px;width:40px;height:40px;border-radius:50%;background:#101422;color:#fff;font-size:24px;line-height:1;transition:transform .12s}.mu-add:active{transform:scale(.88)}',
 '#v-market .mgrid .mc.mu-hide{display:none!important}',
 'html[data-lay="desktop"] #v-market{padding:24px 22px 30px}'
@@ -74,7 +74,7 @@ var ICON = {
   bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>',
   heart: '<svg viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></svg>'
 };
-var CATS = [['All', '\uD83D\uDECD\uFE0F', '#f6d6e4'], ['Electronics', '\uD83D\uDCF1', '#d4e6f7'], ['Books', '\uD83D\uDCDA', '#f6ecc9'], ['Clothes', '\uD83D\uDC55', '#e8dcf5'], ['Furniture', '\uD83D\uDECF\uFE0F', '#f9dfc9'], ['Food', '\uD83C\uDF72', '#d9efd2'], ['Services', '\uD83D\uDEE0\uFE0F', '#d3eeee'], ['Saved', '\u2764\uFE0F', '#fbd5d5']];
+var CATS = [['All', '\uD83D\uDECD\uFE0F', '#A8DCE7'], ['Electronics', '\uD83D\uDCF1', '#A8DCE7'], ['Books', '\uD83D\uDCDA', '#A8DCE7'], ['Clothes', '\uD83D\uDC55', '#A8DCE7'], ['Furniture', '\uD83D\uDECF\uFE0F', '#A8DCE7'], ['Food', '\uD83C\uDF72', '#A8DCE7'], ['Services', '\uD83D\uDEE0\uFE0F', '#A8DCE7'], ['Saved', '\u2764\uFE0F', '#A8DCE7']];
 
 var browse = $('#mbrowse'), grid = $('#mgrid'), q = $('#mkq');
 var cur = 'All', LM = {}, saved = {};

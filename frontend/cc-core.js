@@ -56,7 +56,7 @@ function registerFlow() {
       + '<div class="fld" style="margin-top:10px"><input id="ccw-u" placeholder="Username (3 to 20 letters, numbers or _)" maxlength="20" autocomplete="off" autocapitalize="off" aria-label="Username"></div>'
       + '<div class="fld"><input id="ccw-p" type="password" placeholder="Password (at least 8 characters)" maxlength="100" autocomplete="new-password" aria-label="Password"></div>'
       + '<div class="fld"><input id="ccw-p2" type="password" placeholder="Type the password again" maxlength="100" autocomplete="new-password" aria-label="Confirm password"></div>'
-      + '<p class="sub" id="ccw-e" style="color:var(--bad,#E58A90);min-height:18px"></p>'
+      + '<p class="sub" id="ccw-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
       + '<button class="btn p" id="ccw-go" style="width:100%">Create account</button>'
       + '<button class="btn g" id="ccw-rand" style="width:100%;margin-top:6px">Skip: give me a random recovery code</button>'
       + '<button class="btn g" id="ccw-x" style="width:100%;margin-top:6px">Cancel</button>');
@@ -160,7 +160,7 @@ function chooseSignIn() {                                    // resolves 'google
   return new Promise((done, fail) => {
     const m = sheet('<h3>Sign in to continue</h3><p class="sub" style="margin-top:6px">One tap with Google keeps your orders and wallet safe and works on any phone.</p>'
       + '<div id="ccg" style="display:flex;justify-content:center;margin-top:14px;min-height:44px"></div>'
-      + '<p class="sub" id="ccg-e" style="color:var(--bad,#E58A90);min-height:18px;margin-top:6px"></p>'
+      + '<p class="sub" id="ccg-e" style="color:var(--bad,#FFFFFF);min-height:18px;margin-top:6px"></p>'
       + '<button class="btn g" id="ccg-guest" style="width:100%;margin-top:6px">No Google? Create an anonymous account</button>'
       + '<button class="btn g" id="ccg-x" style="width:100%;margin-top:6px">Cancel</button>');
     m.querySelector('#ccg-guest').onclick = () => { m.close(); done('guest'); };
@@ -208,7 +208,7 @@ function promptRestore(msg, title) {
     + (googleOn() ? '<div id="ccrg" style="display:flex;justify-content:center;margin-top:12px;min-height:44px"></div><p class="sub" style="text-align:center;margin-top:8px">or use the recovery code you saved</p>' : '<p class="sub">Enter the account ID and recovery code you saved.</p>')
     + '<div class="fld" style="margin-top:10px"><input id="ccrst-a" placeholder="Account ID or username" autocomplete="off" autocapitalize="off" aria-label="Account ID or username"></div>'
     + '<div class="fld"><input id="ccrst-c" type="password" placeholder="Password or recovery code" autocomplete="off" autocapitalize="off" aria-label="Password or recovery code"></div>'
-    + '<p class="sub" id="ccrst-e" style="color:var(--bad,#E58A90);min-height:18px"></p>'
+    + '<p class="sub" id="ccrst-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
     + '<div class="two"><button class="btn g" id="ccrst-x">Cancel</button><button class="btn p" id="ccrst-go">Restore</button></div>');
   m.id = 'ccrst';
   m.querySelector('#ccrst-x').onclick = () => m.close();
@@ -434,9 +434,9 @@ function stepsCss() {
     + '.cs-l .cs-s.a .cs-i::after{content:"";width:12px;height:12px;border-radius:50%;border:2px solid var(--fg);border-top-color:transparent;animation:cs-spin .8s linear infinite}'
     + '.cs-l .cs-s.d .cs-i{background:var(--fg);border-color:var(--fg)}'
     + '.cs-l .cs-s.d .cs-i::after{content:"";width:6px;height:11px;border:solid var(--bg);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px);animation:cs-pop .35s ease-out}'
-    + '.cs-l .cs-s.f .cs-i{border-color:var(--bad,#E58A90);background:rgba(248,113,113,.15)}.cs-l .cs-s.f .cs-i::after{content:"\\00d7";color:var(--bad,#E58A90);font-size:20px;line-height:1;font-weight:700}'
+    + '.cs-l .cs-s.f .cs-i{border-color:var(--bad,#FFFFFF);background:rgba(248,113,113,.15)}.cs-l .cs-s.f .cs-i::after{content:"\\00d7";color:var(--bad,#FFFFFF);font-size:20px;line-height:1;font-weight:700}'
     + '.cs-l b{display:block;font-size:14px;line-height:1.35;margin-top:3px}.cs-l small{display:block;font-size:12px;color:var(--mut);line-height:1.5;margin-top:2px;overflow-wrap:anywhere}'
-    + '.cs-e{margin:14px 0 0;font-size:12px;color:var(--bad,#E58A90);line-height:1.5}'
+    + '.cs-e{margin:14px 0 0;font-size:12px;color:var(--bad,#FFFFFF);line-height:1.5}'
     + '@keyframes cs-spin{to{transform:rotate(360deg)}}@keyframes cs-pop{from{transform:rotate(45deg) translate(-1px,-1px) scale(0)}}'
     + '@keyframes cs-pulse{0%{box-shadow:0 0 0 0 rgba(128,128,128,.5)}100%{box-shadow:0 0 0 12px rgba(128,128,128,0)}}';
   document.head.appendChild(st);
@@ -657,7 +657,7 @@ $('#mlist').onclick = async (e) => {
   loadMine();
 };
 function askReason(done) {
-  const m = sheet('<h3>Report a problem</h3><p class="sub" style="margin-top:6px">Say what went wrong. An admin will read it and decide. Do not put phone numbers or links.</p><div class="fld" style="margin-top:10px"><textarea id="ccwhy" maxlength="300" style="height:90px;resize:none" aria-label="What went wrong"></textarea></div><p class="sub" id="ccwhy-e" style="color:var(--bad,#E58A90);min-height:18px"></p><div class="two"><button class="btn g" id="ccwhy-x">Cancel</button><button class="btn p" id="ccwhy-go">Send</button></div>');
+  const m = sheet('<h3>Report a problem</h3><p class="sub" style="margin-top:6px">Say what went wrong. An admin will read it and decide. Do not put phone numbers or links.</p><div class="fld" style="margin-top:10px"><textarea id="ccwhy" maxlength="300" style="height:90px;resize:none" aria-label="What went wrong"></textarea></div><p class="sub" id="ccwhy-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p><div class="two"><button class="btn g" id="ccwhy-x">Cancel</button><button class="btn p" id="ccwhy-go">Send</button></div>');
   m.querySelector('#ccwhy-x').onclick = () => m.close();
   m.querySelector('#ccwhy-go').onclick = async () => {
     const v = m.querySelector('#ccwhy').value.trim(); if (v.length < 5) return (m.querySelector('#ccwhy-e').textContent = 'Write at least a few words.');
@@ -700,7 +700,7 @@ $('#wd').onclick = async () => {
   const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. The money is sent straight to your M-Pesa, usually within a minute. Smallest withdrawal: ' + kes(CFG.min) + '. Largest: ' + kes(CFG.max) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
     + '<div class="fld" style="margin-top:10px"><input id="ccwp" inputmode="numeric" maxlength="12" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'
     + '<div class="fld"><input id="ccwa" type="number" inputmode="numeric" value="' + Math.min(bal, CFG.max) + '" aria-label="Amount in KSh"></div>'
-    + '<p class="sub" id="ccw-e" style="color:var(--bad,#E58A90);min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
+    + '<p class="sub" id="ccw-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
   m.querySelector('#ccw-x').onclick = () => m.close();
   m.querySelector('#ccwp').value = '';
   m.querySelector('#ccw-go').onclick = async () => {
@@ -785,7 +785,7 @@ const dmSection = () => document.querySelector('#dm section[data-v=dm]');
 function drawMsgs() {
   const box = $('#dmlog');
   box.innerHTML = DM.msgs.length ? DM.msgs.map((x) => x.system ? '<p class="note" style="justify-self:center;text-align:center">' + esc(x.body) + '</p>'
-    : '<div class="bub" data-mid="' + esc(x.id) + '" data-mine="' + (x.mine ? 1 : 0) + '" style="' + (x.mine ? '' : 'justify-self:start;background:var(--card2,#2a2a2a);color:inherit;cursor:pointer') + '">' + esc(x.body) + '</div>').join('')
+    : '<div class="bub" data-mid="' + esc(x.id) + '" data-mine="' + (x.mine ? 1 : 0) + '" style="' + (x.mine ? '' : 'justify-self:start;background:var(--card2,#272B3B);color:inherit;cursor:pointer') + '">' + esc(x.body) + '</div>').join('')
     : '<p class="note" style="justify-self:start">No messages yet. Say hi.</p>';
   box.scrollTop = box.scrollHeight;
   $('#dmact').hidden = !DM.tid; $('#dmhint').hidden = !DM.tid || !DM.msgs.some((x) => !x.mine && !x.system);
@@ -1245,9 +1245,9 @@ window.ccTick = function (before) {
   if (!document.getElementById('cc-tick-css')) {
     const st = document.createElement('style'); st.id = 'cc-tick-css';
     st.textContent = '.cc-tick{width:92px;height:92px;margin:10px auto 2px;display:block}'
-      + '.cc-tick .r{fill:none;stroke:#A8BBA3;stroke-width:4;opacity:0;transform-origin:50% 50%;animation:cct-ring .9s ease-out}'
-      + '.cc-tick .c{fill:rgba(168,187,163,.14);stroke:#A8BBA3;stroke-width:4;stroke-dasharray:264;stroke-dashoffset:0;transform-origin:50% 50%;animation:cct-circ .55s ease-out,cct-pop .5s .45s ease-out}'
-      + '.cc-tick .k{fill:none;stroke:#A8BBA3;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:0;animation:cct-draw .4s .45s ease-out backwards}'
+      + '.cc-tick .r{fill:none;stroke:var(--ok);stroke-width:4;opacity:0;transform-origin:50% 50%;animation:cct-ring .9s ease-out}'
+      + '.cc-tick .c{fill:rgba(168,187,163,.14);stroke:var(--ok);stroke-width:4;stroke-dasharray:264;stroke-dashoffset:0;transform-origin:50% 50%;animation:cct-circ .55s ease-out,cct-pop .5s .45s ease-out}'
+      + '.cc-tick .k{fill:none;stroke:var(--ok);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:0;animation:cct-draw .4s .45s ease-out backwards}'
       + '@keyframes cct-circ{from{stroke-dashoffset:264}}@keyframes cct-draw{from{stroke-dashoffset:60}}'
       + '@keyframes cct-pop{50%{transform:scale(1.08)}}@keyframes cct-ring{from{transform:scale(.7);opacity:.7}to{transform:scale(1.35);opacity:0}}';
     document.head.appendChild(st);

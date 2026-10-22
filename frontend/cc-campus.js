@@ -53,11 +53,11 @@ css.textContent =
   '.ccc-ov{position:fixed;inset:0;z-index:9500;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:rgba(16,20,34,.7);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}' +
   '.ccc-sh{width:100%;max-width:420px;max-height:92vh;overflow:auto;border-radius:24px;padding:24px 20px calc(18px + env(safe-area-inset-bottom,0px));background:var(--bg,#101422);color:var(--fg,#fff);border:1px solid var(--gb,rgba(255,255,255,.25));font-family:Poppins,system-ui,sans-serif}' +
   '@media(min-width:700px){.ccc-ov{align-items:center}}' +
-  '.ccc-sh h2{margin:0 0 6px;font-size:22px;font-weight:700;letter-spacing:-.02em}.ccc-sh p{margin:0 0 14px;font-size:14px;line-height:1.5;color:var(--mut,#bdbdbd)}' +
+  '.ccc-sh h2{margin:0 0 6px;font-size:22px;font-weight:700;letter-spacing:-.02em}.ccc-sh p{margin:0 0 14px;font-size:14px;line-height:1.5;color:var(--mut,var(--mut))}' +
   '.ccc-opt{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin:0 0 10px;padding:16px;border-radius:18px;border:1px solid var(--gb,rgba(255,255,255,.28));background:var(--g,rgba(255,255,255,.07));color:inherit;font:600 15px Poppins,system-ui,sans-serif;text-align:left;cursor:pointer;touch-action:manipulation}' +
   '.ccc-opt small{display:block;margin-top:2px;font-weight:400;font-size:12px;opacity:.65}.ccc-opt[aria-pressed=true]{border-color:#A8DCE7;box-shadow:0 0 0 2px rgba(168,220,231,.3)}' +
   '.ccc-go{width:100%;margin:0 0 10px;padding:14px;border-radius:999px;border:0;background:#A8DCE7;color:#101422;font:700 15px Poppins,system-ui,sans-serif;cursor:pointer}.ccc-go[disabled]{opacity:.6}' +
-  '.ccc-no{display:block;width:100%;padding:12px;border:0;background:none;color:var(--mut,#bdbdbd);font:500 14px Poppins,system-ui,sans-serif;cursor:pointer}' +
+  '.ccc-no{display:block;width:100%;padding:12px;border:0;background:none;color:var(--mut,var(--mut));font:500 14px Poppins,system-ui,sans-serif;cursor:pointer}' +
   '.ccc-note{margin:4px 0 0!important;font-size:12px!important}';
 document.head.appendChild(css);
 

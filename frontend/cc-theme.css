@@ -1,0 +1,8 @@
+/* Comrade Connect: Section 1 finishing layer. Palette only */
+.stat b,.big,.pcard .n,.kcard .n{font-family:var(--disp);letter-spacing:-.02em}
+.mit.out,#cc-staff-e,#acso{color:var(--fg)!important;opacity:.8}
+.mu-heart.on,.rlr .on svg{color:var(--ink);fill:var(--ink);stroke:var(--ink)}
+#v-market .mu-ban{background:var(--aq)!important;color:var(--nt)}
+input[type=range]{accent-color:var(--aq)}
+:root[data-theme="light"] input[type=range]{accent-color:var(--nt)}
+meter,progress{accent-color:var(--aq)}

@@ -20,7 +20,7 @@ css.textContent = '.sp-top{display:flex;gap:8px;flex-wrap:wrap;align-items:cente
   '.sp-card p{margin:8px 0 0;font-size:14px;line-height:1.55;overflow-wrap:anywhere}.sp-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}' +
   '.sp-row .act{font-size:13px}.sp-form label{display:block;margin:12px 0 6px;font-size:12px;font-weight:600;opacity:.75}' +
   '.sp-form input,.sp-form textarea{width:100%;box-sizing:border-box;border-radius:14px;border:1px solid var(--gb,rgba(255,255,255,.28));background:rgba(127,127,127,.12);color:inherit;padding:12px 14px;font:500 15px Poppins,system-ui,sans-serif}' +
-  '.sp-form textarea{min-height:84px;resize:vertical}.sp-err{margin:10px 0 0;font-size:13px;color:#ff6b6b}.sp-pin{font-size:12px;opacity:.7;margin-top:6px}';
+  '.sp-form textarea{min-height:84px;resize:vertical}.sp-err{margin:10px 0 0;font-size:13px;color:var(--bad)}.sp-pin{font-size:12px;opacity:.7;margin-top:6px}';
 document.head.appendChild(css);
 
 if (!xt.querySelector('[data-x="ls"]')) xt.insertAdjacentHTML('beforeend', '<button class="tab g" data-x="ls">Land spots</button>');

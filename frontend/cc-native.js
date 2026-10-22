@@ -111,10 +111,10 @@
     ov.style.cssText = 'position:fixed;inset:0;z-index:10200;display:grid;place-items:center;padding:22px;background:rgba(16,20,34,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:Poppins,system-ui,sans-serif';
     ov.innerHTML = '<div style="width:100%;max-width:340px;border-radius:24px;padding:24px 22px 18px;background:var(--bg,#101422);color:var(--fg,#fff);border:1px solid var(--gb,rgba(255,255,255,.28));text-align:center">'
       + '<h2 style="margin:0 0 8px;font-size:21px;font-weight:700">Update available</h2>'
-      + '<p style="margin:0;font-size:14px;line-height:1.55;color:var(--mut,#bdbdbd)">A new version of Comrade Connect is ready.' + (notes ? '<br><span style="display:block;margin-top:10px;color:var(--fg,#fff)">What is new: ' + esc(notes) + '</span>' : '') + '</p>'
+      + '<p style="margin:0;font-size:14px;line-height:1.55;color:var(--mut,var(--mut))">A new version of Comrade Connect is ready.' + (notes ? '<br><span style="display:block;margin-top:10px;color:var(--fg,#fff)">What is new: ' + esc(notes) + '</span>' : '') + '</p>'
       + '<button type="button" data-u style="width:100%;margin-top:18px;border:0;border-radius:999px;padding:14px;background:var(--fg,#fff);color:var(--bg,#101422);font:600 15px Poppins,system-ui,sans-serif;cursor:pointer">Update now</button>'
-      + '<button type="button" data-x style="width:100%;margin-top:8px;border:0;background:none;color:var(--mut,#bdbdbd);padding:12px;font:500 14px Poppins,system-ui,sans-serif;cursor:pointer">Cancel</button>'
-      + '<p style="margin:6px 0 0;font-size:11px;color:var(--mut,#bdbdbd)">Your account and saved data stay as they are. When the download finishes, open it and tap Install.</p></div>';
+      + '<button type="button" data-x style="width:100%;margin-top:8px;border:0;background:none;color:var(--mut,var(--mut));padding:12px;font:500 14px Poppins,system-ui,sans-serif;cursor:pointer">Cancel</button>'
+      + '<p style="margin:6px 0 0;font-size:11px;color:var(--mut,var(--mut))">Your account and saved data stay as they are. When the download finishes, open it and tap Install.</p></div>';
     var close = function () { updOpen = false; ov.remove(); };
     ov.querySelector('[data-u]').onclick = function () { close(); try { P.Browser.open({ url: url }); } catch (e) { location.href = url; } };
     ov.querySelector('[data-x]').onclick = function () { try { localStorage.setItem('cc_upd_until_' + n, String(Date.now() + 864e5)); } catch (e) {} close(); };
@@ -214,7 +214,7 @@
 
   var G = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.9 2.3-8.5 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>';
   var st = document.createElement('style');
-  st.textContent = '.cc-gbtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:300px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid #dadce0;background:#fff;color:#1f1f1f;font:600 14px Poppins,system-ui,sans-serif}.cc-gbtn:disabled{opacity:.6}.cc-gbtn:active{transform:scale(.98)}';
+  st.textContent = '.cc-gbtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:300px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid rgba(16,20,34,.14);background:#fff;color:#101422;font:600 14px Poppins,system-ui,sans-serif}.cc-gbtn:disabled{opacity:.6}.cc-gbtn:active{transform:scale(.98)}';
   document.head.appendChild(st);
 
   window.ccApp.mountGoogle = function (box, onDone, onErr, opts, sign) {

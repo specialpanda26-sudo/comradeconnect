@@ -31,7 +31,7 @@
     '.ccl-hd b{font-size:15px;overflow-wrap:anywhere}',
     '.ccl-ac{display:flex;gap:8px;flex-wrap:wrap}',
     '.ccl-ac button{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:inherit;font:600 13px Poppins,sans-serif;padding:6px 8px;border-radius:10px;cursor:pointer}',
-    '.ccl-ac button.on{color:#f43f5e}',
+    '.ccl-ac button.on{color:var(--ink)}',
     '.ccl-cm{display:grid;gap:4px;font-size:13px;max-height:120px;overflow:auto;overflow-wrap:anywhere}',
     '.ccl-cm p{margin:0}',
     '.ccl-f{display:flex;gap:8px}',

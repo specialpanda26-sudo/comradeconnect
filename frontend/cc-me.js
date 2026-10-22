@@ -66,7 +66,7 @@
       + '<div class="fld"><input id="ccm-u" maxlength="20" autocapitalize="off" autocomplete="off" aria-label="Username" placeholder="3 to 20 letters, numbers or _"></div>'
       + '<label class="sub" style="display:block;margin-top:6px">Bio</label>'
       + '<div class="fld"><textarea id="ccm-b" maxlength="100" style="height:72px;resize:none" placeholder="Write a short bio (no numbers or links)" aria-label="Bio"></textarea></div>'
-      + '<p class="sub" id="ccm-e" style="color:var(--bad,#E58A90);min-height:18px;margin:0"></p>'
+      + '<p class="sub" id="ccm-e" style="color:var(--bad,#FFFFFF);min-height:18px;margin:0"></p>'
       + '<div class="two" style="margin-top:8px"><button class="btn g" id="ccm-x">Cancel</button><button class="btn p" id="ccm-s">Save</button></div></div>';
     document.body.appendChild(m);
     var u = $('#ccm-u', m), b = $('#ccm-b', m), p = $('#ccm-p', m);

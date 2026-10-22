@@ -13,13 +13,13 @@ function connected() { return typeof CC_API === 'string' && CC_API.indexOf('YOUR
 var css = el('style');
 css.textContent =
 '#ccstk .sk-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}' +
-'#ccstk .sk-n{font-size:44px;font-weight:600;letter-spacing:-.04em;line-height:1}#ccstk .sk-l{margin-left:8px;font-size:13px;color:var(--mut,#bdbdbd)}' +
-'#ccstk .sk-b{font-size:12px;color:var(--mut,#bdbdbd);text-align:right;line-height:1.5}#ccstk .sk-b b{color:var(--fg,#fff);font-weight:600}' +
+'#ccstk .sk-n{font-size:44px;font-weight:600;letter-spacing:-.04em;line-height:1}#ccstk .sk-l{margin-left:8px;font-size:13px;color:var(--mut,var(--mut))}' +
+'#ccstk .sk-b{font-size:12px;color:var(--mut,var(--mut));text-align:right;line-height:1.5}#ccstk .sk-b b{color:var(--fg,#fff);font-weight:600}' +
 '#ccstk .sk-d{display:flex;justify-content:space-between;gap:4px;margin-top:16px}' +
 '#ccstk .sk-d span{flex:1;max-width:22px;aspect-ratio:1;border-radius:50%;border:1.5px solid var(--line,rgba(255,255,255,.3));box-sizing:border-box}' +
 '#ccstk .sk-d .on{background:var(--fg,#fff);border-color:var(--fg,#fff)}#ccstk .sk-d .td{border-color:var(--fg,#fff)}' +
-'#ccstk .sk-t{margin:12px 0 0;font-size:13px;line-height:1.6;color:var(--mut,#bdbdbd)}' +
-'#ccstk .sk-m{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}#ccstk .sk-m span{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.3));color:var(--mut,#bdbdbd)}' +
+'#ccstk .sk-t{margin:12px 0 0;font-size:13px;line-height:1.6;color:var(--mut,var(--mut))}' +
+'#ccstk .sk-m{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}#ccstk .sk-m span{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.3));color:var(--mut,var(--mut))}' +
 '#ccstk .sk-m .on{background:var(--fg,#fff);border-color:var(--fg,#fff);color:var(--bg,#101422);font-weight:600}';
 document.head.appendChild(css);
 

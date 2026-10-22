@@ -23,7 +23,7 @@ function field(m, ph, val, mode) {
   var f = el('div', 'fld'); f.style.marginTop = '10px'; var i = el('input'); i.placeholder = ph; i.value = val || ''; i.setAttribute('aria-label', ph);
   if (mode) i.inputMode = mode; f.appendChild(i); m.box.appendChild(f); return i;
 }
-function errLine(m) { var e = el('p', 'sub'); e.style.cssText = 'color:var(--bad,#E58A90);min-height:18px'; m.box.appendChild(e); return e; }
+function errLine(m) { var e = el('p', 'sub'); e.style.cssText = 'color:var(--bad,#FFFFFF);min-height:18px'; m.box.appendChild(e); return e; }
 function btn(label, cls, fn) { var b = el('button', 'btn ' + cls, label); b.onclick = fn; return b; }
 function row2(m, a, b) { var d = el('div', 'two'); d.appendChild(a); d.appendChild(b); m.box.appendChild(d); }
 

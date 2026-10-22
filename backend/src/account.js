@@ -4,6 +4,7 @@ import { credit } from './pay.js';
 import { getSettings, withdrawFee, publicConfig } from './settings.js';
 import { trySendNow, reconcilePayouts } from './payouts.js';
 import { notify } from './notifications.js';
+import { passwordProblem } from './passwords.js';
 
 export async function balance(env, aid) {
   const r = await sb(env, 'rpc/wallet_balance', { method: 'POST', body: JSON.stringify({ p: aid }) });
@@ -63,7 +64,7 @@ export async function accountRoutes(req, env, url, ip) {
       const handle = str(b.handle, 20), pw = String(b.password);
       if (!/^[A-Za-z0-9_]{3,20}$/.test(handle)) return err(env, 'Username: 3 to 20 letters, numbers or _');
       const blk = contactBlock(env, handle); if (blk) return blk;
-      if (!goodPassword(pw, handle)) return err(env, 'Password: 8 to 100 characters, and not the same as your username');
+      const weak1 = await passwordProblem(env, pw, handle); if (weak1) return err(env, weak1);
       const res = await post(env, 'profiles', { aid, handle, token_hash: await H(env, 'tok:' + token), recovery_hash: await hashPassword(pw), referral_code: refcode });
       if (res.status === 409) return err(env, 'That username is already taken', 409);
       if (!res.ok) return err(env, 'Could not create the account', 500);
@@ -169,7 +170,7 @@ export async function accountRoutes(req, env, url, ip) {
     const b = await body(), handle = str(b.handle, 20), pw = String(b.password || '');
     if (!/^[A-Za-z0-9_]{3,20}$/.test(handle)) return err(env, 'Username: 3 to 20 letters, numbers or _');
     const blk = contactBlock(env, handle); if (blk) return blk;
-    if (!goodPassword(pw, handle)) return err(env, 'Password: 8 to 100 characters, and not the same as your username');
+    const weak2 = await passwordProblem(env, pw, handle); if (weak2) return err(env, weak2);
     const cur = await one(await sb(env, `profiles?select=recovery_hash&aid=eq.${enc(u.aid)}`));
     if (cur && String(cur.recovery_hash || '').startsWith('pw1:') && !(await checkPassword(cur.recovery_hash, String(b.current || '').slice(0, 100)))) return err(env, 'Your current password is wrong', 403);
     const res = await patch(env, `profiles?aid=eq.${enc(u.aid)}`, { handle, recovery_hash: await hashPassword(pw) });

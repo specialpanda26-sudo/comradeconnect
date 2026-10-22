@@ -34,7 +34,8 @@
   //   no kind            -> reuse a check that just succeeded (one prompt per action), otherwise ask with everything allowed
   // Android decides the exact sensor on phones that have both, so the picker on screen only offers what checkBiometry() says exists.
   var bioRecent = 0, bioBusy = false;
-  var BIO = function () { return P.BiometricAuth || (cap.registerPlugin ? cap.registerPlugin('BiometricAuth') : null); };
+  var bioPlugin = null;   // the plugin's native name is BiometricAuthNative (not BiometricAuth), and its prompt method is internalAuthenticate
+  var BIO = function () { if (!bioPlugin) { try { bioPlugin = P.BiometricAuthNative || (cap.registerPlugin ? cap.registerPlugin('BiometricAuthNative') : null); } catch (e) {} } return bioPlugin; };
   var caps = function () {
     var B = BIO(), none = { fingerprint: false, face: false, credential: false, any: false };
     if (!B || !B.checkBiometry) return Promise.resolve(none);
@@ -59,13 +60,13 @@
     verify: function (why, kind) {
       var self = window.ccNativeBio; self.last = '';
       if (!kind && Date.now() - bioRecent < 8000) { bioRecent = 0; return Promise.resolve(true); }   // the screen just confirmed it: use that once, never twice
-      var B = BIO(); if (!B || !B.authenticate) { self.last = 'unavailable'; return Promise.resolve(false); }
+      var B = BIO(); if (!B || !B.internalAuthenticate) { self.last = 'unavailable'; return Promise.resolve(false); }
       var o = { reason: why || 'Confirm it is really you', cancelTitle: 'Cancel', allowDeviceCredential: true, androidTitle: 'Comrade Connect',
                 androidSubtitle: why || 'Use your fingerprint, face or phone password', androidConfirmationRequired: false, androidBiometryStrength: 0 };
       if (kind === 'fingerprint') { o.allowDeviceCredential = false; o.androidBiometryStrength = 1; o.androidSubtitle = 'Touch the fingerprint sensor'; }
       else if (kind === 'face') { o.allowDeviceCredential = false; o.androidBiometryStrength = 0; o.androidSubtitle = 'Look at your phone'; }
       bioBusy = true;
-      return B.authenticate(o).then(function () { bioRecent = kind ? Date.now() : 0; return true; },
+      return B.internalAuthenticate(o).then(function () { bioRecent = kind ? Date.now() : 0; return true; },
         function (e) { self.last = WHY[e && e.code] || 'nomatch'; return false; })
         .then(function (ok) { setTimeout(function () { bioBusy = false; }, 1500); return ok; });
     }

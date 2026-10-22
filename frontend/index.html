@@ -1109,7 +1109,7 @@ $('#tabs').innerHTML=CATS.map(c=>`<button class="tab g${c==='All'?' on':''}" rol
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;e.target.classList.add('in');const id=e.target.dataset.id;
  if(id&&!viewed.has(id)){viewed.add(id);ST.set('cs_viewed',[...viewed]);api.view(id).then(p=>{const el=e.target.querySelector('.vc');if(el)el.textContent=n(p.views)})}
  io.unobserve(e.target)}),{threshold:.25});
-const wa=p=>'https://api.whatsapp.com/send?text='+encodeURIComponent('Spilled on Comrade Connect (#'+p.category+'):\n\n"'+p.content+'"\n\nRead more and spill yours: '+location.origin+location.pathname);
+const wa=p=>'https://api.whatsapp.com/send?text='+encodeURIComponent('Spilled on Comrade Connect (#'+p.category+'):\n\n"'+p.content+'"\n\nRead more and spill yours: '+window.ccOrigin()+'/');
 const cmHTML=c=>`<li>${esc(c.text)}<small>${ago(c.createdAt)}</small></li>`;
 function card(p){const el=document.createElement('article');el.className='card g';el.dataset.id=p._id;
  el.innerHTML=`<div class="flex items-center justify-between gap-3"><span><span class="badge">#${esc(p.category)}</span>${p.verified?'<span class="badge" style="margin-left:6px">'+(p.role?'Verified '+esc(p.role):'Verified')+'</span>':''}${p.zone?'<span class="badge" style="margin-left:6px">@'+esc(p.zone)+'</span>':''}${p.boosted?'<span class="badge" style="margin-left:6px">Boosted</span>':''}</span><time>${ago(p.createdAt)}</time></div>
@@ -1217,7 +1217,9 @@ $('#rrs').onclick=()=>{const v=$('#rcode').value.trim().toUpperCase();if(!v)retu
 /* ---------- rewards, referrals, check-in ---------- */
 const LV=[['Fresher',0],['Comrade',100],['Senior',300],['Legend',700]];
 const SHOP=[];   // points are spent on Market items at checkout (server-side), not here
-const rlink=()=>{const c=window.ccRef&&window.ccRef.code;return c?location.origin+location.pathname+'?ref='+c:''};
+/* Inside the Android app the page address is https://localhost. Shared links must always use the real website. */
+window.ccOrigin=()=>{const h=location.hostname;return /^(localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)$/.test(h)&&location.protocol==='https:'&&!location.port||/^(capacitor|ionic|file):/.test(location.protocol)?'https://comradeconnect.co.ke':location.origin};
+const rlink=()=>{const c=window.ccRef&&window.ccRef.code;return c?window.ccOrigin()+'/?ref='+c:''};
 async function syncPts(){try{const r=await window.ccCall('/api/points');ME.pts=r.points;ME.streak=r.streak;ME.last=r.checked_in?dk():'';ME.val=r.value_ksh;ME.per=r.per_ksh;drawRewards()}catch(e){}}
 function drawRewards(){if(!window.__ps){window.__ps=1;setTimeout(()=>{window.__ps=0},4000);syncPts()}let i=0;LV.forEach((l,j)=>{if(ME.pts>=l[1])i=j});const nx=LV[i+1];
  $('#rp').textContent=ME.pts.toLocaleString('en-KE');$('#rl').textContent=LV[i][0];
@@ -1238,7 +1240,7 @@ $('#shop').onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)retu
 
 /* ---------- videos ---------- */
 const VIDS=[],vl=new Set();
-function drawVids(){$('#vl').innerHTML=!VIDS.length?'<p class="sub">No clips yet. Be the first to post one.</p>':VIDS.map(v=>`<article class="box g vcard" data-id="${v.id}"><div class="flex items-center justify-between"><span class="badge">${v.ex?'Example':'New clip'}</span><time style="font-size:11px;color:var(--mut)">${ago(v.at)}</time></div><div style="margin-top:12px">${v.url?`<video controls playsinline preload="metadata" src="${v.url}"></video>`:'<div class="poster">Example clip. </div>'}</div><p style="margin:14px 0;font-size:14px;line-height:1.7;overflow-wrap:anywhere">${esc(v.cap)}</p><div class="bar"><button class="act vlk${vl.has(v.id)?' liked':''}" aria-label="Like">${IC.heart}<span>${n(v.likes)}</span></button>${v.srv&&v.mine===false?'<button class="act vrp">Report</button>':''}<a class="act wa" target="_blank" rel="noopener" href="https://api.whatsapp.com/send?text=${encodeURIComponent('Watch this on Comrade Connect: '+location.origin+location.pathname)}">${IC.wa}Share</a></div></article>`).join('')}
+function drawVids(){$('#vl').innerHTML=!VIDS.length?'<p class="sub">No clips yet. Be the first to post one.</p>':VIDS.map(v=>`<article class="box g vcard" data-id="${v.id}"><div class="flex items-center justify-between"><span class="badge">${v.ex?'Example':'New clip'}</span><time style="font-size:11px;color:var(--mut)">${ago(v.at)}</time></div><div style="margin-top:12px">${v.url?`<video controls playsinline preload="metadata" src="${v.url}"></video>`:'<div class="poster">Example clip. </div>'}</div><p style="margin:14px 0;font-size:14px;line-height:1.7;overflow-wrap:anywhere">${esc(v.cap)}</p><div class="bar"><button class="act vlk${vl.has(v.id)?' liked':''}" aria-label="Like">${IC.heart}<span>${n(v.likes)}</span></button>${v.srv&&v.mine===false?'<button class="act vrp">Report</button>':''}<a class="act wa" target="_blank" rel="noopener" href="https://api.whatsapp.com/send?text=${encodeURIComponent('Watch this on Comrade Connect: '+window.ccOrigin()+'/')}">${IC.wa}Share</a></div></article>`).join('')}
 $('#vl').onclick=e=>{const b=e.target.closest('.vlk');if(!b)return;const v=VIDS.find(x=>x.id===b.closest('.vcard').dataset.id);if(vl.has(v.id))return;vl.add(v.id);v.likes++;drawVids()};
 function addClip(f){if(!f)return;if(!f.type.startsWith('video/'))return toast('Please choose a video file');if(f.size>50*1048576)return toast('That clip is over 50 MB. Trim it and try again.');
  VIDS.unshift({id:'u'+Date.now(),cap:$('#vcap').value.trim()||'New clip',url:URL.createObjectURL(f),likes:0,at:Date.now()});$('#vcap').value='';drawVids();earn(5,'Posted a clip')}
@@ -1575,7 +1577,7 @@ async function shareCard(p){
  lines.forEach((l,i)=>x.fillText(l,80,480+i*80));
  x.fillStyle='#fff';x.font='600 40px '+F;x.fillText('Spill yours. Nobody will know it was you.',80,1740);
  x.fillStyle='#bdbdbd';x.font='300 28px '+F;x.fillText(location.host+location.pathname,80,1800,920);
- c.toBlob(async b=>{const f=new File([b],'comradespill.png',{type:'image/png'}),t='Spilled on Comrade Connect: '+location.origin+location.pathname;
+ c.toBlob(async b=>{const f=new File([b],'comradespill.png',{type:'image/png'}),t='Spilled on Comrade Connect: '+window.ccOrigin()+'/';
   try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:t});return}}catch(e){if(e.name==='AbortError')return}
   $('#pvi').src=c.toDataURL('image/png');$('#pv').classList.add('on')},'image/png')}
 $('#pvx').onclick=()=>$('#pv').classList.remove('on');$('#pv').onclick=e=>{if(e.target.id==='pv')$('#pv').classList.remove('on')};

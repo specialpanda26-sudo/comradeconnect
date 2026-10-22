@@ -22,7 +22,7 @@ function h(tag, attrs, kids) {
 }
 function note(t) { var n = h('div', { class: 'cchn', text: t }); document.body.appendChild(n); setTimeout(function () { n.remove(); }, 3500); }
 function signedIn() { var a = window.ccAuth && window.ccAuth(); return !!(a && a.token); }
-function full(p) { return location.origin + p; }
+function full(p) { return (window.ccOrigin?window.ccOrigin():location.origin) + p; }
 function copy(t) {
   if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t).then(function () { note('Link copied'); }, function () { note(t); });
   note(t); return Promise.resolve();

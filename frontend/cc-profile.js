@@ -279,7 +279,7 @@
       var e1 = $('#ccp-edit'), s1 = $('#ccp-share');
       if (e1) e1.onclick = openEdit;
       if (s1) s1.onclick = function () {
-        var x = 'Join me on Comrade Connect, the campus app for Kirinyaga comrades.', u = location.origin + '/';
+        var x = 'Join me on Comrade Connect, the campus app for Kirinyaga comrades.', u = (window.ccOrigin?window.ccOrigin():location.origin) + '/';
         if (navigator.share) navigator.share({ text: x, url: u }).catch(function () {});
         else window.open('https://wa.me/?text=' + encodeURIComponent(x + ' ' + u), '_blank', 'noopener');
       };

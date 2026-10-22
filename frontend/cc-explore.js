@@ -42,8 +42,8 @@ function reportFlow(ov, type, id, back) {
   };
 }
 function shareText(title, text) {
-  if (navigator.share) return navigator.share({ title: title, text: text, url: location.origin }).catch(function () {});
-  var t = text + ' ' + location.origin; if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { toast('Copied'); }); return Promise.resolve();
+  if (navigator.share) return navigator.share({ title: title, text: text, url: (window.ccOrigin?window.ccOrigin():location.origin) }).catch(function () {});
+  var t = text + ' ' + (window.ccOrigin?window.ccOrigin():location.origin); if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { toast('Copied'); }); return Promise.resolve();
 }
 
 /* ---------- calendar file ---------- */

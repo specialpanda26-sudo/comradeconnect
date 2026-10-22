@@ -117,7 +117,7 @@
     }
   }
   function shareLive(id, title) {
-    var u = location.origin + '/?live=' + id, t = 'Watch "' + (title || 'this live') + '" live on Comrade Connect';
+    var u = (window.ccOrigin?window.ccOrigin():location.origin) + '/?live=' + id, t = 'Watch "' + (title || 'this live') + '" live on Comrade Connect';
     if (navigator.share) navigator.share({ title: 'Comrade Connect Live', text: t, url: u }).catch(function () {});
     else try { navigator.clipboard.writeText(t + ' ' + u).then(function () { say('Link copied'); }); } catch (e) { say(u); }
   }

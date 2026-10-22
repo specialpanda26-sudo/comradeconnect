@@ -112,6 +112,8 @@
     var full = !(h.vacancies > 0), d = s.near && hasLoc(h) ? ' <span class="hstag">' + ic('pin').replace('class="hs-ic"', 'class="hs-ic" style="margin-right:3px"') + dist(km(s.near, h)) + '</span>' : '';
     var photos = (h.photos || []).length ? '<div class="hsph">' + h.photos.map(function (u) { return '<img src="' + esc(u) + '" alt="Room at ' + esc(h.name) + '" loading="lazy" decoding="async" data-hs="zoom" data-src="' + esc(u) + '">'; }).join('') + '</div>'
       : '<div class="hsnp">' + ic('cam') + 'No room photos yet</div>';
+    var hero = (h.photos || []).length ? '<div class="hshero" data-hs="zoom" data-src="' + esc(h.photos[0]) + '"><img src="' + esc(h.photos[0]) + '" alt="Room at ' + esc(h.name) + '" loading="lazy" decoding="async"><div class="hshl"><b>' + esc(h.name) + '</b>' + (h.rent ? '<span>' + kes(h.rent) + ' a month</span>' : '') + '</div></div>'
+      + (h.photos.length > 1 ? '<div class="hsph">' + h.photos.slice(1).map(function (u) { return '<img src="' + esc(u) + '" alt="Room at ' + esc(h.name) + '" loading="lazy" decoding="async" data-hs="zoom" data-src="' + esc(u) + '">'; }).join('') + '</div>' : '') : '';
     var am = (h.amenities || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean).map(function (x) { return '<span class="hstag">' + esc(x) + '</span>'; }).join('');
     var act = '';
     if (hasLoc(h)) act += '<a class="btn p" href="' + esc(dirUrl(h)) + '" target="_blank" rel="noopener">' + ic('pin') + 'Directions</a><a class="btn g" href="' + esc(mapUrl(h)) + '" target="_blank" rel="noopener">' + ic('map') + 'View on map</a>';
@@ -121,9 +123,9 @@
       + '<button class="act" data-hs="addph" data-id="' + esc(h.id) + '">' + ic('cam') + 'Add photos</button><button class="act" data-hs="rm" data-id="' + esc(h.id) + '">Remove</button>'
       : X.xmsg(h, 'caretaker') + X.xrep(h);
     return '<article class="box g"><div class="flex items-center justify-between"><span><span class="badge hsv' + (full ? ' full' : '') + '">' + (full ? 'Full' : h.vacancies + (h.vacancies === 1 ? ' room vacant' : ' rooms vacant')) + '</span><span class="badge" style="margin-left:6px">@' + esc(h.zone) + '</span>' + d + '</span>' + X.xwhen(h) + '</div>'
-      + photos
-      + '<p style="margin:12px 0 2px;font-weight:600;font-size:16px;overflow-wrap:anywhere">' + esc(h.name) + '</p>'
-      + (h.rent ? '<p style="margin:0 0 8px;font-weight:600">' + kes(h.rent) + ' <span class="sub">a month</span></p>' : '')
+      + (hero || photos)
+      + (hero ? '' : '<p style="margin:12px 0 2px;font-weight:600;font-size:16px;overflow-wrap:anywhere">' + esc(h.name) + '</p>')
+      + (h.rent && !hero ? '<p style="margin:0 0 8px;font-weight:600">' + kes(h.rent) + ' <span class="sub">a month</span></p>' : '')
       + (h.room_types ? '<p class="sub" style="margin:0 0 8px">Rooms: ' + esc(h.room_types) + '</p>' : '')
       + (am ? '<div style="margin:4px 0 6px"><span class="sub" style="display:block;margin-bottom:6px">Services included</span>' + am + '</div>' : '')
       + (h.address ? '<p class="sub" style="margin:0 0 6px;overflow-wrap:anywhere">' + ic('pin') + esc(h.address) + '</p>' : '')

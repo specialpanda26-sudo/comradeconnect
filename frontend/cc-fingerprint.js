@@ -88,8 +88,16 @@
     current = new Promise(function (resolve) {
       bio.caps().then(function (caps) {
         if (!caps.any) { current = null; try { (window.ccTools && ccTools.toast || window.toast)('Set up a fingerprint, face unlock or a screen lock on your phone first'); } catch (e) {} return resolve(false); }
-        build(caps);
+        direct(caps);
       });
+      function direct(caps) {
+        var kinds = []; if (caps.fingerprint) kinds.push('fingerprint'); if (caps.face) kinds.push('face');
+        var k = kind && kinds.indexOf(kind) > -1 ? kind : (kinds.indexOf(bio.pref()) > -1 ? bio.pref() : (kinds[0] || 'credential'));
+        bio.verify(why || 'Confirm it is really you', k).then(function (ok) {
+          if (ok && k !== 'credential') bio.setPref(k);
+          current = null; resolve(!!ok);
+        }, function () { current = null; resolve(false); });
+      }
       function build(caps) {
         var h = handle(), enable = mode === 'enable';
         var kinds = []; if (caps.fingerprint) kinds.push('fingerprint'); if (caps.face) kinds.push('face');

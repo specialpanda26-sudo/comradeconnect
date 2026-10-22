@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   if (window.__ccXc) return; window.__ccXc = 1;
-  var SKIP = 'nav,header,#tb,#loader,#lk,.toast,#toast,.bg,#ccfrst,#ccfp,#cookie,.cookie,.ccx-plain';
+  var SKIP = 'nav,header,#tb,#loader,#lk,.toast,#toast,.bg,#ccfrst,#ccfp,#ck,#cookie,.cookie,.ccx-plain';
   var HAS = '[aria-label*="lose" i],[aria-label*="ancel" i],[aria-label*="ismiss" i],[data-close],[data-dismiss],.x,.close,.cls,.clx,.xbtn,.cc-x,[data-ccx]';
   var LOOKS = '[class*="modal"],[class*="sheet"],[class*="dialog"],[class*="popup"],[class*="drawer"],[class*="dlg"],[id*="modal"],[id*="sheet"],[id*="dialog"]';
   var TXT = /^(\u00d7|\u2715|\u2716|\u2717|x|close|cancel|dismiss)$/i;

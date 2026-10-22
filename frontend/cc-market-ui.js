@@ -11,62 +11,7 @@ function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); l
 var V = $('#v-market'); if (!V) return;
 
 /* ================= PART 1: LOOK ================= */
-var css = [
-'#v-market{--fg:#101422;--mut:rgba(16,20,34,.62);--line:rgba(20,40,26,.1);--gb:rgba(20,40,26,.12);--ink:#101422;--inkfg:#fff;--g:#fff;--mg:#101422;',
-' color:var(--fg);border-radius:34px;padding:18px 14px 26px;margin-top:6px;background:linear-gradient(180deg,#A8DCE7 0,rgba(168,220,231,.35) 170px,#FFFFFF 420px);box-shadow:0 18px 50px rgba(0,0,0,.28),inset 0 1px 0 #fff}',
-'#v-market>.ph,#v-market>.sub:first-of-type{display:none}',
-'#v-market .g{background:#fff;border:0;box-shadow:0 6px 22px rgba(36,92,44,.08);-webkit-backdrop-filter:none;backdrop-filter:none;color:var(--fg)}',
-'#v-market .sub,#v-market small{color:var(--mut)}',
-'#v-market h3,#v-market b{color:var(--fg)}',
-/* location row */
-'.mu-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}',
-'.mu-pin,.mu-bell{width:44px;height:44px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none;box-shadow:0 4px 14px rgba(36,92,44,.12);border:0;color:var(--fg);cursor:pointer}',
-'.mu-pin svg,.mu-bell svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}',
-'.mu-loc{flex:1;min-width:0}.mu-loc small{display:block;font-size:11px;color:var(--mut)}.mu-loc b{display:block;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-/* category tiles */
-'.mu-cats{display:flex;gap:14px;overflow-x:auto;padding:2px 2px 6px;margin:0 -2px 14px;scrollbar-width:none}.mu-cats::-webkit-scrollbar{display:none}',
-'.mu-cat{all:unset;cursor:pointer;flex:none;width:66px;text-align:center;font-size:12px;color:var(--fg)}',
-'.mu-cat i{display:grid;place-items:center;width:62px;height:62px;margin:0 auto 6px;border-radius:20px;font-style:normal;font-size:28px;box-shadow:0 6px 16px rgba(36,92,44,.14);border:2px solid transparent;transition:transform .15s,border-color .15s}',
-'.mu-cat.on i{border-color:var(--mg);transform:translateY(-2px)}.mu-cat.on{font-weight:600}',
-/* search */
-'#v-market #mbrowse>.fld{display:flex;align-items:center;gap:10px;background:#fff;border-radius:999px;padding:0 16px;box-shadow:0 4px 14px rgba(36,92,44,.08)}',
-'#v-market #mbrowse>.fld::before{content:"\\2726";color:var(--mg);font-size:15px}',
-'#v-market #mkq{flex:1;border:0;background:transparent;color:var(--fg);padding:14px 0;font-size:14px;outline:none}#v-market #mkq::placeholder{color:rgba(16,20,34,.5)}',
-/* promo banner */
-'.mu-ban{position:relative;overflow:hidden;border-radius:24px;padding:18px;min-height:150px;background:linear-gradient(135deg,#A8DCE7,#A8DCE7 60%,#FFFFFF);box-shadow:0 8px 24px rgba(36,92,44,.14)}',
-'.mu-ban .tag{display:inline-flex;gap:6px;align-items:center;font-size:10.5px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.6);color:var(--mut)}',
-'.mu-ban h4{margin:10px 0 4px;font-size:22px;font-weight:600;color:#101422;max-width:60%}',
-'.mu-ban p{margin:0 0 12px;font-size:12px;color:rgba(16,20,34,.68);max-width:58%;line-height:1.4}',
-'.mu-ban button{all:unset;cursor:pointer;background:#101422;color:#fff;font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px}',
-'.mu-ban .art{position:absolute;right:10px;bottom:2px;font-size:62px;line-height:1;letter-spacing:-8px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.18));transform:rotate(6deg)}',
-'.mu-h{display:flex;justify-content:space-between;align-items:baseline;margin:4px 2px 0}.mu-h b{font-size:16px;font-weight:600}.mu-h span{font-size:12px;color:var(--mut)}',
-/* escrow strip, filter bar, segmented */
-'#v-market .mtrust{margin:0 0 12px;padding:12px 14px;border-radius:20px}#v-market .mtrust .mtb{display:none}#v-market .mtrust svg{stroke:var(--mg)}#v-market .mt-h b{font-size:14px}',
-'#v-market .seg{background:#fff;box-shadow:0 4px 14px rgba(36,92,44,.08)}#v-market .seg button{color:var(--mut)}#v-market .seg button.on{background:var(--mg);color:#fff}',
-'#v-market .ccf input,#v-market .ccf select{background:#fff;border:0;color:var(--fg);box-shadow:0 3px 10px rgba(36,92,44,.08)}',
-'#v-market .cce{padding:12px 16px}',
-'#v-market .btn.p{background:var(--mg);color:#fff;border:0}#v-market .btn.g{background:#fff;color:var(--fg);border:0}',
-/* product cards */
-'#v-market .mgrid{gap:12px}',
-'#v-market .mgrid .mc{position:relative;background:#fff!important;border-radius:24px;box-shadow:0 6px 22px rgba(36,92,44,.1);padding:10px 10px 12px;overflow:hidden;isolation:auto;color:var(--fg)}',
-'#v-market .mgrid .mc::before,#v-market .mgrid .mc::after{display:none!important}',
-'#v-market .mgrid .mc .mm{position:relative;width:100%;aspect-ratio:1/1!important;object-fit:cover;border-radius:18px;background:rgba(168,220,231,.28)!important}',
-'#v-market .mgrid .mc .mm.poster{background:rgba(168,220,231,.28)!important;color:var(--mut);align-content:center;text-align:center}',
-'#v-market .mgrid .mc .mb{position:static;background:none!important;border:0;backdrop-filter:none;-webkit-backdrop-filter:none;padding:10px 2px 0;color:var(--fg);display:block;min-height:76px}',
-'#v-market .mgrid .mc .mb b{color:var(--fg);font-size:14px;font-weight:600;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}',
-'#v-market .mgrid .mc .mb small{color:var(--mut);font-size:10.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}',
-'#v-market .mgrid .mc .mb small.mtl{display:none!important}',
-'#v-market .mgrid .mc .mb .ccrt{color:#101422;font-size:11px}',
-'#v-market .mgrid .mc .mb em{position:absolute;left:12px;bottom:12px;font-style:normal;font-size:16px;font-weight:700;color:var(--fg);margin:0}',
-'#v-market .mgrid .mc .ccpr,#v-market .mgrid .mc .badge{background:var(--mg);color:#fff;border:0;font-size:9.5px}',
-'.mu-heart,.mu-add{position:absolute;z-index:4;border:0;cursor:pointer;display:grid;place-items:center;padding:0}',
-'.mu-heart{top:16px;left:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(0,0,0,.12);color:#101422}',
-'.mu-heart svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}',
-'.mu-heart.on{color:var(--ink)}.mu-heart.on svg{fill:currentColor}',
-'.mu-add{right:12px;bottom:12px;width:40px;height:40px;border-radius:50%;background:#101422;color:#fff;font-size:24px;line-height:1;transition:transform .12s}.mu-add:active{transform:scale(.88)}',
-'#v-market .mgrid .mc.mu-hide{display:none!important}',
-'html[data-lay="desktop"] #v-market{padding:24px 22px 30px}'
-].join('\n');
+var css = "/*mu2*/\n#v-market{padding:4px 0 26px;margin-top:6px;color:var(--fg)}\n#v-market>.ph,#v-market>.sub:first-of-type{display:none}\n.mu-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}\n.mu-pin,.mu-bell{width:44px;height:44px;border-radius:50%;background:var(--g);border:1px solid var(--gb);display:grid;place-items:center;flex:none;color:var(--fg);cursor:pointer;padding:0}\n.mu-pin svg,.mu-bell svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}\n.mu-loc{flex:1;min-width:0}.mu-loc small{display:block;font-size:11px;color:var(--mut)}.mu-loc b{display:block;font:700 15px var(--disp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg)}\n.mu-cats{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;margin:0 0 10px;scrollbar-width:none}.mu-cats::-webkit-scrollbar{display:none}\n.mu-cat{all:unset;cursor:pointer;flex:none;display:inline-flex;align-items:center;padding:10px 18px;border-radius:999px;background:var(--g);border:1px solid var(--gb);color:var(--mut);font:600 12.5px Poppins,sans-serif;white-space:nowrap}\n.mu-cat.on{background:var(--ink);color:var(--inkfg);border-color:var(--ink)}\n.mu-ci{width:18px;height:18px;object-fit:contain;margin-right:8px}\n#v-market #mbrowse>.fld{display:flex;align-items:center;background:var(--soft);border-radius:999px;padding:0 18px;margin-bottom:14px}\n#v-market #mkq{flex:1;border:0;background:transparent;color:var(--fg);padding:14px 0;font-size:14px;outline:none;border-radius:0}\n.mu-ban{position:relative;overflow:hidden;border-radius:28px;padding:20px;min-height:160px;background:var(--aq);color:var(--nt);margin-bottom:14px}\n.mu-ban .tag{display:inline-flex;font-size:10.5px;font-weight:600;padding:4px 12px;border-radius:999px;background:var(--nt);color:var(--aq)}\n.mu-ban h4{margin:12px 0 4px;font:700 20px/1.2 var(--disp);color:var(--nt);max-width:58%}\n.mu-ban p{margin:0 0 14px;font-size:12px;color:rgba(16,20,34,.7);max-width:56%;line-height:1.45}\n.mu-ban button{all:unset;cursor:pointer;background:var(--nt);color:var(--aq);font-size:13px;font-weight:600;padding:10px 20px;border-radius:999px}\n.mu-ban .art{position:absolute;right:8px;bottom:0;height:86%;width:auto;max-width:44%;object-fit:contain}\n.mu-h{display:flex;justify-content:space-between;align-items:baseline;margin:6px 2px 10px}.mu-h b{font:700 15px var(--disp)}.mu-h span{font-size:12px;color:var(--mut);cursor:pointer}\n#v-market .mgrid{gap:12px}\n#v-market .mgrid .mc{position:relative;background:var(--g)!important;border:1px solid var(--gb);border-radius:28px;box-shadow:none;padding:10px 10px 12px;overflow:hidden;color:var(--fg)}\n#v-market .mgrid .mc::before,#v-market .mgrid .mc::after{display:none!important}\n#v-market .mgrid .mc .mm{position:relative;width:100%;aspect-ratio:1/1!important;object-fit:cover;border-radius:20px;background:var(--soft)!important}\n#v-market .mgrid .mc .mm.poster{background:var(--soft)!important;color:var(--mut);align-content:center;text-align:center}\n#v-market .mgrid .mc .mb{position:static;background:none!important;border:0;-webkit-backdrop-filter:none;backdrop-filter:none;padding:10px 2px 0;color:var(--fg);display:block;min-height:76px}\n#v-market .mgrid .mc .mb b{color:var(--fg);font-size:14px;font-weight:600;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}\n#v-market .mgrid .mc .mb small{color:var(--mut);font-size:10.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}\n#v-market .mgrid .mc .mb small.mtl{display:none!important}\n#v-market .mgrid .mc .mb .ccrt{color:var(--fg);font-size:11px}\n#v-market .mgrid .mc .mb em{position:absolute;left:14px;bottom:14px;font-style:normal;font:700 16px var(--disp);color:var(--fg);margin:0}\n#v-market .mgrid .mc .ccpr,#v-market .mgrid .mc .badge{background:var(--aq);color:var(--nt);border:0;font-size:9.5px}\n.mu-heart,.mu-add{position:absolute;z-index:4;border:0;cursor:pointer;display:grid;place-items:center;padding:0}\n.mu-heart{top:16px;left:16px;width:32px;height:32px;border-radius:50%;background:rgba(16,20,34,.6);color:#FFFFFF}\n.mu-heart svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}\n.mu-heart.on{background:var(--aq);color:var(--nt)}.mu-heart.on svg{fill:currentColor}\n.mu-add{right:12px;bottom:12px;width:40px;height:40px;border-radius:50%;background:var(--ink);color:var(--inkfg);font-size:24px;line-height:1;transition:transform .12s}.mu-add:active{transform:scale(.88)}\n#v-market .mgrid .mc.mu-hide{display:none!important}\nhtml[data-lay=\"desktop\"] #v-market{padding:24px 22px 30px}\n";
 var st = el('style'); st.id = 'mu-css'; st.textContent = css; document.head.appendChild(st);
 
 var ICON = {
@@ -74,7 +19,7 @@ var ICON = {
   bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>',
   heart: '<svg viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></svg>'
 };
-var CATS = [['All', '\uD83D\uDECD\uFE0F', '#A8DCE7'], ['Electronics', '\uD83D\uDCF1', '#A8DCE7'], ['Books', '\uD83D\uDCDA', '#A8DCE7'], ['Clothes', '\uD83D\uDC55', '#A8DCE7'], ['Furniture', '\uD83D\uDECF\uFE0F', '#A8DCE7'], ['Food', '\uD83C\uDF72', '#A8DCE7'], ['Services', '\uD83D\uDEE0\uFE0F', '#A8DCE7'], ['Saved', '\u2764\uFE0F', '#A8DCE7']];
+var CATS = ['All', 'Electronics', 'Books', 'Clothes', 'Furniture', 'Food', 'Services', 'Saved'];
 
 var browse = $('#mbrowse'), grid = $('#mgrid'), q = $('#mkq');
 var cur = 'All', LM = {}, saved = {};
@@ -91,8 +36,8 @@ bell.onclick = function () { var b = document.querySelector('#nb, #bellbtn, [dat
 /* category tiles */
 var cats = el('div', 'mu-cats'); cats.setAttribute('role', 'tablist');
 CATS.forEach(function (c) {
-  var b = el('button', 'mu-cat' + (c[0] === 'All' ? ' on' : '')); b.type = 'button'; b.dataset.c = c[0];
-  var i = el('i', '', c[1]); i.style.background = c[2]; b.appendChild(i); b.appendChild(document.createTextNode(c[0] === 'Electronics' ? 'Tech' : c[0]));
+  var b = el('button', 'mu-cat' + (c === 'All' ? ' on' : '')); b.type = 'button'; b.dataset.c = c;
+  var im = document.createElement('img'); im.className = 'mu-ci'; im.alt = ''; im.onerror = function () { im.remove(); }; im.src = 'img/cat-' + c.toLowerCase() + '.webp'; b.appendChild(im); b.appendChild(document.createTextNode(c === 'Electronics' ? 'Tech' : c));
   cats.appendChild(b);
 });
 top.insertAdjacentElement('afterend', cats);
@@ -101,10 +46,10 @@ top.insertAdjacentElement('afterend', cats);
 var fld = q && q.closest('.fld');
 q.placeholder = 'Search beds, fridges, books...';
 var ban = el('div', 'mu-ban');
-var tg = el('span', 'tag', '\u2726 Campus picks'); ban.appendChild(tg);
+var tg = el('span', 'tag', 'Campus picks'); ban.appendChild(tg);
 ban.appendChild(el('h4', '', 'Back to routine')); ban.appendChild(el('p', '', 'Everything a comrade needs, from room basics to study gear.'));
 var sn = el('button', '', 'Shop now'); sn.type = 'button'; ban.appendChild(sn);
-ban.appendChild(el('div', 'art', '\uD83D\uDECF\uFE0F\uD83D\uDCDA\uD83D\uDCF1'));
+var art = document.createElement('img'); art.className = 'art'; art.alt = ''; art.onerror = function () { art.remove(); }; art.src = 'img/market-banner.webp'; ban.appendChild(art);
 var hd = el('div', 'mu-h'); hd.appendChild(el('b', '', 'Top Picks For You')); var all = el('span', '', 'See All'); hd.appendChild(all);
 if (fld) { fld.insertAdjacentElement('afterend', ban); ban.insertAdjacentElement('afterend', hd); }
 function toGrid() { grid.scrollIntoView({ behavior: 'smooth', block: 'start' }); }

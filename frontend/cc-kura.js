@@ -337,7 +337,7 @@ function openProfile(id) {
   var p = page(); p.hidden = false; p.scrollTop = 0; p.innerHTML = '<div class="kpw"><button class="kbk" data-k="pclose">' + I.back + ' All creators</button><p class="ksub">Loading...</p></div>';
   call('/api/kura/c/' + id).then(function (d) { drawProfile(p, d); }).catch(function (e) { p.innerHTML = '<div class="kpw"><button class="kbk" data-k="pclose">' + I.back + ' All creators</button><p class="ksub">' + esc(e.message) + '</p></div>'; });
 }
-var MEDAL = ['&#129351;', '&#129352;', '&#129353;'];
+var MEDAL = ['1st', '2nd', '3rd'];
 function drawProfile(p, d) {
   var c = d.contestant, s = season(), packs = s.packs || [], open = s.voting_open !== false; S.cur = { id: c.id, name: c.name, photo: c.photo, category: c.category, rank: d.rank, d: d };
   var soc = Object.keys(c.socials || {}).map(function (k) { var x = c.socials[k]; return '<a class="kchip" href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(k.charAt(0).toUpperCase() + k.slice(1)) + '</a>'; }).join('');

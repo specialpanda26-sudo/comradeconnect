@@ -6,3 +6,8 @@
 input[type=range]{accent-color:var(--aq)}
 :root[data-theme="light"] input[type=range]{accent-color:var(--nt)}
 meter,progress{accent-color:var(--aq)}
+
+/* Section 3: cookie card X in the top right of the card */
+#ck{padding-right:58px}
+#ck .ckx{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:1px solid var(--gb);background:var(--soft);color:var(--fg);display:grid;place-items:center;padding:0;cursor:pointer}
+#ck .ckx:active{opacity:.6}

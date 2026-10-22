@@ -1,0 +1,51 @@
+/* cc-lockglass.js v1: builds the password view of the lock screen (#lk) like the reference:
+   label, glass field with show/hide eye, "Forgot your Password?", Continue (grey until typed) + fingerprint button.
+   Only ADDS to the page. Every old id (lku, lkpw, lkc, lkr, lksw, lkhelp) and its handler stays. Section 1 of 4. */
+(function () {
+  'use strict';
+  var lk = document.getElementById('lk'); if (!lk || lk.__lkg) return; lk.__lkg = 1;
+  lk.classList.add('lkg');
+  var $ = function (s) { return lk.querySelector(s); };
+  var hero = $('.lkhero'), card = $('.lkcard'), rec = $('.lkrec'), inp = document.getElementById('lkc'), go = document.getElementById('lkr');
+  if (!hero || !card || !rec || !inp || !go) return;
+
+  var pill = document.createElement('i'); pill.className = 'lkpill'; pill.setAttribute('aria-hidden', 'true'); hero.parentNode.insertBefore(pill, hero.nextSibling);
+
+  var lab = document.createElement('label'); lab.className = 'lklab'; lab.setAttribute('for', 'lkc'); lab.textContent = 'Sign in with Password';
+  rec.insertBefore(lab, rec.firstChild);
+
+  var EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYEOFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4"/><path d="M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7c1.7 0 3.2-.4 4.5-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  var fld = inp.closest('.fld') || inp.parentNode;
+  var eye = document.createElement('button'); eye.type = 'button'; eye.className = 'lkeye'; eye.setAttribute('aria-label', 'Show password'); eye.innerHTML = EYEOFF;
+  eye.onclick = function () { var show = inp.type === 'password'; inp.type = show ? 'text' : 'password'; eye.innerHTML = show ? EYE : EYEOFF; eye.setAttribute('aria-label', show ? 'Hide password' : 'Show password'); inp.focus(); };
+  fld.appendChild(eye);
+
+  var fg = document.createElement('a'); fg.className = 'lkforgot'; fg.href = 'contact.html'; fg.textContent = 'Forgot your Password?';
+  fld.insertAdjacentElement('afterend', fg);
+
+  var act = document.createElement('div'); act.className = 'lkact';
+  go.parentNode.insertBefore(act, go); act.appendChild(go);
+  var FP = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M12 26a20 20 0 0 1 40 0"/><path d="M18 52c3-5 4-9 4-15a10 10 0 0 1 20 0c0 7 1 12 4 17"/><path d="M26 56c3-5 5-11 5-19a1 1 0 0 1 2 0c0 8 2 13 5 17"/><path d="M12 38c0-4 0-8 2-12"/><path d="M50 40c0-3 0-6-1-9"/><path d="M32 12a14 14 0 0 0-14 14"/></svg>';
+  var fp2 = document.createElement('button'); fp2.type = 'button'; fp2.className = 'lkfp2'; fp2.id = 'lkfp2'; fp2.setAttribute('aria-label', 'Use fingerprint or face unlock instead'); fp2.innerHTML = FP;
+  fp2.onclick = function () { lk.classList.remove('rec'); var u = document.getElementById('lku'); if (u) u.click(); };
+  act.appendChild(fp2);
+
+  // Continue stays grey until something is typed
+  function sync() { var empty = !inp.value.trim(); if (go.disabled !== empty) go.disabled = empty; }
+  inp.addEventListener('input', sync);
+  inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !go.disabled) { e.preventDefault(); go.click(); } });
+  new MutationObserver(sync).observe(go, { attributes: true, attributeFilter: ['disabled'] });
+  new MutationObserver(function () { if (lk.classList.contains('rec')) { sync(); } else { inp.value = ''; inp.type = 'password'; eye.innerHTML = EYEOFF; sync(); } }).observe(lk, { attributes: true, attributeFilter: ['class'] });
+  // the old script writes "Unlock" on the button; the reference says "Continue"
+  setTimeout(function () { go.textContent = 'Continue'; sync(); }, 0);
+  sync();
+  // "Hi, HENRY": the name shows in orange like the reference
+  var hi = document.getElementById('lkhi');
+  function tint() {
+    if (!hi || hi.querySelector('b')) return;
+    var m = /^Hi,\s*(.+)$/.exec(hi.textContent || ''); if (!m) return;
+    var b = document.createElement('b'); b.textContent = m[1]; hi.textContent = 'Hi, '; hi.appendChild(b);
+  }
+  if (hi) { tint(); new MutationObserver(function () { setTimeout(tint, 0); }).observe(hi, { childList: true, characterData: true, subtree: true }); }
+})();

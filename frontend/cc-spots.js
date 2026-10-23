@@ -16,6 +16,7 @@ var on = function () { return xt.querySelector('.tab[data-x="ls"].on'); };
 
 var css = document.createElement('style');
 css.textContent = '.sp-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}.sp-top .btn{flex:none}' +
+  '.sp-t{display:flex;align-items:center;gap:10px;min-width:0}.sp-ic{flex:none;width:44px;height:44px;border-radius:14px;background:#fff;padding:4px;box-sizing:border-box;border:0}' +
   '.sp-card .sp-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.sp-card h3{margin:0;font-size:16px;overflow-wrap:anywhere}' +
   '.sp-card p{margin:8px 0 0;font-size:14px;line-height:1.55;overflow-wrap:anywhere}.sp-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}' +
   '.sp-row .act{font-size:13px}.sp-form label{display:block;margin:12px 0 6px;font-size:12px;font-weight:600;opacity:.75}' +
@@ -25,6 +26,8 @@ document.head.appendChild(css);
 
 if (!xt.querySelector('[data-x="ls"]')) xt.insertAdjacentHTML('beforeend', '<button class="tab g" data-x="ls">Land spots</button>');
 
+var ICONS = { food: 'food', study: 'study', hangout: 'hangout', transport: 'transport', services: 'services', worship: 'worship', safety: 'safety' };
+function icon(c) { return ICONS[String(c || '').toLowerCase()] || 'landspots'; }
 function campusName() { return (window.ccCampus && ccCampus.name()) || 'your campus'; }
 function maps(s) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(s.lat + ',' + s.lng); }
 
@@ -37,7 +40,7 @@ function paint() {
   else if (S.err && !S.list.length) h += '<p class="sub" style="margin-top:14px">' + esc(S.err) + '</p><button class="btn g" data-sp="retry">Try again</button>';
   else if (!S.list.length) h += '<article class="box g" style="margin-top:14px"><h3>No spots here yet</h3><p class="sub" style="margin-top:6px">Be the first. Add the best chips, a quiet study corner or the safest way home.</p></article>';
   else h += S.list.map(function (s) {
-    return '<article class="box g sp-card" style="margin-top:12px"><div class="sp-h"><h3>' + esc(s.name) + '</h3><span class="badge">' + esc(s.category) + '</span></div>'
+    return '<article class="box g sp-card" style="margin-top:12px"><div class="sp-h"><div class="sp-t"><img class="sp-ic" alt="" src="img/spots/' + icon(s.category) + '.svg"><h3>' + esc(s.name) + '</h3></div><span class="badge">' + esc(s.category) + '</span></div>'
       + (s.details ? '<p>' + esc(s.details) + '</p>' : '')
       + '<div class="sp-row"><button class="act' + (s.liked ? ' liked' : '') + '" data-sp="like" data-id="' + esc(s.id) + '">Good spot' + (s.likes ? ' ' + s.likes : '') + '</button>'
       + (s.lat != null ? '<a class="act" style="text-decoration:none" target="_blank" rel="noopener" data-sp="dir" href="' + esc(maps(s)) + '">Directions</a>' : '')

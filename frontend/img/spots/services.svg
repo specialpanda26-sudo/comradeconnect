@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img"><defs><pattern id="s" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(32)"><path d="M-1 1.1 Q1.5 0.2 3 1.2 T7 1.1 M-1 3.9 Q1.5 3 3 4 T7 3.9" stroke="#2f6fd6" stroke-width="1.15" fill="none" stroke-linecap="round"/></pattern></defs><style>.o{fill:none;stroke:#15171c;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}.h{fill:url(#s);stroke:#2f6fd6;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}.a{fill:#f2a23a;stroke:#15171c;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.k{fill:#15171c;stroke:#15171c;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.w{fill:#fff;stroke:none}</style>
+<path class="o" d="M33 38 V28 a5 5 0 0 1 5 -5 H58 a5 5 0 0 1 5 5 V38"/>
+<rect class="h" x="10" y="38" width="76" height="46" rx="7"/>
+<path class="o" d="M10 56 H86"/>
+<rect class="a" x="39" y="49" width="18" height="14" rx="3"/>
+<circle class="k" cx="22" cy="47" r="2.2"/><circle class="k" cx="74" cy="47" r="2.2"/>
+<path class="o" d="M22 84 V90 M74 84 V90"/></svg>

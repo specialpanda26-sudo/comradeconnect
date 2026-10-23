@@ -31,6 +31,8 @@ jobs:
       KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      PUB_REPO: ${{ vars.RELEASES_REPO }}
+      PUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -104,5 +106,18 @@ jobs:
           tag_name: app-${{ env.BUILD_N }}
           name: Comrade Connect app ${{ env.BUILD_N }}
           body: "Install comrade-connect.apk on your Android phone. ${{ github.event.head_commit.message }}"
+          make_latest: true
+          files: android-wrapper/comrade-connect.apk
+
+      # Optional copy to a PUBLIC releases repo (needed when this repo is private: visitors without GitHub get a 404 otherwise).
+      # Turn on by adding repo variable RELEASES_REPO (e.g. specialpanda26-sudo/comradeconnect-releases) and secret RELEASES_TOKEN.
+      - uses: softprops/action-gh-release@v2
+        if: ${{ env.PUB_REPO != '' && env.PUB_TOKEN != '' }}
+        with:
+          repository: ${{ env.PUB_REPO }}
+          token: ${{ env.PUB_TOKEN }}
+          tag_name: app-${{ env.BUILD_N }}
+          name: Comrade Connect app ${{ env.BUILD_N }}
+          body: "Install comrade-connect.apk on your Android phone."
           make_latest: true
           files: android-wrapper/comrade-connect.apk

@@ -4,15 +4,18 @@
   'use strict';
   if (window.__ccGetApp) return; window.__ccGetApp = 1;
   if (window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) return;
-  var REL = 'https://github.com/specialpanda26-sudo/comradeconnect/releases/latest/download/';
-  var DREL = 'https://github.com/specialpanda26-sudo/comradeconnect/releases/download/desktop-latest/';   // computer apps always live here
-  var API = 'https://api.github.com/repos/specialpanda26-sudo/comradeconnect/releases?per_page=20';
+  var REPO = 'specialpanda26-sudo/comradeconnect';   // CHANGE THIS to your PUBLIC releases repo if the main repo is private
+  var REL = 'https://github.com/' + REPO + '/releases/latest/download/';
+  var DREL = 'https://github.com/' + REPO + '/releases/download/desktop-latest/';   // computer apps always live here
+  var API = 'https://api.github.com/repos/' + REPO + '/releases?per_page=20';
+  var blocked = false;   // true when GitHub answers 404: repo private or release missing, so every download link would show GitHub's 404 page
   var FILES = { apk: 'comrade-connect.apk', win: 'comrade-connect-setup.exe', macA: 'comrade-connect-arm64.dmg', macI: 'comrade-connect-x64.dmg', linux: 'comrade-connect.AppImage' };
   // Asks GitHub for the recent releases and, for EACH file, uses the newest release that really contains it.
   // (The Android build and the computer builds publish separately, so the very newest release can briefly hold only one of them.
   //  Asking only for "latest" is what used to grey out the Windows button.)
   function latest() {
-    return fetch(API, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (list) {
+    return fetch(API, { cache: 'no-store' }).then(function (r) { if (r.status === 404) blocked = true; return r.ok ? r.json() : null; }).then(function (list) {
+      if (list && !list.length) blocked = true;
       if (!list || !list.length) return null;
       var m = {}, head = null;
       list.forEach(function (j) {
@@ -122,7 +125,13 @@
     };
     document.body.appendChild(m);
     latest().then(function (l) {
-      if (!l) return;                                   // GitHub unreachable: the buttons keep their direct links
+      if (!l) {                                         // GitHub unreachable: the buttons keep their direct links, unless GitHub said 404
+        if (blocked) {
+          Array.prototype.forEach.call(m.querySelectorAll('a[data-k]'), function (a) { a.classList.add('off'); a.removeAttribute('href'); });
+          var bv = m.querySelector('#ccdl-v'); if (bv) bv.textContent = 'Downloads are being set up. Please try again soon, or message support@comradeconnect.co.ke.';
+        }
+        return;
+      }
       var missing = false;
       Array.prototype.forEach.call(m.querySelectorAll('a[data-k]'), function (a) {
         var u = l.files[FILES[a.dataset.k]];

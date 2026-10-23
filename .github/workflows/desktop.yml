@@ -72,6 +72,9 @@ jobs:
           if-no-files-found: error
 
   release:
+    env:
+      PUB_REPO: ${{ vars.RELEASES_REPO }}
+      PUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
     # Publish whatever was built, even if one computer type failed (for example Mac),
     # so a Mac problem can never stop the Windows download from appearing.
     needs: build
@@ -100,6 +103,20 @@ jobs:
           tag_name: desktop-latest
           name: Comrade Connect desktop apps (latest)
           body: Windows, Mac and Linux apps. The newest build replaces the files here. Android is under the app-NNN releases.
+          make_latest: false
+          overwrite_files: true
+          files: files/*
+
+      # Optional copy to a PUBLIC releases repo (needed when this repo is private: visitors without GitHub get a 404 otherwise).
+      # Turn on by adding repo variable RELEASES_REPO (e.g. specialpanda26-sudo/comradeconnect-releases) and secret RELEASES_TOKEN.
+      - uses: softprops/action-gh-release@v2
+        if: ${{ env.PUB_REPO != '' && env.PUB_TOKEN != '' }}
+        with:
+          repository: ${{ env.PUB_REPO }}
+          token: ${{ env.PUB_TOKEN }}
+          tag_name: desktop-latest
+          name: Comrade Connect desktop apps (latest)
+          body: Windows, Mac and Linux apps.
           make_latest: false
           overwrite_files: true
           files: files/*

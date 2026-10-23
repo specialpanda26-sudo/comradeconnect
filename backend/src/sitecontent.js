@@ -34,7 +34,7 @@ export const FIELDS = {
   social_website: { kind: 'link', group: 'Links and contact', label: 'Website link' },
   contact_email: { kind: 'email', group: 'Links and contact', label: 'Contact email' },
 
-  lock_image: { kind: 'link', max: 500, group: 'App look', label: 'Lock screen picture', help: 'Photo at the top of the fingerprint lock screen. Paste an https:// link to a picture. Empty = the site background picture.' },
+  lock_image: { kind: 'link', max: 500, group: 'App look', label: 'Lock screen picture', help: 'Photo behind the lock screen. Tap Upload and choose a picture from your phone. Empty = plain dark colour.' },
   lock_greeting: { kind: 'text', max: 40, group: 'App look', label: 'Lock screen greeting', help: 'Built-in: Welcome back!' },
 
   hide_videos: { kind: 'flag', group: 'Switch parts off', label: 'Hide Videos' },

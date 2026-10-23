@@ -10,8 +10,8 @@
   }
   function paint(C) {
     C = C || saved();
-    var img = /^https:\/\/[^\s<>"']+$/i.test(C.lock_image || '') ? C.lock_image : 'media/bg-poster.webp';
-    hero.style.backgroundImage = 'url("' + img.replace(/"/g, '%22') + '")';
+    var img = /^https:\/\/[^\s<>"']+$/i.test(C.lock_image || '') ? C.lock_image : '';
+    hero.style.backgroundImage = img ? 'url("' + img.replace(/"/g, '%22') + '")' : 'none';
     var n = name(), hi = document.getElementById('lkhi'); if (hi) hi.textContent = 'Hi, ' + (n ? n.toUpperCase() : 'COMRADE');
   }
   paint();

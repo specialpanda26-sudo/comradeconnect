@@ -3,6 +3,7 @@
 'use strict';
 const SL = [1, 2, 3, 4, 5].map((i) => ['landing_img_' + i, 'Landing picture ' + i]);
 const BG = [['bg_all', 'Everywhere (default)'], ['bg_feed', 'Feed'], ['bg_videos', 'Videos'], ['bg_live', 'Live'], ['bg_market', 'Market'], ['bg_explore', 'Explore'], ['bg_rewards', 'Rewards'], ['bg_me', 'Me']];
+const LK = [['lock_image', 'Lock screen picture']];
 const TX = [['landing_cta', 'Main button text', 'Get started'], ['landing_login_q', 'Words before Log in', 'Already have an account?']];
 const G = { v: null, err: '', busy: '' };
 async function loadG() {
@@ -24,6 +25,7 @@ SECTIONS.landing = () => {
   return [
     '<div class="card"><h3>Page before login</h3><p class="sub">Pictures rotate on the page people see first, under the Get started button. JPG, PNG or WebP under 5 MB. With none set, the built-in colours show.</p>' + SL.map((s) => slot(s[0], s[1])).join('') + '</div>',
     '<div class="card"><h3>Background pictures</h3><p class="sub">Pick which tab each picture runs behind. "Everywhere" is used on any tab without its own picture.</p>' + BG.map((s) => slot(s[0], s[1])).join('') + '</div>',
+    '<div class="card"><h3>Lock screen picture</h3><p class="sub">The picture behind the fingerprint lock screen. With none set, a plain dark glass look shows.</p>' + LK.map((s) => slot(s[0], s[1])).join('') + '</div>',
     '<div class="card"><h3>Landing words</h3>'
       + '<label class="fl" for="lp_cap">Slide words<small>One slide per line: Title | small text</small></label><textarea id="lp_cap" rows="4" maxlength="600" data-lt="landing_captions">' + esc(G.v.landing_captions) + '</textarea>'
       + TX.map((t) => '<label class="fl" for="lp_' + t[0] + '">' + esc(t[1]) + '<small>Built-in: ' + esc(t[2]) + '</small></label><input id="lp_' + t[0] + '" data-lt="' + t[0] + '" maxlength="50" value="' + esc(G.v[t[0]]) + '">').join('')

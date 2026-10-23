@@ -2,7 +2,8 @@
    Loaded by admin.html after admin-extra.js. Uses api, render, SECTIONS, LABEL, esc, toast. */
 (function () {
 'use strict';
-const S = { fields: null, draft: {}, err: '', log: null };
+const S = { fields: null, draft: {}, err: '', log: null, busy: '' };
+const IMG = /^(landing_img_\d|bg_[a-z]+|logo_[a-z]+|lock_image)$/;
 async function loadS() {
   try { S.log = (await api('/api/admin/audit?limit=60')).log || []; } catch (e) { S.log = null; }
   try { S.fields = (await api('/api/admin/site-content')).fields; S.draft = {}; S.err = ''; } catch (e) { S.fields = null; S.err = e.message; } }
@@ -17,7 +18,15 @@ if (!LABEL.site) LABEL.site = 'Site editor';
 LABEL.audit = 'Audit log';
 
 const cur = (f) => (f.key in S.draft ? S.draft[f.key] : f.value);
+function imgField(f) {
+  const u = f.value, hint = f.help ? '<small>' + esc(f.help) + '</small>' : '';
+  return '<div class="imgf"><div class="imgf-h"><b>' + esc(f.label) + '</b>' + hint + '</div><div class="imgf-b">'
+    + (u ? '<img src="' + esc(u) + '" alt="">' : '<span class="sub">Not set</span>')
+    + '<label class="p">' + (S.busy === f.key ? 'Uploading...' : (u ? 'Change' : 'Upload')) + '<input type="file" accept="image/jpeg,image/png,image/webp" data-sup="' + esc(f.key) + '" hidden></label>'
+    + (u ? '<button data-supx="' + esc(f.key) + '">Remove</button>' : '') + '</div></div>';
+}
 function field(f) {
+  if (IMG.test(f.key)) return imgField(f);
   const v = cur(f), id = 'sc_' + f.key;
   if (f.kind === 'flag') return '<label class="sw"><span>' + esc(f.label) + (f.help ? '<small>' + esc(f.help) + '</small>' : '') + '</span><input type="checkbox" data-sc="' + esc(f.key) + '"' + (v ? ' checked' : '') + '><i></i></label>';
   const hint = f.help ? '<small>' + esc(f.help) + '</small>' : '';
@@ -54,7 +63,27 @@ document.addEventListener('input', (e) => {
   if (S.draft[k] === (f.kind === 'flag' ? !!f.value : f.value)) delete S.draft[k];
   mark();
 });
+async function saveImg(k, url, msg) {
+  const keep = Object.assign({}, S.draft); delete keep[k];
+  await api('/api/admin/site-content', { values: { [k]: url } });
+  await loadS(); S.draft = keep; S.busy = ''; render(); toast(msg);
+}
+document.addEventListener('change', async (e) => {
+  const k = e.target.dataset && e.target.dataset.sup; if (!k) return;
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 5242880) throw new Error('Choose a JPG, PNG or WebP picture under 5 MB');
+    S.busy = k; render();
+    const u = await api('/api/admin/site-upload-url', { content_type: file.type }), fd = new FormData();
+    fd.append('cacheControl', '3600'); fd.append('', file);
+    const r = await fetch(u.upload_url, { method: 'PUT', body: fd });
+    if (!r.ok) throw new Error('The picture did not upload. Try again.');
+    await saveImg(k, u.url, 'Saved. The live site updates within a minute.');
+  } catch (x) { S.busy = ''; render(); toast(x.message); }
+});
 document.addEventListener('click', async (e) => {
+  const rm = e.target.closest('[data-supx]');
+  if (rm) { try { await saveImg(rm.dataset.supx, '', 'Removed'); } catch (x) { toast(x.message); } return; }
   const b = e.target.closest('#scsave'); if (!b) return;
   const values = Object.assign({}, S.draft); if (!Object.keys(values).length) return;
   b.disabled = true;

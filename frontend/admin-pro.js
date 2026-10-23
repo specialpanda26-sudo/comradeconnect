@@ -161,7 +161,7 @@ function shell() {
   const top = $('header.top');
   if (top && !top.querySelector('.pro-search')) {
     const m = document.createElement('button'); m.className = 'pro-menu'; m.type = 'button'; m.setAttribute('aria-label', 'Menu'); m.innerHTML = svg('menu', 22); m.onclick = () => body.classList.toggle('sb-open'); top.insertBefore(m, top.firstChild);
-    const f = document.createElement('label'); f.className = 'pro-search'; f.innerHTML = svg('search', 18) + '<input id="pro_q" type="search" placeholder="Search a username or account ID" autocomplete="off" aria-label="Search users">';
+    const f = document.createElement('label'); f.className = 'pro-search'; f.innerHTML = svg('search', 18) + '<input id="pro_q" type="search" placeholder="Search users" autocomplete="off" aria-label="Search users">';
     top.insertBefore(f, top.querySelector('.tools'));
     const me = document.createElement('div'); me.className = 'pro-me'; me.innerHTML = '<i>A</i><div><b>Admin</b><small>Owner</small></div>'; top.appendChild(me);
   }

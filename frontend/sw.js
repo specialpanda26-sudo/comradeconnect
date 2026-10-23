@@ -9,7 +9,7 @@ self.addEventListener('install', (e) => {
     const c = await caches.open(SHELL);
     const r = await fetch('/index.html', { cache: 'reload' });
     const html = await r.clone().text();
-    const urls = new Set(['/site.webmanifest', '/icon-192.png', '/icon-512.png', '/favicon.png', '/config.js']);
+    const urls = new Set(['/site.webmanifest', '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/favicon.png', '/config.js']);
     (html.match(/(?:src|href)="[^"#]+"/g) || []).forEach((m) => {
       const u = m.slice(m.indexOf('"') + 1, -1);
       if (/^(https?:)?\/\/|^data:|^mailto:|^tel:|^javascript:/.test(u)) return;
@@ -17,7 +17,7 @@ self.addEventListener('install', (e) => {
     });
     await c.put('/index.html', r);
     await Promise.allSettled([...urls].map((u) => c.add(u)));
-    await Promise.allSettled(['/icon-192.png', '/icon-512.png', '/favicon.png', '/apple-touch-icon.png'].map((u) => fetch(u, { cache: 'reload' }).then((x) => x.ok && c.put(u, x))));
+    await Promise.allSettled(['/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/favicon.png', '/apple-touch-icon.png'].map((u) => fetch(u, { cache: 'reload' }).then((x) => x.ok && c.put(u, x))));
     await Promise.allSettled(CDN.map((u) => fetch(u, { mode: 'no-cors' }).then((x) => c.put(u, x))));
     self.skipWaiting();
   })());

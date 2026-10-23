@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve().parent
 APP = HERE / 'android' / 'app'
 MAIN = APP / 'src' / 'main'
 RES = MAIN / 'res'
-LOGO = HERE.parent / 'frontend' / 'icon-512.png'
+LOGO = HERE.parent / 'frontend' / 'cc-mark.png'
 BG = (0, 0, 0)
 
 PERMS = ['INTERNET', 'ACCESS_NETWORK_STATE', 'CAMERA', 'RECORD_AUDIO', 'MODIFY_AUDIO_SETTINGS',
@@ -55,17 +55,13 @@ def patch_version():
 
 
 def mark():
-    """The logo without the words under it, cropped tight, on a transparent canvas."""
-    im = Image.open(LOGO).convert('RGB')
-    top = im
-    mask = top.convert('L').point(lambda v: 255 if v > 40 else 0)
-    box = mask.getbbox()
-    if not box: sys.exit('STOP: could not find the logo in ' + str(LOGO))
-    m = top.crop(box).convert('L')
-    out = Image.new('RGBA', m.size, (255, 255, 255, 0))
-    out.putalpha(m)                                                  # white mark, soft edges
-    white = Image.new('RGBA', m.size, (255, 255, 255, 255)); white.putalpha(m)
-    return white
+    im = Image.open(LOGO).convert('RGBA')
+    al = im.getchannel('A')
+    box = al.point(lambda v: 255 if v > 8 else 0).getbbox()
+    if not box: sys.exit('STOP: no logo found')
+    m = al.crop(box)
+    w = Image.new('RGBA', m.size, (255, 255, 255, 255)); w.putalpha(m)
+    return w
 
 
 def put(canvas_size, scale, circle=False, transparent=False):
@@ -86,7 +82,7 @@ def icons():
     legacy = {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}
     for d, px in legacy.items():
         folder = RES / ('mipmap-' + d); folder.mkdir(parents=True, exist_ok=True)
-        put(px, 0.62).save(folder / 'ic_launcher.png')
+        put(px, 0.70).save(folder / 'ic_launcher.png')
         put(px, 0.62, circle=True).save(folder / 'ic_launcher_round.png')
         put(int(px * 108 / 48), 0.46, transparent=True).save(folder / 'ic_launcher_foreground.png')   # inside the adaptive-icon safe zone
     any26 = RES / 'mipmap-anydpi-v26'; any26.mkdir(parents=True, exist_ok=True)

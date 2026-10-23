@@ -152,3 +152,21 @@ Privacy policy + Terms matching real data (needs a Kenyan lawyer check), moderat
 ## v12: seller phone number after payment (DONE)
 - Sell form has a required phone number, stored in `listings.contact_phone` (run the v12 block at the end of schema.sql).
 - Hidden until the buyer pays; then Orders shows it with Call and WhatsApp buttons. Hidden again after a refund.
+
+## UI pass (Oct 2026): Section 1 DONE, Section 2 TO DO
+### Section 1 (DONE): `frontend/cc-ui1.css` + `frontend/cc-ui1.js`, linked last in index.html
+- Top bar: icons (search, safety, bell, layout, theme) sit bare on the bar, no circles, even spacing; the wordmark shows on two lines on phones so it is never cut.
+- Location chip ("Kirinyaga . change") sits under the top bar, not behind it (the story tray's top gap was reduced to match).
+- Glass without glow: cards, sheets, bars and buttons are frosted glass (high to low opacity), black drop shadow underneath, shading inside. No coloured outer glow. Primary buttons are tinted glass.
+- Light mode: bottom bar labels are dark, Kura button and toast are readable, inputs have a faint grey glass.
+- Robot (Tech): blink is now driven from script (eye `ry`), and the float animation is exempted from the reduced-motion rule, so both work on phones with "Remove animations" on. Cause found: index.html has `@media(prefers-reduced-motion:reduce){*{animation:none!important}}` and Android WebView follows the phone's "Remove animations" setting.
+- Tested in headless Chromium at 360 and 412 px, light and dark. `python3 tests/browser_zones.py` already fails BEFORE this change (the campus picker covers the Spill button); not caused by it.
+
+### Section 2 (TO DO): lock screen, fingerprint animation, re-lock on return, password fallback
+Findings (already diagnosed, not yet changed):
+1. `frontend/cc-fingerprint.js` function `scan()`: after `bio.caps().then(...)` it calls `direct(caps)` (skips the animated "Hi, NAME / Welcome back" screen, goes straight to Android's prompt). Commit 8145c6b did this. The animated screen is the function `build(caps)` in the same file. Call `build(caps)` instead (keep `direct` only as a fallback if build throws).
+2. Same file sets `reduce` from prefers-reduced-motion and adds `data-rm` (kills the animation); `frontend/cc-lockscreen.js` has a reduced-motion rule too. Ignore reduced motion for the fingerprint and face animations.
+3. Re-lock only happens in index.html (line with `visibilitychange` and `Date.now()-hidAt>60000`): only after 60 s away, and only if `ME.bio` is set. Make it lock every time the app goes to the background and comes back: listen to Capacitor `App` `appStateChange` (isActive false then true) plus `pause`/`resume` and `visibilitychange`; skip while Android's own biometric prompt is open (`ccNativeBio` has an internal `bioBusy`, expose it), during Google sign-in (`window.ccAwayOK`), and right after the lock opened. Then show `#lk` and call the existing auto-ask (`#lku` click).
+4. "Sign in with my password": exists (`#lkpw` opens the password view built by `cc-lockglass.js`; `#lkr` checks the saved password or recovery code). Check it works from the animated screen (`#fpx-pw` button) in the app, and that the fingerprint button on the password view returns to the scan.
+5. Light and dark check of the lock screen (`#lk`, `#ccfp`), and remove the glow rules at the end of `frontend/cc-glass.css` ("lock screen glass v3") and in `frontend/cc-lockglass.css`: same recipe as Section 1 (black shadow, shading inside, no coloured glow).
+6. Bottom navigation buttons in both themes were fixed in Section 1; re-check them on the lock return.

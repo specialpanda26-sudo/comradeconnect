@@ -7,7 +7,8 @@ test('campus: the list of campuses and spot categories is public', async (t) => 
   const w = await fresh(t);
   const r = await w.call('GET', '/api/campuses');
   assert.equal(r.status, 200);
-  assert.deepEqual(r.data.campuses.map((c) => c.id), ['kirinyaga', 'uon']);
+  assert.deepEqual(r.data.campuses.slice(0, 2).map((c) => c.id), ['kirinyaga', 'uon']);
+  assert.ok(r.data.campuses.length > 2, 'all universities are listed');
   assert.ok(r.data.categories.includes('Food'));
 });
 

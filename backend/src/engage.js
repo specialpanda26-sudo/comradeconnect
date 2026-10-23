@@ -74,7 +74,7 @@ export async function engageRoutes(req, env, url, ip) {
     const rate = invited >= 5 ? bought / invited : 0.3;                       // what share of invited friends buy; a fair guess until there is enough history
     // your own activity over the last 30 days
     const since = ago(30 * DAY), sd = kenyaDay(Date.now() - 29 * DAY);
-    const ts = async (q) => (await rows(await sb(env, q))).map((x) => String(x.created_at || x.day).slice(0, 10));
+    const ts = async (q) => (await rows(await sb(env, q))).map((x) => (x.created_at ? kenyaDay(Date.parse(x.created_at)) : String(x.day).slice(0, 10)));
     const [posts, comments, media, buys, sells, checks] = await Promise.all([
       ts(`posts?select=created_at&aid=eq.${a}&created_at=gte.${enc(since)}&limit=500`), ts(`comments?select=created_at&aid=eq.${a}&created_at=gte.${enc(since)}&limit=500`),
       ts(`media?select=created_at&aid=eq.${a}&kind=in.(clip,video,story_photo,story_video)&status=eq.ready&created_at=gte.${enc(since)}&limit=500`),

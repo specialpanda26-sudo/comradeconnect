@@ -5,6 +5,7 @@ import { mediaUrl, MEDIA_BUCKET, PRIVATE_BUCKET } from './storage.js';
 import { isWholesaler } from './wholesale.js';
 import { getSettings } from './settings.js';
 import { HOSTEL_PHOTOS } from './hostels.js';
+import { audit } from './lib.js';
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, randHex, throttle, tooMany, user, authProfile, isAdmin, ahead, DAY } from './lib.js';
 
 const VERIFY_ROLES = ['Student', 'Class rep', 'Student leader', 'Club official', 'Hostel rep', 'Lecturer or staff', 'Local seller'];
@@ -90,6 +91,27 @@ export async function mediaRoutes(req, env, url, ip) {
     if (!ins.length) return json(env, { likes: c.likes, liked: true });
     const r = await sb(env, 'rpc/inc_likes', { method: 'POST', body: JSON.stringify({ t: 'media', p: c.id }) });
     return json(env, { likes: await r.json().catch(() => c.likes + 1), liked: true });
+  }
+
+  // ---- delete a video: the person who posted it, or the admin (X-Admin-Key) ----
+  mm = path.match(/^\/api\/clips\/([0-9a-f-]{36})\/delete$/);
+  if (mm && m === 'POST') {
+    const admin = isAdmin(req, env); let aid = null;
+    if (!admin) { const u = await user(req, env, true); if (u instanceof Response) return u; aid = u.aid; }
+    const c = await one(await sb(env, `media?id=eq.${mm[1]}&kind=in.(clip,video)`));
+    if (!c || (!admin && c.aid !== aid)) return err(env, 'Video not found', 404);
+    await store.remove(env, MEDIA_BUCKET(env), c.r2_key);
+    await sb(env, `media_comments?media_id=eq.${c.id}`, { method: 'DELETE' });
+    await sb(env, `media_likes?media_id=eq.${c.id}`, { method: 'DELETE' });
+    await sb(env, `media?id=eq.${c.id}`, { method: 'DELETE' });
+    if (admin) await audit(env, 'clip.delete', 'media', c.id, null, ip);
+    return json(env, { ok: true });
+  }
+  // ---- admin: list every video so it can be deleted ----
+  if (path === '/api/media/admin/clips' && m === 'GET') {
+    if (!isAdmin(req, env)) return err(env, 'Not allowed', 403);
+    const r = await rows(await sb(env, 'media?kind=in.(clip,video)&status=eq.ready&order=created_at.desc&limit=100'));
+    return json(env, { clips: r.map((x) => ({ id: x.id, url: mediaUrl(env, x.r2_key), caption: x.caption, aid: x.aid, likes: x.likes, createdAt: Date.parse(x.created_at) })) });
   }
 
   // ---- ID verification (private bucket, image deleted after the decision) ----

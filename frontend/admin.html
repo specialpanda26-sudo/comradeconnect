@@ -213,8 +213,8 @@ function login(msg) {
 let X = { events: [], products: [], orders: [], notices: [], sponsors: [] };
 async function loadExtra() {                                   // events, shop and orders to collect; a failure here never blocks the queue
   const g = async (path) => { try { return await api(path); } catch (e) { return {}; } };
-  const [ev, pr, od, nt, sp] = await Promise.all([g('/api/events'), g('/api/club/products'), g('/api/admin/club/orders?status=paid'), g('/api/notices'), g('/api/sponsors')]);
-  X = { events: ev.events || [], products: pr.products || [], orders: od.orders || [], notices: nt.notices || [], sponsors: sp.sponsors || [] };
+  const [ev, pr, od, nt, sp, vd] = await Promise.all([g('/api/events'), g('/api/club/products'), g('/api/admin/club/orders?status=paid'), g('/api/notices'), g('/api/sponsors'), g('/api/media/admin/clips')]);
+  X = { events: ev.events || [], products: pr.products || [], orders: od.orders || [], notices: nt.notices || [], sponsors: sp.sponsors || [], videos: vd.clips || [] };
 }
 async function load() { Q = await api('/api/admin/queue'); await loadExtra(); render(); }
 
@@ -266,11 +266,12 @@ const SECTIONS = {
     return [form].concat(X.products.map((p) => '<div class="card" data-id="' + esc(p.id) + '"><h3>' + esc(p.name) + '</h3>' + kv([['Price', kes(p.price)], ['In stock', p.stock]]) + '<div class="row"><button data-do="cpstock">Set stock</button></div></div>'),
       X.orders.map((o) => '<div class="card" data-id="' + esc(o.id) + '"><h3>Collect: ' + esc(name(o.product_id)) + ' x' + esc(o.qty) + '</h3>' + kv([['Ref', String(o.id).slice(0, 8).toUpperCase()], ['Amount', kes(o.amount)], ['Paid', when(o.created_at)]]) + '<div class="row"><button class="p" data-do="cocollect">Mark collected</button></div></div>'));
   },
+  videos: () => (X.videos || []).map((v) => '<div class="card" data-id="' + esc(v.id) + '"><video controls playsinline preload="metadata" src="' + esc(v.url) + '" style="width:100%;max-height:320px;border-radius:12px;background:#000"></video><p style="overflow-wrap:anywhere">' + esc(v.caption || 'No caption') + '</p><p class="sub">By ' + esc(v.aid) + ', ' + when(v.createdAt) + '</p><div class="row"><button class="bad" data-do="vdel">Delete video</button></div></div>'),
   users: () => ['<div class="card"><h3>Account actions</h3><input id="ua" placeholder="Account ID, e.g. u_ab12cd34" autocomplete="off"><select id="uact"><option value="ban">Ban</option><option value="unban">Unban</option><option value="mute">Mute (hours)</option><option value="unmute">Unmute</option><option value="role">Set role</option></select><input id="uv" placeholder="Hours for mute, or role: user, seller, club_admin, admin" autocomplete="off"><div class="row"><button class="p" id="ugo">Apply</button></div></div>'],
 };
 function rep(r, kind) { return '<div class="card" data-id="' + esc(r.id) + '" data-kind="' + kind + '"><h3>' + (kind === 'content' ? 'Reported ' + esc(r.target_type || 'item') : 'Reported message') + '</h3>' + kv([['Reason', r.reason], ['Message', r.snapshot], ['Reported account', r.reported_aid], ['Target', r.target_id], ['Reported', when(r.created_at)]])
   + '<div class="row">' + (kind === 'content' ? '<button class="bad" data-do="ractionhide">Take action and hide it</button>' : '') + '<button data-do="raction">Mark as actioned</button><button data-do="rdismiss">Dismiss</button></div></div>'; }
-const LABEL = { listings: 'Listings', withdrawals: 'Withdrawals', disputes: 'Disputes', verifications: 'ID checks', reports: 'Reports', confirm: 'Confirm M-Pesa', payments: 'Underpaid', users: 'Accounts', events: 'Events', club: 'Club', notices: 'Notices', sponsors: 'Sponsors' };
+const LABEL = { listings: 'Listings', withdrawals: 'Withdrawals', disputes: 'Disputes', verifications: 'ID checks', reports: 'Reports', confirm: 'Confirm M-Pesa', payments: 'Underpaid', users: 'Accounts', events: 'Events', club: 'Club', notices: 'Notices', sponsors: 'Sponsors', videos: 'Videos' };
 const COUNT = () => ({ listings: Q.counts.listings, withdrawals: Q.counts.withdrawals, disputes: Q.counts.disputes, verifications: Q.counts.verifications, reports: Q.counts.reports, confirm: Q.counts.confirm, payments: Q.counts.underpaid, users: 0, events: 0, club: X.orders.length, notices: 0, sponsors: 0 });
 
 const TILES = [['listings', 'Listings'], ['confirm', 'To confirm'], ['withdrawals', 'Withdrawals'], ['verifications', 'ID checks'], ['disputes', 'Disputes'], ['reports', 'Reports']];
@@ -341,6 +342,7 @@ document.addEventListener('click', async (e) => {
   const b = e.target.closest('[data-do]'); if (!b) return;
   const card = b.closest('.card'), id = card && card.dataset.id, d = b.dataset.do;
   if (d === 'copy') { try { await navigator.clipboard.writeText(b.dataset.v); toast('Copied'); } catch (x) { toast(b.dataset.v); } return; }
+  if (d === 'vdel') { if (!confirm('Delete this video for everyone? This cannot be undone.')) return; return act(b, () => api('/api/clips/' + id + '/delete', {}), 'Video deleted'); }
   if (d === 'ntdel') { if (!confirm('Delete this notice? Students will stop seeing it.')) return; return act(b, () => api('/api/admin/notices/' + id, { action: 'delete' }), 'Notice deleted'); }
   if (d === 'spdel') { if (!confirm('Delete this sponsor?')) return; return act(b, () => api('/api/admin/sponsors/' + id, { action: 'delete' }), 'Sponsor deleted'); }
   if (d === 'evdel') { if (!confirm('Delete this event? Tickets already sold stay valid in the database but the event disappears from the app.')) return; return act(b, () => api('/api/admin/events/' + id, { action: 'delete' }), 'Event deleted'); }

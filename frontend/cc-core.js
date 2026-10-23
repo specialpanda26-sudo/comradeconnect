@@ -1349,6 +1349,15 @@ function loadClips(more) {
   })().finally(() => { CLIPS.job = null; redrawClips(); });
   return CLIPS.job;
 }
+/* delete one of my videos (the server checks it is mine) */
+window.ccDeleteClip = async function (id) {
+  if (!confirm('Delete this video? This cannot be undone.')) return;
+  try {
+    await call('/api/clips/' + id + '/delete', { body: {} });
+    const i = VIDS.findIndex((x) => x.id === id); if (i >= 0) VIDS.splice(i, 1);
+    redrawClips(); toast('Video deleted');
+  } catch (e) { toast(e.message); }
+};
 /* the old screens like locally; this reconciles with the Worker (a like cannot be undone) */
 function syncLikes() {
   if (!connected()) return;
@@ -1383,6 +1392,8 @@ function initClips() {
   $('#vl').addEventListener('click', (e) => {
     if (!connected()) return;
     if (e.target.closest('#vmore')) return loadClips(true);
+    const dl = e.target.closest('.vdl');
+    if (dl) { e.stopPropagation(); return window.ccDeleteClip(dl.closest('.vcard').dataset.id); }
     const rp = e.target.closest('.vrp');
     if (rp) { e.stopPropagation(); const id = rp.closest('.vcard').dataset.id; return askReason(async (why) => { await call('/api/report', { body: { type: 'clip', id, reason: why } }); const i = VIDS.findIndex((x) => x.id === id); if (i >= 0) VIDS.splice(i, 1); redrawClips(); toast('Reported. It is hidden for you while an admin reviews it.'); }); }
     setTimeout(syncLikes, 0);

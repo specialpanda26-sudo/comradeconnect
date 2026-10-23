@@ -57,7 +57,7 @@ def patch_version():
 def mark():
     """The logo without the words under it, cropped tight, on a transparent canvas."""
     im = Image.open(LOGO).convert('RGB')
-    top = im.crop((0, 0, im.width, int(im.height * 0.66)))          # the words sit in the lower third
+    top = im
     mask = top.convert('L').point(lambda v: 255 if v > 40 else 0)
     box = mask.getbbox()
     if not box: sys.exit('STOP: could not find the logo in ' + str(LOGO))

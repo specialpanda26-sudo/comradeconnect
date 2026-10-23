@@ -28,3 +28,12 @@
 
 /sw.js
   Cache-Control: no-cache
+
+/icon-192.png
+  Cache-Control: no-cache
+/icon-512.png
+  Cache-Control: no-cache
+/apple-touch-icon.png
+  Cache-Control: no-cache
+/favicon.png
+  Cache-Control: no-cache

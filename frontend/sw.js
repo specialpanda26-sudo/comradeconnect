@@ -17,6 +17,7 @@ self.addEventListener('install', (e) => {
     });
     await c.put('/index.html', r);
     await Promise.allSettled([...urls].map((u) => c.add(u)));
+    await Promise.allSettled(['/icon-192.png', '/icon-512.png', '/favicon.png', '/apple-touch-icon.png'].map((u) => fetch(u, { cache: 'reload' }).then((x) => x.ok && c.put(u, x))));
     await Promise.allSettled(CDN.map((u) => fetch(u, { mode: 'no-cors' }).then((x) => c.put(u, x))));
     self.skipWaiting();
   })());

@@ -1,0 +1,19 @@
+/* cc-ui4.css v1: the unlock flow in the Android app.
+   - The old lock "page" (photo + card with Fingerprint / Face ID buttons, Google button) is never shown. Only the scan screen and the password panel.
+   - Scan screen: just the fingerprint (or face) picture. No circle, no box, no rings, no sweeping line, nothing moving.
+     It fills in (dim to full) while the phone is scanning. If the scan fails it shakes, on both fingerprint and face. */
+html.cc-in-app #lk.lkg.on:not(.rec):not(.cc-show)>*{visibility:hidden !important}
+html.cc-in-app #lk.lkg.on:not(.rec):not(.cc-show){background:#101422 !important}
+
+#ccfp .fpx-disc{background:none !important;border:0 !important;box-shadow:none !important;border-radius:0 !important;overflow:visible !important;width:120px !important;height:120px !important;animation:none !important}
+#ccfp[data-k=face] .fpx-disc{border-radius:0 !important}
+#ccfp .fpx-r,#ccfp .fpx-ln{display:none !important}
+#ccfp .fpx-ic{width:96px !important;height:96px !important;animation:none !important;color:var(--fpa);transition:opacity .35s}
+#ccfp[data-k=fingerprint] .fpx-fpi,#ccfp[data-k=face] .fpx-fci{opacity:.5 !important;transform:none !important}
+#ccfp.scanning[data-k=fingerprint] .fpx-fpi,#ccfp.scanning[data-k=face] .fpx-fci{opacity:1 !important}
+#ccfp[data-k=face] .fpx-fci .fb,#ccfp[data-k=face] .fpx-fci .ff{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+#ccfp.ok .fpx-ic{opacity:0 !important}
+#ccfp.bad .fpx-stage{animation:fpx-shake .4s !important}
+#ccfp.bad[data-k=fingerprint] .fpx-fpi,#ccfp.bad[data-k=face] .fpx-fci{opacity:1 !important}
+/* the tab that is not selected stays flat (the glass tint script must not paint it) */
+#ccfp .fpx-tab:not([aria-selected=true]){background:none !important;background-image:none !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;color:var(--mut) !important}

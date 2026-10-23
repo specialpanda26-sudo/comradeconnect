@@ -170,3 +170,9 @@ Findings (already diagnosed, not yet changed):
 4. "Sign in with my password": exists (`#lkpw` opens the password view built by `cc-lockglass.js`; `#lkr` checks the saved password or recovery code). Check it works from the animated screen (`#fpx-pw` button) in the app, and that the fingerprint button on the password view returns to the scan.
 5. Light and dark check of the lock screen (`#lk`, `#ccfp`), and remove the glow rules at the end of `frontend/cc-glass.css` ("lock screen glass v3") and in `frontend/cc-lockglass.css`: same recipe as Section 1 (black shadow, shading inside, no coloured glow).
 6. Bottom navigation buttons in both themes were fixed in Section 1; re-check them on the lock return.
+
+## UI pass Section 2 DONE (lock screen)
+- cc-fingerprint.js now shows the animated Hi NAME screen again (build instead of direct); reduced-motion no longer switches the fingerprint/face/robot animations off (index.html rule, cc-lockscreen.js, cc-fingerprint.js).
+- cc-ui2.js: the app locks every time you leave and come back (not for Android's own prompt, Google sign-in, or a file/camera picker you opened). cc-native.js exposes ccNativeBio.busy().
+- cc-ui2.css: lock and scan screens use black shadow + inner shading, no glow, light and dark.
+- Not tested on a real phone: Android's real prompt, and the exact relock timing when the phone's own prompt closes.

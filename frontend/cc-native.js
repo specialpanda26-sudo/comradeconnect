@@ -52,7 +52,7 @@
   var WHY = { userCancel: 'cancelled', systemCancel: 'cancelled', appCancel: 'cancelled', authenticationFailed: 'nomatch', biometryLockout: 'locked',
               biometryNotEnrolled: 'notenrolled', biometryNotAvailable: 'unavailable', noDeviceCredential: 'nolock' };
   window.ccNativeBio = {
-    last: '',
+    last: '', busy: function () { return bioBusy; },
     caps: caps,
     available: function () { return caps().then(function (c) { return c.any; }); },
     pref: function () { try { return localStorage.getItem('cc_bio_kind') || ''; } catch (e) { return ''; } },

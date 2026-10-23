@@ -1,5 +1,6 @@
 import { json, sb, rows, ago, isAdmin, hasContact, standingBlock, audit, user } from './lib.js';
 import { feeFor } from './postrules.js';
+import { checkText } from './moderation.js';
 import { notify, notifySnippet } from './notifications.js';
 import { campusRow, campusQuery } from './campus.js';
 
@@ -39,6 +40,9 @@ export async function feedRoutes(req, env, url, ip) {
     { const blk = await standingBlock(env, aid); if (blk) return blk; }
     if (category === 'Notices' && !isAdmin(req, env)) return json(env, { error: 'Only admins post notices' }, 403);
     if (hasContact(content)) return json(env, { error: 'Remove phone numbers, handles and links' }, 400);
+    const ccMod = isAdmin(req, env) ? { action: 'allow' } : checkText(content, String(env.BLOCKED_NAMES || '').split(','));
+    if (ccMod.action === 'block') return json(env, { error: 'Remove vulgar words and personal details' }, 400);
+    const ccHold = ccMod.action === 'review';
     const byAid = await rows(await sb(env, `posts?select=id&aid=eq.${encodeURIComponent(aid)}&created_at=gte.${ago(3600e3)}&limit=10`));
     const byIp = await rows(await sb(env, `posts?select=id&ip=eq.${encodeURIComponent(ip)}&created_at=gte.${ago(3600e3)}&limit=20`));
     if (byAid.length >= 10 || byIp.length >= 20) return json(env, { error: 'Too many posts. Try again later.' }, 429);
@@ -50,7 +54,7 @@ export async function feedRoutes(req, env, url, ip) {
       if (!draft) return json(env, { error: 'Could not save your post. Try again.' }, 500);
       return json(env, { payment_required: true, fee: due.fee, rule: due.rule, post_id: draft.id, error: `Posts about money cost KSh ${due.fee}. Pay to publish it.` }, 402);
     }
-    const [row] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid, content, category, zone, ip, verified: category === 'Notices', ...campusRow(req) }) }));
+    const [row] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid, content, category, zone, ip, verified: category === 'Notices', hidden: ccHold, ...campusRow(req) }) }));
     return json(env, fmtPost({ ...row, comments: [] }), 201);
   }
   const m = path.match(/^\/api\/posts\/([0-9a-f-]{36})\/(like|view|comments|report)$/);

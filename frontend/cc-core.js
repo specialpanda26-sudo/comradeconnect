@@ -1482,9 +1482,9 @@ window.ccGoogle = { on: googleOn, mount: mountGoogle, signIn: googleSignIn };
 
 window.ccMarketTerms = () => S.list.map((l) => l.title);
 // Used by the first-open panel. kind 'password' = username + password, 'random' = anonymous account with a recovery code.
-async function createAccount(kind) {
+async function createAccount(kind, creds) {
   if (!connected()) throw new Error('We cannot reach the service right now. Please try again in a moment.');
-  const d = kind === 'random' ? await rawPost('/api/auth/register', {}) : await registerFlow();
+  const d = kind === 'random' ? await rawPost('/api/auth/register', {}) : (creds && creds.handle && creds.password) ? await rawPost('/api/auth/register', { handle: creds.handle, password: creds.password }) : await registerFlow();
   saveAuth({ aid: d.aid, token: d.token });
   if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
   ME.aid = d.aid; saveMe();

@@ -29,7 +29,7 @@ box.addEventListener('click', function (e) {
   var b = e.target.closest('button'); if (!b) return;
   if (b.classList.contains('ccwx')) return dismiss();
   if (b.dataset.wb === 'explore') { var t = document.querySelector('[data-v="explore"]'); dismiss(); if (t) t.click(); return; }
-  if (b.dataset.wb === 'start') { if (window.ccAuthPanel) window.ccAuthPanel(); }
+  if (b.dataset.wb === 'start') { if (window.ccAuthPanel) window.ccAuthPanel('create'); }
 });
 feed.insertBefore(box, feed.firstChild);
 })();

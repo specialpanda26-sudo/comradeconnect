@@ -1,4 +1,5 @@
-create table if not exists poll_votes (
+-- Campus pulse: the shared daily poll and hostel zone ratings (own tables). Safe to run again.
+create table if not exists pulse_votes (
   day integer not null,
   aid text not null,
   campus text not null default 'kirinyaga',
@@ -6,9 +7,9 @@ create table if not exists poll_votes (
   created_at timestamptz not null default now(),
   primary key (day, aid)
 );
-alter table poll_votes enable row level security;
-create index if not exists poll_votes_campus_day on poll_votes(campus, day);
-create table if not exists zone_ratings (
+alter table pulse_votes enable row level security;
+create index if not exists pulse_votes_campus_day on pulse_votes(campus, day);
+create table if not exists pulse_ratings (
   campus text not null default 'kirinyaga',
   zone text not null,
   aid text not null,
@@ -18,4 +19,4 @@ create table if not exists zone_ratings (
   created_at timestamptz not null default now(),
   primary key (campus, zone, aid)
 );
-alter table zone_ratings enable row level security;
+alter table pulse_ratings enable row level security;

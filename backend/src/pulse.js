@@ -10,13 +10,13 @@ export async function pulseRoutes(req, env, url, ip) {
 
   if (p === '/api/pulse' && m === 'GET') {
     const d = today();
-    const votes = await rows(await sb(env, `poll_votes?select=opt,aid&day=eq.${d}&campus=eq.${enc(camp)}&limit=5000`));
+    const votes = await rows(await sb(env, `pulse_votes?select=opt,aid&day=eq.${d}&campus=eq.${enc(camp)}&limit=5000`));
     const counts = [0, 0, 0];
     for (const v of votes) if (v.opt >= 0 && v.opt < 3) counts[v.opt]++;
     const me = req.headers.get('X-Token') ? await authProfile(req, env) : null;
     const mv = me ? votes.find((v) => v.aid === me.aid) : null;
     const zones = {};
-    for (const r of await rows(await sb(env, `zone_ratings?select=zone,water,security,wifi&campus=eq.${enc(camp)}&limit=5000`))) {
+    for (const r of await rows(await sb(env, `pulse_ratings?select=zone,water,security,wifi&campus=eq.${enc(camp)}&limit=5000`))) {
       const z = (zones[r.zone] ||= { Water: [0, 0], Security: [0, 0], Wifi: [0, 0] });
       z.Water[0] += r.water; z.Water[1]++; z.Security[0] += r.security; z.Security[1]++; z.Wifi[0] += r.wifi; z.Wifi[1]++;
     }
@@ -28,7 +28,7 @@ export async function pulseRoutes(req, env, url, ip) {
     if (!(await throttle(env, ip, 'pvote', u.aid, 20, 100))) return tooMany(env);
     const b = await req.json().catch(() => ({})), opt = int(b.opt, 0, 2);
     if (opt === null) return err(env, 'Pick an answer');
-    const res = await post(env, 'poll_votes', { day: today(), aid: u.aid, campus: camp, opt }, 'resolution=ignore-duplicates,return=representation');
+    const res = await post(env, 'pulse_votes', { day: today(), aid: u.aid, campus: camp, opt }, 'resolution=ignore-duplicates,return=representation');
     if (!res.ok) return err(env, 'Voting is not ready yet. Ask the admin to run the pulse SQL.', 503);
     if (!(await rows(res)).length) return err(env, 'You already voted today', 409);
     return json(env, { ok: true }, 201);
@@ -40,7 +40,7 @@ export async function pulseRoutes(req, env, url, ip) {
     const b = await req.json().catch(() => ({})), zone = str(b.zone, 40);
     const water = int(b.water, 1, 5), security = int(b.security, 1, 5), wifi = int(b.wifi, 1, 5);
     if (!zone || !water || !security || !wifi) return err(env, 'Pick a score for water, security and wifi');
-    const res = await post(env, 'zone_ratings', { campus: camp, zone, aid: u.aid, water, security, wifi }, 'resolution=ignore-duplicates,return=representation');
+    const res = await post(env, 'pulse_ratings', { campus: camp, zone, aid: u.aid, water, security, wifi }, 'resolution=ignore-duplicates,return=representation');
     if (!res.ok) return err(env, 'Ratings are not ready yet. Ask the admin to run the pulse SQL.', 503);
     if (!(await rows(res)).length) return err(env, 'You already rated this zone', 409);
     return json(env, { ok: true }, 201);

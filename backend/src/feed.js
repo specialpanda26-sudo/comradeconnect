@@ -82,6 +82,8 @@ export async function feedRoutes(req, env, url, ip) {
       const text = String(b.text || '').trim().slice(0, 200);
       if (text.length < 1) return json(env, { error: 'Write a comment' }, 400);
       if (hasContact(text)) return json(env, { error: 'Remove phone numbers, handles and links' }, 400);
+      const ccCom = checkText(text, String(env.BLOCKED_NAMES || '').split(','));
+      if (!ccCom.ok) return json(env, { error: 'Remove vulgar words and personal details' }, 400);
       const recent = await rows(await sb(env, `comments?select=id&aid=eq.${encodeURIComponent(aid)}&created_at=gte.${ago(3600e3)}&limit=30`));
       if (recent.length >= 30) return json(env, { error: 'Too many comments. Try again later.' }, 429);
       const [c] = await rows(await sb(env, 'comments', { method: 'POST', body: JSON.stringify({ post_id: id, aid, text }) }));

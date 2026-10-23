@@ -7,6 +7,7 @@ const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const G = 'Landing & backgrounds';
 const add = {
   landing_off: { kind: 'flag', group: G, label: 'Turn OFF the landing page', help: 'Skips the page people see before logging in.' },
+  landing_brand: { kind: 'flag', group: G, label: 'Show logo and name over the pictures', help: 'Off by default: when you upload pictures, they replace the logo and the Comrade Connect name.' },
   landing_captions: { kind: 'text', max: 600, multi: true, group: G, label: 'Slide words', help: 'One slide per line: Title | small text' },
   landing_cta: { kind: 'text', max: 30, group: G, label: 'Main button text', help: 'Built-in: Get started' },
   landing_login_q: { kind: 'text', max: 50, group: G, label: 'Words before Log in', help: 'Built-in: Already have an account?' },

@@ -30,7 +30,7 @@ st.textContent = 'html.cc-gate #tkb,html.cc-gate #cc-banner,html.cc-gate .toast,
 + '#ccland .hero{position:absolute;left:0;right:0;top:0;bottom:46%;display:grid;place-items:center;pointer-events:none}'
 + '#ccland .hero i{display:block;width:112px;height:112px;border-radius:32px;background:#000 url(icon-512.png) center/cover;border:1px solid var(--gb,rgba(255,255,255,.07));box-shadow:0 0 0 14px color-mix(in srgb,#A8DCE7 12%,transparent),0 0 0 32px color-mix(in srgb,#A8DCE7 6%,transparent),var(--sh,0 18px 40px rgba(16,20,34,.45));animation:ccllf 6s ease-in-out infinite}'
 + '@keyframes ccllf{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}'
-+ '#ccland.pic .hero{display:none}'
++ '#ccland.pic .hero{display:none}#ccland.pic .top{display:none}#ccland.pic.brand .top{display:flex}'
 + '#ccland .top{position:absolute;left:18px;top:calc(16px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:10px;padding:7px 16px 7px 8px;border-radius:999px;background:var(--sl,#272B3B);color:var(--fg,#fff);font-weight:600;font-size:13px;letter-spacing:.02em;box-shadow:0 10px 28px rgba(16,20,34,.35)}'
 + ':root[data-theme="light"] #ccland .top{background:#fff;border:1px solid var(--line,rgba(16,20,34,.1));box-shadow:0 10px 28px rgba(16,20,34,.1)}'
 + '#ccland .top img{width:28px;height:28px;border-radius:9px}'
@@ -60,7 +60,7 @@ var L = null, idx = 0, timer = null, slides = [], capList = CAPS;
 
 function build() {
   var C = cfg(); capList = caps(C); var im = imgs(C); slides = im.length ? im : [0, 1, 2];
-  L.classList.toggle('pic', !!im.length);
+  L.classList.toggle('pic', !!im.length); L.classList.toggle('brand', !!C.landing_brand);
   L.querySelectorAll('.i').forEach(function (n) { n.remove(); });
   var host = L.querySelector('.sh'), dots = L.querySelector('.dots'); dots.textContent = '';
   slides.forEach(function (s, i) {

@@ -27,6 +27,7 @@ SECTIONS.landing = () => {
     '<div class="card"><h3>Landing words</h3>'
       + '<label class="fl" for="lp_cap">Slide words<small>One slide per line: Title | small text</small></label><textarea id="lp_cap" rows="4" maxlength="600" data-lt="landing_captions">' + esc(G.v.landing_captions) + '</textarea>'
       + TX.map((t) => '<label class="fl" for="lp_' + t[0] + '">' + esc(t[1]) + '<small>Built-in: ' + esc(t[2]) + '</small></label><input id="lp_' + t[0] + '" data-lt="' + t[0] + '" maxlength="50" value="' + esc(G.v[t[0]]) + '">').join('')
+      + '<label class="sw"><span>Show logo and name over the pictures<small>Off = your pictures replace the logo and the Comrade Connect name</small></span><input type="checkbox" data-lt="landing_brand"' + (G.v.landing_brand ? ' checked' : '') + '><i></i></label>'
       + '<label class="sw"><span>Turn OFF the landing page</span><input type="checkbox" data-lt="landing_off"' + (G.v.landing_off ? ' checked' : '') + '><i></i></label>'
       + '<button class="p" id="lp_save" style="margin-top:14px;width:100%">Save words</button></div>'
   ];

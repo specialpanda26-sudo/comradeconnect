@@ -1,0 +1,6 @@
+/* cc-ui5.css v1
+   1. Tech robot and its menu: always tappable.
+   2. "Sign in again" sheet spacing and 3. clean Google button (added in section 2). */
+#tkr{touch-action:manipulation;-webkit-tap-highlight-color:transparent;pointer-events:auto}
+#tkb{pointer-events:auto}
+#tkb .btn{touch-action:manipulation}

@@ -73,7 +73,7 @@
     // "Sign in with my password": a real check. The password is sent to the server and only a yes unlocks. The old recovery code still works.
     var pwb = document.getElementById('lkpw'), lkc = document.getElementById('lkc'), lkr = document.getElementById('lkr');
     if (pwb) pwb.textContent = 'Sign in with my password';
-    if (lkc) { lkc.type = 'password'; lkc.placeholder = 'Your password or recovery code'; lkc.setAttribute('aria-label', 'Password or recovery code'); }
+    if (lkc) { lkc.type = 'password'; lkc.placeholder = 'Your password or code'; lkc.setAttribute('aria-label', 'Password or recovery code'); }
     if (lkr) {
       lkr.textContent = 'Unlock';
       lkr.addEventListener('click', function (e) {

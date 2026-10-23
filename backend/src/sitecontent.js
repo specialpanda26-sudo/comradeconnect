@@ -36,7 +36,6 @@ export const FIELDS = {
 
   lock_image: { kind: 'link', max: 500, group: 'App look', label: 'Lock screen picture', help: 'Photo at the top of the fingerprint lock screen. Paste an https:// link to a picture. Empty = the site background picture.' },
   lock_greeting: { kind: 'text', max: 40, group: 'App look', label: 'Lock screen greeting', help: 'Built-in: Welcome back!' },
-  scroll_video_off: { kind: 'flag', group: 'App look', label: 'Turn OFF the scrolling video background', help: 'Switch on to remove the scroll video. Applies the next time people open the app.' },
 
   hide_videos: { kind: 'flag', group: 'Switch parts off', label: 'Hide Videos' },
   hide_live: { kind: 'flag', group: 'Switch parts off', label: 'Hide Live' },

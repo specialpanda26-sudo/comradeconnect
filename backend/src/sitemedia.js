@@ -14,6 +14,7 @@ const add = {
 };
 for (let i = 1; i <= 5; i++) add['landing_img_' + i] = { kind: 'link', max: 500, group: G, label: 'Landing picture ' + i };
 for (const k of ['all', 'feed', 'videos', 'live', 'market', 'explore', 'rewards', 'me']) add['bg_' + k] = { kind: 'link', max: 500, group: G, label: 'Background: ' + k };
+for (const k of ['main', 'header', 'loader', 'lock', 'landing', 'welcome', 'receipt', 'popups']) add['logo_' + k] = { kind: 'link', max: 500, group: 'Logos', label: 'Logo: ' + k };
 Object.assign(FIELDS, add);
 
 export async function siteMediaRoutes(req, env, url) {

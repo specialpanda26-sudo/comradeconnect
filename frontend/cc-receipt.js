@@ -94,7 +94,9 @@ s.textContent = [
 ].join('\n');
 document.head.appendChild(s);
 }
+function ccl(e) { var u = window.ccLogoUrl && window.ccLogoUrl('receipt'); if (!u) return; e.style.setProperty('-webkit-mask', 'none'); e.style.setProperty('mask', 'none'); e.style.background = 'url("' + u + '") center/contain no-repeat'; }
 function logoMask() {
+if (window.__ccMask) return window.__ccMask;
 try {
 var l = $('nav .nb .lgo') || $('.lgo'); if (!l) return '';
 var cs = getComputedStyle(l), m = cs.webkitMaskImage || cs.maskImage || '';
@@ -118,7 +120,7 @@ x.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 var pg = el('div', 'rc-pg'), A = el('section', 'rc-ph on'), B = el('section', 'rc-ph'); pg.append(A, B); root.append(bar, pg);
 var h = el('h2', 'rc-t', 'Confirm order'), sub = el('p', 'rc-sub rc-t', 'Holding your payment safely in escrow'); A.append(h, sub);
 var st = el('div', 'rc-st'), card = el('div', 'rc-card'), lg = el('div', 'rc-lg'), lgo = el('span', 'rc-lgo');
-if (mask) { lgo.style.webkitMaskImage = mask; lgo.style.maskImage = mask; }
+if (mask) { lgo.style.webkitMaskImage = mask; lgo.style.maskImage = mask; } ccl(lgo);
 lg.append(lgo, el('span', 'rc-wm', 'Comrade Connect')); card.append(lg, el('span', 'rc-chip'));
 card.insertAdjacentHTML('beforeend', WAVES);
 var cf = el('div', 'rc-cf'), l = el('div'), sm = el('small', '', 'Escrow hold'), bb = el('b', '', money(amount)); l.append(sm, bb); cf.append(l, el('span', 'rc-pill', 'ESCROW')); card.append(cf);
@@ -127,7 +129,7 @@ st.append(card, pos); A.append(st);
 var rows = el('div', 'rc-rows'); [['Paid', money(amount)], ['Status', 'Held safely in escrow'], ['Item', item], ['Receipt', ref]].forEach(function (r) { var dv = el('div'); dv.append(el('span', '', r[0]), el('b', '', r[1])); rows.append(dv); });
 var act = el('div', 'rc-act'), vb = el('button', 'rc-b p', 'View receipt'), dn = el('button', 'rc-b', 'Done'); vb.type = dn.type = 'button'; act.append(vb, dn); A.append(rows, act);
 var prt = el('div', 'rc-prt'); prt.append(el('i')); var feed = el('div', 'rc-feed'), paper = el('div', 'rc-paper'); feed.append(paper);
-var ph = el('div', 'rp-h'), pl = el('div', 'rp-lgo'); if (mask) { pl.style.webkitMaskImage = mask; pl.style.maskImage = mask; }
+var ph = el('div', 'rp-h'), pl = el('div', 'rp-lgo'); if (mask) { pl.style.webkitMaskImage = mask; pl.style.maskImage = mask; } ccl(pl);
 ph.append(pl, el('div', 'rp-wm', 'Comrade Connect'), el('div', 'rp-ed', 'Kirinyaga Edition')); paper.append(ph, el('hr', 'rp-hr'), el('div', 'rp-t', 'ESCROW RECEIPT'));
 var pm = el('div', 'rp-m'); pm.append(el('span', '', ref), el('span', '', when)); paper.append(pm, el('hr', 'rp-hr'));
 var line = function (a, b) { var r = el('div', 'rp-r'); r.append(el('span', '', a), el('b', '', b)); paper.append(r); };

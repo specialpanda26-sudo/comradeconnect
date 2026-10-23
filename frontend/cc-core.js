@@ -607,11 +607,20 @@ async function addPhoto(f) {
 ['mphi', 'mgi'].forEach((i) => { $('#' + i).onchange = (e) => { addPhoto(e.target.files[0]); e.target.value = ''; }; });
 $('#mph').onclick = () => $('#mphi').click(); $('#mgal').onclick = () => $('#mgi').click();
 // Sends a file to Supabase Storage with the one-time upload URL the Worker gave us (same call the official Supabase client makes).
-async function putFile(url, blob, type) {
-  const fd = new FormData();
+function putFile(url, blob, type) {
+  const fd = new FormData(), U = window.ccUpload;
   fd.append('cacheControl', '3600');
   fd.append('', new Blob([blob], { type: type || blob.type }));
-  return fetch(url, { method: 'PUT', body: fd });
+  if (U) U.start(/^video/.test(type || blob.type) ? 'your video' : 'your photo');
+  return new Promise((ok, bad) => {
+    const x = new XMLHttpRequest();
+    x.open('PUT', url);
+    x.upload.onprogress = (e) => { if (U && e.lengthComputable) U.progress(e.loaded / e.total * 100); };
+    x.onload = () => { const good = x.status >= 200 && x.status < 300; if (!good && U) U.fail('Upload failed (' + x.status + '). Try again.'); ok({ ok: good, status: x.status }); };
+    x.onerror = x.ontimeout = () => { if (U) U.fail('Upload failed. Check your connection.'); bad(new Error('Upload failed. Check your connection and try again.')); };
+    x.timeout = 600000;
+    x.send(fd);
+  });
 }
 async function uploadPhoto(listingId, blob) {
   const u = await call('/api/media/upload-url', { body: { kind: 'listing_photo', content_type: 'image/jpeg', bytes: blob.size, listing_id: listingId } });
@@ -1356,16 +1365,16 @@ function syncLikes() {
 }
 async function uploadClip(f) {
   if (!f) return;
+  if (!f.type) { const ex = (f.name.split('.').pop() || '').toLowerCase(); if (ex === 'mp4' || ex === 'webm') f = new File([f], f.name, { type: 'video/' + ex }); }
   if (!/^video\/(mp4|webm)$/.test(f.type)) return toast('Please use an MP4 or WebM video. On iPhone, set Camera formats to Most Compatible.');
   if (f.size > 25 * 1048576) return toast('That clip is over 25 MB. Trim it and try again.');
-  toast('Uploading your clip...');
   try {
     const d = await call('/api/media/upload-url', { body: { kind: 'clip', content_type: f.type, bytes: f.size, caption: $('#vcap').value.trim() } });
     const r = await putFile(d.upload_url, f, f.type);
     if (!r.ok) throw new Error('The upload did not finish. Check your connection and try again.');
     await call('/api/media/' + d.id + '/complete', { body: {} });
-    $('#vcap').value = ''; await loadClips(false); earn(5, 'Posted a clip'); toast('Clip posted');
-  } catch (e) { toast(e.message); }
+    $('#vcap').value = ''; await loadClips(false); earn(5, 'Posted a clip'); if (window.ccUpload) window.ccUpload.done('Clip posted'); else toast('Clip posted');
+  } catch (e) { if (window.ccUpload) window.ccUpload.fail(e.message); toast(e.message); }
 }
 function initClips() {
   const baseAdd = addClip, baseDraw = drawVids;

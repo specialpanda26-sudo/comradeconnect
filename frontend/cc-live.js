@@ -94,7 +94,7 @@
     } catch (e) {
       if (st.dead) return false;
       var n = e && (e.name || e.code) || '';
-      v.textContent = /NotAllowed|PERMISSION/i.test(String(n) + (e && e.message)) ? 'Camera or microphone is blocked. Allow them for this site, then try again.' : 'Could not start the video. Try again.';
+      v.textContent = /NotAllowed|PERMISSION/i.test(String(n) + (e && e.message)) ? 'Camera or microphone is blocked. Allow them for this site, then try again.' : 'Could not start the video (' + String(e && (e.code || e.name || e.message) || 'unknown').slice(0, 60) + '). Tell the admin this code.'; /* ccl-why */ try { console.warn('live error', e); } catch (x) {}
       return false;
     }
   }

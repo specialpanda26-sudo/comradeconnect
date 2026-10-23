@@ -250,7 +250,7 @@ function preview(file) {
         var d = await call('/api/media/upload-url', { body: { kind: isVideo ? 'story_video' : 'story_photo', content_type: type, bytes: blob.size, caption: cap.value.trim() } });
         var r = await CC.putFile(d.upload_url, blob, type); if (!r.ok) throw new Error('The upload did not finish. Check your connection and try again.');
         await call('/api/media/' + d.id + '/complete', { body: {} });
-        URL.revokeObjectURL(url); shut(); say('Story shared. It disappears in 24 hours.'); load(true);
+        URL.revokeObjectURL(url); shut(); if (window.ccUpload) window.ccUpload.done('Story shared'); say('Story shared. It disappears in 24 hours.'); load(true);
       } catch (e) { er.textContent = e.message || 'Could not share your story.'; go.disabled = no.disabled = false; go.textContent = 'Share story'; }
     };
   });

@@ -1,7 +1,7 @@
-/* cc-guide.css v1: tidy layout for the "Need a hand?" guide popup (bot, bottom-left).
+/* cc-guide.css v2 (solid card so the page behind never shows through): tidy layout for the "Need a hand?" guide popup (bot, bottom-left).
    Header (bot + title + one close X), text, then neat buttons in a grid. */
-html body #tkb{box-sizing:border-box;left:12px;right:auto;width:min(320px,calc(100vw - 24px));padding:16px 16px 14px;border-radius:22px;overflow:visible;text-align:left}
-html body #tkb::after{content:"";position:absolute;left:24px;bottom:-7px;width:14px;height:14px;background:var(--bg);border-right:1px solid var(--gb);border-bottom:1px solid var(--gb);transform:rotate(45deg);border-bottom-right-radius:4px}
+html body #tkb{box-sizing:border-box;left:12px;right:auto;width:min(320px,calc(100vw - 24px));padding:16px 16px 14px;border-radius:22px;overflow:visible;text-align:left;background:var(--card,var(--bg)) !important;background-image:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;border:1px solid var(--gb)}
+html body #tkb::after{content:"";position:absolute;left:24px;bottom:-7px;width:14px;height:14px;background:var(--card,var(--bg));border-right:1px solid var(--gb);border-bottom:1px solid var(--gb);transform:rotate(45deg);border-bottom-right-radius:4px}
 html[data-lay="desktop"] body #tkb::after{display:none}
 #tkb .ccx-b,#tkb .ccx-plain{display:none !important}
 #tkb .tk-h{display:flex;align-items:center;gap:10px;margin:0 0 10px}

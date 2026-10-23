@@ -22,7 +22,6 @@
   box-shadow:0 12px 28px -8px color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 75%,transparent),0 2px 6px color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 30%,transparent),
     inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 8px color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 35%,transparent) !important}
 .btn.p:active,button.p:active,#fab:active{transform:scale(.97)}
-#ccl .go{background:linear-gradient(100deg,rgba(254,129,60,.8),rgba(245,160,106,.6)) !important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.45) !important;box-shadow:0 14px 34px -8px rgba(254,129,60,.65),inset 0 1px 0 rgba(255,255,255,.6),inset 0 -3px 8px rgba(188,101,106,.25)}
 :is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]){
   background:linear-gradient(135deg,rgba(255,255,255,.11),rgba(255,255,255,.03)) !important;
   border:1px solid var(--gl-br) !important;border-radius:14px !important;padding:12px 14px !important;

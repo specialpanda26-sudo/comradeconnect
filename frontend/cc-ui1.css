@@ -64,8 +64,6 @@ html .btn.kgo:not(.p){color:var(--inkfg) !important}
 .btn.p:active,button.p:active,#fab:active{transform:scale(.97)}
 .btn.p:hover{transform:none}
 
-/* landing "Get started" and the lock screen go button: same recipe, no orange glow */
-#ccl .go{box-shadow:var(--u-sh-sm),inset 0 1px 0 rgba(255,255,255,.5),inset 0 -12px 18px -12px rgba(0,0,0,.35) !important}
 
 /* inputs: sunken glass, plain focus ring (no glow) */
 :is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]){

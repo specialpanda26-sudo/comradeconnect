@@ -35,7 +35,8 @@
     '#ccfrst .ccfrst-x svg{width:18px;height:18px}',
     /* header */
     '#ccfrst .ccfrst-hd{display:flex;align-items:center;gap:12px;margin:2px 0 22px;padding-right:52px;min-height:44px;font:600 14px Poppins,system-ui,sans-serif}',
-    '#ccfrst .ccfrst-hd img{width:44px;height:44px;border-radius:13px;background:#000;flex:none}',
+    '#ccfrst .ccfrst-hd img{width:auto;height:28px;border-radius:0;background:none;flex:none}',
+    ':root[data-theme="light"] #ccfrst .ccfrst-hd img{filter:invert(1)}',
     '#ccfrst h2{margin:0 0 8px;font-family:var(--disp,Unbounded,Poppins,system-ui,sans-serif);font-size:clamp(24px,6.6vw,30px);line-height:1.18;letter-spacing:-.01em;font-weight:700;color:var(--fg,#fff)}',
     '#ccfrst p.ccfrst-s{margin:0 0 20px;font-size:14px;line-height:1.6;color:var(--mut,rgba(255,255,255,.62));min-height:3.2em}',
     /* the switch */
@@ -88,7 +89,7 @@
     if (ex) { if (ex.__set) ex.__set(mode); return; }
     var m = document.createElement('div'); m.id = 'ccfrst'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Welcome to Comrade Connect');
     m.innerHTML = '<div class="ccfrst-b"><button type="button" class="ccfrst-x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'
-      + '<div class="ccfrst-hd"><img src="/icon-192.png" alt="" width="44" height="44">Comrade Connect</div>'
+      + '<div class="ccfrst-hd"><img src="/cc-mark.png" alt="" width="38" height="28">Comrade Connect</div>'
       + '<h2 id="ccfrst-t"></h2><p class="ccfrst-s" id="ccfrst-s"></p>'
       + '<div class="ccfrst-seg" role="tablist" aria-label="Account"><button type="button" role="tab" data-m="login">Log in</button><button type="button" role="tab" data-m="create">Sign up</button><button type="button" role="tab" data-m="anon">Anonymous</button></div>'
       /* LOG IN */

@@ -28,12 +28,13 @@ st.textContent = 'html.cc-gate #tkb,html.cc-gate #cc-banner,html.cc-gate .toast,
 + '#ccland .sh{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 0,transparent 38%,color-mix(in srgb,var(--bg,#101422) 88%,transparent) 70%,var(--bg,#101422) 100%)}'
 /* brand mark, only when the admin has not set pictures */
 + '#ccland .hero{position:absolute;left:0;right:0;top:0;bottom:46%;display:grid;place-items:center;pointer-events:none}'
-+ '#ccland .hero i{display:block;width:112px;height:112px;border-radius:32px;background:#000 url(icon-512.png) center/cover;border:1px solid var(--gb,rgba(255,255,255,.07));box-shadow:0 0 0 14px color-mix(in srgb,#A8DCE7 12%,transparent),0 0 0 32px color-mix(in srgb,#A8DCE7 6%,transparent),var(--sh,0 18px 40px rgba(16,20,34,.45));animation:ccllf 6s ease-in-out infinite}'
++ '#ccland .hero i{display:block;width:min(46vw,190px);aspect-ratio:440/324;background:url(cc-mark.png) center/contain no-repeat;filter:drop-shadow(0 0 26px rgba(168,220,231,.5));animation:ccllf 6s ease-in-out infinite}'
 + '@keyframes ccllf{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}'
 + '#ccland.pic .hero{display:none}#ccland.pic .top{display:none}#ccland.pic.brand .top{display:flex}'
 + '#ccland .top{position:absolute;left:18px;top:calc(16px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:10px;padding:7px 16px 7px 8px;border-radius:999px;background:var(--sl,#272B3B);color:var(--fg,#fff);font-weight:600;font-size:13px;letter-spacing:.02em;box-shadow:0 10px 28px rgba(16,20,34,.35)}'
 + ':root[data-theme="light"] #ccland .top{background:#fff;border:1px solid var(--line,rgba(16,20,34,.1));box-shadow:0 10px 28px rgba(16,20,34,.1)}'
-+ '#ccland .top img{width:28px;height:28px;border-radius:9px}'
++ '#ccland .top img{width:auto;height:22px;border-radius:0;margin-left:4px}'
++ ':root[data-theme="light"] #ccland .hero i,:root[data-theme="light"] #ccland .top img{filter:invert(1)}'
 + '#ccland .bt{position:absolute;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;padding:0 22px calc(22px + env(safe-area-inset-bottom,0px))}'
 + '#ccland .dots{display:flex;gap:6px;margin-bottom:18px}#ccland .dots b{width:7px;height:7px;border-radius:9px;background:color-mix(in srgb,var(--fg,#fff) 28%,transparent);transition:.3s;cursor:pointer}#ccland .dots b.on{width:26px;background:var(--aq,#A8DCE7)}'
 + ':root[data-theme="light"] #ccland .dots b.on{background:var(--nt,#101422)}'
@@ -83,7 +84,7 @@ function go(i, user) {
 function open() {
   if (L) return;
   L = document.createElement('div'); L.id = ID; L.setAttribute('role', 'dialog'); L.setAttribute('aria-label', 'Welcome to Comrade Connect');
-  L.innerHTML = '<div class="hero" aria-hidden="true"><i></i></div><div class="sh"></div><div class="top"><img src="icon-192.png" alt="" width="28" height="28">Comrade Connect</div>'
+  L.innerHTML = '<div class="hero" aria-hidden="true"><i></i></div><div class="sh"></div><div class="top"><img src="cc-mark.png" alt="" width="30" height="22">Comrade Connect</div>'
     + '<div class="bt"><div class="dots"></div><h1></h1><p></p><button type="button" class="go">Get started</button>'
     + '<div class="lg"><span></span><button type="button" data-l>Log in</button></div><button type="button" class="gu">Just looking around</button></div>';
   document.body.appendChild(L); build();

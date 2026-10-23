@@ -24,3 +24,9 @@ iframe[src*="accounts.google.com"]{color-scheme:light !important;background:tran
 #ccrg,#ccg,div:has(> div > iframe[src*="accounts.google.com/gsi/button"]){border-radius:999px;overflow:hidden;background:transparent !important}
 #ccrg,#ccg{width:fit-content;max-width:100%;margin-left:auto;margin-right:auto}
 #ccrg > div,#ccg > div{background:transparent !important}
+
+/* ---------- Market page: clear the top banner ----------
+   cc-market-ui.js set #v-market padding to 4px 0, which removed the 124px the page needs under the fixed banner,
+   so the location pin and the bell sat behind it and the cards touched the screen edges. */
+#v-market{padding:124px 6vw 170px !important;margin-top:0 !important;box-sizing:border-box}
+html[data-lay="desktop"] #v-market{padding:124px 22px 60px !important}

@@ -29,13 +29,18 @@ function apply() {
   styleTag().textContent = css;
   // announcement banner
   var b = q('#cc-banner');
-  if (C.banner_on && C.banner_text) {
+  var gone = ''; try { gone = localStorage.getItem('cc_banner_read') || ''; } catch (e) {}
+  if (C.banner_on && C.banner_text && gone !== C.banner_text) {   // once read (closed), the same announcement never shows again
     if (!b) { b = document.createElement('div'); b.id = 'cc-banner'; b.setAttribute('role', 'status'); document.body.insertBefore(b, document.body.firstChild); }
     b.textContent = '';
     var t = document.createElement(https(C.banner_link) ? 'a' : 'span');
     t.textContent = C.banner_text;
     if (https(C.banner_link)) { t.href = C.banner_link; t.target = '_blank'; t.rel = 'noopener noreferrer'; }
     b.appendChild(t);
+    var x = document.createElement('button'); x.type = 'button'; x.setAttribute('aria-label', 'Close announcement'); x.textContent = '\u00d7';
+    x.style.cssText = 'all:unset;cursor:pointer;margin-left:12px;font-size:18px;line-height:1;padding:0 4px;opacity:.8';
+    x.onclick = function () { try { localStorage.setItem('cc_banner_read', C.banner_text); } catch (e) {} b.remove(); document.documentElement.classList.remove('cc-has-banner'); };
+    b.appendChild(x);
     document.documentElement.classList.add('cc-has-banner');
   } else { if (b) b.remove(); document.documentElement.classList.remove('cc-has-banner'); }
   // maintenance cover

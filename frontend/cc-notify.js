@@ -6,11 +6,15 @@
 if (window.__ccNotify) return; window.__ccNotify = 1;
 
 var API = (typeof CC_API !== 'undefined' ? CC_API : '').replace(/\/$/, '');
-var SEEN_KEY = 'cc_notice_seen', EV_KEY = 'ccn_ev_seen', SESSION_KEY = 'ccn_banner';
+var SEEN_KEY = 'cc_notice_seen', EV_KEY = 'ccn_ev_seen', ANN_KEY = 'ccn_announced';
 var S = { items: [], events: [], unread: 0, total: 0, loaded: false, tab: 'all', guest: false, lastTotal: -1 };
 var panel = null, banner = null, bell = null;
 
 function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
+
+/* ids already announced in the pop-up note: kept for good, so the same news never pops twice */
+function announced() { try { var a = JSON.parse(ls(ANN_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+function rememberAnnounced(ids) { var a = announced(); ids.forEach(function (x) { if (a.indexOf(x) < 0) a.push(x); }); ls(ANN_KEY, JSON.stringify(a.slice(-400))); }
 function ss(k, v) { try { if (v === undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k, v); } catch (e) {} return null; }
 function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
 function signedIn() { var a = window.ccAuth && window.ccAuth(); return !!(a && a.token); }
@@ -212,7 +216,11 @@ function markAll() {
   else call('/api/notifications/read', { all: true, events: true }).catch(function () {});
   S.events = []; paintBell(); draw();
 }
-function close() { if (panel) { panel.remove(); panel = null; } document.removeEventListener('keydown', onKey); }
+function close() {
+  var was = !!panel;
+  if (panel) { panel.remove(); panel = null; } document.removeEventListener('keydown', onKey);
+  if (was) { S.items.forEach(function (n) { n.read = true; }); S.unread = 0; S.events = []; paintBell(); }
+}
 function onKey(e) { if (e.key !== 'Escape') return; var ev = document.querySelector('.ccn-ev'); if (ev) ev.remove(); else close(); }
 function open() {
   close(); dismissBanner();
@@ -233,19 +241,30 @@ function open() {
   bx.appendChild(el('div', 'ls')); panel.appendChild(bx); document.body.appendChild(panel);
   document.addEventListener('keydown', onKey);
   draw(); refresh(true);
-  var a = siteNotices(); if (a.length) { ls(SEEN_KEY, noticeKey(a)); paintBell(); }
-  if (!S.guest && S.events.length) { call('/api/notifications/read', { events: true }).catch(function () {}); }
+  var a = siteNotices(); if (a.length) { ls(SEEN_KEY, noticeKey(a)); }
+  markViewed();
+}
+/* Everything shown in the panel counts as read the moment it is seen. It stays drawn as new until the panel closes. */
+function markViewed() {
+  var ids = S.items.filter(function (n) { return !n.read; }).map(function (n) { return n.id; });
+  rememberAnnounced(S.items.map(function (n) { return 'n' + n.id; }).concat(S.events.map(function (e) { return 'e' + e.id; })));
+  if (S.guest) { var seen = guestEventsSeen(); S.events.forEach(function (e) { if (seen.indexOf(e.id) < 0) seen.push(e.id); }); ls(EV_KEY, JSON.stringify(seen.slice(-200))); }
+  else if (ids.length || S.events.length) { call('/api/notifications/read', ids.length ? { ids: ids, events: true } : { events: true }).catch(function () {}); }
+  S.viewed = ids.concat(S.events.map(function (e) { return 'e' + e.id; }));
 }
 
 /* ---------- the short note when you open the site ---------- */
 function dismissBanner() { if (banner) { banner.remove(); banner = null; } }
 function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
 function showBanner() {
-  if (ss(SESSION_KEY) || panel) return;
-  var ev = S.events.length, cm = S.items.filter(function (n) { return !n.read && /comment/.test(n.kind); }).length, other = Math.max(0, S.unread - cm);
-  var parts = []; if (cm) parts.push(plural(cm, 'new comment')); if (ev) parts.push(plural(ev, 'new event')); if (other) parts.push(plural(other, 'other update'));
+  if (panel) return;
+  var seen = announced();
+  var fresh = S.items.filter(function (n) { return !n.read && seen.indexOf('n' + n.id) < 0; });
+  var evs = S.events.filter(function (e) { return seen.indexOf('e' + e.id) < 0; });
+  var cm = fresh.filter(function (n) { return /comment/.test(n.kind); }).length, other = fresh.length - cm;
+  var parts = []; if (cm) parts.push(plural(cm, 'new comment')); if (evs.length) parts.push(plural(evs.length, 'new event')); if (other) parts.push(plural(other, 'other update'));
   if (!parts.length) return;
-  ss(SESSION_KEY, '1');
+  rememberAnnounced(fresh.map(function (n) { return 'n' + n.id; }).concat(evs.map(function (e) { return 'e' + e.id; })));
   var text = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0];
   banner = el('div'); banner.id = 'ccnb'; banner.setAttribute('role', 'status');
   banner.appendChild(el('span', '', text)); var v = el('button', '', 'View'); v.type = 'button'; v.onclick = open;

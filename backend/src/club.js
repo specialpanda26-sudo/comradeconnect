@@ -41,6 +41,8 @@ export async function clubRoutes(req, env, url, ip) {
   if (path === '/api/club/join' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const name = str((await body()).display_name, 40);
+    const was = await one(await sb(env, `club_members?select=status&club=eq.default&aid=eq.${enc(u.aid)}`));
+    if (was?.status === 'removed') return err(env, 'An admin removed you from the club', 403);
     await post(env, 'club_members', { club: 'default', aid: u.aid, display_name: name || null, status: 'active' }, 'resolution=merge-duplicates,return=representation');
     return json(env, { member: true });
   }

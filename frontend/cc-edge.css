@@ -1,0 +1,13 @@
+/* cc-edge.css v1: pictures run edge to edge inside their cards. No white frame or padding around any photo.
+   The card clips the picture to its own rounded corners; the text below keeps its own padding. */
+html .mc{padding:0 !important;overflow:hidden;border-radius:22px}
+html .mc .mm,html .mc img.mm,html .mc .mm.poster{border-radius:0 !important;width:100%;display:block;aspect-ratio:1;object-fit:cover}
+html .mc .mb{padding:12px 14px 14px !important}
+html .mc .mb em{top:10px !important;left:10px !important}
+html .kcard.kt3{padding:0 !important;overflow:hidden}
+html .kt3 .ph,html .kt3 .ph img{border-radius:0 !important}
+html .ecard,html .pcard,html .mecard{overflow:hidden}
+html .ecard>img:first-child,html .pcard>img:first-child,html .mecard>img:first-child,
+html .ecard>.ph,html .pcard>.ph{display:block;width:calc(100% + 40px);max-width:none;margin:-20px -20px 14px;border-radius:0 !important}
+html .card>img:first-child,html .card>.mm:first-child{display:block;width:calc(100% + 28px);max-width:none;margin:-14px -14px 12px;border-radius:0 !important}
+html .hsph img,html .hsp img{border-radius:0}

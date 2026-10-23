@@ -1,13 +1,18 @@
-// Hides any [data-live-metric] element unless its [data-live-url] parent holds a valid stream link.
+// Hides live metrics (watching, comments, reactions, hearts) until a stream is embedded in #rframe.
 (function(){
-  function ok(u){return /^https:\/\/(www\.|vm\.)?(youtube\.com|youtu\.be|tiktok\.com|twitch\.tv|facebook\.com|fb\.watch)\//i.test(u||'')}
-  function run(){
-    document.querySelectorAll('[data-live-metric]').forEach(function(el){
-      var box=el.closest('[data-live-url]');
-      el.style.display=ok(box?box.getAttribute('data-live-url'):'')?'':'none';
-    });
+  function active(){
+    var f=document.getElementById('rframe');
+    return !!(f&&f.querySelector('iframe,a,video'));
   }
-  window.ccLiveApply=run;
-  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['data-live-url']});
+  function targets(){
+    var h=document.getElementById('lheart');
+    return [document.getElementById('rstats'),document.getElementById('rv'),h&&h.parentElement].filter(Boolean);
+  }
+  function run(){
+    var on=active();
+    targets().forEach(function(e){e.style.display=on?'':'none'});
+  }
   document.addEventListener('DOMContentLoaded',run);
+  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
+  run();
 })();

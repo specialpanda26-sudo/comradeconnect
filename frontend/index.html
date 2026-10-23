@@ -1359,12 +1359,13 @@ $('#acsv').onclick=async()=>{const rows=['id,total,delivery,status,ref,date'].co
 $('#madm').onclick=()=>{goTo('admin','me');drawAdmin()};$('#adb').onclick=()=>goTo('me','me');
 
 /* ---------- campus pulse: daily poll + hostel zone ratings ---------- */
-const QS=[{q:'How was lunch at the cafeteria today?',o:['Bad','Sawa','Fire'],b:[120,210,64]},{q:'Was the cafeteria queue worth it today?',o:['No','Maybe','Yes'],b:[150,88,102]},{q:'How was the water in your hostel today?',o:['Dry','Trickle','Flowing'],b:[170,140,52]}];
+const QS=[{q:'How was lunch at the cafeteria today?',o:['Bad','Sawa','Fire'],b:[0,0,0]},{q:'Was the cafeteria queue worth it today?',o:['No','Maybe','Yes'],b:[0,0,0]},{q:'How was the water in your hostel today?',o:['Dry','Trickle','Flowing'],b:[0,0,0]}];
 const Q=QS[Math.floor(Date.now()/864e5)%QS.length],PK='cs_poll_'+Math.floor(Date.now()/864e5);let vote=ST.get(PK,null);
 function drawPoll(){const tot=Q.b.reduce((a,c)=>a+c,0)+(vote===null?0:1);$('#pq').textContent=Q.q;
  $('#po').innerHTML=Q.o.map((o,i)=>{const pc=Math.round((Q.b[i]+(vote===i?1:0))/tot*100);return `<button class="opt" data-i="${i}"${vote!==null?' disabled':''}><i style="width:${vote!==null?pc:0}%"></i><span>${o}</span>${vote!==null?`<span style="float:right">${pc}%</span>`:''}</button>`}).join('');
  $('#pn').textContent=vote===null?'Vote to see how others voted. A new question every day.':tot.toLocaleString('en-KE')+' votes. Come back tomorrow for a new question.'}
-$('#po').onclick=e=>{const b=e.target.closest('.opt');if(!b||b.disabled)return;vote=+b.dataset.i;ST.set(PK,vote);drawPoll()};drawPoll();
+async function pulseLoad(){try{const d=await window.ccCall('/api/pulse',{auth:false});if(d.poll&&Array.isArray(d.poll.counts)){vote=(d.poll.mine===null||d.poll.mine===undefined)?null:d.poll.mine;ST.set(PK,vote);Q.b=d.poll.counts.map((c,i)=>Math.max(0,c-(vote===i?1:0)));drawPoll()}if(d.zones){ZONES.forEach(z=>{RK.forEach(k=>{const s=(d.zones[z]||{})[k]||[0,0];RT[z][k]=[s[0],s[1]]})});drawBoard()}}catch(e){}}
+$('#po').onclick=async e=>{const b=e.target.closest('.opt');if(!b||b.disabled)return;const i=+b.dataset.i;try{await window.ccCall('/api/pulse/vote',{body:{opt:i}});vote=i;ST.set(PK,vote);drawPoll();pulseLoad()}catch(er){toast(er.message)}};drawPoll();
 const RK=['Water','Security','Wifi'],SEEDR=[];
 let RT=ST.get('cs_rt',null),rated=ST.get('cs_rated',[]),pick={};
 if(!RT){RT={};ZONES.forEach((z,i)=>{RT[z]={};RK.forEach(k=>RT[z][k]=[0,0])})}
@@ -1373,9 +1374,8 @@ function drawBoard(){$('#lbd').innerHTML=[...ZONES].sort((a,b)=>zAvg(b)-zAvg(a))
 drawBoard();
 function buildRate(){pick={};$('#rz').innerHTML=ZONES.map(z=>`<option>${z}</option>`).join('');$('#rrows').innerHTML=RK.map(k=>`<div class="rr"><span>${k}</span><div class="stars" data-k="${k}">${[1,2,3,4,5].map(n=>`<button type="button" data-n="${n}" aria-label="${k} ${n} out of 5">${n}</button>`).join('')}</div></div>`).join('')}
 $('#rrows').onclick=e=>{const b=e.target.closest('button');if(!b)return;const g=b.parentElement;pick[g.dataset.k]=+b.dataset.n;[...g.children].forEach(x=>x.classList.toggle('on',x===b))};
-$('#rsub').onclick=()=>{const z=$('#rz').value;if(rated.includes(z))return toast('You already rated @'+z+' on this phone');if(RK.some(k=>!pick[k]))return toast('Pick a score for water, security and wifi');
- RK.forEach(k=>{RT[z][k][0]+=pick[k];RT[z][k][1]++});rated.push(z);ST.set('cs_rt',RT);ST.set('cs_rated',rated);drawBoard();shut();toast('Rating saved. Thanks for helping other comrades.')};
-$('#rate').onclick=()=>openDm('rate');$('#dx3').onclick=shut;
+$('#rsub').onclick=async()=>{const z=$('#rz').value;if(RK.some(k=>!pick[k]))return toast('Pick a score for water, security and wifi');try{await window.ccCall('/api/pulse/rate',{body:{zone:z,water:pick.Water,security:pick.Security,wifi:pick.Wifi}});shut();toast('Rating saved. Thanks for helping other comrades.');pulseLoad()}catch(e){toast(e.message)}};
+$('#rate').onclick=()=>openDm('rate');pulseLoad();setInterval(()=>{if(!document.hidden)pulseLoad()},60000);$('#dx3').onclick=shut;
 
 /* ---------- safety: report, block, hide, anonymous messages, safety tools ---------- */
 const RSN=['Asked me to pay or meet outside Comrade Connect','Names or targets a real person','Hate or harassment','Sexual content','Threat or violence','Spam or scam','Something else'];

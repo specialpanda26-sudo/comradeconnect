@@ -14,7 +14,7 @@ function h(tag, cls, html) { var e = document.createElement(tag); if (cls) e.cla
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
 function enhance(real) {
-  if (real.__cco || real.type === 'hidden') return;
+  if (real.__cco || real.type === 'hidden' || real.classList.contains('cco-b')) return;
   var n = parseInt(real.maxLength, 10); if (!(n >= 4 && n <= 8)) n = 6;
   var root = h('div', 'cco'); root.setAttribute('role', 'group'); root.setAttribute('aria-label', n + '-digit code');
   var ic = h('div', 'cco-ic', KEY), t = h('p', 'cco-t', 'Verify <b>code</b>'), s = h('p', 'cco-s', 'Enter the ' + n + '-digit code we sent you.');

@@ -25,7 +25,7 @@
 
   function busyBtn(b, on, label) { b.disabled = on; if (label) b.textContent = label; }
 
-  function ask(force) {
+  function ask(force, cb) {
     if (open || document.getElementById('ccea')) return;
     open = true;
     var m = window.ccTools && ccTools.sheet ? ccTools.sheet('') : null;
@@ -46,7 +46,7 @@
     [h3, sub, f, msg, go, alt].forEach(function (n) { box.appendChild(n); });
 
     var step = 1, say2 = function (t, bad) { msg.textContent = t || ''; msg.style.color = bad ? 'var(--bad,#fff)' : ''; };
-    function close() { open = false; m.close(); }
+    function close() { open = false; m.close(); if (cb) cb(); }
     function snooze() { var s = st(); s.n = (s.n || 0) + 1; s.until = Date.now() + s.n * 2 * 864e5; save(s); close(); }
     function toStep(n) {
       step = n; w1.hidden = n === 2; w2.hidden = n !== 2;
@@ -102,6 +102,12 @@
     }, 2500);
   }, 2000);
 
+  window.ccAskEmailSignup = function () {
+    return new Promise(function (done) {
+      if (!auth()) return done();
+      call("/api/me/recovery-email").then(function (d) { if (d.has_email || !d.available || googleLinked()) return done(); ask(false, done); }).catch(function () { done(); });
+    });
+  };
   window.ccAskEmail = function () {                    // always works, even after "Not now" three times
     if (!auth()) return say('Sign in first.');
     call('/api/me/recovery-email').then(function (d) {

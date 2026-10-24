@@ -9,8 +9,17 @@
   var say = function (t) { try { if (window.ccTools && ccTools.toast) ccTools.toast(t); else if (typeof toast === 'function') toast(t); } catch (e) {} };
   var api = function () { try { return (typeof CC_API === 'string' && CC_API) || ''; } catch (e) { return ''; } };
   var signedIn = function () { try { var a = window.ccAuth && window.ccAuth(); return !!(a && a.token); } catch (e) { return false; } };
-  var isDone = function () { try { return localStorage.getItem(DONE) === '1'; } catch (e) { return false; } };
-  var mark = function () { try { localStorage.setItem(DONE, '1'); } catch (e) {} };
+  var isNew = function () { try { return localStorage.getItem('cc_setup_new') === '1'; } catch (e) { return false; } };   // brand new Google account: ask first, whatever happened before on this phone
+  var isDone = function () { try { return !isNew() && localStorage.getItem(DONE) === '1'; } catch (e) { return false; } };
+  var mark = function () { try { localStorage.setItem(DONE, '1'); localStorage.removeItem('cc_setup_new'); } catch (e) {} };
+  // Clean username ideas: the first name from Google, then the same with two digits, then comrade + digits. Always plain names, never random ones.
+  function ideas() {
+    var f = ''; try { f = String((ME && ME.gfirst) || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]/g, '').slice(0, 14).toLowerCase(); } catch (e) {}
+    var d2 = function () { return String(10 + Math.floor(Math.random() * 90)); }, out = [];
+    if (f.length >= 3) { out.push(f, f + '_' + d2(), f + d2() + Math.floor(Math.random() * 10)); }
+    out.push('comrade_' + String(1000 + Math.floor(Math.random() * 9000)));
+    return out.slice(0, 3);
+  }
   var esc = function (t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
   var css = document.createElement('style');
@@ -29,7 +38,8 @@
     '#ccsu .go{width:100%;margin-top:18px;border:0;border-radius:999px;background:#A8DCE7;color:#101422;min-height:52px;font:700 16px Poppins,system-ui,sans-serif;cursor:pointer}',
     '#ccsu .go:disabled{opacity:.6}',
     '#ccsu .sk{display:block;width:100%;margin-top:8px;padding:12px;background:none;border:0;color:var(--mut,var(--mut));font:500 14px Poppins,system-ui,sans-serif;cursor:pointer}',
-    '#ccsu .e{margin:12px 0 0;font-size:13px;color:var(--bad);text-align:center}'
+    '#ccsu .e{margin:12px 0 0;font-size:13px;color:var(--bad);text-align:center}',
+    '#ccsu .ch{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}#ccsu .ch button{border:1px solid var(--line,rgba(255,255,255,.28));background:rgba(127,127,127,.12);color:inherit;border-radius:999px;padding:7px 13px;font:600 13px Poppins,system-ui,sans-serif;cursor:pointer}'
   ].join('');
   document.head.appendChild(css);
 
@@ -44,28 +54,30 @@
 
   function open() {
     if (document.getElementById('ccsu')) return;
-    shown = true;
+    shown = true; var fresh = isNew(); try { localStorage.removeItem('cc_setup_new'); } catch (e) {}
     var cur = ''; try { cur = (typeof ME !== 'undefined' && ME && ME.handle) ? String(ME.handle) : ''; } catch (e) {}
     var m = document.createElement('div'); m.id = 'ccsu'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Set up your account');
     m.innerHTML = '<div class="b">'
       + '<button type="button" class="ccx-plain" data-ccx="1" id="ccsu-x" aria-label="Close" style="position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:10px;width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;background:none;color:inherit;cursor:pointer">' + XI + '</button>'
-      + '<h2>Set up your account</h2>'
+      + '<h2>' + (fresh ? 'Choose your username' : 'Set up your account') + '</h2>'
       + '<p class="s">Choose your own username and a password so you can sign in on any phone. Your stories always stay anonymous. You can skip this and do it later.</p>'
       + '<form id="ccsu-f" novalidate>'
       + '<div class="f"><label for="ccsu-u">Username (optional)</label><input id="ccsu-u" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="20" placeholder="' + esc(cur || 'Pick a username') + '"></div>'
       + '<p class="h">3 to 20 letters, numbers or _</p>'
+      + (fresh || !cur ? '<div class="ch" id="ccsu-ch">' + ideas().map(function (n) { return '<button type="button" data-n="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') + '</div>' : '')
       + '<div class="f"><label for="ccsu-p">Password (optional)</label><input id="ccsu-p" type="password" autocomplete="new-password" maxlength="100" placeholder="At least 8 characters"><button type="button" class="eye" id="ccsu-eye" aria-label="Show password">' + EYE + '</button></div>'
       + '<div class="f"><label for="ccsu-n">Phone number (optional)</label><input id="ccsu-n" type="tel" inputmode="tel" autocomplete="tel" placeholder="07XX XXX XXX"></div>'
       + '<p class="h">Used to fill in M-Pesa payments and withdrawals for you. It stays on this phone.</p>'
       + '<p class="e" id="ccsu-e" role="alert" hidden></p>'
       + '<button type="submit" class="go" id="ccsu-go">Save</button></form>'
-      + '<button type="button" class="sk" id="ccsu-sk">Skip for now</button>'
+      + '<button type="button" class="sk" id="ccsu-sk">' + (fresh ? 'Cancel' : 'Skip for now') + '</button>'
       + '<p class="h" style="text-align:center">You can add these later in your profile.</p></div>';
     document.body.appendChild(m);
     var $ = function (s) { return m.querySelector(s); };
     var err = function (t) { var e = $('#ccsu-e'); e.textContent = t || ''; e.hidden = !t; };
     var close = function () { m.remove(); };
     $('#ccsu-x').onclick = $('#ccsu-sk').onclick = function () { mark(); close(); };
+    var ch = $('#ccsu-ch'); if (ch) ch.onclick = function (ev) { var b = ev.target.closest('button[data-n]'); if (b) { $('#ccsu-u').value = b.dataset.n; err(''); } };
     $('#ccsu-eye').onclick = function () { var i = $('#ccsu-p'), s = i.type === 'password'; i.type = s ? 'text' : 'password'; this.setAttribute('aria-label', s ? 'Hide password' : 'Show password'); };
     $('#ccsu-f').onsubmit = function (ev) {
       ev.preventDefault(); err('');
@@ -93,17 +105,17 @@
     var l = document.getElementById('loader'), lk = document.getElementById('lk');
     return !!(document.getElementById('ccfrst') || document.getElementById('ccfp') || (lk && lk.classList.contains('on')) || (l && getComputedStyle(l).display !== 'none' && l.getBoundingClientRect().height > 0));
   }
+  var asking = false;
   var timer = setInterval(function () {
-    if (shown || isDone() || ++tries > 400) { clearInterval(timer); return; }
-    if (!signedIn() || busy()) return;
-    clearInterval(timer);
-    setTimeout(function () {
-      if (isDone() || busy()) return;
-      fetch(api() + '/api/me').then(function (r) { return r.ok ? r.json() : null; }).then(function (me) {
-        if (!me || me.has_password || isDone()) { if (me && me.has_password) mark(); return; }
-        open();
-      }).catch(function () {});
-    }, 1500);
-  }, 1500);
+    if (shown || isDone() || ++tries > 600) { clearInterval(timer); return; }
+    if (asking || !signedIn() || busy()) return;
+    asking = true;
+    fetch(api() + '/api/me').then(function (r) { return r.ok ? r.json() : null; }).then(function (me) {
+      asking = false;
+      if (!me || shown) return;
+      if (me.has_password) { mark(); clearInterval(timer); return; }
+      clearInterval(timer); open();
+    }).catch(function () { asking = false; });
+  }, 500);
   window.ccSetupAccount = open;                          // the profile can call this to reopen it later
 })();

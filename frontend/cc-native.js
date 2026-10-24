@@ -83,7 +83,7 @@
 
   // New version of the app? Ask the person: "Update now" or "Cancel". The website inside the app cannot change by itself, so every change you push
   // builds a new APK (GitHub Releases); the app checks for it when it opens, when you come back to it, and when the internet returns.
-  var REPO = 'specialpanda26-sudo/comradeconnect';
+  var REPO = 'specialpanda26-sudo/comradeconnect-releases';
   var updBusy = false, updOpen = false, updLast = 0;
   var checkUpdate = function (force) {
     if (updBusy || updOpen || !P.App || !P.App.getInfo || navigator.onLine === false) return;

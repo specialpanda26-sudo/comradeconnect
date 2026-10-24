@@ -1,5 +1,5 @@
 #!/bin/sh
-REPO=specialpanda26-sudo/comradeconnect
+REPO=specialpanda26-sudo/comradeconnect-releases
 command -v gh >/dev/null || { echo "Install gh first: pkg install gh"; exit 1; }
 gh release list -R "$REPO" -L 1000 --json tagName,createdAt -q 'sort_by(.createdAt) | reverse | .[].tagName' > "$HOME/cc_tags.txt" || { echo "Could not list releases. Run: gh auth login"; exit 1; }
 TOTAL=$(wc -l < "$HOME/cc_tags.txt")

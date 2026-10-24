@@ -4,7 +4,7 @@
   'use strict';
   if (window.__ccGetApp) return; window.__ccGetApp = 1;
   if (window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) return;
-  var REPO = 'specialpanda26-sudo/comradeconnect';   // CHANGE THIS to your PUBLIC releases repo if the main repo is private
+  var REPO = 'specialpanda26-sudo/comradeconnect-releases';   // CHANGE THIS to your PUBLIC releases repo if the main repo is private
   var REL = 'https://github.com/' + REPO + '/releases/latest/download/';
   var DREL = 'https://github.com/' + REPO + '/releases/download/desktop-latest/';   // computer apps always live here
   var API = 'https://api.github.com/repos/' + REPO + '/releases?per_page=20';

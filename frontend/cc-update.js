@@ -6,7 +6,7 @@
   var cap = window.Capacitor;
   if (!(cap && cap.isNativePlatform && cap.isNativePlatform())) return;
   if (window.__ccUpd) return; window.__ccUpd = 1;
-  var REPO = 'specialpanda26-sudo/comradeconnect';
+  var REPO = 'specialpanda26-sudo/comradeconnect-releases';
   var P = cap.Plugins || {};
   ['App', 'Browser'].forEach(function (n) { try { if (!P[n] && cap.registerPlugin) P[n] = cap.registerPlugin(n); } catch (e) {} });
   var state = { cur: 0, n: 0, url: '', notes: '', checking: false, last: 0, msg: '' };

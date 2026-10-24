@@ -50,7 +50,7 @@ window.ccBusy = function (btn, on, label) {
 /* ---------- small popup sheet ---------- */
 function sheet(html) {
   const m = document.createElement('div');
-  m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(16,20,34,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';
+  m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(16,20,34,.8);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';
   m.innerHTML = '<div class="box g" style="max-width:360px;width:100%">' + html + '</div>';
   document.body.appendChild(m);
   m.close = () => m.remove();
@@ -247,18 +247,21 @@ function promptRestore(msg, title) {
 // Forgot password: only the email saved on the account is asked. A 6-digit code goes to it, then the person picks a new password.
 function promptForgot(prefill) {
   if (document.getElementById('ccfgt')) return;
-  const m = sheet('<h3>Forgot password</h3><p class="sub" style="margin-top:6px">Type the email saved on your account. We send a 6-digit code to it, then you choose a new password. No email saved yet? Sign in with your recovery code instead.</p>'
+  const m = sheet('<p class="sub" id="ccfg-st" style="margin:0 0 4px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;font-size:12px">Step 1 of 2</p><h3>Reset your password</h3><p class="sub" id="ccfg-in" style="margin-top:6px">Type the email saved on your account. We send a 6-digit code to it, then you choose a new password. No email saved yet? Sign in with your recovery code instead.</p>'
     + '<div class="fld" style="margin-top:10px"><input id="ccfg-m" type="email" inputmode="email" placeholder="Email on your account" autocomplete="email" autocapitalize="off" aria-label="Email on your account"></div>'
     + '<div id="ccfg-2" style="display:none"><div class="fld"><input id="ccfg-c" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" aria-label="6-digit code"></div>'
     + '<div class="fld"><input id="ccfg-p" type="password" placeholder="New password" autocomplete="new-password" aria-label="New password"></div></div>'
     + '<p class="sub" id="ccfg-e" style="min-height:18px"></p>'
-    + '<p class="sub" style="text-align:center;margin:0 0 8px"><a href="#" id="ccfg-have">I already have a code</a></p><div class="two"><button class="btn g" id="ccfg-x">Cancel</button><button class="btn p" id="ccfg-go">Send code</button></div>');
+    + '<p class="sub" style="text-align:center;margin:0 0 8px"><a href="#" id="ccfg-have">I already have a code</a></p><div class="two"><button class="btn g" id="ccfg-x">Cancel</button><button class="btn p" id="ccfg-go">Send code</button></div>'
+    + '<p class="sub" style="text-align:center;margin:14px 0 0"><a href="#" id="ccfg-bk" style="font-weight:600;color:inherit">Back to sign in</a></p>');
   m.id = 'ccfgt';
+  m.style.background = 'rgba(8,11,22,.97)'; m.style.webkitBackdropFilter = m.style.backdropFilter = 'blur(22px)';   // nothing of the screen behind shows through
   const $ = (i) => m.querySelector('#' + i), msg = (t, bad) => { $('ccfg-e').textContent = t; $('ccfg-e').style.color = bad ? 'var(--bad,#FF6B6B)' : ''; };
   const pre = String(prefill || '').trim(); if (pre.indexOf('@') > 0) $('ccfg-m').value = pre;
   $('ccfg-x').onclick = () => m.close();
+  $('ccfg-bk').onclick = (ev) => { ev.preventDefault(); m.close(); };
   let step = 1;
-  const toStep2 = () => { step = 2; $('ccfg-2').style.display = 'block'; $('ccfg-go').textContent = 'Change password'; $('ccfg-have').textContent = 'Send me a new code'; $('ccfg-c').focus(); };
+  const toStep2 = () => { step = 2; $('ccfg-st').textContent = 'Step 2 of 2'; $('ccfg-in').textContent = 'Type the 6-digit code we emailed you and choose a new password. Check your spam folder too.'; $('ccfg-2').style.display = 'block'; $('ccfg-go').textContent = 'Change password'; $('ccfg-have').textContent = 'Send me a new code'; $('ccfg-c').focus(); };
   $('ccfg-have').onclick = async (ev) => {
     ev.preventDefault(); if (!$('ccfg-m').value.trim()) return msg('Type your email first.', true);
     if (step === 1) { toStep2(); return msg('Type the 6-digit code from your email and a new password.'); }

@@ -22,7 +22,7 @@ export async function deviceGate(env, req) {
   const d = await deviceFrom(req, env);
   if (!d) return err(env, 'Please update the Comrade Connect app (or refresh the page) so we can check this device, then try again.', 400);
   if ((await bindings(env, d.hash)).length >= maxAccounts(env))
-    return err(env, 'This device already has a Comrade Connect account. Sign in to it instead. If this is a mistake, contact support.', 403);
+    return err(env, 'This device has reached the limit of ' + maxAccounts(env) + ' Comrade Connect accounts. Sign in to one of them instead. If this is a mistake, contact support.', 403);
   return null;
 }
 // After the account row exists: claim the device for it. If two sign-ups raced and the device is over the limit, the newcomer is removed.
@@ -34,7 +34,7 @@ export async function deviceClaim(env, req, aid) {
   if (all.length > maxAccounts(env) && all.indexOf(aid) >= maxAccounts(env)) {
     await sb(env, `account_devices?aid=eq.${enc(aid)}`, { method: 'DELETE' });
     await sb(env, `profiles?aid=eq.${enc(aid)}`, { method: 'DELETE' });
-    return err(env, 'This device already has a Comrade Connect account. Sign in to it instead.', 403);
+    return err(env, 'This device has reached the limit of ' + maxAccounts(env) + ' Comrade Connect accounts. Sign in to one of them instead.', 403);
   }
   return null;
 }

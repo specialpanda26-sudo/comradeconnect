@@ -183,12 +183,15 @@
 
   function openRestore() {
     var m = sheet('<h3>Sign in</h3><p class="sub" style="margin-top:6px">Enter your username and password. If you made your account before usernames, use your account ID and the recovery code you saved.</p>'
-      + '<div class="fld" style="margin-top:10px"><input id="ccp-a" placeholder="Username or account ID" autocomplete="username" autocapitalize="off" aria-label="Username or account ID"></div>'
+      + '<form id="ccp-f" style="display:contents" autocomplete="on" novalidate>'   /* a real form: Android and Chrome then offer to save the password */
+      + '<div class="fld" style="margin-top:10px"><input id="ccp-a" name="username" placeholder="Username or account ID" autocomplete="username" autocapitalize="off" aria-label="Username or account ID"></div>'
       + pwField('ccp-c', 'Password or recovery code', 'Password or recovery code', 'current-password') + SHOWPW
       + '<p class="sub" id="ccp-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
-      + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-r">Sign in</button></div>'
+      + '<div class="two"><button type="button" class="btn g" id="ccp-x">Cancel</button><button type="submit" class="btn p" id="ccp-r">Sign in</button></div></form>'
       + '<p class="sub" style="text-align:center;margin:14px 0 0"><a href="#" id="ccp-fg" style="font-weight:600;text-decoration:underline;color:inherit">Forgot password?</a></p>');
     showToggle(m, ['ccp-c']);
+    $('#ccp-c', m).setAttribute('name', 'password');
+    $('#ccp-f', m).onsubmit = function (ev) { ev.preventDefault(); };   // the Sign in button's click does the work
     $('#ccp-x', m).onclick = function () { m.close(); };
     $('#ccp-fg', m).onclick = function (ev) {
       ev.preventDefault();
@@ -200,7 +203,7 @@
       $('#ccp-e', m).textContent = '';
       if (!a || !c) { $('#ccp-e', m).textContent = 'Enter your username and password'; return; }
       busyBtn(b, true, 'Signing in...');
-      try { await window.CC.restoreAccount(a, c); m.close(); say('Signed in'); await afterSignIn(); }
+      try { await window.CC.restoreAccount(a, c); if (window.ccRemember) ccRemember(a, c); m.close(); say('Signed in'); await afterSignIn(); }
       catch (e) { $('#ccp-e', m).textContent = e.message || 'Could not sign in'; busyBtn(b, false); }
     };
   }

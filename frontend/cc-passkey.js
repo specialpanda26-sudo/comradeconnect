@@ -95,9 +95,9 @@
   }
 
   // ---- "Sign in with a passkey" button on the restore screens ----
-  function addSignIn(host, before, fail) {
+  function addSignIn(host, before, fail, cls, css) {
     if (!supported() || host.querySelector('.ccpk-in')) return;
-    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn g ccpk-in'; b.style.cssText = 'width:100%;margin-top:10px';
+    var b = document.createElement('button'); b.type = 'button'; b.className = (cls || 'btn g') + ' ccpk-in'; b.style.cssText = css || 'width:100%;margin-top:10px';
     b.innerHTML = KEY + 'Sign in with a passkey';
     b.onclick = function () { signIn(b, fail); };
     if (before && before.parentNode) before.parentNode.insertBefore(b, before); else host.appendChild(b);
@@ -105,6 +105,8 @@
   function scan() {
     mountBox();
     var rrs = $('#rrs'); if (rrs) addSignIn(rrs.parentNode, rrs, null);
+    var fr = $('#ccfrst-form'); if (fr) addSignIn(fr, null, function (m) { var e = $('#ccfrst-e'); if (e) { e.textContent = m; e.hidden = !m; } }, 'ccfrst-btn', 'margin-top:10px;background:transparent!important;border:1px solid rgba(255,255,255,.35)!important;color:inherit');
+    var pr = $('#ccp-r'); if (pr) { var pf = $('#ccp-f'); if (pf) addSignIn(pf, null, function (m) { var e = $('#ccp-e'); if (e) e.textContent = m; }); }
     var sh = $('#ccrst'); if (sh) { var go = $('#ccrst-go', sh); if (go) addSignIn(go.parentNode.parentNode, go.parentNode, function (m) { var e = $('#ccrst-e', sh); if (e) e.textContent = m; }); }
   }
   new MutationObserver(function () { scan(); }).observe(document.documentElement, { childList: true, subtree: true });

@@ -47,6 +47,15 @@ window.ccBusy = function (btn, on, label) {
   }
 };
 
+// ccRemember(username, password): after a good sign-in, offer the login to the browser's password manager so the next sign-in is one tap.
+// Account IDs (u_...) are skipped: those sign-ins use a recovery code, not a password.
+window.ccRemember = function (id, pw) {
+  try {
+    id = String(id || '').trim(); if (!id || !pw || /^u_[0-9a-f]{16}$/i.test(id)) return;
+    if (window.PasswordCredential && navigator.credentials && navigator.credentials.store) navigator.credentials.store(new PasswordCredential({ id: id, password: String(pw), name: id })).catch(function () {});
+  } catch (e) {}
+};
+
 /* ---------- small popup sheet ---------- */
 function sheet(html) {
   const m = document.createElement('div');
@@ -240,7 +249,7 @@ function promptRestore(msg, title) {
   if (googleOn()) mountGoogle(m.querySelector('#ccrg'), () => { m.close(); toast('Signed in'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {} }, (e) => { m.querySelector('#ccrst-e').textContent = e; });
   m.querySelector('#ccrst-go').onclick = async () => {
     const b = m.querySelector('#ccrst-go'); ccBusy(b, true, 'Signing in...'); m.querySelector('#ccrst-e').textContent = '';
-    try { await restoreAccount(m.querySelector('#ccrst-a').value, m.querySelector('#ccrst-c').value); m.close(); toast('Account restored'); refreshAll(); }
+    try { const ua = m.querySelector('#ccrst-a').value, up = m.querySelector('#ccrst-c').value; await restoreAccount(ua, up); ccRemember(ua, up); m.close(); toast('Account restored'); refreshAll(); }
     catch (e) { m.querySelector('#ccrst-e').textContent = e.message; ccBusy(b, false); }
   };
 }

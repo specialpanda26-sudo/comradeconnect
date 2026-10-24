@@ -159,7 +159,7 @@
       var u = $('#ccfrst-u').value.trim(), p = $('#ccfrst-p').value, b = $('#ccfrst-in');
       if (!u || !p) return err('Enter your username and password');
       busy(b, true, 'Logging in...', 'Log in');
-      CC.restoreAccount(u, p).then(function () { say('Welcome back, comrade'); close(true); setTimeout(function () { location.reload(); }, 350); },
+      CC.restoreAccount(u, p).then(function () { if (window.ccRemember) ccRemember(u, p); say('Welcome back, comrade'); close(true); setTimeout(function () { location.reload(); }, 350); },
         function (e) { busy(b, false, 'Logging in...', 'Log in'); err((e && e.message) || 'That username or password is not right'); });
     };
 

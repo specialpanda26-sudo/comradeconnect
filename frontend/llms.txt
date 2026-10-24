@@ -1,6 +1,6 @@
 # Comrade Connect
 
-> Comrade Connect is a campus app for Kirinyaga University comrades in Kenya: an anonymous campus feed, a safe marketplace with escrow payments, events with tickets, campus notices and Hearts.
+> Comrade Connect is a campus app for Kenyan university comrades in Kenya: an anonymous campus feed, a safe marketplace with escrow payments, events with tickets, campus notices and Hearts.
 
 ## Who owns and runs it
 - Owner and operator: Ogolla Tech (Kenya)

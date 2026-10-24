@@ -315,7 +315,7 @@ function wordHit(t){const M={zero:0,sifuri:0,nought:0,naught:0,one:1,moja:1,two:
 function modLog(kind,text){try{const L=JSON.parse(localStorage.getItem('cs_modlog')||'[]');L.push({at:Date.now(),kind,aid:(typeof ME!=='undefined'&&ME.aid)||'',why:'number-words',text:String(text).slice(0,200)});localStorage.setItem('cs_modlog',JSON.stringify(L.slice(-200)))}catch(e){}}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="config.js?v=2"></script>
+<script src="config.js?v=3"></script>
 <script>
 /* Comrade Connect payment client. CC_API and CC_GOOGLE_ID come from config.js. */
 async function ccJson(url,opt){let r;try{r=await fetch(url,opt)}catch(e){throw new Error('Could not reach the server. Check your internet and try again.')}

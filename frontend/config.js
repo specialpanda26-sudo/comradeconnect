@@ -4,4 +4,4 @@
 const CC_API = 'https://comradeconnectback.onrender.com';
 const CC_GOOGLE_ID = '628050649968-umh0eflaigqqet517sj7te2oa9h0bsmq.apps.googleusercontent.com';
 const CC_NATIVE_GOOGLE = false;   // the in-app picker plugin was removed (it crashed some phones); the app signs in through the phone's secure browser tab
-const CC_AGORA_ID = '79e2fffbbb174dc68ef55905a227d9f8';
+const CC_AGORA_ID = '1c6f32877ba24f478465733e633a5b4d';

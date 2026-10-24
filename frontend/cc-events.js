@@ -12,6 +12,16 @@ st.textContent = '.cchips{display:flex;gap:6px;flex-wrap:wrap}.cchc{all:unset;bo
   + '.cchm input,.cchm textarea{width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid var(--line,rgba(255,255,255,.2));background:transparent;color:inherit;font:inherit}'
   + '.cchev{border:1px solid var(--line,rgba(255,255,255,.14));border-radius:16px;padding:14px;margin-top:10px}.cchev b{display:block}.cchev small{opacity:.7}'
   + '.cchn{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:10000;background:var(--bg,#101422);color:var(--fg,#fff);border:1px solid var(--gb,rgba(255,255,255,.16));padding:10px 16px;border-radius:99px;font-size:14px;max-width:90%}';
+st.textContent += 'html .cchost{margin-bottom:14px}'
+  + 'html .cchost .row,html .cchm .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}'
+  + 'html .cchb{display:flex;align-items:center;justify-content:center;min-height:46px;padding:12px 14px;border:0;border-radius:14px;background:var(--gb);color:var(--fg);font-weight:600;text-decoration:none}'
+  + 'html .cchb.p{background:var(--ink);color:var(--inkfg)}'
+  + 'html .cchc{border:1px solid var(--line);background:transparent;color:var(--fg)}'
+  + 'html .cchc.on{background:var(--ink);color:var(--inkfg);border-color:var(--ink)}'
+  + 'html .cchm input,html .cchm textarea{background:var(--gb);border:1px solid var(--line);color:var(--fg);border-radius:14px}'
+  + 'html .cchm label{opacity:.7;font-weight:600}'
+  + 'html .cchev{background:var(--gb);border:0;border-radius:18px}'
+  + 'html .cchn{background:var(--ink);color:var(--inkfg);border:0}';
 document.head.appendChild(st);
 
 function h(tag, attrs, kids) {

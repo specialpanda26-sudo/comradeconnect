@@ -1437,7 +1437,7 @@ function payNow(o) {
 function initClub() {
   const baseDrawClub = drawClub;
   drawClub = function () { if (!connected()) return baseDrawClub(); drawClubX(); if (!CS.loaded || Date.now() - CS.at > 20000) loadClub(true); };
-  const guard = (sel, fn) => $(sel).addEventListener('click', (e) => { if (!connected()) return; e.stopPropagation(); fn(e); }, true);
+  const guard = (sel, fn) => $(sel).addEventListener('click', (e) => { if (!connected() || (e.target.closest && e.target.closest('.cchost'))) return; e.stopPropagation(); fn(e); }, true);
   guard('#cmem', async (e) => {
     const b = e.target.closest('#cjoin'); if (!b) return; b.disabled = true;
     try { await call('/api/club/join', { body: {} }); CS.member = true; toast('Welcome to the Club'); } catch (err) { toast(err.message); }

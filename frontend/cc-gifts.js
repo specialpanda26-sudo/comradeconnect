@@ -60,6 +60,7 @@ function draw() {
   var two = el('div', 'two'); two.style.marginTop = '10px'; two.appendChild(btn('Copy link', 'g', copy)); two.appendChild(btn('Share', 'p', share)); host.appendChild(two);
   var two2 = el('div', 'two'); two2.style.marginTop = '8px'; two2.appendChild(btn('Edit', 'g', edit)); two2.appendChild(btn(D.link.active ? 'Pause' : 'Turn on', 'g', toggle)); host.appendChild(two2);
   if (!D.earned.count) { var z = el('p', 'note', 'No gifts yet. When someone sends you one, it shows here and in your wallet.'); z.style.marginTop = '12px'; host.appendChild(z); return; }
+  if (!D.earned.count) { var z = el('p', 'note', 'No gifts yet. When someone sends you one, it shows here and in your wallet.'); z.style.marginTop = '12px'; host.appendChild(z); return; }
   var hr = el('div'); hr.style.cssText = 'height:1px;background:var(--line,rgba(255,255,255,.12));margin:14px 0'; host.appendChild(hr);
   host.appendChild(el('div', 'sub', 'Received in gifts'));
   var big = el('div', 'big', kes(D.earned.net)); host.appendChild(big);

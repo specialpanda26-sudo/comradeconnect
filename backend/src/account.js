@@ -230,6 +230,11 @@ export async function accountRoutes(req, env, url, ip) {
     const list = await rows(await sb(env, `wallet_ledger?select=delta,kind,status,note,created_at&aid=eq.${enc(u.aid)}&status=neq.void&created_at=gte.${enc(ago(90 * DAY))}&order=created_at.desc&limit=1000`));
     return json(env, { balance: await balance(env, u.aid), ledger: list });
   }
+  if (path === '/api/wallet/stats' && m === 'GET') {
+    const u = await user(req, env); if (u instanceof Response) return u;
+    const list = await rows(await sb(env, `wallet_ledger?select=delta,kind,status,note,created_at&aid=eq.${enc(u.aid)}&status=neq.void&created_at=gte.${enc(ago(90 * DAY))}&order=created_at.desc&limit=1000`));
+    return json(env, { balance: await balance(env, u.aid), ledger: list });
+  }
   if (path === '/api/wallet/withdraw' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     if ((env.WITHDRAW_REQUIRES_VERIFIED ?? '1') === '1' && !u.verified) return err(env, 'Verify your ID before withdrawing', 403);

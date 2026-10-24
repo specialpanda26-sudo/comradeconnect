@@ -84,7 +84,8 @@
         st.cl.on('user-unpublished', function (u, type) { if (type === 'video' && !st.dead) { v.textContent = 'The host paused the video'; } });
         v.textContent = 'Waiting for the host video...';
       }
-      await st.cl.join(AGORA, s.channel, null, null); if (st.dead) { try { st.cl.leave(); } catch (e) {} return; }
+      var tk = null; try { tk = (await call('/api/live/token', { auth: !!host, body: { channel: s.channel, host: !!host } })).token || null; } catch (e) { if (host) throw e; }
+      await st.cl.join(AGORA, s.channel, tk, null); if (st.dead) { try { st.cl.leave(); } catch (e) {} return; }
       if (host) {
         var t = await AgoraRTC.createMicrophoneAndCameraTracks({}, { encoderConfig: '720p_2' });
         st.tracks = t; if (st.dead) { detach(box); return; }
@@ -94,6 +95,8 @@
     } catch (e) {
       if (st.dead) return false;
       var n = e && (e.name || e.code) || '';
+      var why = String(n) + ' ' + (e && e.message) + ' ' + (e && e.code);
+      if (/CAN_NOT_GET_GATEWAY_SERVER|INVALID_VENDOR_KEY|DYNAMIC_KEY|TOKEN/i.test(why)) { v.textContent = 'Live video is not ready: the video service refused to connect. The admin must add the Agora App Certificate on the server.'; try { console.warn('live error', e); } catch (x) {} return false; }
       v.textContent = /NotAllowed|PERMISSION/i.test(String(n) + (e && e.message)) ? 'Camera or microphone is blocked. Allow them for this site, then try again.' : 'Could not start the video (' + String(e && (e.code || e.name || e.message) || 'unknown').slice(0, 60) + '). Tell the admin this code.'; /* ccl-why */ try { console.warn('live error', e); } catch (x) {}
       return false;
     }

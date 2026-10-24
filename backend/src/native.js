@@ -1,6 +1,7 @@
 // Live inside Comrade Connect (video by Agora, free plan) + profile pictures.
 // The video itself never touches our server; we only keep the stream row, hearts, comments and viewers.
 import { liveEmbed } from './media.js';
+import { agoraToken, hasAgoraCert } from './agora.js';
 import { viewerCounts } from './live.js';
 import { json, err, sb, rows, one, post, patch, enc, str, randHex, user, isAdmin, throttle, tooMany } from './lib.js';
 
@@ -35,6 +36,22 @@ export async function nativeRoutes(req, env, url, ip) {
     await patch(env, `live_streams?host_aid=eq.${enc(hostAid)}&status=eq.live`, { status: 'ended', ended_at: new Date().toISOString() });
     const s = await one(await post(env, 'live_streams', { host_aid: hostAid, title, input_uid: 'cc:' + channel }));
     return s ? json(env, { id: s.id, channel, native: true }, 201) : err(env, 'Could not start', 500);
+  }
+
+  // Video token for the Agora channel of a live that is running. The host gets a publishing token, everyone else a watch-only one.
+  // No certificate set on the server = no token (the app then joins without one, which only works if the Agora project has the certificate switched off).
+  if (path === '/api/live/token' && m === 'POST') {
+    const b = await req.json().catch(() => ({})), channel = str(b.channel, 40).replace(/[^\w-]/g, '');
+    if (!channel) return err(env, 'Bad request');
+    if (!hasAgoraCert(env)) return json(env, { token: null });
+    const s = await one(await sb(env, `live_streams?select=id,host_aid&input_uid=eq.${enc('cc:' + channel)}&status=eq.live`)); if (!s) return err(env, 'This live has ended', 404);
+    let host = false;
+    if (b.host) {
+      if (isAdmin(req, env)) host = s.host_aid === 'admin';
+      else { const u = await user(req, env, true); if (u instanceof Response) return u; host = u.aid === s.host_aid; }
+      if (!host) return err(env, 'Only the host can start the video', 403);
+    }
+    return json(env, { token: await agoraToken(env, channel, host ? 'host' : 'audience') });
   }
 
   // Profile picture: a small square JPEG (about 192px) saved on the profile as text.

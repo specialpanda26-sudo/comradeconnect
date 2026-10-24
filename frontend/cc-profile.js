@@ -80,22 +80,6 @@
     });
   }
 
-  /* a REAL account (the old Me page and welcome sheet showed a made-up local code that could not restore anything) */
-  async function createGuest() {
-    if (!live()) throw new Error('We cannot reach the service right now. Please try again in a moment.');
-    var r, d;
-    try { r = await fetch(API + '/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); }
-    catch (e) { throw new Error('Could not reach the server. Check your internet and try again.'); }
-    d = await r.json().catch(function () { return {}; });
-    if (!r.ok) throw new Error(window.ccErr ? ccErr(r.status, d.error) : 'Could not create the account');
-    localStorage.setItem('cc_auth', JSON.stringify({ aid: d.aid, token: d.token }));
-    if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
-    ME.aid = d.aid; saveMe();
-    await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {} try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
-    await afterSignIn();
-    say('Account created');
-  }
-
   async function afterSignIn() {
     await fetchInfo();
     try { saveMe(); } catch (e) {}
@@ -260,10 +244,8 @@
       + '<div id="ccsig" style="display:flex;justify-content:center;min-height:44px"></div>'
       + '<p class="sub" id="ccsie" style="color:var(--bad,#FFFFFF);min-height:18px;margin:0"></p>'
       + '<button class="btn p" id="ccsiC" style="width:100%">Create account</button>'
-      + '<button class="btn g" id="ccsiR" style="width:100%">I already have an account</button>'
-      + '<button class="btn g" id="ccsiG" style="width:100%">Continue without a username</button></div>');
+      + '<button class="btn g" id="ccsiR" style="width:100%">I already have an account</button></div>');
     $('#ccsiC').onclick = openCreate;
-    $('#ccsiG').onclick = async function (e) { var b = e.currentTarget; b.disabled = true; try { await createGuest(); } catch (er) { say(er.message); } b.disabled = false; };
     $('#ccsiR').onclick = openRestore;
   }
   function ensureUp() {
@@ -381,13 +363,11 @@
   try { var d3 = drawVids; drawVids = function () { var r = d3.apply(this, arguments); paintClips(); return r; }; } catch (e) {}
   try { var g1 = go; go = function (v) { var r = g1.apply(this, arguments); if (v === 'me') { setTimeout(render, 0); if (!info && signedIn()) fetchInfo().then(function () { render(); }); } return r; }; } catch (e) {}
 
-  /* welcome sheet: "Create anonymous account" now makes a real account and shows the real recovery code */
+  /* welcome sheet: Sign up opens the one sign-in panel */
   var siA = $('#siA');
   if (siA) siA.onclick = async function () {
     if (signedIn()) return say('You already have an account on this phone');
-    siA.disabled = true;
-    try { await createGuest(); var dn = $('#siD'); if (dn) dn.click(); } catch (e) { say(e.message); }
-    siA.disabled = false;
+    if (window.ccAuthPanel) window.ccAuthPanel('create');
   };
   try {
     var rs = resetSi;

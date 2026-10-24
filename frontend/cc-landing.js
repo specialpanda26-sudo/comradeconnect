@@ -84,6 +84,11 @@ function go(i, user) {
 function open() {
   if (L) return;
   L = document.createElement('div'); L.id = ID; L.setAttribute('role', 'dialog'); L.setAttribute('aria-label', 'Welcome to Comrade Connect');
+  if (window.ccApp && window.ccApp.native && window.ccAppIntro) {      // the Android app gets the animated cards (cc-appintro.js); the website keeps the page below
+    document.body.appendChild(L);
+    window.ccAppIntro.mount(L, { caps: caps(cfg()), start: function () { done(); panel('create'); }, login: function () { done(); panel('login'); }, skip: done });
+    return;
+  }
   L.innerHTML = '<div class="hero" aria-hidden="true"><i></i></div><div class="sh"></div><div class="top"><img src="cc-mark.png" alt="" width="30" height="22">Comrade Connect</div>'
     + '<div class="bt"><div class="dots"></div><h1></h1><p></p><button type="button" class="go">Get started</button>'
     + '<div class="lg"><span></span><button type="button" data-l>Log in</button></div><button type="button" class="gu">Just looking around</button></div>';
@@ -95,7 +100,7 @@ function open() {
   L.querySelector('[data-l]').onclick = function () { done(); panel('login'); };
   L.querySelector('.gu').onclick = done;
 }
-/* ONE sign-in panel with a switch (Log in / Sign up / Anonymous). Get started opens it on Sign up, Log in opens it on Log in. */
+/* ONE sign-in panel with a switch (Log in / Sign up). Get started opens it on Sign up, Log in opens it on Log in. */
 function panel(mode) {
   var t = 0, tryOpen = function () {
     if (window.ccAuthPanel) window.ccAuthPanel(mode);
@@ -119,7 +124,7 @@ function start() {
   if (!seen() && !signed() && !cfg().landing_off) { window.__ccFrSeen = 1; try { sessionStorage.setItem('cc_fr', '1'); } catch (e) {} open(); }
 }
 if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
-document.addEventListener('cc-site', function () { if (L) build(); paintBg(); });
+document.addEventListener('cc-site', function () { if (L && !L.classList.contains('ccapp')) build(); paintBg(); });
 window.ccLanding = { open: function () { open(); }, close: done };
 
 /* ---- admin pictures behind each tab ---- */

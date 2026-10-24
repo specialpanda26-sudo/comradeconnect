@@ -80,24 +80,23 @@ async function rawPost(path, body) {
   if (!r.ok) throw Object.assign(new Error(ccErr(r.status, d.error)), { status: r.status });
   return d;
 }
-/* ---------- anonymous account with a password you choose (no random code) ---------- */
+/* ---------- account with a username and a password you choose (no random code) ---------- */
 function registerFlow() {
   return new Promise((done, fail) => {
-    const m = sheet('<h3>Create your anonymous account</h3><p class="sub" style="margin-top:6px">Pick a username and a password you will remember. No email, no phone number. Your password is the only way back in on a new phone.</p>'
+    const m = sheet('<h3>Create your account</h3><p class="sub" style="margin-top:6px">Pick a username and a password you will remember. No email, no phone number. Your password is the only way back in on a new phone.</p>'
       + '<form id="ccw-f" style="display:contents" autocomplete="on" novalidate>'
       + '<div class="fld" style="margin-top:10px"><input id="ccw-u" name="username" placeholder="Username (3 to 20 letters, numbers or _)" maxlength="20" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Username"></div>'
       + '<div class="fld"><input id="ccw-p" name="password" type="password" placeholder="Password (at least 8 characters)" maxlength="100" autocomplete="new-password" aria-label="Password"></div>'
       + '<div class="fld"><input id="ccw-p2" name="confirm_password" type="password" placeholder="Type the password again" maxlength="100" autocomplete="new-password" aria-label="Confirm password"></div>'
       + '<p class="sub" id="ccw-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
       + '<button type="submit" class="btn p" id="ccw-go" style="width:100%">Create account</button></form>'
-      + '<button class="btn g" id="ccw-rand" style="width:100%;margin-top:6px">Skip: give me a random recovery code</button>'
       + '<button class="btn g" id="ccw-x" style="width:100%;margin-top:6px">Cancel</button>');
     const $q = (s) => m.querySelector(s), err = (t) => { $q('#ccw-e').textContent = t || ''; };
     const run = async (body) => {
-      const spun = $q(body && body.handle ? '#ccw-go' : '#ccw-rand'), other = $q(body && body.handle ? '#ccw-rand' : '#ccw-go');
-      other.disabled = true; ccBusy(spun, true, 'Creating...'); err('');
+      const spun = $q('#ccw-go');
+      ccBusy(spun, true, 'Creating...'); err('');
       try { const d = await rawPost('/api/auth/register', body); m.close(); done(d); }
-      catch (e) { err(e.message); ccBusy(spun, false); other.disabled = false; }
+      catch (e) { err(e.message); ccBusy(spun, false); }
     };
     $q('#ccw-go').onclick = () => {
       const u = $q('#ccw-u').value.trim(), p = $q('#ccw-p').value;
@@ -108,7 +107,6 @@ function registerFlow() {
       run({ handle: u, password: p });
     };
     $q('#ccw-f').onsubmit = (ev) => { ev.preventDefault(); };   // the Create account button's click does the work
-    $q('#ccw-rand').onclick = () => run({});
     $q('#ccw-x').onclick = () => { m.close(); fail(new Error('Sign in to continue')); };
   });
 }
@@ -196,7 +194,7 @@ function chooseSignIn() {                                    // resolves 'google
     const m = sheet('<h3>Sign in to continue</h3><p class="sub" style="margin-top:6px">One tap with Google keeps your orders and wallet safe and works on any phone.</p>'
       + '<div id="ccg" style="display:flex;justify-content:center;margin-top:14px;min-height:44px"></div>'
       + '<p class="sub" id="ccg-e" style="color:var(--bad,#FFFFFF);min-height:18px;margin-top:6px"></p>'
-      + '<button class="btn g" id="ccg-guest" style="width:100%;margin-top:6px">No Google? Create an anonymous account</button>'
+      + '<button class="btn g" id="ccg-guest" style="width:100%;margin-top:6px">No Google? Create an account with a username</button>'
       + '<button class="btn g" id="ccg-x" style="width:100%;margin-top:6px">Cancel</button>');
     m.querySelector('#ccg-guest').onclick = () => { m.close(); done('guest'); };
     m.querySelector('#ccg-x').onclick = () => { m.close(); fail(new Error('Sign in to continue')); };
@@ -1636,10 +1634,10 @@ window.ccSignOut = signOut;
 window.ccGoogle = { on: googleOn, mount: mountGoogle, signIn: googleSignIn };
 
 window.ccMarketTerms = () => S.list.map((l) => l.title);
-// Used by the first-open panel. kind 'password' = username + password, 'random' = anonymous account with a recovery code.
+// Used by the first-open panel. Username + password only: random anonymous accounts are not offered any more.
 async function createAccount(kind, creds) {
   if (!connected()) throw new Error('We cannot reach the service right now. Please try again in a moment.');
-  const d = kind === 'random' ? await rawPost('/api/auth/register', {}) : (creds && creds.handle && creds.password) ? await rawPost('/api/auth/register', { handle: creds.handle, password: creds.password }) : await registerFlow();
+  const d = (creds && creds.handle && creds.password) ? await rawPost('/api/auth/register', { handle: creds.handle, password: creds.password }) : await registerFlow();
   saveAuth({ aid: d.aid, token: d.token });
   if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
   ME.aid = d.aid; saveMe();

@@ -856,8 +856,9 @@ q('#dcm').addEventListener('click',e=>{if(e.target.id==='dcm')q('#dcm').classLis
   </section>
   <section data-v="si" hidden>
     <div class="flex items-center justify-between"><h2>Welcome, comrade</h2><button class="ib xb" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <p class="note">No signup needed. Pick how to continue. Your stories always stay anonymous.</p>
-    <button class="btn p" id="siA" style="width:100%;margin-top:16px">Create anonymous account</button>
+    <p class="note">Sign up or log in to continue. Your stories always stay anonymous.</p>
+    <button class="btn p" id="siA" style="width:100%;margin-top:16px">Sign up</button>
+    <button class="btn g" id="siLg" style="width:100%;margin-top:10px" onclick="window.ccAuthPanel&&window.ccAuthPanel('login')">Log in</button>
     <div id="siGb" style="display:flex;justify-content:center;margin-top:10px;min-height:44px"></div>
     <p class="note" id="siGn" role="alert" hidden></p>
     <div id="siC" hidden><p class="note">Your handle</p><div class="code" id="siH"></div><p class="note" style="margin-top:12px">Recovery code. Save it somewhere safe. It is the only way back in without Google.</p><div class="code" id="siR"></div><button class="btn p" id="siD" style="width:100%;margin-top:14px">I saved it</button></div>
@@ -1594,7 +1595,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-logos.js?v=1"></script><script src="cc-landing.js?v=2"></script><script src="cc-getapp.js?v=8"></script><script src="cc-firstrun.js?v=7"></script><script src="cc-core.js?v=6"></script><script src="cc-welcome.js?v=4"></script><script src="cc-lockscreen.js?v=5"></script><script src="cc-lockglass.js?v=2"></script><script src="cc-receipt.js?v=5"></script><script src="cc-wifi.js?v=3"></script><script src="cc-hostels.js?v=4"></script><script src="cc-profile.js?v=8"></script><script src="cc-me.js?v=3"></script><script src="cc-closex.js?v=4"></script><script src="cc-nav.js?v=2"></script>
+<script src="cc-logos.js?v=1"></script><script src="cc-appintro.js?v=1"></script><script src="cc-landing.js?v=3"></script><script src="cc-getapp.js?v=8"></script><script src="cc-firstrun.js?v=8"></script><script src="cc-core.js?v=7"></script><script src="cc-welcome.js?v=4"></script><script src="cc-lockscreen.js?v=5"></script><script src="cc-lockglass.js?v=2"></script><script src="cc-receipt.js?v=5"></script><script src="cc-wifi.js?v=3"></script><script src="cc-hostels.js?v=4"></script><script src="cc-profile.js?v=9"></script><script src="cc-me.js?v=3"></script><script src="cc-closex.js?v=4"></script><script src="cc-nav.js?v=2"></script>
 <script src="cc-xcancel.js?v=5"></script><script src="cc-zones.js?v=3"></script>
 <script src="cc-onewelcome.js?v=1"></script>
 <script src="cc-setup.js?v=4"></script>

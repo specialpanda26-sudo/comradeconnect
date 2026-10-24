@@ -1,7 +1,7 @@
-/* cc-firstrun.js v5: the sign-in panel. ONE panel with a switch at the top: Log in / Sign up / Anonymous.
+/* cc-firstrun.js v5: the sign-in panel. ONE panel with a switch at the top: Log in / Sign up.
    Nothing pops up on top of it any more (Sign up used to open a second pop-up over the login screen).
    It opens when you open the app or site signed out, and you can close it (X or Skip for now) so it stays away for that visit.
-   window.ccAuthPanel('login' | 'create' | 'anon') opens the same panel from anywhere (landing page, Welcome banner, lock screen...).
+   window.ccAuthPanel('login' | 'create') opens the same panel from anywhere (landing page, Welcome banner, lock screen...).
    Look = the site's Aqua foundation: night, slate, aqua. Password strength + "Suggest a strong password" come from cc-pass.js
    (it picks up any autocomplete="new-password" field by itself). */
 (function () {
@@ -19,8 +19,7 @@
 
   var COPY = {
     login:  ['Welcome back', 'Log in to Comrade Connect. Your stories always stay anonymous.'],
-    create: ['Create your account', 'Pick a username and a password you will remember. No email, no phone number. Your password is the only way back in on a new phone.'],
-    anon:   ['Stay fully anonymous', 'No username and no password. You get a random recovery code to save. It is the only way back in on a new phone.']
+    create: ['Create your account', 'Pick a username and a password you will remember. No email, no phone number. Your password is the only way back in on a new phone.']
   };
 
   var css = document.createElement('style');
@@ -40,7 +39,7 @@
     '#ccfrst h2{margin:0 0 8px;font-family:var(--disp,Unbounded,Poppins,system-ui,sans-serif);font-size:clamp(24px,6.6vw,30px);line-height:1.18;letter-spacing:-.01em;font-weight:700;color:var(--fg,#fff)}',
     '#ccfrst p.ccfrst-s{margin:0 0 20px;font-size:14px;line-height:1.6;color:var(--mut,rgba(255,255,255,.62));min-height:3.2em}',
     /* the switch */
-    '#ccfrst .ccfrst-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;margin:0 0 22px;border-radius:999px;background:var(--g,#272B3B);border:1px solid var(--gb,rgba(255,255,255,.07))}',
+    '#ccfrst .ccfrst-seg{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;padding:4px;margin:0 0 22px;border-radius:999px;background:var(--g,#272B3B);border:1px solid var(--gb,rgba(255,255,255,.07))}',
     '#ccfrst .ccfrst-seg button{all:unset;box-sizing:border-box;text-align:center;cursor:pointer;padding:11px 6px;border-radius:999px;font:600 13px Poppins,system-ui,sans-serif;color:var(--mut,rgba(255,255,255,.62));transition:background .2s,color .2s;-webkit-tap-highlight-color:transparent}',
     '#ccfrst .ccfrst-seg button{background:none !important;background-image:none !important;border:0 !important;box-shadow:none !important}#ccfrst .ccfrst-seg button[aria-selected="true"]{background:var(--ink,#A8DCE7) !important;color:var(--inkfg,#101422)}',
     '#ccfrst .ccfrst-seg button:focus-visible{outline:2px solid var(--fg,#fff);outline-offset:2px}',
@@ -93,7 +92,7 @@
     m.innerHTML = '<div class="ccfrst-b"><button type="button" class="ccfrst-x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'
       + '<div class="ccfrst-hd"><img src="/cc-mark.png" alt="" width="38" height="28">Comrade Connect</div>'
       + '<h2 id="ccfrst-t"></h2><p class="ccfrst-s" id="ccfrst-s"></p>'
-      + '<div class="ccfrst-seg" role="tablist" aria-label="Account"><button type="button" role="tab" data-m="login">Log in</button><button type="button" role="tab" data-m="create">Sign up</button><button type="button" role="tab" data-m="anon">Anonymous</button></div>'
+      + '<div class="ccfrst-seg" role="tablist" aria-label="Account"><button type="button" role="tab" data-m="login">Log in</button><button type="button" role="tab" data-m="create">Sign up</button></div>'
       /* LOG IN */
       + '<form class="ccfrst-pn" data-pn="login" id="ccfrst-form" autocomplete="on" novalidate>'
       + field('ccfrst-u', 'Username or account ID', { attr: 'name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Enter your username"' })
@@ -108,9 +107,6 @@
       + field('ccfrst-cp', 'Password', { pw: 1, eye: 'create', attr: 'name="password" type="password" maxlength="100" autocomplete="new-password" placeholder="At least 8 characters"' })
       + field('ccfrst-cp2', 'Confirm password', { attr: 'name="confirm_password" type="password" maxlength="100" autocomplete="new-password" placeholder="Type it again"' })
       + '<button type="button" class="ccfrst-btn" id="ccfrst-new">Create account</button></form>'
-      /* ANONYMOUS */
-      + '<div class="ccfrst-pn" data-pn="anon" hidden><div class="ccfrst-box"><b>How it works</b><br>We make you an account with a random ID. After it is created you see a recovery code once. Screenshot it or write it down, because we cannot show it again.</div>'
-      + '<button type="button" class="ccfrst-btn" id="ccfrst-anon">Create anonymous account</button></div>'
       + '<p class="ccfrst-n" id="ccfrst-e" role="alert" hidden></p>'
       + '<div id="ccfrst-gw" hidden><p class="ccfrst-or">or</p><div class="ccfrst-g" id="ccfrst-gb"></div></div>'
       + '<div class="ccfrst-ft"><button type="button" class="ccfrst-sk" id="ccfrst-skip">Skip for now</button>'
@@ -125,7 +121,6 @@
       $('#ccfrst-t').textContent = COPY[k][0]; $('#ccfrst-s').textContent = COPY[k][1];
       $$('.ccfrst-seg button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.m === k ? 'true' : 'false'); });
       $$('.ccfrst-pn').forEach(function (p) { p.hidden = p.dataset.pn !== k; });
-      $('#ccfrst-gw').style.display = k === 'anon' ? 'none' : '';
       err('');
       if (focus !== false) setTimeout(function () { var f = k === 'login' ? $('#ccfrst-u') : k === 'create' ? $('#ccfrst-cu') : null; try { if (f) f.focus({ preventScroll: true }); } catch (e) {} }, 60);
       m.__mode = k;
@@ -177,13 +172,6 @@
     $('#ccfrst-cf').onsubmit = function (ev) { ev.preventDefault(); };   // the Create account button's click does the work
     $('#ccfrst-new').onclick = create;
     ['ccfrst-cu', 'ccfrst-cp', 'ccfrst-cp2'].forEach(function (id) { $('#' + id).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); create(); } }); });
-
-    $('#ccfrst-anon').onclick = function () {
-      if (!ready()) return; err('');
-      var b = $('#ccfrst-anon'); busy(b, true, 'Creating...', 'Create anonymous account');
-      var r; try { r = CC.createAccount('random'); } catch (e) { busy(b, false, 'Creating...', 'Create anonymous account'); return fail(e); }
-      r.then(function () { busy(b, false, 'Creating...', 'Create anonymous account'); }, function (e) { busy(b, false, 'Creating...', 'Create anonymous account'); fail(e); });
-    };
 
     $('.ccfrst-x', m).onclick = $('#ccfrst-skip').onclick = function () { close(true); };
     if (window.ccGoogle && ccGoogle.on && ccGoogle.on()) {

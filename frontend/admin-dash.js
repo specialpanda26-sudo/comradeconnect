@@ -213,7 +213,7 @@ const PW = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const makePw = () => { const a = crypto.getRandomValues(new Uint8Array(12)); let s = ''; a.forEach((x, i) => { s += PW[x % PW.length]; if (i === 3 || i === 7) s += '-'; }); return s; };
 
 function newAccount() {
-  const ov = sheet(closeX + '<h3>New anonymous account</h3><p class="sub" style="margin-top:6px">You choose the username and the password. No random code. The person signs in from Me, Restore an account, with these two.</p>'
+  const ov = sheet(closeX + '<h3>New account</h3><p class="sub" style="margin-top:6px">You choose the username and the password. No random code. The person signs in from Me, Restore an account, with these two.</p>'
     + '<input id="n_u" placeholder="Username (3 to 20 letters, numbers or _)" maxlength="20" autocomplete="off" autocapitalize="off">'
     + '<div class="ar"><input id="n_p" type="text" placeholder="Password (8+ characters)" maxlength="100" autocomplete="off" autocapitalize="off"><button data-d="gen2">Make one</button></div>'
     + '<select id="n_r" aria-label="Role"><option value="user">User</option><option value="seller">Seller</option><option value="club_admin">Club admin</option><option value="admin">Admin</option></select>'

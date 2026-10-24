@@ -4,7 +4,13 @@
 'use strict';
 if (window.__ccStreak) return; window.__ccStreak = 1;
 var view = document.getElementById('v-rewards'); if (!view) return;
-var D = null, card = null, at = 0, busy = false;
+var D = null, card = null, at = 0, busy = false, want = 0;
+function play(auto) {
+  if (!D || !window.ccStreakPlay || !D.last14) return;
+  var day = new Date().toDateString();
+  if (auto) { try { if (localStorage.getItem('cc_streak_fx') === day) return; localStorage.setItem('cc_streak_fx', day); } catch (e) {} }
+  window.ccStreakPlay({ from: Math.max(0, D.current - 1), to: D.current, days: D.last14.slice(-7) });
+}
 
 function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
 function signedIn() { var a = window.ccAuth && window.ccAuth(); return !!(a && a.token); }
@@ -13,7 +19,7 @@ function connected() { return typeof CC_API === 'string' && CC_API.indexOf('YOUR
 var css = el('style');
 css.textContent =
 '#ccstk .sk-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}' +
-'#ccstk .sk-n{font-size:44px;font-weight:600;letter-spacing:-.04em;line-height:1}#ccstk .sk-l{margin-left:8px;font-size:13px;color:var(--mut,var(--mut))}' +
+'#ccstk .sk-n{cursor:pointer;font-size:44px;font-weight:600;letter-spacing:-.04em;line-height:1}#ccstk .sk-l{margin-left:8px;font-size:13px;color:var(--mut,var(--mut))}' +
 '#ccstk .sk-b{font-size:12px;color:var(--mut,var(--mut));text-align:right;line-height:1.5}#ccstk .sk-b b{color:var(--fg,#fff);font-weight:600}' +
 '#ccstk .sk-d{display:flex;justify-content:space-between;gap:4px;margin-top:16px}' +
 '#ccstk .sk-d span{flex:1;max-width:22px;aspect-ratio:1;border-radius:50%;border:1.5px solid var(--line,rgba(255,255,255,.3));box-sizing:border-box}' +
@@ -40,14 +46,14 @@ function draw() {
 function mount() {
   if (card) return;
   var first = view.querySelector('.box.g'); if (!first) return;
-  card = el('div', 'box g'); card.id = 'ccstk'; first.parentNode.insertBefore(card, first.nextSibling);
+  card = el('div', 'box g'); card.id = 'ccstk'; card.addEventListener('click', function (e) { if (e.target.classList && e.target.classList.contains('sk-n')) play(false); }); first.parentNode.insertBefore(card, first.nextSibling);
 }
 function load() {
   if (!connected() || !signedIn() || busy) return; busy = true; mount();
-  window.ccCall('/api/streak', { auth: false }).then(function (d) { D = d; at = Date.now(); draw(); }).catch(function () {}).then(function () { busy = false; });
+  window.ccCall('/api/streak', { auth: false }).then(function (d) { D = d; at = Date.now(); draw(); if (want && D.checked_in) { want = 0; play(true); } }).catch(function () {}).then(function () { busy = false; });
 }
 function onView() { if (document.body.dataset.view === 'rewards' && Date.now() - at > 20000) load(); }
 new MutationObserver(onView).observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
-var ci = document.getElementById('ci'); if (ci) ci.addEventListener('click', function () { setTimeout(function () { at = 0; load(); }, 900); });
+var ci = document.getElementById('ci'); if (ci) ci.addEventListener('click', function () { want = 1; setTimeout(function () { at = 0; load(); }, 900); });
 onView();
 })();

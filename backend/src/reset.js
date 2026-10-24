@@ -2,8 +2,8 @@
 // student email they verified). A 6-digit code is emailed to it, then they choose a new password.
 // We never store the address, only a keyed hash, so we hash what was typed and look the account up by that hash.
 // Replies never reveal whether an account exists. Needs the mail settings (BREVO_API_KEY or RESEND_API_KEY, and MAIL_FROM).
-import { json, err, sb, rows, one, post, patch, enc, H, tsEqual, randHex, throttle, tooMany, ahead, hashPassword } from './lib.js';
-import { mailReady, sendMail } from './mail.js';
+import { json, err, sb, rows, one, post, patch, enc, H, tsEqual, randHex, throttle, tooMany, ahead, hashPassword, isAdmin } from './lib.js';
+import { mailReady, sendMailDetailed, mailDiagnosis } from './mail.js';
 import { normStudentEmail, studentDomains, CODE_MINUTES, CODE_TRIES, markUsed, USED_MSG } from './trust.js';
 import { passwordProblem } from './passwords.js';
 import { normAnyEmail } from './recovery.js';
@@ -13,7 +13,12 @@ const OK_MSG = 'If that email is saved on an account, a code is on its way. Chec
 // The account whose saved email (recovery email first, then verified student email) matches what was typed.
 async function findByEmail(env, raw) {
   const e = normAnyEmail(raw); if (!e) return null;
-  let p = await one(await sb(env, `profiles?recovery_email_hash=eq.${enc(await H(env, 'recemail:' + e.canon))}&order=created_at.desc&limit=1`));
+  let p = null;
+  for (const c of new Set([e.gmail, e.canon])) {                       // new hashing first, then the older one, so emails saved before still match
+    const res = await sb(env, `profiles?recovery_email_hash=eq.${enc(await H(env, 'recemail:' + c))}&order=created_at.desc&limit=1`);
+    if (!res.ok) console.error('reset: account lookup failed', res.status, 'run supabase/recovery-email.sql if the column recovery_email_hash is missing');
+    p = await one(res); if (p) break;
+  }
   const se = normStudentEmail(env, raw);
   if (!p && se) p = await one(await sb(env, `profiles?student_email_hash=eq.${enc(await H(env, 'stuemail:' + se.canon))}&limit=1`));
   return p ? { p, e } : { p: null, e };
@@ -21,6 +26,18 @@ async function findByEmail(env, raw) {
 
 export async function resetRoutes(req, env, url, ip) {
   const path = url.pathname, m = req.method;
+
+  // Admin only: send a test email and show exactly what the mail provider answered. Use it when reset codes do not arrive.
+  //   curl -X POST $API/api/admin/mail-test -H "X-Admin-Key: $ADMIN_KEY" -H "Content-Type: application/json" -d '{"to":"you@gmail.com"}'
+  if (path === '/api/admin/mail-test' && (m === 'POST' || m === 'GET')) {
+    if (!isAdmin(req, env)) return err(env, 'Not allowed', 403);
+    const diag = mailDiagnosis(env);
+    if (m === 'GET') return json(env, diag);
+    const to = normAnyEmail((await req.json().catch(() => ({}))).to);
+    if (!to) return err(env, 'Send {"to":"your@email.com"}');
+    const r = await sendMailDetailed(env, { to: to.email, subject: 'Comrade Connect mail test', text: 'If you can read this, the mail settings work. Check the spam folder if it was not in your inbox.' });
+    return json(env, { ...diag, sent: r.ok, provider_status: r.status, provider_says: r.detail || (r.ok ? 'accepted' : '') }, r.ok ? 200 : 502);
+  }
   if (!path.startsWith('/api/auth/reset')) return null;
   const body = async () => (await req.json().catch(() => ({})));
 
@@ -33,8 +50,11 @@ export async function resetRoutes(req, env, url, ip) {
     if (!e0) return err(env, 'Enter the email address saved on your account');
     if (!(await throttle(env, ip, 'pwreset', e0.canon, 5, 15))) return tooMany(env);
     const { p, e } = await findByEmail(env, b.email);
+    if (!p) console.log('reset: no account has that email saved (nothing sent)');
+    else if (p.banned) console.log('reset: account is banned (nothing sent)');
     if (p && !p.banned) {
       const [cur] = await rows(await sb(env, `password_resets?select=sent_at&aid=eq.${enc(p.aid)}`));
+      if (cur && Date.now() - Date.parse(cur.sent_at) < 60e3) console.log('reset: asked again within a minute (nothing sent)');
       if (!cur || Date.now() - Date.parse(cur.sent_at) >= 60e3) {
         const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e6).padStart(6, '0');
         if (cur) await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' });
@@ -42,11 +62,11 @@ export async function resetRoutes(req, env, url, ip) {
           aid: p.aid, code_hash: await H(env, `pwcode:${p.aid}:${code}`), expires_at: ahead(CODE_MINUTES * 60e3), attempts: 0, sent_at: new Date().toISOString(),
         }, 'resolution=merge-duplicates,return=representation');
         if (!saved.ok) return err(env, 'Could not start the reset. Run supabase/password-reset.sql in Supabase first.', 500);
-        const sent = await sendMail(env, {
+        const mailed = await sendMailDetailed(env, {
           to: e.email, subject: 'Your Comrade Connect password reset code',
           text: `Your Comrade Connect password reset code is ${code}\n\nIt works for ${CODE_MINUTES} minutes. Type it in the app, then choose a new password.\nIf you did not ask for this, ignore this email: your password stays the same.\nNever share this code with anyone.`,
         });
-        if (!sent) { await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' }); return err(env, 'Could not send the email. Try again in a moment.', 502); }
+        if (!mailed.ok) { await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' }); return err(env, 'Could not send the email. Try again in a moment.', 502); }
       }
     }
     return json(env, { ok: true, message: OK_MSG, expires_minutes: CODE_MINUTES });

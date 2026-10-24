@@ -9,7 +9,9 @@ export function normAnyEmail(v) {
   if (raw.length > 120 || !/^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(raw)) return null;
   const [l0, domain] = raw.split('@'), local = l0.split('+')[0];
   if (!local) return null;
-  return { email: raw, canon: local + '@' + domain };
+  // canon = how emails were hashed before (kept so saved emails still match). gmail = Gmail ignores dots, so a.b@gmail.com and ab@gmail.com are one mailbox.
+  const gmail = /^(gmail|googlemail)\.com$/.test(domain) ? local.replace(/\./g, '') + '@gmail.com' : local + '@' + domain;
+  return { email: raw, canon: local + '@' + domain, gmail };
 }
 const mask = (e) => { const [l, d] = e.split('@'); return (l.length > 2 ? l.slice(0, 2) : l.slice(0, 1)) + '***@' + d; };
 
@@ -33,7 +35,7 @@ export async function recoveryRoutes(req, env, url, ip) {
     const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e6).padStart(6, '0');
     if (cur) await sb(env, `recovery_email_codes?aid=eq.${enc(u.aid)}`, { method: 'DELETE' });
     const saved = await post(env, 'recovery_email_codes', {
-      aid: u.aid, email_hash: await H(env, 'recemail:' + e.canon), code_hash: await H(env, `reccode:${u.aid}:${code}`),
+      aid: u.aid, email_hash: await H(env, 'recemail:' + e.gmail), code_hash: await H(env, `reccode:${u.aid}:${code}`),
       expires_at: ahead(CODE_MINUTES * 60e3), attempts: 0, sent_at: new Date().toISOString(),
     }, 'resolution=merge-duplicates,return=representation');
     if (!saved.ok) return err(env, 'Could not start. Run supabase/recovery-email.sql in Supabase first.', 500);

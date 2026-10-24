@@ -73,7 +73,7 @@ function draw() {
 function mount() {
   var cur = $('#ccgift');
   if (cur) { var au0 = window.ccAuth && window.ccAuth(); if (au0 && au0.token) { if (!D && !busy) { busy = true; load().then(function () { busy = false; }, function () { busy = false; }); } } else { cur.hidden = true; D = null; } return; }
-  var anchor = $('#ccsetrow') || $('#mecard'); if (!anchor) return;
+  var anchor = $('#mecard'); if (!anchor) return;
   var au = window.ccAuth && window.ccAuth(); if (!au || !au.token) return;      // gifts are for signed-in accounts only
   var box = el('div', 'box g'); box.id = 'ccgift'; box.hidden = true; anchor.after(box); load();
 }

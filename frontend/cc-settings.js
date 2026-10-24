@@ -14,11 +14,9 @@
 
   var css = el('style');
   css.textContent = [
-    '#ccsetrow{display:block;width:100%;text-align:left;padding:0;cursor:pointer;color:inherit;font:inherit}',
-    '#ccsetrow .in{display:flex;align-items:center;gap:12px;padding:14px 16px}',
-    '#ccsetrow .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:var(--aq,#A8DCE7);color:var(--nt,#101422)}',
-    '#ccsetrow .tx{flex:1;min-width:0}#ccsetrow .tx b{display:block;font-size:15px}#ccsetrow .tx small{display:block;color:var(--mut);font-size:12px;line-height:1.35;margin-top:2px}',
-    '#ccsetrow .ch{opacity:.55;flex:none}',
+    '#v-me>.ph{display:flex;align-items:center;justify-content:space-between;gap:12px}',
+    '#ccsetbtn{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;padding:0;cursor:pointer;color:inherit;border:1px solid var(--line,rgba(255,255,255,.18));background:var(--card,rgba(255,255,255,.08));-webkit-tap-highlight-color:transparent}',
+    '#ccsetbtn:active{transform:scale(.94)}#ccsetbtn svg{width:21px;height:21px}',
     '.ccset-box{max-width:460px;width:100%}',
     '.ccset-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}.ccset-h h3{margin:0;flex:1}',
     '.ccset-x{width:38px;height:38px;border-radius:50%;border:1px solid var(--line,rgba(255,255,255,.2));background:none;color:inherit;display:grid;place-items:center;cursor:pointer;padding:0}',
@@ -97,10 +95,10 @@
   function mount() {
     var card = $('#mecard'); if (!card) return;
     slim();
-    if ($('#ccsetrow')) return;
-    var b = el('button', 'box g'); b.id = 'ccsetrow'; b.type = 'button'; b.setAttribute('aria-label', 'Open settings');
-    b.innerHTML = '<div class="in"><span class="ic">' + GEAR + '</span><span class="tx"><b>Settings</b><small>Campus, light or dark, security, recovery code and more</small></span><span class="ch">' + CHEV + '</span></div>';
-    b.onclick = open; card.after(b);
+    if ($('#ccsetbtn')) return;
+    var ph = $('#v-me > .ph'); if (!ph) return;
+    var b = el('button'); b.id = 'ccsetbtn'; b.type = 'button'; b.setAttribute('aria-label', 'Settings'); b.title = 'Settings';
+    b.innerHTML = GEAR; b.onclick = open; ph.appendChild(b);
   }
   window.ccOpenSettings = open;
   mount();

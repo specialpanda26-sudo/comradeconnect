@@ -26,7 +26,7 @@ test('forgot password: only the email is asked, code arrives, new password works
   const code = lastCode(w);
 
   r = await w.call('POST', '/api/auth/reset/confirm', { body: { email: 'jane@kyu.ac.ke', code: code === '000000' ? '111111' : '000000', password: NEWPW }, ip: '5.5.5.4' });
-  assert.equal(r.status, 400); assert.match(r.data.error, /4 tries left/);
+  assert.equal(r.status, 400); assert.match(r.data.error, /Wrong code/); assert.ok(!/tries left/.test(r.data.error));
   r = await w.call('POST', '/api/auth/reset/confirm', { body: { email: 'jane@kyu.ac.ke', code, password: 'short' }, ip: '5.5.5.5' });
   assert.equal(r.status, 400);                                                     // weak password refused, code kept
   r = await w.call('POST', '/api/auth/reset/confirm', { body: { email: 'someone@else.com', code, password: NEWPW }, ip: '5.5.5.5' });
@@ -59,6 +59,6 @@ test('one email can be saved on only one account, so a reset never hits the wron
   assert.equal(r.status, 200);
   r = await w.call('POST', '/api/me/recovery-email/start', { as: b, body: { email: 'shared@gmail.com' } });
   r = await w.call('POST', '/api/me/recovery-email/confirm', { as: b, body: { code: lastCode(w) } });
-  assert.equal(r.status, 409);
+  assert.equal(r.status, 400); assert.match(r.data.error, /Could not save that email/); assert.ok(!/already|another account|registered/i.test(r.data.error));
   w.restore();
 });

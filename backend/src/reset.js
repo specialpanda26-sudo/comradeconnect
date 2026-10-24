@@ -14,12 +14,12 @@ const OK_MSG = 'If that email is saved on an account, a code is on its way. Chec
 async function findByEmail(env, raw) {
   const e = normAnyEmail(raw); if (!e) return null;
   let p = null;
-  for (const c of new Set([e.gmail, e.canon])) {                       // new hashing first, then the older one, so emails saved before still match
+  for (const c of (e.same ? new Set([e.gmail, e.canon]) : [])) {                       // new hashing first, then the older one, so emails saved before still match
     const res = await sb(env, `profiles?recovery_email_hash=eq.${enc(await H(env, 'recemail:' + c))}&order=created_at.desc&limit=1`);
     if (!res.ok) console.error('reset: account lookup failed', res.status, 'run supabase/recovery-email.sql if the column recovery_email_hash is missing');
     p = await one(res); if (p) break;
   }
-  const se = normStudentEmail(env, raw);
+  const se = e.same ? normStudentEmail(env, raw) : null;   // bob+x@school is not bob@school
   if (!p && se) p = await one(await sb(env, `profiles?student_email_hash=eq.${enc(await H(env, 'stuemail:' + se.canon))}&limit=1`));
   return p ? { p, e } : { p: null, e };
 }
@@ -80,26 +80,32 @@ export async function resetRoutes(req, env, url, ip) {
     if (!(await throttle(env, ip, 'pwreset2', e0.canon + '|' + ip, 10, 30))) return tooMany(env);
     if (!(await bump(env, 'pwreset2all:a:' + e0.canon, 100))) return tooMany(env);
     if (code.length !== 6) return err(env, 'The code has 6 digits');
-    const BAD = 'Wrong code, or it expired. Ask for a new one.';
+    const BAD = 'Wrong code, or it expired. Ask for a new one.', LOCK = 'Too many wrong codes. Ask for a new one.';
+    // No account, banned, or no code asked for: answer exactly like a wrong code, and use up the same 5 tries, so this page cannot be used to find out which emails have accounts.
+    const fake = async () => ((await bump(env, 'pwfake:a:' + e0.canon, CODE_TRIES)) ? err(env, BAD, 400) : err(env, LOCK, 429));
     const { p } = await findByEmail(env, b.email);
-    if (!p || p.banned) return err(env, BAD, 400);
+    if (!p || p.banned) return fake();
     const [v] = await rows(await sb(env, `password_resets?aid=eq.${enc(p.aid)}`));
-    if (!v) return err(env, BAD, 400);
-    if (!v.used_at && Date.parse(v.expires_at) < Date.now()) { await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' }); return err(env, BAD, 400); }
-    if (v.attempts >= CODE_TRIES) return err(env, 'Too many wrong codes. Ask for a new one.', 429);
+    if (!v) return fake();
+    if (!v.used_at && Date.parse(v.expires_at) < Date.now()) { await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' }); return fake(); }
+    if (v.attempts >= CODE_TRIES) return err(env, LOCK, 429);
     const took = await rows(await patch(env, `password_resets?aid=eq.${enc(p.aid)}&attempts=eq.${v.attempts}`, { attempts: v.attempts + 1 }));
     if (!took.length) return err(env, 'Try again in a moment', 429);
-    if (!tsEqual(v.code_hash, await H(env, `pwcode:${p.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
+    if (!tsEqual(v.code_hash, await H(env, `pwcode:${p.aid}:${code}`))) return err(env, BAD, 400);   // no "tries left": only real accounts could show it
     if (v.used_at) return err(env, USED_MSG, 410);   // only someone who typed the real code learns it was used
     if (b.check) {   // page step 2: the code is right. Show the username, put the try back, and keep the code alive for the password step
       await patch(env, `password_resets?aid=eq.${enc(p.aid)}&attempts=eq.${v.attempts + 1}`, { attempts: v.attempts });
       return json(env, { ok: true, verified: true, handle: p.handle || null });
     }
     const weak = await passwordProblem(env, pw, p.handle); if (weak) return err(env, weak);
+    // Claim the code first, so two taps at the same moment cannot both use it. (If the used_at column does not exist yet, the old order is used.)
+    const claimRes = await patch(env, `password_resets?aid=eq.${enc(p.aid)}&used_at=is.null`, { used_at: new Date().toISOString() });
+    const claimed = claimRes.ok;
+    if (claimed && !(await rows(claimRes)).length) return err(env, USED_MSG, 410);
     const token = randHex(24);
     const res = await patch(env, `profiles?aid=eq.${enc(p.aid)}`, { recovery_hash: await hashPassword(pw), token_hash: await H(env, 'tok:' + token) });   // a new token cuts off any other phone
-    if (!res.ok) return err(env, 'Could not save the new password', 500);
-    await markUsed(env, 'password_resets', p.aid);
+    if (!res.ok) { if (claimed) await patch(env, `password_resets?aid=eq.${enc(p.aid)}`, { used_at: null }); return err(env, 'Could not save the new password', 500); }
+    if (!claimed) await markUsed(env, 'password_resets', p.aid);
     return json(env, { ok: true, aid: p.aid, token });
   }
   return null;

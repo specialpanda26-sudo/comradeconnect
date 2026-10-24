@@ -28,17 +28,13 @@
   -webkit-backdrop-filter:blur(10px) !important;backdrop-filter:blur(10px) !important;
   box-shadow:inset 0 2px 7px rgba(0,0,0,.22),0 8px 18px -10px color-mix(in srgb,var(--tint,#A8DCE7) 45%,transparent) !important}
 :is(input,textarea,select):focus{border-color:var(--tint,#A8DCE7) !important;box-shadow:inset 0 2px 7px rgba(0,0,0,.18),0 0 0 3px color-mix(in srgb,var(--tint,#A8DCE7) 30%,transparent),0 10px 24px -8px color-mix(in srgb,var(--tint,#A8DCE7) 60%,transparent) !important}
-.cc-orbs{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
-.bg>.cc-orbs{position:absolute;z-index:1}#ccbgi{z-index:0}
-.cc-orbs i{position:absolute;border-radius:50%;animation:ccfl 16s ease-in-out infinite alternate}
-.cc-orbs .o1{width:64vmin;height:64vmin;left:50%;bottom:-20vmin;margin-left:-32vmin;background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.5),transparent 22%),radial-gradient(circle at 40% 38%,#FE813C 0,#d9531e 62%,#8a2f10 100%);box-shadow:0 0 100px 12px rgba(254,129,60,.35)}
-.cc-orbs .o2{width:30vmin;height:30vmin;left:5%;top:9%;animation-duration:12s;background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.6),transparent 24%),radial-gradient(circle at 40% 38%,#A8DCE7 0,#5aa6bd 62%,#2b5f73 100%);box-shadow:0 0 80px 8px rgba(168,220,231,.35)}
-.cc-orbs .o3{width:19vmin;height:19vmin;right:7%;top:46%;animation-duration:19s;background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.55),transparent 24%),radial-gradient(circle at 40% 38%,#BC656A 0,#92454a 65%,#5e2a2e 100%);box-shadow:0 0 70px 6px rgba(188,101,106,.35)}
-@keyframes ccfl{to{transform:translate3d(0,-26px,0) rotate(8deg)}}
-@media(prefers-reduced-motion:reduce){.cc-orbs i{animation:none}}
+#ccbgi{z-index:0}
 @supports not (backdrop-filter:blur(1px)){.g,.box,.card,.bx,.savebar,#tb{background:color-mix(in srgb,var(--bg,#101422) 88%,transparent) !important}}
 /* lock screen glass v3 */
 #lk.lkg.on .bx.lkcard{box-shadow:0 30px 70px -22px rgba(168,220,231,.5),0 4px 14px rgba(168,220,231,.18),inset 0 1.5px 0 var(--lg-hi),inset 0 -1px 0 rgba(255,255,255,.14),inset 0 0 40px rgba(168,220,231,.08)!important}
 #lk.lkg.on .lkfp,#lk.lkg.on .lkfp2{box-shadow:0 14px 32px -10px rgba(168,220,231,.6),inset 0 1.5px 0 var(--lg-hi)!important}
 #lk.lkg.on .lkpw,#lk.lkg.on .lkgo{box-shadow:0 12px 28px -10px rgba(168,220,231,.5),inset 0 1.5px 0 var(--lg-hi)!important}
 #lk.lkg.on .lkrec .fld{box-shadow:0 10px 24px -12px rgba(168,220,231,.5),inset 0 1.5px 0 var(--lg-hi)!important}
+
+/* cc-noballs-css */
+.cc-orbs,.cc-orbs *{display:none!important}

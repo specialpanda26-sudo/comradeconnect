@@ -11,7 +11,8 @@ export function normAnyEmail(v) {
   if (!local) return null;
   // canon = how emails were hashed before (kept so saved emails still match). gmail = Gmail ignores dots, so a.b@gmail.com and ab@gmail.com are one mailbox.
   const gmail = /^(gmail|googlemail)\.com$/.test(domain) ? local.replace(/\./g, '') + '@gmail.com' : local + '@' + domain;
-  return { email: raw, canon: local + '@' + domain, gmail };
+  // same = the typed address reaches the same mailbox as the saved form. Gmail ignores dots and +tags. Other providers may treat bob+x@ as a different mailbox, so a +tag there is NOT the same.
+  return { email: raw, canon: local + '@' + domain, gmail, same: /^(gmail|googlemail)\.com$/.test(domain) || l0 === local };
 }
 const mask = (e) => { const [l, d] = e.split('@'); return (l.length > 2 ? l.slice(0, 2) : l.slice(0, 1)) + '***@' + d; };
 
@@ -49,6 +50,7 @@ export async function recoveryRoutes(req, env, url, ip) {
   if (path === '/api/me/recovery-email/confirm' && m === 'POST') {
     const code = String((await body()).code || '').replace(/\D/g, '');
     if (code.length !== 6) return err(env, 'The code has 6 digits');
+    if (!(await throttle(env, ip, 'recemail2', u.aid, 30, 60))) return tooMany(env);   // rate limit on saving
     const [v] = await rows(await sb(env, `recovery_email_codes?aid=eq.${enc(u.aid)}`));
     if (!v) return err(env, 'Ask for a code first', 404);
     if (!v.used_at && Date.parse(v.expires_at) < Date.now()) { await sb(env, `recovery_email_codes?aid=eq.${enc(u.aid)}`, { method: 'DELETE' }); return err(env, 'That code expired. Ask for a new one.', 410); }
@@ -58,7 +60,7 @@ export async function recoveryRoutes(req, env, url, ip) {
     if (!tsEqual(v.code_hash, await H(env, `reccode:${u.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
     if (v.used_at) return err(env, USED_MSG, 410);
     const [taken] = await rows(await sb(env, `profiles?select=aid&recovery_email_hash=eq.${enc(v.email_hash)}&aid=neq.${enc(u.aid)}&limit=1`));
-    if (taken) return err(env, 'That email is already saved on another account. Use a different email.', 409);   // one email, one account, so a reset by email is never ambiguous
+    if (taken) return err(env, 'Could not save that email. Try another one.', 400);   // one email, one account, so a reset by email is never ambiguous
     const res = await patch(env, `profiles?aid=eq.${enc(u.aid)}`, { recovery_email_hash: v.email_hash });
     if (!res.ok) return err(env, 'Could not save. Run supabase/recovery-email.sql in Supabase first.', 500);
     await markUsed(env, 'recovery_email_codes', u.aid);

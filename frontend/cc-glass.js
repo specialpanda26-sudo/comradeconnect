@@ -4,11 +4,7 @@
 if (window.__ccGl) return; window.__ccGl = 1;
 var H = document.documentElement;
 if (/admin/i.test(location.pathname)) H.classList.add('cc-adm');
-function orbs() {
-  if (document.querySelector('.cc-orbs')) return;
-  var o = document.createElement('div'); o.className = 'cc-orbs'; o.setAttribute('aria-hidden', 'true'); o.innerHTML = '<i class="o1"></i><i class="o2"></i><i class="o3"></i>';
-  var bg = !H.classList.contains('cc-adm') && document.querySelector('.bg'); (bg || document.body).appendChild(o);
-}
+function orbs() { [].forEach.call(document.querySelectorAll('.cc-orbs'), function (n) { n.remove(); }); }   /* cc-noballs */
 var SEL = 'button,.btn,.ib,#fab,.chip,.pill,.tag,.badge,[class*="badge"],[class*="chip"]';
 function rgba(s) { var m = /rgba?\(([^)]+)\)/.exec(s || ''); if (!m) return null; var p = m[1].split(/[ ,\/]+/).map(parseFloat); return { r: p[0], g: p[1], b: p[2], a: p.length > 3 && !isNaN(p[3]) ? p[3] : 1 }; }
 function tint() {
@@ -23,9 +19,4 @@ function go() { orbs(); tint(); try { new MutationObserver(q).observe(document.b
 if (document.readyState === 'complete') go(); else window.addEventListener('load', go);
 document.addEventListener('cc-site', q); document.addEventListener('cc-ready', q);
 })();
-/* lock orbs: the same glossy orbs behind the lock screen card */
-(function () {
-  var lk = document.getElementById('lk'); if (!lk || lk.querySelector('.cc-orbs')) return;
-  var o = document.createElement('div'); o.className = 'cc-orbs'; o.setAttribute('aria-hidden', 'true'); o.innerHTML = '<i class="o1"></i><i class="o2"></i><i class="o3"></i>';
-  lk.insertBefore(o, lk.firstChild);
-})();
+/* the lock screen has no balls either */

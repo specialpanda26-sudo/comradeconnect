@@ -209,14 +209,49 @@ function promptRestore(msg, title) {
     + '<div class="fld" style="margin-top:10px"><input id="ccrst-a" placeholder="Account ID or username" autocomplete="off" autocapitalize="off" aria-label="Account ID or username"></div>'
     + '<div class="fld"><input id="ccrst-c" type="password" placeholder="Password or code" autocomplete="off" autocapitalize="off" aria-label="Password or recovery code"></div>'
     + '<p class="sub" id="ccrst-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
-    + '<div class="two"><button class="btn g" id="ccrst-x">Cancel</button><button class="btn p" id="ccrst-go">Restore</button></div>');
+    + '<div class="two"><button class="btn g" id="ccrst-x">Cancel</button><button class="btn p" id="ccrst-go">Restore</button></div>'
+    + '<p class="sub" style="text-align:center;margin-top:12px"><a href="#" id="ccrst-fg">Forgot password?</a></p>');
   m.id = 'ccrst';
   m.querySelector('#ccrst-x').onclick = () => m.close();
+  m.querySelector('#ccrst-fg').onclick = (ev) => { ev.preventDefault(); const w = m.querySelector('#ccrst-a').value; m.close(); promptForgot(w); };
   if (googleOn()) mountGoogle(m.querySelector('#ccrg'), () => { m.close(); toast('Signed in'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {} }, (e) => { m.querySelector('#ccrst-e').textContent = e; });
   m.querySelector('#ccrst-go').onclick = async () => {
     const b = m.querySelector('#ccrst-go'); b.disabled = true;
     try { await restoreAccount(m.querySelector('#ccrst-a').value, m.querySelector('#ccrst-c').value); m.close(); toast('Account restored'); refreshAll(); }
     catch (e) { m.querySelector('#ccrst-e').textContent = e.message; b.disabled = false; }
+  };
+}
+// Forgot password: a 6-digit code goes to the student email you verified, then you choose a new password.
+function promptForgot(who) {
+  if (document.getElementById('ccfgt')) return;
+  const m = sheet('<h3>Forgot password</h3><p class="sub" style="margin-top:6px">We email a 6-digit code to the university email you verified in Me > Verification. If you never verified one, use your recovery code instead.</p>'
+    + '<div class="fld" style="margin-top:10px"><input id="ccfg-w" placeholder="Username or account ID" autocomplete="off" autocapitalize="off" aria-label="Username or account ID"></div>'
+    + '<div class="fld"><input id="ccfg-m" type="email" placeholder="Your university email" autocomplete="email" autocapitalize="off" aria-label="University email"></div>'
+    + '<div id="ccfg-2" style="display:none"><div class="fld"><input id="ccfg-c" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" aria-label="6-digit code"></div>'
+    + '<div class="fld"><input id="ccfg-p" type="password" placeholder="New password" autocomplete="new-password" aria-label="New password"></div></div>'
+    + '<p class="sub" id="ccfg-e" style="min-height:18px"></p>'
+    + '<div class="two"><button class="btn g" id="ccfg-x">Cancel</button><button class="btn p" id="ccfg-go">Send code</button></div>');
+  m.id = 'ccfgt';
+  const $ = (i) => m.querySelector('#' + i), msg = (t, bad) => { $('ccfg-e').textContent = t; $('ccfg-e').style.color = bad ? 'var(--bad,#FF6B6B)' : ''; };
+  $('ccfg-w').value = String(who || '').trim();
+  $('ccfg-x').onclick = () => m.close();
+  let step = 1;
+  $('ccfg-go').onclick = async () => {
+    const b = $('ccfg-go'); b.disabled = true; msg('');
+    try {
+      if (step === 1) {
+        const d = await rawPost('/api/auth/reset/start', { who: $('ccfg-w').value, email: $('ccfg-m').value });
+        step = 2; $('ccfg-2').style.display = 'block'; b.textContent = 'Change password';
+        msg(d.message || 'If the details match, a code is on its way. Check your inbox and spam folder.');
+      } else {
+        const d = await rawPost('/api/auth/reset/confirm', { who: $('ccfg-w').value, code: $('ccfg-c').value, password: $('ccfg-p').value });
+        saveAuth({ aid: d.aid, token: d.token }); ME.aid = d.aid; saveMe();
+        setTimeout(() => { syncVer(); refreshReferral(true); }, 0);
+        m.close(); toast('Password changed. You are signed in.'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {}
+        return;
+      }
+    } catch (e) { msg(e.message, true); }
+    b.disabled = false;
   };
 }
 // Me > Restore an account now really restores (needs the account ID and the recovery code).
@@ -234,6 +269,7 @@ function promptRestore(msg, title) {
     b.parentElement.insertBefore(gb, b.parentElement.firstChild);
     mountGoogle(gb, () => { toast('Signed in with Google'); refreshAll(); }, (e) => toast(e));
   }
+  if (b.parentElement) { const fg = document.createElement('p'); fg.className = 'sub'; fg.style.cssText = 'text-align:center;margin-top:10px'; fg.innerHTML = '<a href="#">Forgot password?</a>'; fg.firstChild.onclick = (ev) => { ev.preventDefault(); promptForgot((document.getElementById('raid') || {}).value); }; b.insertAdjacentElement('afterend', fg); }
   const a = window.ccAuth && window.ccAuth(), box = b.parentElement && b.parentElement.querySelector('p.sub');
   if (box) box.textContent = 'Use the account ID and recovery code you saved when you first used the Market.' + (a ? ' Your account ID on this phone: ' + a.aid : '');
 })();

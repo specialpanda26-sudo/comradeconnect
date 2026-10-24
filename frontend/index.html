@@ -572,6 +572,7 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
   <div class="box g"><h3>Messages</h3><div id="dml"></div></div>
   <div class="box g"><h3>Safety</h3><div class="rw"><span>Blocked posters<small id="bk"></small></span><button class="act" id="ubk">Unblock all</button></div><div class="rw"><span>Hidden stories<small id="hd"></small></span><button class="act" id="uhd">Show again</button></div><button class="btn g" id="sf2" style="width:100%;margin-top:12px">Open safety tools</button></div>
   <div class="box g"><h3>Documentation</h3><p class="sub">A full guide to how Comrade Connect works, from posting and escrow to rewards and safety.</p><div class="two" style="margin-top:12px"><button class="btn g" id="dcr">Read documentation</button><button class="btn p" id="dcd">Download PDF</button></div></div>
+  <div class="box g"><h3>Recovery email</h3><p class="sub" id="rcs" style="margin:6px 0 12px">Add an email so you can reset your password if you forget it. Signed in with Google? Your Google email is used automatically.</p><a class="btn p" id="rcgo" href="/recovery-email.html" style="display:block;width:100%;text-align:center;text-decoration:none">Add a recovery email</a></div>
   <div class="box g"><h3>Recovery code</h3><p class="sub" style="margin:6px 0 12px">It is the only way back into this account on a new phone. Save it somewhere safe and never share it.</p><div class="code" id="mcode"></div><div class="two" style="margin-top:12px"><button class="btn g" id="mshow">Show code</button><button class="btn g" id="mcopy">Copy code</button></div></div>
   <div class="box g"><h3>Account</h3><p class="sub" id="acs"></p><div class="acl"><button class="btn g" id="acb">Sign-in options</button><button class="btn g" id="atour">Take the tour</button><button class="btn g" id="ckre">Cookie settings</button></div><div class="acl so"><button class="btn g" id="acso"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg>Sign out</button><p class="sub">Signing out removes this account from this phone.</p></div></div>
   <div class="box g"><h3>Notifications</h3><div id="nl"></div><button class="act" id="nread" style="margin-top:10px">Mark all as read</button></div>
@@ -1734,8 +1735,9 @@ const me=$('#v-me'),h2=me&&me.querySelector('.ph');if(!me||!h2)return;
 const BACK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
 const IC={'Account':'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>','Recovery code':'<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3M14 9l2 2"/>','Secure my account':'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>','Verification':'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>','Restore an account':'<path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5"/>','Messages':'<path d="M4 5h16v11H9l-5 4z"/>','Notifications':'<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/>','Club':'<path d="M3 10l9-6 9 6M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18"/>','Safety':'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>','Documentation':'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>','Join our community':'<circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M15 15c3 0 6 1.5 6 4.5"/>','Advertise with us':'<path d="M4 10v4h3l8 4V6L7 10z"/><path d="M18 9a4 4 0 0 1 0 6"/>','Media kit':'<path d="M5 20V10M12 20V4M19 20v-7"/>','out':'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>','d':'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>'};
 const NAME={'Secure my account':'Security'};
+IC['Recovery email']='<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>';
 const DESC=()=>({'Account':ME.google?'Signed in with Google':'Anonymous. Add Google to recover it','Recovery code':'Your way back in on a new phone','Secure my account':'Fingerprint lock','Verification':'Get a verified badge','Restore an account':'Use your account ID and recovery code','Messages':'Your anonymous chats','Notifications':'Alerts and what you hear about','Club':'Wholesale student prices','Safety':'Blocked posters and safety tools','Documentation':'How Comrade Connect works'});
-const GROUPS=[['Account',['Account','Recovery code','Secure my account','Verification','Restore an account']],['Activity',['Messages','Notifications','Club']],['Help and safety',['Safety','Documentation']]];
+const GROUPS=[['Account',['Account','Recovery email','Recovery code','Secure my account','Verification','Restore an account']],['Activity',['Messages','Notifications','Club']],['Help and safety',['Safety','Documentation']]];
 h2.insertAdjacentHTML('beforebegin','<div id="ccph"><button id="ccback" type="button" aria-label="Back to Me">'+BACK+'</button><b id="ccpt"></b></div>');
 const ttl=b=>{const x=b.querySelector('h3');return x?x.textContent.trim():''};
 const boxes=()=>[...me.querySelectorAll('.box')].filter(b=>!b.closest('#ccmenu')&&b.id!=='mecard'&&ttl(b));
@@ -1771,6 +1773,7 @@ const D=[
  ['Search stories, notices and events','Open the search in Explore','search find stories notices events','srch'],['Rewards','Points, daily check-in, invite friends','rewards points check-in invite referral earn','go','rewards'],
  ['Club','Wholesale student prices','club wholesale members','go','club'],['Me','Your profile','me profile dashboard','go','me'],
  ['Account','Sign-in options, tour, cookies','account sign in google login cookie tour','me','Account'],['Sign out','Remove this account from this phone','sign out log out logout','out'],
+ ['Recovery email','Needed for Forgot password','recovery email forgot password reset email google','me','Recovery email'],
  ['Recovery code','Your way back in','recovery code backup','me','Recovery code'],['Security','Fingerprint lock','security Fingerprint lock biometric','me','Secure my account'],
  ['Verification','Get a verified badge','verification verified badge id','me','Verification'],['Restore an account','Use your account ID and recovery code','restore recover account','me','Restore an account'],
  ['Messages','Your anonymous chats','messages chats dm inbox','me','Messages'],['Notifications','Alerts and preferences','notifications alerts','me','Notifications'],
@@ -1788,6 +1791,37 @@ fr.addEventListener('click',e=>{const b=e.target.closest('.mit');if(!b)return;co
  if(d[3]==='go')go(d[4]);else if(d[3]==='me')window.ccOpenMe(d[4]);else if(d[3]==='out'){window.ccSignOut&&window.ccSignOut()}else if(d[3]==='srch'){go('explore');setTimeout(()=>{const t=document.querySelector('#xt [data-x="sr"]');if(t)t.click();const i=$('#sq');if(i)i.focus()},60)}});
 })();
 
+</script>
+
+<script>
+/* Me page: a clear "Add a recovery email" card at the top until an email is saved (Google sign-in saves it automatically). */
+(function(){
+const me=document.getElementById('v-me');if(!me||typeof CC_API!=='string'||!CC_API)return;
+const API=CC_API.replace(/\/$/,'');let card=null,last=0;
+const auth=()=>{try{const a=JSON.parse(localStorage.getItem('cc_auth')||'null');return a&&a.token?a:null}catch(e){return null}};
+function hide(){if(card)card.hidden=true}
+function show(){
+ if(!card){card=document.createElement('div');card.id='ccrecnudge';card.className='box g';
+  const b=document.createElement('b');b.textContent='Add a recovery email';
+  const p=document.createElement('p');p.className='sub';p.style.margin='6px 0 12px';p.textContent='Without one, Forgot password cannot send you a code. It takes a minute.';
+  const a=document.createElement('a');a.className='btn p';a.href='/recovery-email.html';a.textContent='Add it now';a.style.cssText='display:block;width:100%;text-align:center;text-decoration:none';
+  card.append(b,p,a);
+  const menu=document.getElementById('ccmenu'),h2=me.querySelector('.ph');
+  if(menu)menu.before(card);else if(h2)h2.after(card);else me.prepend(card)}
+ card.hidden=false}
+function sub(){const s=me.querySelector('.mit[data-t="Recovery email"] small');if(s&&!s.textContent)s.textContent='Needed for Forgot password. Google sign-in saves it for you.'}
+function check(){
+ const a=auth();if(!a){hide();return}
+ if(Date.now()-last<20000)return;last=Date.now();
+ fetch(API+'/api/me/recovery-email',{headers:{'X-Aid':a.aid,'X-Token':a.token}}).then(r=>r.ok?r.json():null).then(d=>{
+  if(!d)return;
+  const s=document.getElementById('rcs'),g=document.getElementById('rcgo');
+  if(s)s.textContent=d.has_email?'Saved. You can reset your password by email.':'Add an email so you can reset your password if you forget it. Signed in with Google? Your Google email is used automatically.';
+  if(g)g.textContent=d.has_email?'Change recovery email':'Add a recovery email';
+  if(d.has_email||!d.available)hide();else show()}).catch(()=>{})}
+sub();new MutationObserver(sub).observe(me,{childList:true,subtree:true});
+check();document.addEventListener('click',check);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
+})();
 </script>
 
 <script>

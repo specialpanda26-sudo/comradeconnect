@@ -239,6 +239,12 @@
     } catch (e) {}
     drawCtl(); setTimeout(function () { replay($('#rframe')); }, 60);
   }
+  /* phone back button: leave full screen first (cc-panels.js and cc-nav.js call this) */
+  window.ccLiveBack = function () {
+    var m = media();
+    if (m && m.classList.contains('ccl-fs')) { setFull(false); window.__cclBackAt = Date.now(); return true; }
+    return false;
+  };
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && media() && media().classList.contains('ccl-fs')) setFull(false); });
   document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement && media() && media().classList.contains('ccl-fs')) setFull(false); });
 

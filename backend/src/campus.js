@@ -1,6 +1,6 @@
 // Campuses and Land spots.
 // The app sends the campus the person picked in the X-Campus header. Feed, events, Wi-Fi, hostels, roommates and services only show that
-// campus, and new posts are tagged with it. Market, rewards, messages and everything else ignore it. Old rows default to 'kirinyaga'.
+// campus, and new posts are tagged with it. Market, rewards, messages and everything else ignore it. X-Campus: all shows every university (see isAllCampuses). Old rows default to 'kirinyaga'.
 import { json, err, sb, rows, one, post, patch, enc, str, UUID, throttle, tooMany, user, authProfile, contactBlock } from './lib.js';
 
 // To open the app to another university, add it here. The campus column takes any text, so no SQL is needed.
@@ -68,7 +68,12 @@ export const CAMPUSES = [
 export const DEFAULT_CAMPUS = 'kirinyaga';
 export const CAMPUS_IDS = CAMPUSES.map((c) => c.id);
 export const campusOf = (req) => { const v = String(req.headers.get('X-Campus') || '').toLowerCase(); return CAMPUS_IDS.includes(v) ? v : null; };
-export const campusRow = (req) => { const c = campusOf(req); return c ? { campus: c } : {}; };      // spread into an insert
+// "All universities": the app sends X-Campus: all (not a real campus, so reads are NOT filtered) plus X-Home, the person's own university.
+// New posts, events and spots are tagged with the home university (or the picked one), so reading everything never mislabels what you write.
+export const isAllCampuses = (req) => String(req.headers.get('X-Campus') || '').toLowerCase() === 'all';
+export const homeOf = (req) => { const v = String(req.headers.get('X-Home') || '').toLowerCase(); return CAMPUS_IDS.includes(v) ? v : null; };
+export const campusOrHome = (req) => campusOf(req) || homeOf(req) || DEFAULT_CAMPUS;
+export const campusRow = (req) => { const c = campusOf(req) || (isAllCampuses(req) ? homeOf(req) : null); return c ? { campus: c } : {}; };      // spread into an insert
 export const campusQuery = (req) => { const c = campusOf(req); return c ? '&campus=eq.' + c : ''; };   // append to a list query
 
 export const SPOT_CATEGORIES = ['Food', 'Study', 'Hangout', 'Transport', 'Services', 'Worship', 'Safety', 'Other'];
@@ -86,9 +91,10 @@ export async function campusRoutes(req, env, url, ip) {
 
   if (path === '/api/spots' && m === 'GET') {
     const me = req.headers.get('X-Token') ? await authProfile(req, env) : null;
-    const camp = campusOf(req) || (CAMPUS_IDS.includes(url.searchParams.get('campus')) ? url.searchParams.get('campus') : DEFAULT_CAMPUS);
+    const all = isAllCampuses(req);
+    const camp = all ? 'all' : (campusOf(req) || (CAMPUS_IDS.includes(url.searchParams.get('campus')) ? url.searchParams.get('campus') : DEFAULT_CAMPUS));
     const cat = String(url.searchParams.get('category') || '');
-    let q = `spots?hidden=eq.false&campus=eq.${camp}&order=created_at.desc&limit=100`;
+    let q = `spots?hidden=eq.false${all ? '' : '&campus=eq.' + camp}&order=created_at.desc&limit=100`;
     if (cat && cat !== 'All') q += '&category=eq.' + enc(cat.slice(0, 24));
     const r = await rows(await sb(env, q));
     const mine = me && r.length ? new Set((await rows(await sb(env, `spot_likes?select=spot_id&aid=eq.${enc(me.aid)}&spot_id=in.(${r.map((x) => x.id).join(',')})`))).map((x) => x.spot_id)) : new Set();
@@ -101,7 +107,7 @@ export async function campusRoutes(req, env, url, ip) {
     const name = str(b.name, 60), details = str(b.details, 300), cat = str(b.category, 24) || 'Other';
     if (name.length < 3) return err(env, 'Give the spot a name');
     const blk = contactBlock(env, name, details, cat); if (blk) return blk;
-    const row = { name, details: details || null, category: cat, campus: campusOf(req) || DEFAULT_CAMPUS };
+    const row = { name, details: details || null, category: cat, campus: campusOrHome(req) };
     if (b.lat != null && b.lng != null && b.lat !== '' && b.lng !== '') {
       const lat = Number(b.lat), lng = Number(b.lng);
       if (!Number.isFinite(lat) || !Number.isFinite(lng) || !inKenya(lat, lng)) return err(env, 'That location is not in Kenya. Tap Use my location again or leave the pin off');

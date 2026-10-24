@@ -1,12 +1,12 @@
 import { json, err, sb, rows, post, enc, str, int, throttle, tooMany, user, authProfile } from './lib.js';
-import { campusOf, DEFAULT_CAMPUS } from './campus.js';
+import { campusOrHome } from './campus.js';
 
 const today = () => Math.floor(Date.now() / 864e5);
 
 export async function pulseRoutes(req, env, url, ip) {
   const p = url.pathname, m = req.method;
   if (p !== '/api/pulse' && !p.startsWith('/api/pulse/')) return null;
-  const camp = campusOf(req) || DEFAULT_CAMPUS;
+  const camp = campusOrHome(req);
 
   if (p === '/api/pulse' && m === 'GET') {
     const d = today();

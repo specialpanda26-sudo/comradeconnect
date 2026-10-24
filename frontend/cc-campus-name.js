@@ -10,6 +10,7 @@
       .replace(/kirinyaga_updates/g,short.toLowerCase().replace(/[^a-z0-9]/g,'')+'_updates').replace(/Kirinyaga/g,short);
   }
   var same=(!id||id==='kirinyaga');
+  if(id==='all'){name='All universities';short='Kenya';window.ccCampusName=name;window.ccCampusShort=short}
   function skip(v){return v.indexOf('Kirinyaga')<0&&v.indexOf('kirinyaga_')<0||/founded|Kerugoya/i.test(v)}
   function walk(){
     var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null),n,list=[];

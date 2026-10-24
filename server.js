@@ -35,7 +35,7 @@ function cors(headers, reqOrigin) {
   if (list.length && !list.includes('*')) allow = list.includes(reqOrigin) ? reqOrigin : list[0];
   headers.set('Access-Control-Allow-Origin', allow);
   if (allow !== '*') headers.append('Vary', 'Origin');
-  headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key, X-Aid, X-Token, X-Campus, X-Device-Id, X-Device-Kind');   // the app adds the two X-Device-* headers to every /api/auth call; leaving them out makes the browser block the call
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Key, X-Aid, X-Token, X-Campus, X-Home, X-Device-Id, X-Device-Kind');   // the app adds the two X-Device-* headers to every /api/auth call; leaving them out makes the browser block the call
   headers.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   headers.set('Access-Control-Max-Age', '86400');
   headers.set('X-Content-Type-Options', 'nosniff');

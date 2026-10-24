@@ -82,14 +82,21 @@
   +'#ccuniv .it small{opacity:.65;font-size:12px;white-space:nowrap}#ccuniv .it.on{border-color:rgba(168,220,231,.8);background:rgba(168,220,231,.16)}#ccuniv .it:active{background:rgba(255,255,255,.16)}'
   +'#ccuniv .hd{margin:8px 2px 2px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;opacity:.6}'
   +'#ccuniv .loc{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 14px;margin-bottom:10px;border-radius:14px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}'
+  +'#ccuniv .all{border-color:rgba(168,220,231,.55);background:rgba(168,220,231,.12);flex-direction:column;align-items:flex-start;gap:4px;margin-bottom:4px}#ccuniv .all b{font-size:15px}#ccuniv .all em{font-style:normal;opacity:.75;font-size:12px;line-height:1.45;white-space:normal}'
   +'#ccuniv .msg{margin:0 0 8px;font-size:12px;opacity:.8}'
   +'#ccuniv .x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:18px;cursor:pointer}'
   +'.ccc-chip{display:inline-flex;align-items:center;gap:8px;max-width:100%;margin:0 0 8px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:inherit;font:500 13px Poppins,sans-serif;cursor:pointer}'
   +'.ccc-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ccc-chip u{text-decoration:none;opacity:.7}';
   document.head.appendChild(st);
 
+  var ALLU={id:'all',name:'All universities',short:'Kenya'};
   function choose(u){
-    try{localStorage.setItem(K,u.id);localStorage.setItem('cc_campus_name',u.name);localStorage.setItem('cc_campus_short',u.short||'')}catch(e){}
+    try{
+      var prior=cur();
+      if(u.id==='all'){if(prior&&prior!=='all')localStorage.setItem('cc_campus_home',prior)}   // posts you write still go under your own university
+      else localStorage.setItem('cc_campus_home',u.id);
+      localStorage.setItem(K,u.id);localStorage.setItem('cc_campus_name',u.name);localStorage.setItem('cc_campus_short',u.short||'')
+    }catch(e){}
     location.reload();
   }
   function show(list,must){
@@ -99,7 +106,7 @@
     function close(){o.remove();open=false}
     if(!must){var x=el('button','x','\u00d7');x.type='button';x.setAttribute('aria-label','Close');x.onclick=close;c.appendChild(x)}
     c.appendChild(el('h2','','Which university are you in?'));
-    c.appendChild(el('p','','Your feed, events, hostels and more follow the university you pick. Tap Use my location and we show the ones closest to you.'));
+    c.appendChild(el('p','','Your feed, events, hostels and more follow the university you pick. Or choose All universities to read the feed from every university at once. Tap Use my location to see the closest ones.'));
     var lb=el('button','loc');lb.type='button';lb.innerHTML=PIN+'<span>Use my location</span>';c.appendChild(lb);
     var msg=el('p','msg');msg.hidden=true;c.appendChild(msg);
     var q=el('input');q.type='search';q.placeholder='Search universities';q.setAttribute('aria-label','Search universities');c.appendChild(q);
@@ -112,6 +119,12 @@
     }
     function draw(){
       var t=q.value.trim().toLowerCase();ls.textContent='';
+      if(!t||'all universities every kenya'.indexOf(t)>=0){
+        var ab=el('button','it all'+(cur()==='all'?' on':''));ab.type='button';
+        ab.appendChild(el('b','','All universities'));
+        ab.appendChild(el('em','','You get the feed, events and spots from every university in Kenya in one place. Your own posts still go under your university.'));
+        ab.onclick=function(){choose(ALLU)};ls.appendChild(ab);
+      }
       var arr=list.filter(function(u){return u.id!=='other'&&(!t||((u.name||'')+' '+(u.short||'')).toLowerCase().indexOf(t)>=0)});
       var other=list.filter(function(u){return u.id==='other'&&(!t||'other university college'.indexOf(t)>=0)});
       if(dist){

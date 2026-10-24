@@ -273,9 +273,9 @@ function promptForgot(prefill, back) {
     + '<div class="fp-f" id="ccfg-f1"><label for="ccfg-m">Email on your account</label><input id="ccfg-m" type="email" inputmode="email" placeholder="name@gmail.com" autocomplete="email" autocapitalize="off" aria-label="Email on your account"></div>'
     + '<div id="ccfg-2" hidden><form id="ccfg-fm" style="display:contents" autocomplete="on" novalidate>'
     + '<input id="ccfg-un" name="username" type="email" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">'
-    + '<div class="fp-f"><label for="ccfg-c">6-digit code</label><input id="ccfg-c" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" aria-label="6-digit code"></div>'
-    + '<div class="fp-f"><label for="ccfg-p">New password</label><div class="fp-pw"><input id="ccfg-p" name="password" type="password" placeholder="8+ characters" autocomplete="new-password" autocapitalize="off" aria-label="New password"><button type="button" class="fp-eye" id="ccfg-eye" aria-label="Show password">' + EYEOFF + '</button></div></div>'
-    + '</form></div>'
+    + '<div id="ccfg-cb"><div class="fp-f"><label for="ccfg-c">6-digit code</label><input id="ccfg-c" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" aria-label="6-digit code"></div></div>'
+    + '<div id="ccfg-pb" hidden><div class="fp-f"><label for="ccfg-p">New password</label><div class="fp-pw"><input id="ccfg-p" name="password" type="password" placeholder="8+ characters" autocomplete="new-password" autocapitalize="off" aria-label="New password"><button type="button" class="fp-eye" id="ccfg-eye" aria-label="Show password">' + EYEOFF + '</button></div></div>'
+    + '</div></form></div>'
     + '<p class="fp-msg" id="ccfg-e" role="status" aria-live="polite"></p>'
     + '<button type="button" class="fp-go" id="ccfg-go">Send code</button>'
     + '<p class="fp-sub" id="ccfg-no" style="margin-top:14px">No email saved on your account? Sign in with your account ID and the recovery code you saved. Once you are in, add an email so this works next time.</p>'
@@ -286,7 +286,7 @@ function promptForgot(prefill, back) {
   const msg = (t, bad) => { const e = $('ccfg-e'); e.textContent = t || ''; e.classList.toggle('bad', !!(bad && t)); };
   const maskE = (v) => { const p = String(v).trim().split('@'); return p.length === 2 ? (p[0].length > 2 ? p[0].slice(0, 2) : p[0].slice(0, 1)) + '***@' + p[1] : v; };
   const okMail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v).trim());
-  let step = 1, timer = null, until = 0;
+  let step = 1, timer = null, until = 0, forgotHandle = '';
   const onKey = (ev) => { if (ev.key === 'Escape') pg.close(); };
   pg.close = () => { clearInterval(timer); document.removeEventListener('keydown', onKey); pg.remove(); };
   document.addEventListener('keydown', onKey);
@@ -301,19 +301,19 @@ function promptForgot(prefill, back) {
   };
   const wait = () => { until = Date.now() + 60e3; clearInterval(timer); timer = setInterval(tick, 1000); tick(); };
   const toStep = (n) => {
-    step = n; const two = n === 2;
-    $('ccfg-st').textContent = 'Step ' + n + ' of 2';
-    $('ccfg-h').textContent = two ? 'Check your email' : 'Reset your password';
-    $('ccfg-in').textContent = two ? 'If ' + maskE($('ccfg-m').value) + ' is saved on an account, a 6-digit code is on its way. It can take a minute. Check your spam folder too.' : 'Type the email saved on your account. We send a 6-digit code to it, then you choose a new password.';
-    $('ccfg-2').hidden = !two; $('ccfg-f1').hidden = two; $('ccfg-no').hidden = two; $('ccfg-un').value = $('ccfg-m').value.trim();
-    $('ccfg-go').textContent = two ? 'Change password' : 'Send code';
+    step = n; const two = n >= 2, three = n === 3;
+    $('ccfg-st').textContent = 'Step ' + n + ' of 3';
+    $('ccfg-h').textContent = three ? 'Choose a new password' : two ? 'Check your email' : 'Reset your password';
+    $('ccfg-in').textContent = three ? 'Code verified. ' + (forgotHandle ? 'Your username is @' + forgotHandle + '. ' : '') + 'Now choose a new password. You will be signed in right after.' : two ? 'We are sending a verification code to ' + maskE($('ccfg-m').value) + '. Open your email, copy the 6-digit code and type it here. It will help you sign in. It can take a minute, so check your spam folder too.' : 'Type the email saved on your account. We send a verification code to it. Forgot your username too? Just type your email: once you verify the code, we show it to you.';
+    $('ccfg-2').hidden = !two; $('ccfg-f1').hidden = two; $('ccfg-no').hidden = two; $('ccfg-un').value = three && forgotHandle ? forgotHandle : $('ccfg-m').value.trim(); $('ccfg-cb').hidden = three; $('ccfg-pb').hidden = !three; $('ccfg-have').hidden = three;
+    $('ccfg-go').textContent = three ? 'Change password' : two ? 'Verify code' : 'Send code';
     $('ccfg-have').disabled = false; $('ccfg-have').textContent = two ? 'Send me a new code' : 'I already have a code';
     msg('');
-    if (two) { $('ccfg-c').focus(); tick(); } else { clearInterval(timer); $('ccfg-m').focus(); }
+    if (three) { $('ccfg-p').focus(); } else if (two) { $('ccfg-c').focus(); tick(); } else { clearInterval(timer); $('ccfg-m').focus(); }
   };
   const leave = () => { pg.close(); if (typeof back === 'function') back(); };
   $('ccfg-x').onclick = () => pg.close();
-  $('ccfg-bk').onclick = () => { if (step === 2) toStep(1); else leave(); };
+  $('ccfg-bk').onclick = () => { if (step === 3) toStep(2); else if (step === 2) toStep(1); else leave(); };
   $('ccfg-si').onclick = leave;
   $('ccfg-eye').onclick = () => { const show = $('ccfg-p').type === 'password'; [$('ccfg-p')].forEach((i) => { i.type = show ? 'text' : 'password'; }); $('ccfg-eye').innerHTML = show ? EYE : EYEOFF; $('ccfg-eye').setAttribute('aria-label', show ? 'Hide password' : 'Show password'); };
   $('ccfg-have').onclick = async () => {
@@ -325,15 +325,16 @@ function promptForgot(prefill, back) {
   $('ccfg-go').onclick = async () => {
     const b = $('ccfg-go'); msg('');
     if (step === 1 && !okMail($('ccfg-m').value)) return msg('Enter a real email address, for example name@gmail.com', true);
-    if (step === 2) {
-      if (String($('ccfg-c').value).replace(/\D/g, '').length !== 6) return msg('The code has 6 digits.', true);
-      if ($('ccfg-p').value.length < 8) return msg('The new password needs at least 8 characters.', true);
-    }
-    ccBusy(b, true, step === 1 ? 'Sending code...' : 'Changing password...');
+    if (step === 2 && String($('ccfg-c').value).replace(/\D/g, '').length !== 6) return msg('The code has 6 digits.', true);
+    if (step === 3 && $('ccfg-p').value.length < 8) return msg('The new password needs at least 8 characters.', true);
+    ccBusy(b, true, step === 1 ? 'Sending code...' : step === 2 ? 'Checking code...' : 'Changing password...');
     try {
       if (step === 1) {
         await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value });
         toStep(2); wait();
+      } else if (step === 2) {
+        const c = await rawPost('/api/auth/reset/confirm', { email: $('ccfg-m').value, code: $('ccfg-c').value, check: true });
+        forgotHandle = c.handle || ''; toStep(3);
       } else {
         const d = await rawPost('/api/auth/reset/confirm', { email: $('ccfg-m').value, code: $('ccfg-c').value, password: $('ccfg-p').value });
         saveAuth({ aid: d.aid, token: d.token }); ME.aid = d.aid; saveMe();
@@ -345,7 +346,7 @@ function promptForgot(prefill, back) {
       }
     } catch (e) { msg(e.message, true); }
     ccBusy(b, false);
-    b.textContent = step === 2 ? 'Change password' : 'Send code';   // ccBusy puts back the label saved before the step changed
+    b.textContent = step === 3 ? 'Change password' : step === 2 ? 'Verify code' : 'Send code';   // ccBusy puts back the label saved before the step changed
   };
   setTimeout(() => $('ccfg-m').focus(), 60);
 }

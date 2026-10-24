@@ -1,8 +1,8 @@
 /* cc-remember.js v1: the phone remembers WHO you were, so a forgotten username or email is easy to get past.
    It keeps two small things on this phone only (localStorage "cc_hint"): your username, and a masked email hint like jo***@gmail.com.
-   The full email is never stored here, and the server never shows it back (it only keeps a scrambled copy).
+   The full email is kept on this phone only (never on the server in readable form) so the reset code can be sent in one tap; "Not you?" and sign-out can wipe it.
    Used for: filling in the username box on the log-in screens, and a "Your username is @name, your email looks like jo***@gmail.com"
-   line on the Forgot password page. "Not you?" wipes it. Text is inserted with textContent only. */
+   line on the Forgot password page, with a one-tap "Send the code to jo***@gmail.com" button. "Not you?" wipes it. Text is inserted with textContent only. */
 (function () {
   'use strict';
   if (window.__ccRemember) return; window.__ccRemember = 1;
@@ -29,9 +29,9 @@
   window.fetch = function (input, init) {
     var url = typeof input === 'string' ? input : (input && input.url) || '', path = url.split('?')[0], p = realFetch.apply(this, arguments);
     var body = null; try { body = init && typeof init.body === 'string' ? JSON.parse(init.body) : null; } catch (e) {}
-    if (/\/api\/me\/recovery-email\/start$/.test(path) && body && body.email) p.then(function (r) { if (r.ok) pending = mask(body.email); }).catch(function () {});
-    if (/\/api\/me\/recovery-email\/confirm$/.test(path)) p.then(function (r) { if (r.ok && pending) set({ m: pending }); }).catch(function () {});
-    if (/\/api\/auth\/reset\/confirm$/.test(path) && body && body.email) p.then(function (r) { if (r.ok) set({ m: mask(body.email) }); }).catch(function () {});
+    if (/\/api\/me\/recovery-email\/start$/.test(path) && body && body.email) p.then(function (r) { if (r.ok) pending = { m: mask(body.email), e: String(body.email).trim().toLowerCase() }; }).catch(function () {});
+    if (/\/api\/me\/recovery-email\/confirm$/.test(path)) p.then(function (r) { if (r.ok && pending) set({ m: pending.m, e: pending.e }); }).catch(function () {});
+    if (/\/api\/auth\/reset\/confirm$/.test(path) && body && body.email) p.then(function (r) { if (r.ok) set({ m: mask(body.email), e: String(body.email).trim().toLowerCase() }); }).catch(function () {});
     return p;
   };
 
@@ -55,6 +55,12 @@
       no.onclick = function () { clear(); box.remove(); };
       box.appendChild(document.createTextNode(' ')); box.appendChild(no);
       slot.appendChild(box);
+      if (hint.e) {   // one tap: the email is already known on this phone, so just send the code
+        var one = document.createElement('button'); one.type = 'button'; one.className = 'fp-go'; one.style.marginTop = '12px';
+        one.textContent = 'Send the code to ' + hint.m;
+        one.onclick = function () { var inp = f1.querySelector('#ccfg-m'), go = f1.querySelector('#ccfg-go'); if (inp && go) { inp.value = hint.e; go.click(); } };
+        slot.appendChild(one);
+      }
     }
   }
   new MutationObserver(function (recs) { recs.forEach(function (r) { [].forEach.call(r.addedNodes, fill); }); }).observe(document.body, { childList: true, subtree: true });

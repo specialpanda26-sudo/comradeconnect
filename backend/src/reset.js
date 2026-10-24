@@ -89,6 +89,10 @@ export async function resetRoutes(req, env, url, ip) {
     if (!took.length) return err(env, 'Try again in a moment', 429);
     if (!tsEqual(v.code_hash, await H(env, `pwcode:${p.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
     if (v.used_at) return err(env, USED_MSG, 410);   // only someone who typed the real code learns it was used
+    if (b.check) {   // page step 2: the code is right. Show the username, put the try back, and keep the code alive for the password step
+      await patch(env, `password_resets?aid=eq.${enc(p.aid)}&attempts=eq.${v.attempts + 1}`, { attempts: v.attempts });
+      return json(env, { ok: true, verified: true, handle: p.handle || null });
+    }
     const weak = await passwordProblem(env, pw, p.handle); if (weak) return err(env, weak);
     const token = randHex(24);
     const res = await patch(env, `profiles?aid=eq.${enc(p.aid)}`, { recovery_hash: await hashPassword(pw), token_hash: await H(env, 'tok:' + token) });   // a new token cuts off any other phone

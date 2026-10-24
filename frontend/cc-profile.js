@@ -239,12 +239,12 @@
         + '<button class="btn g" id="ccp-sc" style="width:100%;margin-top:10px">Copy account ID</button>'
         + (canG ? '<p class="sub" style="margin-top:14px">Safer: link Google first, then you can always get back in.</p><div id="ccp-sg" style="display:flex;justify-content:center;margin-top:8px;min-height:44px"></div>' : '')
         + '<label class="sub" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="ccp-so"> I saved my account ID and recovery code</label>';
-    var m = sheet('<h3>Sign out?</h3>' + body + '<div class="two" style="margin-top:14px"><button class="btn g" id="ccp-sx">Cancel</button><button class="btn p" id="ccp-sgo">Sign out</button></div>');
+    var m = sheet('<h3>Sign out?</h3>' + body + '<label class="sub" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="ccp-sf"> Also forget my username and email on this phone (use this on a shared phone)</label><div class="two" style="margin-top:14px"><button class="btn g" id="ccp-sx">Cancel</button><button class="btn p" id="ccp-sgo">Sign out</button></div>');
     var go2 = $('#ccp-sgo', m), ok = $('#ccp-so', m);
     if (ok) { go2.disabled = true; ok.onchange = function () { go2.disabled = !ok.checked; }; }
     var cp = $('#ccp-sc', m); if (cp) cp.onclick = function () { copy(a.aid); };
     $('#ccp-sx', m).onclick = function () { m.close(); };
-    go2.onclick = function () { go2.disabled = true; doSignOut(a); };
+    go2.onclick = function () { var sf = $('#ccp-sf', m); if (sf && sf.checked && window.ccHint) window.ccHint.clear(); go2.disabled = true; doSignOut(a); };
     var gb = $('#ccp-sg', m);
     if (gb) window.ccGoogle.mount(gb, function () { m.close(); say('Google linked. You can sign out safely now.'); render(); }, function (e) { say(e); }, { theme: 'outline', width: 260 });
   }

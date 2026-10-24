@@ -2,7 +2,7 @@
 // student email they verified). A 6-digit code is emailed to it, then they choose a new password.
 // We never store the address, only a keyed hash, so we hash what was typed and look the account up by that hash.
 // Replies never reveal whether an account exists. Needs the mail settings (BREVO_API_KEY or RESEND_API_KEY, and MAIL_FROM).
-import { json, err, sb, rows, one, post, patch, enc, H, tsEqual, randHex, throttle, tooMany, ahead, hashPassword, isAdmin } from './lib.js';
+import { json, err, sb, rows, one, post, patch, enc, H, tsEqual, randHex, throttle, bump, tooMany, ahead, hashPassword, isAdmin } from './lib.js';
 import { mailReady, sendMailDetailed, mailDiagnosis } from './mail.js';
 import { normStudentEmail, studentDomains, CODE_MINUTES, CODE_TRIES, markUsed, USED_MSG } from './trust.js';
 import { passwordProblem } from './passwords.js';
@@ -48,7 +48,8 @@ export async function resetRoutes(req, env, url, ip) {
     if (!mailReady(env)) return err(env, 'Password reset by email is not switched on yet', 503);
     const b = await body(), e0 = normAnyEmail(b.email);
     if (!e0) return err(env, 'Enter the email address saved on your account');
-    if (!(await throttle(env, ip, 'pwreset', e0.canon, 5, 15))) return tooMany(env);
+    if (!(await throttle(env, ip, 'pwreset', e0.canon + '|' + ip, 5, 15))) return tooMany(env);
+    if (!(await bump(env, 'pwresetall:a:' + e0.canon, 30))) return tooMany(env);
     const { p, e } = await findByEmail(env, b.email);
     if (!p) console.log('reset: no account has that email saved (nothing sent)');
     else if (p.banned) console.log('reset: account is banned (nothing sent)');
@@ -76,7 +77,8 @@ export async function resetRoutes(req, env, url, ip) {
   if (path === '/api/auth/reset/confirm' && m === 'POST') {
     const b = await body(), e0 = normAnyEmail(b.email), code = String(b.code || '').replace(/\D/g, ''), pw = String(b.password || '').slice(0, 100);
     if (!e0) return err(env, 'Enter the email address saved on your account');
-    if (!(await throttle(env, ip, 'pwreset2', e0.canon, 10, 30))) return tooMany(env);
+    if (!(await throttle(env, ip, 'pwreset2', e0.canon + '|' + ip, 10, 30))) return tooMany(env);
+    if (!(await bump(env, 'pwreset2all:a:' + e0.canon, 100))) return tooMany(env);
     if (code.length !== 6) return err(env, 'The code has 6 digits');
     const BAD = 'Wrong code, or it expired. Ask for a new one.';
     const { p } = await findByEmail(env, b.email);

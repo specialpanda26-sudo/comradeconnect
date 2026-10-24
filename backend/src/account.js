@@ -1,5 +1,5 @@
 // Accounts, wallet, withdrawals and referrals.
-import { json, err, sb, rows, one, post, patch, enc, str, int, UUID, H, tsEqual, randHex, throttle, tooMany, user, authProfile, contactBlock, ahead, ago, DAY, hashPassword, checkPassword, goodPassword } from './lib.js';
+import { json, err, sb, rows, one, post, patch, enc, str, int, UUID, H, tsEqual, randHex, throttle, bump, tooMany, user, authProfile, contactBlock, ahead, ago, DAY, hashPassword, checkPassword, goodPassword } from './lib.js';
 import { credit } from './pay.js';
 import { getSettings, withdrawFee, publicConfig } from './settings.js';
 import { trySendNow, reconcilePayouts } from './payouts.js';
@@ -142,7 +142,9 @@ export async function accountRoutes(req, env, url, ip) {
   // Get a new token with the recovery code (also rotates the token, so a lost device is cut off).
   if (path === '/api/auth/recover' && m === 'POST') {
     const b = await body(); const who = str(b.aid || b.handle || b.username, 64), raw = String(b.password ?? b.recovery_code ?? '').slice(0, 100);   // account ID or username; recovery code or password
-    if (!(await throttle(env, ip, 'recover', who.toLowerCase() || 'x', 10, 30))) return tooMany(env);
+    const whoKey = who.toLowerCase() || 'x';
+    if (!(await throttle(env, ip, 'recover', whoKey + '|' + ip, 10, 30))) return tooMany(env);   // 10 tries a day per account per IP, 30 per IP
+    if (!(await bump(env, 'recoverall:a:' + whoKey, 300))) return tooMany(env);                  // ceiling across all IPs
     let p = who ? await one(await sb(env, `profiles?aid=eq.${enc(who)}`)) : null;
     if (!p && /^[A-Za-z0-9_]{3,20}$/.test(who)) {                                    // not an account ID: try it as a username
       p = await one(await sb(env, `profiles?handle=eq.${enc(who)}`));

@@ -383,7 +383,7 @@ function follow(id) {
   CCx().needSignup('follow').then(function (ok) { if (!ok) return; return call('/api/kura/follow', { contestant_id: id }).then(function () { refreshProfile(id); }); }).catch(function (e) { toast(e.message); });
 }
 function share() {
-  var c = S.cur; if (!c) return; var url = location.origin + location.pathname + '#kura', text = 'Vote for ' + c.name + ' on Kura: Campus Star Awards';
+  var c = S.cur; if (!c) return; var url = (window.ccOrigin ? window.ccOrigin() : location.origin) + '/#kura', text = 'Vote for ' + c.name + ' on Kura: Campus Star Awards';
   if (navigator.share) navigator.share({ title: 'Kura', text: text, url: url }).catch(function () {});
   else if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + url).then(function () { toast('Link copied'); }, function () {});
 }

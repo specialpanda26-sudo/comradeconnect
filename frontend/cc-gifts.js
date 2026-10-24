@@ -6,7 +6,7 @@ function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c
 function say(m) { try { toast(m); } catch (e) { alert(m); } }
 var kes = function (n) { return 'KSh ' + Number(n || 0).toLocaleString('en-KE'); };
 var call = function () { return window.CC.call.apply(null, arguments); };
-var home = function () { return location.origin + '/'; };
+var home = function () { return (window.ccOrigin ? window.ccOrigin() : (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.protocol === 'https:' && !location.port ? 'https://comradeconnect.co.ke' : location.origin)) + '/'; };
 function linkUrl() { return home() + D.link.path; }
 function btn(label, cls, fn) { var b = el('button', 'btn ' + cls, label); b.type = 'button'; b.onclick = fn; return b; }
 

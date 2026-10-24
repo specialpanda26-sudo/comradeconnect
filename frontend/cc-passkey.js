@@ -32,6 +32,26 @@
     return (e && e.message) || 'Passkey failed. Try again.';
   };
 
+  // ---- a readable name for each passkey, and a one-time offer after sign-up ----
+  function deviceName() {
+    var ua = navigator.userAgent || '';
+    var os = /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iPhone' : /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Device';
+    var br = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /Firefox\//.test(ua) ? 'Firefox' : 'Browser';
+    return br + ' on ' + os + ' \u00b7 ' + new Date().toISOString().slice(0, 10);
+  }
+  function offerAfterSignup() {
+    try { if (!supported() || localStorage.getItem('cc_pk_offered')) return Promise.resolve(); } catch (e) { return Promise.resolve(); }
+    var a = window.ccAuth && ccAuth(); if (!a || !a.token) return Promise.resolve();
+    try { localStorage.setItem('cc_pk_offered', '1'); } catch (e) {}
+    if (!window.confirm('Add a passkey? Next time you can sign in with your fingerprint, face or screen lock.')) return Promise.resolve();
+    return register(deviceName()).then(function () { say('Passkey added'); }, function (x) { var m = friendly(x); if (m !== 'Cancelled') say(m); });
+  }
+  function hookSignup() {   // cc-core calls window.ccAskEmailSignup after every new account; offer the passkey right after it
+    var f = window.ccAskEmailSignup; if (typeof f !== 'function' || f.__pk) return;
+    var w = function () { var r = f.apply(this, arguments); return Promise.resolve(r).then(function (v) { return offerAfterSignup().then(function () { return v; }); }); };
+    w.__pk = 1; window.ccAskEmailSignup = w;
+  }
+
   // ---- add one ----
   async function register(name) {
     var o = (await call('/api/passkey/register/options', {})).publicKey;
@@ -81,11 +101,12 @@
     anchor.parentNode.insertBefore(box, anchor.nextSibling);
     $('#ccpk-a', box).onclick = async function (e) {
       var b = e.currentTarget; b.disabled = true;
-      try { await register(''); say('Passkey added'); } catch (x) { var m = friendly(x); if (m !== 'Cancelled') say(m); }
+      try { await register(deviceName()); say('Passkey added'); } catch (x) { var m = friendly(x); if (m !== 'Cancelled') say(m); }
       b.disabled = false; drawBox(box);
     };
     box.addEventListener('click', async function (e) {
       var rm = e.target.closest('button[data-id]'); if (!rm) return;
+      if (!window.confirm('Remove this passkey? You will not be able to sign in with it any more.')) return;
       rm.disabled = true;
       try { await call('/api/passkey/delete', { id: rm.getAttribute('data-id') }); say('Passkey removed'); } catch (x) { say(friendly(x)); }
       drawBox(box);
@@ -103,13 +124,15 @@
     if (before && before.parentNode) before.parentNode.insertBefore(b, before); else host.appendChild(b);
   }
   function scan() {
+    hookSignup();
     mountBox();
     var rrs = $('#rrs'); if (rrs) addSignIn(rrs.parentNode, rrs, null);
     var fr = $('#ccfrst-form'); if (fr) addSignIn(fr, null, function (m) { var e = $('#ccfrst-e'); if (e) { e.textContent = m; e.hidden = !m; } }, 'ccfrst-btn', 'margin-top:10px;background:transparent!important;border:1px solid rgba(255,255,255,.35)!important;color:inherit');
     var pr = $('#ccp-r'); if (pr) { var pf = $('#ccp-f'); if (pf) addSignIn(pf, null, function (m) { var e = $('#ccp-e'); if (e) e.textContent = m; }); }
     var sh = $('#ccrst'); if (sh) { var go = $('#ccrst-go', sh); if (go) addSignIn(go.parentNode.parentNode, go.parentNode, function (m) { var e = $('#ccrst-e', sh); if (e) e.textContent = m; }); }
   }
-  new MutationObserver(function () { scan(); }).observe(document.documentElement, { childList: true, subtree: true });
+  var queued = false;   // one scan per frame, however many DOM changes happen
+  new MutationObserver(function () { if (queued) return; queued = true; (window.requestAnimationFrame || setTimeout)(function () { queued = false; scan(); }); }).observe(document.documentElement, { childList: true, subtree: true });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scan); else scan();
   window.ccPasskey = { supported: supported, register: register, login: login };
 })();

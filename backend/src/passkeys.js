@@ -133,7 +133,7 @@ export async function passkeyRoutes(req, env, url, ip) {
       const name = str(b.name, 40) || 'Passkey';
       const res = await post(env, 'passkeys', { id, aid: u.aid, public_key: JSON.stringify(jwk), alg, sign_count: ad.signCount, name });
       if (res.status === 409) return err(env, 'This passkey is already saved', 409);
-      if (!res.ok) return err(env, 'Could not save the passkey. Ask the admin to run the passkeys SQL.', 500);
+      if (!res.ok) { console.error('passkey save failed: run supabase/passkeys-and-device-lock.sql', res.status); return err(env, 'Could not save the passkey right now. Please try again later.', 500); }
       return json(env, { ok: true, id, name }, 201);
     } catch (e) { return bad(); }
   }

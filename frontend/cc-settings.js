@@ -15,8 +15,8 @@
   var css = el('style');
   css.textContent = [
     '#v-me>.ph{display:flex;align-items:center;justify-content:space-between;gap:12px}',
-    '#ccsetbtn{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;padding:0;cursor:pointer;color:inherit;border:1px solid var(--line,rgba(255,255,255,.18));background:var(--card,rgba(255,255,255,.08));-webkit-tap-highlight-color:transparent}',
-    '#ccsetbtn:active{transform:scale(.94)}#ccsetbtn svg{width:21px;height:21px}',
+    '#ccsetbtn{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;padding:0;cursor:pointer;color:inherit;border:0;background:none;-webkit-tap-highlight-color:transparent}',
+    '#ccsetbtn:active{transform:scale(.94)}#ccsetbtn svg{width:26px;height:26px}',
     '.ccset-box{max-width:460px;width:100%}',
     '.ccset-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}.ccset-h h3{margin:0;flex:1}',
     '.ccset-x{width:38px;height:38px;border-radius:50%;border:1px solid var(--line,rgba(255,255,255,.2));background:none;color:inherit;display:grid;place-items:center;cursor:pointer;padding:0}',

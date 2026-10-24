@@ -1644,6 +1644,7 @@ async function createAccount(kind, creds) {
   setTimeout(() => { attributeRef(); syncVer(); refreshAll(); }, 0);
   return { aid: d.aid, token: d.token };
 }
+window.ccOpenThread = openThread;
 window.CC = { forgot: (e, back) => promptForgot(e, back), createAccount, signIn: (msg) => promptRestore(msg || 'Enter your username or account ID and your password or recovery code.', 'Log in'), needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid, payNow };
 window.ccSteps = { paySteps, withdrawFlow, stepsCss };
 window.ccTools = { sheet, call, toast, copyText, sleep };   // used by cc-tickets.js   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections

@@ -2,7 +2,7 @@
 import { json, err, sb, rows, one, post, patch, enc, inList, str, UUID, throttle, tooMany, user, contactBlock, ahead, DAY } from './lib.js';
 
 // What a person can start a chat about besides a Market item: [table, text column shown as the chat title]. Hearts chats only start from a match.
-const REFS = { hostel: ['hostels', 'name'], wifi: ['wifi', 'place'], post: ['posts', 'content'], room: ['rooms', 'title'], service: ['services', 'title'], group: ['study_groups', 'name'] };
+const REFS = { hostel: ['hostels', 'name'], wifi: ['wifi', 'place'], post: ['posts', 'content'], room: ['rooms', 'title'], service: ['services', 'title'], group: ['study_groups', 'name'], lostfound: ['lost_found', 'title'] };
 const other = (t, aid) => (t.a_aid === aid ? t.b_aid : t.a_aid);
 async function blockedEither(env, x, y) {
   const r = await rows(await sb(env, `blocks?select=blocker_aid,blocked_aid&blocker_aid=${inList([x, y])}&blocked_aid=${inList([x, y])}`));

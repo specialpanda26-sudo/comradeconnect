@@ -84,11 +84,12 @@ async function rawPost(path, body) {
 function registerFlow() {
   return new Promise((done, fail) => {
     const m = sheet('<h3>Create your anonymous account</h3><p class="sub" style="margin-top:6px">Pick a username and a password you will remember. No email, no phone number. Your password is the only way back in on a new phone.</p>'
-      + '<div class="fld" style="margin-top:10px"><input id="ccw-u" placeholder="Username (3 to 20 letters, numbers or _)" maxlength="20" autocomplete="off" autocapitalize="off" aria-label="Username"></div>'
-      + '<div class="fld"><input id="ccw-p" type="password" placeholder="Password (at least 8 characters)" maxlength="100" autocomplete="new-password" aria-label="Password"></div>'
-      + '<div class="fld"><input id="ccw-p2" type="password" placeholder="Type the password again" maxlength="100" autocomplete="new-password" aria-label="Confirm password"></div>'
+      + '<form id="ccw-f" style="display:contents" autocomplete="on" novalidate>'
+      + '<div class="fld" style="margin-top:10px"><input id="ccw-u" name="username" placeholder="Username (3 to 20 letters, numbers or _)" maxlength="20" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Username"></div>'
+      + '<div class="fld"><input id="ccw-p" name="password" type="password" placeholder="Password (at least 8 characters)" maxlength="100" autocomplete="new-password" aria-label="Password"></div>'
+      + '<div class="fld"><input id="ccw-p2" name="confirm_password" type="password" placeholder="Type the password again" maxlength="100" autocomplete="new-password" aria-label="Confirm password"></div>'
       + '<p class="sub" id="ccw-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
-      + '<button class="btn p" id="ccw-go" style="width:100%">Create account</button>'
+      + '<button type="submit" class="btn p" id="ccw-go" style="width:100%">Create account</button></form>'
       + '<button class="btn g" id="ccw-rand" style="width:100%;margin-top:6px">Skip: give me a random recovery code</button>'
       + '<button class="btn g" id="ccw-x" style="width:100%;margin-top:6px">Cancel</button>');
     const $q = (s) => m.querySelector(s), err = (t) => { $q('#ccw-e').textContent = t || ''; };
@@ -106,6 +107,7 @@ function registerFlow() {
       if (p !== $q('#ccw-p2').value) return err('The two passwords do not match');
       run({ handle: u, password: p });
     };
+    $q('#ccw-f').onsubmit = (ev) => { ev.preventDefault(); };   // the Create account button's click does the work
     $q('#ccw-rand').onclick = () => run({});
     $q('#ccw-x').onclick = () => { m.close(); fail(new Error('Sign in to continue')); };
   });
@@ -269,13 +271,14 @@ function promptForgot(prefill, back) {
     + '<div class="fp-body"><p class="fp-step" id="ccfg-st">Step 1 of 2</p><h1 id="ccfg-h">Reset your password</h1>'
     + '<p class="fp-sub" id="ccfg-in">Type the email saved on your account. We send a 6-digit code to it, then you choose a new password.</p>'
     + '<div class="fp-f" id="ccfg-f1"><label for="ccfg-m">Email on your account</label><input id="ccfg-m" type="email" inputmode="email" placeholder="name@gmail.com" autocomplete="email" autocapitalize="off" aria-label="Email on your account"></div>'
-    + '<div id="ccfg-2" hidden>'
+    + '<div id="ccfg-2" hidden><form id="ccfg-fm" style="display:contents" autocomplete="on" novalidate>'
+    + '<input id="ccfg-un" name="username" type="email" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">'
     + '<div class="fp-f"><label for="ccfg-c">6-digit code</label><input id="ccfg-c" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" aria-label="6-digit code"></div>'
-    + '<div class="fp-f"><label for="ccfg-p">New password</label><div class="fp-pw"><input id="ccfg-p" type="password" placeholder="8+ characters" autocomplete="new-password" autocapitalize="off" aria-label="New password"><button type="button" class="fp-eye" id="ccfg-eye" aria-label="Show password">' + EYEOFF + '</button></div></div>'
-    + '<div class="fp-f"><label for="ccfg-p2">Repeat the new password</label><div class="fp-pw"><input id="ccfg-p2" type="password" placeholder="Type it again" autocomplete="new-password" autocapitalize="off" aria-label="Repeat the new password"></div></div>'
-    + '</div>'
+    + '<div class="fp-f"><label for="ccfg-p">New password</label><div class="fp-pw"><input id="ccfg-p" name="password" type="password" placeholder="8+ characters" autocomplete="new-password" autocapitalize="off" aria-label="New password"><button type="button" class="fp-eye" id="ccfg-eye" aria-label="Show password">' + EYEOFF + '</button></div></div>'
+    + '</form></div>'
     + '<p class="fp-msg" id="ccfg-e" role="status" aria-live="polite"></p>'
     + '<button type="button" class="fp-go" id="ccfg-go">Send code</button>'
+    + '<p class="fp-sub" id="ccfg-no" style="margin-top:14px">No email saved on your account? Sign in with your account ID and the recovery code you saved. Once you are in, add an email so this works next time.</p>'
     + '<button type="button" class="fp-link" id="ccfg-have">I already have a code</button>'
     + '<button type="button" class="fp-link" id="ccfg-si">Back to sign in</button></div>';
   document.body.appendChild(pg);
@@ -302,7 +305,7 @@ function promptForgot(prefill, back) {
     $('ccfg-st').textContent = 'Step ' + n + ' of 2';
     $('ccfg-h').textContent = two ? 'Check your email' : 'Reset your password';
     $('ccfg-in').textContent = two ? 'If ' + maskE($('ccfg-m').value) + ' is saved on an account, a 6-digit code is on its way. It can take a minute. Check your spam folder too.' : 'Type the email saved on your account. We send a 6-digit code to it, then you choose a new password.';
-    $('ccfg-2').hidden = !two; $('ccfg-f1').hidden = two;
+    $('ccfg-2').hidden = !two; $('ccfg-f1').hidden = two; $('ccfg-no').hidden = two; $('ccfg-un').value = $('ccfg-m').value.trim();
     $('ccfg-go').textContent = two ? 'Change password' : 'Send code';
     $('ccfg-have').disabled = false; $('ccfg-have').textContent = two ? 'Send me a new code' : 'I already have a code';
     msg('');
@@ -312,20 +315,19 @@ function promptForgot(prefill, back) {
   $('ccfg-x').onclick = () => pg.close();
   $('ccfg-bk').onclick = () => { if (step === 2) toStep(1); else leave(); };
   $('ccfg-si').onclick = leave;
-  $('ccfg-eye').onclick = () => { const show = $('ccfg-p').type === 'password'; [$('ccfg-p'), $('ccfg-p2')].forEach((i) => { i.type = show ? 'text' : 'password'; }); $('ccfg-eye').innerHTML = show ? EYE : EYEOFF; $('ccfg-eye').setAttribute('aria-label', show ? 'Hide password' : 'Show password'); };
+  $('ccfg-eye').onclick = () => { const show = $('ccfg-p').type === 'password'; [$('ccfg-p')].forEach((i) => { i.type = show ? 'text' : 'password'; }); $('ccfg-eye').innerHTML = show ? EYE : EYEOFF; $('ccfg-eye').setAttribute('aria-label', show ? 'Hide password' : 'Show password'); };
   $('ccfg-have').onclick = async () => {
     if (!okMail($('ccfg-m').value)) return msg('Type your email first.', true);
     if (step === 1) { toStep(2); wait(); return; }
     try { const d = await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value }); msg(d.message || 'A new code is on its way.'); wait(); } catch (e) { msg(e.message, true); }
   };
-  ['ccfg-m', 'ccfg-c', 'ccfg-p', 'ccfg-p2'].forEach((i) => $(i).addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); $('ccfg-go').click(); } }));
+  ['ccfg-m', 'ccfg-c', 'ccfg-p'].forEach((i) => $(i).addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); $('ccfg-go').click(); } }));
   $('ccfg-go').onclick = async () => {
     const b = $('ccfg-go'); msg('');
     if (step === 1 && !okMail($('ccfg-m').value)) return msg('Enter a real email address, for example name@gmail.com', true);
     if (step === 2) {
       if (String($('ccfg-c').value).replace(/\D/g, '').length !== 6) return msg('The code has 6 digits.', true);
       if ($('ccfg-p').value.length < 8) return msg('The new password needs at least 8 characters.', true);
-      if ($('ccfg-p').value !== $('ccfg-p2').value) return msg('The two passwords are not the same.', true);
     }
     ccBusy(b, true, step === 1 ? 'Sending code...' : 'Changing password...');
     try {

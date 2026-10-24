@@ -102,12 +102,12 @@
       + '<p class="ccfrst-hint">Old account with a recovery code? Type that code in the password box instead.</p>'
       + '<button type="submit" class="ccfrst-btn" id="ccfrst-in">Log in</button></form>'
       /* SIGN UP */
-      + '<div class="ccfrst-pn" data-pn="create" hidden>'
-      + field('ccfrst-cu', 'Username', { attr: 'maxlength="20" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="e.g. night_owl"' })
+      + '<form class="ccfrst-pn" data-pn="create" id="ccfrst-cf" hidden autocomplete="on" novalidate>'
+      + field('ccfrst-cu', 'Username', { attr: 'name="username" maxlength="20" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="e.g. night_owl"' })
       + '<p class="ccfrst-hint" style="margin-top:-8px">3 to 20 letters, numbers or _</p>'
-      + field('ccfrst-cp', 'Password', { pw: 1, eye: 'create', attr: 'type="password" maxlength="100" autocomplete="new-password" placeholder="At least 8 characters"' })
-      + field('ccfrst-cp2', 'Confirm password', { attr: 'type="password" maxlength="100" autocomplete="new-password" placeholder="Type it again"' })
-      + '<button type="button" class="ccfrst-btn" id="ccfrst-new">Create account</button></div>'
+      + field('ccfrst-cp', 'Password', { pw: 1, eye: 'create', attr: 'name="password" type="password" maxlength="100" autocomplete="new-password" placeholder="At least 8 characters"' })
+      + field('ccfrst-cp2', 'Confirm password', { attr: 'name="confirm_password" type="password" maxlength="100" autocomplete="new-password" placeholder="Type it again"' })
+      + '<button type="button" class="ccfrst-btn" id="ccfrst-new">Create account</button></form>'
       /* ANONYMOUS */
       + '<div class="ccfrst-pn" data-pn="anon" hidden><div class="ccfrst-box"><b>How it works</b><br>We make you an account with a random ID. After it is created you see a recovery code once. Screenshot it or write it down, because we cannot show it again.</div>'
       + '<button type="button" class="ccfrst-btn" id="ccfrst-anon">Create anonymous account</button></div>'
@@ -174,6 +174,7 @@
       var r; try { r = CC.createAccount('password', { handle: u, password: p }); } catch (e) { busy(b, false, 'Creating...', 'Create account'); return fail(e); }
       r.then(function () { busy(b, false, 'Creating...', 'Create account'); }, function (e) { busy(b, false, 'Creating...', 'Create account'); fail(e); });
     }
+    $('#ccfrst-cf').onsubmit = function (ev) { ev.preventDefault(); };   // the Create account button's click does the work
     $('#ccfrst-new').onclick = create;
     ['ccfrst-cu', 'ccfrst-cp', 'ccfrst-cp2'].forEach(function (id) { $('#' + id).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); create(); } }); });
 

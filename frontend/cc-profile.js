@@ -112,7 +112,7 @@
     info = null; if (!signedIn() || !live()) return;
     try { var r = await fetch(API + '/api/me'); if (r.ok) { info = await r.json(); if (info && info.handle) ME.handle = info.handle; } } catch (e) {}
   }
-  var pwField = function (id, ph, label, ac) { return '<div class="fld"><input id="' + id + '" type="password" placeholder="' + ph + '" autocomplete="' + (ac || 'new-password') + '" autocapitalize="off" aria-label="' + label + '"></div>'; };
+  var pwField = function (id, ph, label, ac) { return '<div class="fld"><input id="' + id + '" name="' + (ac === 'current-password' ? 'current_password' : id === 'ccp-p2' ? 'confirm_password' : 'password') + '" type="password" placeholder="' + ph + '" autocomplete="' + (ac || 'new-password') + '" autocapitalize="off" aria-label="' + label + '"></div>'; };
   var SHOWPW = '<label class="sub" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="ccp-sh"> Show password</label>';
   function showToggle(m, ids) { var c = $('#ccp-sh', m); if (c) c.onchange = function () { ids.forEach(function (i) { var n = $('#' + i, m); if (n) n.type = c.checked ? 'text' : 'password'; }); }; }
   function problem(h, p) {
@@ -136,10 +136,11 @@
   function openCreate() {
     if (!live()) return say('We cannot reach the service right now. Please try again in a moment.');
     var m = sheet('<h3>Create your account</h3><p class="sub" style="margin-top:6px">Pick a username and a password. You will use them to sign in on any phone. Other people only see your username.</p>'
-      + '<div class="fld" style="margin-top:10px"><input id="ccp-u" placeholder="Username" maxlength="20" autocomplete="username" autocapitalize="off" aria-label="Username"></div>'
+      + '<form id="ccp-fm" style="display:contents" autocomplete="on" novalidate><div class="fld" style="margin-top:10px"><input id="ccp-u" name="username" placeholder="Username" maxlength="20" autocomplete="username" autocapitalize="off" aria-label="Username"></div>'
       + pwField('ccp-p1', 'Password (8 or more characters)', 'Password') + pwField('ccp-p2', 'Repeat the password', 'Repeat the password') + SHOWPW
-      + '<p class="sub" id="ccp-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
+      + '<p class="sub" id="ccp-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p></form>'
       + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-go">Create account</button></div>');
+    $('#ccp-fm', m).onsubmit = function (ev) { ev.preventDefault(); };
     showToggle(m, ['ccp-p1', 'ccp-p2']);
     $('#ccp-x', m).onclick = function () { m.close(); };
     $('#ccp-go', m).onclick = async function () {
@@ -160,11 +161,13 @@
     var has = !!(info && info.has_password);
     var m = sheet('<h3>' + (has ? 'Change username or password' : 'Set a username and password') + '</h3><p class="sub" style="margin-top:6px">'
       + (has ? 'Enter your current password to make changes.' : 'Right now this account only has an account ID and a recovery code. Choose a username and password so you can sign in on any phone. Your old recovery code stops working once you save.') + '</p>'
-      + (has ? '<div style="margin-top:10px">' + pwField('ccp-cur', 'Current password', 'Current password', 'current-password') + '</div>' : '')
-      + '<div class="fld" style="margin-top:10px"><input id="ccp-u" placeholder="Username" maxlength="20" autocomplete="username" autocapitalize="off" aria-label="Username" value="' + esc((info && info.handle) || '') + '"></div>'
+      + '<form id="ccp-fm" style="display:contents" autocomplete="on" novalidate>'
+      + '<div class="fld" style="margin-top:10px"><input id="ccp-u" name="username" placeholder="Username" maxlength="20" autocomplete="username" autocapitalize="off" aria-label="Username" value="' + esc((info && info.handle) || '') + '"></div>'
+      + (has ? pwField('ccp-cur', 'Current password', 'Current password', 'current-password') : '')
       + pwField('ccp-p1', has ? 'New password' : 'Password (8 or more characters)', 'Password') + pwField('ccp-p2', 'Repeat the password', 'Repeat the password') + SHOWPW
-      + '<p class="sub" id="ccp-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
+      + '<p class="sub" id="ccp-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p></form>'
       + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-go">Save</button></div>');
+    $('#ccp-fm', m).onsubmit = function (ev) { ev.preventDefault(); };
     showToggle(m, ['ccp-p1', 'ccp-p2', 'ccp-cur']);
     $('#ccp-x', m).onclick = function () { m.close(); };
     $('#ccp-go', m).onclick = async function () {

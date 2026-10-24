@@ -140,6 +140,7 @@ queue();
 
 function goBack() {
   if (locked()) return false;
+  try { if (window.ccLiveBack && window.ccLiveBack()) return true; } catch (e) {}   // live full screen: back leaves full screen first
   var fr = document.getElementById('ccfrst'); if (fr) { var fx = fr.querySelector('.ccfrst-x'); if (fx) { fx.click(); return true; } }
   var o = openList();
   if (o.length) { closeIt(o[o.length - 1]); return true; }

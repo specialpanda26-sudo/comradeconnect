@@ -1,0 +1,4 @@
+
+/* cc-scrim: every popup backdrop is the same navy glass (no pure black). The photo viewer and the lock screen keep their own. */
+#md,#dm,#ccp,#dcm,#cchp,#ccuniv,#ccgate{background:rgba(16,20,34,.8)!important;-webkit-backdrop-filter:blur(10px)!important;backdrop-filter:blur(10px)!important}
+:root[data-theme="light"] #md,:root[data-theme="light"] #dm,:root[data-theme="light"] #ccp,:root[data-theme="light"] #dcm,:root[data-theme="light"] #cchp,:root[data-theme="light"] #ccuniv,:root[data-theme="light"] #ccgate{background:rgba(16,20,34,.5)!important}

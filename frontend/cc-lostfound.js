@@ -56,7 +56,7 @@ function paint() {
       + (x.details ? '<p>' + esc(x.details) + '</p>' : '')
       + '<div class="lf-row">'
       + (x.status === 'returned' ? '<span class="badge">Returned to owner</span>' : (!x.mine ? '<button class="act" data-lf="dm" data-id="' + esc(x.id) + '">' + (x.kind === 'found' ? 'This is mine' : 'I found it') + '</button>' : '<button class="act" data-lf="ret" data-id="' + esc(x.id) + '">Mark returned</button>'))
-      + (x.mine ? '<button class="act" data-lf="rm" data-id="' + esc(x.id) + '">Remove</button>' : '') + '</div></article>';
+      + (x.mine ? '<button class="act" data-lf="rm" data-id="' + esc(x.id) + '">Remove</button>' : '<button class="act" data-lf="rp" data-id="' + esc(x.id) + '">Report</button>') + '</div></article>';
   }).join('');
   body.innerHTML = h;
 }

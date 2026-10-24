@@ -1,4 +1,5 @@
-/* cc-live.js v1: Live inside Comrade Connect (video by Agora, free plan), a viewers button, and live cards in the Feed.
+/* cc-live.js v2: Live inside Comrade Connect (video by Agora, free plan), a viewers button, full screen and small screen modes, host leave prompt.
+   Lives show ONLY in the Live tab (never in the Feed).
    Loaded after cc-core.js and cc-profile.js. Icons are outline SVGs, no emoji. */
 (function () {
   'use strict';
@@ -37,7 +38,26 @@
     '.ccl-f{display:flex;gap:8px}',
     '.ccl-f input{flex:1;min-width:0}',
     '.ccl-sh{position:fixed;inset:0;z-index:9999;background:rgba(16,20,34,.8);display:flex;align-items:center;justify-content:center;padding:20px}',
-    '.ccl-sh .box{max-width:320px;width:100%;text-align:center}'
+    '.ccl-sh .box{max-width:320px;width:100%;text-align:center;position:relative}',
+    '.ccl-sh .ccl-x{position:absolute;top:8px;right:8px;width:36px;height:36px;border:0;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer;padding:0}',
+    '.ccl-sh .ccl-x svg{width:20px;height:20px}',
+    '#ccl-ctl{position:absolute;top:10px;right:10px;display:flex;gap:8px;z-index:5}',
+    '#ccl-ctl button{width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}',
+    '#ccl-ctl button.ccl-plain{background:transparent;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}',
+    '#ccl-ctl button[data-k=hrt]{display:none}',
+    '#rmedia.ccl-fs{position:fixed!important;inset:0;z-index:9000;background:#000;display:grid}',
+    '#rmedia.ccl-fs #rframe{height:100%}',
+    '#rmedia.ccl-fs .ccl-v{max-height:none;height:100%;aspect-ratio:auto;border-radius:0}',
+    '#rmedia.ccl-fs #ccl-ctl{top:calc(10px + env(safe-area-inset-top,0px))}',
+    '#rmedia.ccl-fs #ccl-ctl button[data-k=hrt]{display:grid}',
+    'body.ccl-fsb{overflow:hidden}',
+    '#ccl-mini{position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));width:128px;z-index:8000;border-radius:14px;overflow:hidden;background:#101422;box-shadow:0 6px 24px rgba(0,0,0,.45)}',
+    '#ccl-mini #ccl-ctl{display:none}',
+    '#ccl-mini .ccl-v{max-height:none;border-radius:0}',
+    '#ccl-mbar{position:absolute;top:4px;left:4px;right:4px;display:flex;justify-content:space-between;z-index:6}',
+    '#ccl-mbar button{width:30px;height:30px;border:0;background:rgba(0,0,0,.55);color:#fff;border-radius:50%;display:grid;place-items:center;padding:0;cursor:pointer}',
+    '#ccl-mbar button svg{width:15px;height:15px}',
+    '.ccl-snd{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;border:0;border-radius:999px;padding:9px 16px;background:#fff;color:#101422;font:600 13px Poppins,sans-serif;cursor:pointer}'
   ].join('');
   document.head.appendChild(css);
 
@@ -72,6 +92,7 @@
     if (!AGORA) { v.textContent = 'Live video is not set up yet. The admin must add the video key.'; return false; }
     try {
       await loadSdk(); if (st.dead) return;
+      try { AgoraRTC.onAudioAutoplayFailed = function () { soundTap(box); }; } catch (e) {}   // the browser blocked sound until a tap
       st.cl = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
       await st.cl.setClientRole(host ? 'host' : 'audience');
       if (!host) {
@@ -79,17 +100,24 @@
           try { await st.cl.subscribe(u, type); } catch (e) { return; }
           if (st.dead) return;
           if (type === 'video') { v.textContent = ''; u.videoTrack.play(v); }
-          if (type === 'audio') { try { u.audioTrack.play(); } catch (e) {} }
+          if (type === 'audio') { try { u.audioTrack.setVolume(st.muted ? 0 : 100); u.audioTrack.play(); } catch (e) {} }
         });
         st.cl.on('user-unpublished', function (u, type) { if (type === 'video' && !st.dead) { v.textContent = 'The host paused the video'; } });
+        st.cl.on('user-left', function () { if (!st.dead) { v.textContent = 'The host has left'; } });
         v.textContent = 'Waiting for the host video...';
       }
       var tk = null; try { tk = (await call('/api/live/token', { auth: !!host, body: { channel: s.channel, host: !!host } })).token || null; } catch (e) { if (host) throw e; }
       await st.cl.join(AGORA, s.channel, tk, null); if (st.dead) { try { st.cl.leave(); } catch (e) {} return; }
       if (host) {
-        var t = await AgoraRTC.createMicrophoneAndCameraTracks({}, { encoderConfig: '720p_2' });
-        st.tracks = t; if (st.dead) { detach(box); return; }
-        v.textContent = ''; t[1].play(v); await st.cl.publish(t);
+        var t;
+        try { t = await AgoraRTC.createMicrophoneAndCameraTracks({ AEC: true, ANS: true, AGC: true }, { encoderConfig: '720p_2' }); }
+        catch (me) {
+          // microphone blocked or missing: still go live with the camera, and say so
+          var cam = await AgoraRTC.createCameraVideoTrack({ encoderConfig: '720p_2' }); t = [null, cam];
+          say('Your microphone is blocked, so people will see you but not hear you. Allow the microphone for this site.');
+        }
+        st.tracks = t.filter(Boolean); st.mic = t[0]; st.cam = t[1]; if (st.dead) { detach(box); return; }
+        v.textContent = ''; t[1].play(v); await st.cl.publish(st.tracks);
       }
       return true;
     } catch (e) {
@@ -145,125 +173,191 @@
       b.disabled = false;
     };
   }
+
+
+  /* ---------- room controls: sound, full screen, small screen, leave ---------- */
+  var ICON = {
+    spk: SV('<path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>'),
+    spkOff: SV('<path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/>'),
+    mic: SV('<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/>'),
+    micOff: SV('<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M3 3l18 18"/>'),
+    fs: SV('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
+    fsOff: SV('<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>'),
+    min: SV('<rect x="3" y="4" width="18" height="16" rx="2"/><rect x="12" y="12" width="7" height="6" rx="1"/>'),
+    big: SV('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
+    x: SV('<path d="M6 6l12 12M18 6L6 18"/>')
+  };
+  var ME = null, HB = null, keep = false, force = false;
+  var media = function () { return $('#rmedia'); };
+  var mini = function () { return $('#ccl-mini'); };
+  var st = function () { var f = $('#rframe'); return f && f.__cc; };
+
+  function endOnServer(id) { return call('/api/live/' + id + '/end', { body: {} }).catch(function () {}); }
+  function endBeacon(id) {                                  // survives the tab closing
+    try { fetch((typeof CC_API !== 'undefined' ? CC_API : '') + '/api/live/' + id + '/end', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(function () {}); } catch (e) {}
+  }
+
+  function soundTap(box) {
+    var v = box && box.querySelector('.ccl-v'); if (!v || v.querySelector('.ccl-snd')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'ccl-snd'; b.textContent = 'Tap for sound';
+    b.onclick = function (e) {
+      e.stopPropagation(); var s = box.__cc;
+      try { s && s.cl && s.cl.remoteUsers.forEach(function (u) { if (u.audioTrack) { u.audioTrack.setVolume(s.muted ? 0 : 100); u.audioTrack.play(); } }); } catch (x) {}
+      b.remove();
+    };
+    v.appendChild(b);
+  }
+  function replay(box) {                                    // a video stops when its element is moved: start it again
+    var s = box && box.__cc, v = box && box.querySelector('.ccl-v'); if (!s || !v) return;
+    try { if (s.cam) s.cam.play(v); else s.cl && s.cl.remoteUsers.forEach(function (u) { if (u.videoTrack) u.videoTrack.play(v); }); } catch (e) {}
+  }
+
+  function drawCtl() {
+    var m = media(); if (!m) return;
+    var c = $('#ccl-ctl'); if (c) c.remove();
+    if (!ME) return;
+    var fsOn = m.classList.contains('ccl-fs'), s = st();
+    var off = ME.mine ? !!(s && s.micOff) : !!(s && s.muted);
+    var h = '';
+    if (ME.native) h += '<button type="button" data-k="snd" aria-label="' + (ME.mine ? (off ? 'Turn microphone on' : 'Turn microphone off') : (off ? 'Turn sound on' : 'Turn sound off')) + '">' + (ME.mine ? (off ? ICON.micOff : ICON.mic) : (off ? ICON.spkOff : ICON.spk)) + '</button>';
+    h += '<button type="button" data-k="hrt" aria-label="Send a heart">' + I.heart + '</button>';
+    h += '<button type="button" data-k="fs" aria-label="' + (fsOn ? 'Exit full screen' : 'Full screen') + '">' + (fsOn ? ICON.fsOff : ICON.fs) + '</button>';
+    h += '<button type="button" data-k="min" aria-label="Small screen">' + ICON.min + '</button>';
+    h += '<button type="button" data-k="x" class="ccl-plain" aria-label="' + (ME.mine ? 'Leave or end live' : 'Leave stream') + '">' + ICON.x + '</button>';
+    var d = document.createElement('div'); d.id = 'ccl-ctl'; d.innerHTML = h; m.appendChild(d);
+  }
+
+  function setFull(on) {
+    var m = media(); if (!m) return;
+    m.classList.toggle('ccl-fs', !!on); document.body.classList.toggle('ccl-fsb', !!on);
+    // glass panels can trap position:fixed, so full screen lives directly under <body>
+    if (on && m.parentNode !== document.body) { m.__home = { p: m.parentNode, n: m.nextSibling }; document.body.appendChild(m); }
+    else if (!on && m.__home && !miniOn()) { var hh = m.__home; m.__home = null; hh.p.insertBefore(m, hh.n && hh.n.parentNode === hh.p ? hh.n : null); }
+    try {
+      if (on && m.requestFullscreen && !document.fullscreenElement) m.requestFullscreen().catch(function () {});
+      else if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {});
+    } catch (e) {}
+    drawCtl(); setTimeout(function () { replay($('#rframe')); }, 60);
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && media() && media().classList.contains('ccl-fs')) setFull(false); });
+  document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement && media() && media().classList.contains('ccl-fs')) setFull(false); });
+
+  /* small screen: the video floats above every tab while the live keeps going */
+  function miniOn() { return !!mini(); }
+  function minimize() {
+    var m = media(); if (!m || !ME || miniOn()) return;
+    setFull(false);
+    var box = document.createElement('div'); box.id = 'ccl-mini';
+    box.__home = { p: m.parentNode, n: m.nextSibling };
+    box.innerHTML = '<div id="ccl-mbar"><button type="button" data-k="big" aria-label="Open the live">' + ICON.big + '</button><button type="button" data-k="mx" aria-label="' + (ME.mine ? 'Leave or end live' : 'Leave stream') + '">' + ICON.x + '</button></div>';
+    box.appendChild(m); document.body.appendChild(box);
+    box.onclick = function (e) {
+      var k = e.target.closest('button'); k = k && k.dataset.k;
+      if (k === 'mx') { e.stopPropagation(); ME.mine ? askHost(null) : leaveRoom(); }
+      else { force = false; try { go('live'); } catch (x) {} }
+    };
+    var c = $('#ccl-ctl'); if (c) c.remove();
+    setTimeout(function () { replay($('#rframe')); }, 60);
+  }
+  function unmini() {
+    var b = mini(); if (!b) return;
+    var m = $('#rmedia', b), h = b.__home;
+    if (m && h && h.p) h.p.insertBefore(m, h.n && h.n.parentNode === h.p ? h.n : null);
+    b.remove(); drawCtl(); setTimeout(function () { replay($('#rframe')); }, 60);
+  }
+
+  /* host leaving: end the live, or keep going */
+  function askHost(after) {
+    if (document.querySelector('.ccl-sh[data-host]')) return;
+    var m = document.createElement('div'); m.className = 'ccl-sh'; m.setAttribute('data-host', '1'); m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true');
+    m.innerHTML = '<div class="box g">'
+      + '<h3 style="margin:6px 0 6px">You are live</h3>'
+      + '<p class="sub" style="margin:0 0 16px">If you leave, your live ends for everyone watching. Or keep it going in the small screen while you use the app.</p>'
+      + '<button type="button" class="btn p" data-k="end" style="width:100%">End live</button>'
+      + '<button type="button" class="btn g" data-k="go" style="width:100%;margin-top:10px">Continue live</button></div>';
+    m.onclick = function (e) {
+      var k = e.target === m ? 'close' : (e.target.closest('button') || {}).dataset;
+      k = e.target === m ? 'close' : (k && k.k); if (!k) return;
+      m.remove();
+      if (k === 'end') {
+        var id = ME && ME.id;
+        (id ? endOnServer(id) : Promise.resolve()).then(function () { say('Your live has ended'); });
+        force = true; try { leaveRoom(); if (after) go(after); } finally { force = false; }
+      } else if (k === 'go') {
+        if (after) { minimize(); keep = true; try { go(after); } finally { keep = false; } } else minimize();
+      }
+    };
+    document.body.appendChild(m);
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('#ccl-ctl button'); if (!b) return;
+    var k = b.dataset.k, s = st();
+    if (k === 'fs') setFull(!media().classList.contains('ccl-fs'));
+    else if (k === 'min') minimize();
+    else if (k === 'x') { if (ME && ME.mine) askHost(null); else { setFull(false); leaveRoom(); } }
+    else if (k === 'hrt') { var h = $('#lheart'); if (h) h.click(); }
+    else if (k === 'snd' && s) {
+      if (ME.mine) { s.micOff = !s.micOff; try { s.mic && s.mic.setEnabled(!s.micOff); } catch (x) {} if (!s.mic) say('No microphone is on'); }
+      else { s.muted = !s.muted; try { s.cl.remoteUsers.forEach(function (u) { if (u.audioTrack) { u.audioTrack.setVolume(s.muted ? 0 : 100); if (!s.muted) u.audioTrack.play(); } }); } catch (x) {} }
+      drawCtl();
+    }
+  });
+
+  /* heartbeat: the server ends the live by itself when the host stops answering */
+  function beat(id) {
+    call('/api/live/' + id + '/host-ping', { body: {} }).then(function (d) {
+      if (d && d.status === 'ended' && ME && ME.id === id) { say('Your live has ended'); force = true; try { leaveRoom(); } finally { force = false; } }
+    }).catch(function () {});
+  }
+  function startBeat(id) { stopBeat(); beat(id); HB = setInterval(function () { beat(id); }, 15000); }
+  function stopBeat() { if (HB) clearInterval(HB); HB = null; }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && ME && ME.mine) beat(ME.id); });
+
+  /* closing the tab or the browser: ask first, and end the live if they go */
+  window.addEventListener('beforeunload', function (e) { if (ME && ME.mine) { e.preventDefault(); e.returnValue = ''; return ''; } });
+  window.addEventListener('pagehide', function () { if (ME && ME.mine) endBeacon(ME.id); });
+
   try {
     var _or = openRoom;
     openRoom = function (s) {
+      if (miniOn()) unmini();
       var r = _or.apply(this, arguments);
       try {
-        mountRoomViewers();
+        ME = { id: s.id, mine: !!s.mine, native: !!s.native };
+        mountRoomViewers(); drawCtl();
+        var re = $('#rend'); if (re) re.onclick = function () { if (ME && ME.mine) askHost(null); else leaveRoom(); };
         if (s && s.native) {
           var f = $('#rframe');
           attach(s, f, !!s.mine).then(function (ok) {
-            if (ok === false && s.mine) { call('/api/live/' + s.id + '/end', { body: {} }).catch(function () {}); }
+            if (ok === false && s.mine) { endOnServer(s.id); stopBeat(); }
           });
+          if (s.mine) startBeat(s.id);
         }
       } catch (e) {}
       return r;
     };
     var _lr = leaveRoom;
-    leaveRoom = function () { try { detach($('#rframe')); } catch (e) {} return _lr.apply(this, arguments); };
-  } catch (e) {}
-
-  /* ---------- Feed: live cards with like, reshare and comment ---------- */
-  var FEED = { live: [], hearted: {}, seen: {}, t: null };
-  function feedHost() {
-    var f = $('#v-feed'); if (!f) return null;
-    var h = $('#ccl-feed');
-    if (!h) { h = document.createElement('div'); h.id = 'ccl-feed'; f.insertBefore(h, f.firstChild); }
-    return h;
-  }
-  function cardHtml(s, i) {
-    return '<article class="box g ccl-card" data-id="' + esc(s.id) + '">'
-      + '<div class="ccl-hd"><span class="live-b">LIVE</span><button type="button" class="ccl-vw" data-a="v" aria-label="Viewers">' + I.eye + '<span class="n">' + (s.viewers || 0) + '</span></button></div>'
-      + '<b>' + esc(s.title) + '</b>'
-      + '<div class="ccl-box"></div>'
-      + '<div class="ccl-ac"><button type="button" data-a="h" class="' + (FEED.hearted[s.id] ? 'on' : '') + '" aria-label="Like">' + I.heart + '<span class="hc">' + (s.hearts || 0) + '</span></button>'
-      + '<button type="button" data-a="c" aria-label="Comment">' + I.chat + '<span>Comment</span></button>'
-      + '<button type="button" data-a="s" aria-label="Reshare">' + I.share + '<span>Reshare</span></button></div>'
-      + '<div class="ccl-cm" aria-live="polite"></div>'
-      + '<form class="ccl-f"><div class="fld" style="flex:1;margin:0"><input maxlength="140" placeholder="Say something" aria-label="Comment on the live"></div><button class="act" aria-label="Send">' + I.send + '</button></form>'
-      + '</article>';
-  }
-  function paintFeed() {
-    var h = feedHost(); if (!h) return;
-    var ids = FEED.live.map(function (s) { return s.id; }).join(',');
-    if (h.dataset.ids === ids) return;
-    Array.prototype.forEach.call(h.querySelectorAll('.ccl-box'), detach);
-    h.dataset.ids = ids; h.innerHTML = FEED.live.map(cardHtml).join('');
-    FEED.live.forEach(function (s, i) {
-      var c = h.querySelector('[data-id="' + s.id + '"]'); if (!c) return;
-      var box = $('.ccl-box', c);
-      if (s.native && i === 0) attach(s, box, false);   // the first live keeps playing as soon as you open the Feed
-      else if (s.native) box.innerHTML = '<button class="btn p" data-a="w" style="width:100%">Watch</button>';
-      else box.innerHTML = '<p class="sub" style="margin:0">This live plays on another site. Open the Live tab to watch it.</p>';
-    });
-  }
-  function onFeedView() { return document.body.dataset.view === 'feed' && !document.hidden; }
-  async function loadFeed() {
-    if (!onFeedView()) return;
-    try { var d = await call('/api/live', { auth: false }); FEED.live = (d.streams || []).filter(function (s) { return s.native; }); }
-    catch (e) { return; }
-    var h = feedHost(); if (!FEED.live.length && h) { Array.prototype.forEach.call(h.querySelectorAll('.ccl-box'), detach); h.innerHTML = ''; h.dataset.ids = ''; return; }
-    paintFeed(); pingFeed();
-  }
-  async function pingFeed() {
-    if (!onFeedView()) return;
-    var h = feedHost(); if (!h) return;
-    FEED.live.forEach(async function (s) {
-      var c = h.querySelector('[data-id="' + s.id + '"]'); if (!c) return;
-      try {
-        var d = await call('/api/live/' + s.id + '/ping', { auth: false, body: { v: VID, since: c.__at || undefined } });
-        if (d.status === 'ended') { FEED.live = FEED.live.filter(function (x) { return x.id !== s.id; }); h.dataset.ids = ''; paintFeed(); return; }
-        $('.n', c).textContent = d.viewers; $('.hc', c).textContent = d.hearts;
-        var box = $('.ccl-cm', c);
-        (d.comments || []).forEach(function (m) {
-          if (FEED.seen[m.id]) return; FEED.seen[m.id] = 1; if (m.at > (c.__at || '')) c.__at = m.at;
-          var p = document.createElement('p'), b = document.createElement('b'); b.textContent = m.name + ': '; p.append(b, document.createTextNode(m.text)); box.appendChild(p);
-          while (box.children.length > 30) box.firstChild.remove();
-        });
-        box.scrollTop = box.scrollHeight;
-      } catch (e) {}
-    });
-  }
-  var pendH = {};
-  document.addEventListener('click', function (e) {
-    var c = e.target.closest('#ccl-feed .ccl-card'); if (!c) return;
-    var id = c.dataset.id, s = FEED.live.filter(function (x) { return x.id === id; })[0], b = e.target.closest('button[data-a]'); if (!s || !b) return;
-    var a = b.dataset.a;
-    if (a === 'v') viewersSheet(numOf($('.n', c).textContent));
-    else if (a === 'w') attach(s, $('.ccl-box', c), false);
-    else if (a === 's') shareLive(id, s.title);
-    else if (a === 'c') { var i = $('input', c); if (i) i.focus(); }
-    else if (a === 'h') {
-      FEED.hearted[id] = true; b.classList.add('on'); var hc = $('.hc', c); hc.textContent = numOf(hc.textContent) + 1;
-      pendH[id] = Math.min((pendH[id] || 0) + 1, 10);
-      if (!pendH.t) pendH.t = setTimeout(function () { pendH.t = null; Object.keys(pendH).forEach(function (k) { if (k === 't') return; var n = pendH[k]; delete pendH[k]; if (n) call('/api/live/' + k + '/heart', { auth: false, body: { n: n } }).catch(function () {}); }); }, 1500);
-    }
-  });
-  document.addEventListener('submit', async function (e) {
-    var f = e.target.closest('#ccl-feed .ccl-f'); if (!f) return; e.preventDefault();
-    var c = f.closest('.ccl-card'), i = $('input', f), t = i.value.trim(); if (!t) return;
-    var btn = $('button', f); btn.disabled = true;
-    try { var m = await call('/api/live/' + c.dataset.id + '/comment', { body: { text: t } }); i.value = ''; pingFeed(); }
-    catch (er) { say(er.message); }
-    btn.disabled = false;
-  });
-
-  try {
+    leaveRoom = function () {
+      if (keep) return;                                            // moving to another tab with the small screen on: do not leave
+      try { stopBeat(); setFull(false); unmini(); detach($('#rframe')); var c = $('#ccl-ctl'); if (c) c.remove(); } catch (e) {}
+      ME = null; return _lr.apply(this, arguments);
+    };
     var _go = go;
     go = function (v) {
+      if (ME && v !== 'live' && !force) {
+        if (miniOn()) { keep = true; try { return _go.apply(this, arguments); } finally { keep = false; } }   // already in the small screen: just move on
+        if (ME.mine) { askHost(v); return; }                      // host: end the live or continue
+        minimize(); keep = true;                                  // a viewer who walks away gets the small screen; X leaves
+        try { return _go.apply(this, arguments); } finally { keep = false; }
+      }
       var r = _go.apply(this, arguments);
       try {
-        if (v === 'feed') setTimeout(loadFeed, 0);
-        else { var h = $('#ccl-feed'); if (h) { Array.prototype.forEach.call(h.querySelectorAll('.ccl-box'), detach); h.dataset.ids = ''; } }
-        if (v === 'live') setTimeout(mountHost, 0);
+        if (v === 'live') { if (miniOn()) unmini(); setTimeout(mountHost, 0); }
       } catch (e) {}
       return r;
     };
   } catch (e) {}
-  setInterval(function () { if (onFeedView()) { loadFeed(); pingFeed(); } }, 6000);
-  document.addEventListener('visibilitychange', function () { if (document.hidden) { var h = $('#ccl-feed'); if (h) { Array.prototype.forEach.call(h.querySelectorAll('.ccl-box'), detach); h.dataset.ids = ''; } } else if (onFeedView()) loadFeed(); });
-
   /* a shared link (/?live=ID) opens that live */
   function openShared() {
     var id = (new URLSearchParams(location.search)).get('live'); if (!id) return;
@@ -274,7 +368,8 @@
     }).catch(function () {});
   }
   window.addEventListener('load', function () {
-    setTimeout(function () { mountHost(); loadFeed(); openShared(); }, 600);
+    setTimeout(function () { mountHost(); openShared(); }, 600);
   });
+  try { var oldFeed = $('#ccl-feed'); if (oldFeed) oldFeed.remove(); } catch (e) {}
   mountHost();
 })();

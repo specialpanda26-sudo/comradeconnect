@@ -984,7 +984,7 @@ const XP = {
     const card = (x) => {
       const tel = String(x.phone || '').replace(/[^\d+]/g, ''), wa = String(x.whatsapp || '').replace(/\D/g, '');
       const price = String(x.offerings || '').split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 15).map((l) => { const p = l.split(/\s*\|\s*/); return '<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;' + line + '"><span style="font-weight:300">' + esc(p[0]) + '</span><b style="white-space:nowrap;font-weight:600">' + esc(p[1] || '') + '</b></div>'; }).join('');
-      const maps = x.location ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(x.location + ' Kirinyaga University') : '';
+      const maps = x.location ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(x.location + ' ' + (window.ccCampusName || 'Kirinyaga University')) : '';
       const bt = 'style="padding:11px 20px;text-decoration:none"';
       const act = (tel ? '<a class="btn p" ' + bt + ' href="tel:' + esc(tel) + '">' + ic(IC.phone) + 'Call</a>' : '') + (wa ? '<a class="btn g" ' + bt + ' href="https://wa.me/' + esc(wa) + '?text=' + encodeURIComponent('Hi ' + x.title + ', I found you on Comrade Connect.') + '" target="_blank" rel="noopener noreferrer">' + ic(IC.chat) + 'WhatsApp</a>' : '')
         + (maps ? '<a class="btn g" ' + bt + ' href="' + esc(maps) + '" target="_blank" rel="noopener noreferrer">' + ic(IC.pin) + 'Directions</a>' : '');

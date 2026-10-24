@@ -2,13 +2,13 @@ import { json, sb, rows, ago, isAdmin, hasContact, standingBlock, audit, user } 
 import { feeFor } from './postrules.js';
 import { checkText } from './moderation.js';
 import { notify, notifySnippet } from './notifications.js';
-import { campusRow, campusQuery } from './campus.js';
+import { campusRow, campusQuery, CAMPUSES } from './campus.js';
 
 // ---------- Feed ----------
 const CAT_OK = /^[A-Za-z0-9]{2,22}$/;
 const fmtPost = (r) => ({
   _id: r.id, content: r.content, category: r.category, zone: r.zone || '', verified: !!r.verified, aid: r.aid,
-  campus: 'Kirinyaga University', likes: r.likes || 0, views: r.views || 0,
+  campus: (CAMPUSES.find((c) => c.id === r.campus) || CAMPUSES[0]).name, likes: r.likes || 0, views: r.views || 0,
   boosted: !!(r.boosted_until && new Date(r.boosted_until) > new Date()),
   comments: (r.comments || []).sort((a, b) => a.created_at < b.created_at ? -1 : 1).map((c) => ({ text: c.text, createdAt: Date.parse(c.created_at) })),
   createdAt: Date.parse(r.created_at),

@@ -2,7 +2,7 @@
   var K='cc_campus';
   window.ccChangeCampus=function(){try{localStorage.removeItem(K)}catch(e){}location.reload()};
   try{if(localStorage.getItem(K))return}catch(e){return}
-  var FB=[{id:'kirinyaga',name:'Kirinyaga University'},{id:'uon',name:'University of Nairobi'}];
+  var FB=[{id:'kirinyaga',name:'Kirinyaga University',short:'Kirinyaga'},{id:'uon',name:'University of Nairobi',short:'UoN'}];
   var st=document.createElement('style');
   st.textContent='#ccu{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,18,.72);backdrop-filter:blur(10px)}#ccu .cd{width:100%;max-width:420px;max-height:86vh;display:flex;flex-direction:column;padding:20px;border-radius:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(18px);color:#fff;font-family:inherit;position:relative}#ccu h2{margin:0 0 4px;font-size:20px;padding-right:34px}#ccu p{margin:0 0 12px;opacity:.7;font-size:13px}#ccu input{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:15px;outline:none;margin-bottom:10px}#ccu .ls{overflow:auto;display:flex;flex-direction:column;gap:6px}#ccu .it{text-align:left;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;font-size:14px;cursor:pointer}#ccu .it:active{background:rgba(255,255,255,.16)}#ccu .x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:18px;cursor:pointer}';
   document.head.appendChild(st);
@@ -20,7 +20,7 @@
         var n=(u.name||'')+' '+(u.short||'');
         if(t&&n.toLowerCase().indexOf(t)<0)return;
         var b=document.createElement('button');b.type='button';b.className='it';b.textContent=u.name;
-        b.onclick=function(){try{localStorage.setItem(K,u.id);localStorage.setItem('cc_campus_name',u.name)}catch(e){}location.reload()};
+        b.onclick=function(){try{localStorage.setItem(K,u.id);localStorage.setItem('cc_campus_name',u.name);localStorage.setItem('cc_campus_short',u.short||'')}catch(e){}location.reload()};
         ls.appendChild(b);
       });
     }

@@ -1,13 +1,13 @@
-/* cc-otp.js v1: turns every 6-digit code field (autocomplete="one-time-code") into glass boxes and plays the verify animation.
-   No page code needs changing: the real input stays in the page and always holds the typed code,
+/* cc-otp.js v2: turns every 6-digit code field (autocomplete="one-time-code") into glass boxes and plays the verify animation.
+   Section 1 of 2. No page code needs changing: the real input stays in the page and always holds the typed code,
    and the confirm calls are watched through fetch, so the animation plays while the server checks the code. */
 (function () {
 'use strict';
 if (window.ccOtp) return;
 var KEY = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M17 6l3 3M14.5 8.5l2.5 2.5"/></svg>';
 var SHIELD = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.1 7.5 9.5 4.4-1.4 7.5-4.9 7.5-9.5V6L12 3z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg>';
-var CHECK = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
-var SPIN_MS = 1100, ORBIT = 34;
+var CHECK = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+var MIN_OK = 1300, MIN_BAD = 800;   /* the blue light runs at least this long (ms) before the answer shows */
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 var list = [];
 function h(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
@@ -19,18 +19,18 @@ function enhance(real) {
   var root = h('div', 'cco'); root.setAttribute('role', 'group'); root.setAttribute('aria-label', n + '-digit code');
   var ic = h('div', 'cco-ic', KEY), t = h('p', 'cco-t', 'Verify <b>code</b>'), s = h('p', 'cco-s', 'Enter the ' + n + '-digit code we sent you.');
   t.setAttribute('aria-live', 'polite');
-  var stage = h('div', 'cco-stage'), row = h('div', 'cco-row'), fin = h('div', 'cco-final', CHECK), r1 = h('span', 'cco-ring'), r2 = h('span', 'cco-ring r2');
+  var stage = h('div', 'cco-stage'), row = h('div', 'cco-row'), fin = h('div', 'cco-final', CHECK);
   var boxes = [];
   for (var i = 0; i < n; i++) {
     var b = h('input', 'cco-b'); b.type = 'text'; b.inputMode = 'numeric'; b.autocomplete = i === 0 ? 'one-time-code' : 'off'; b.setAttribute('aria-label', 'Digit ' + (i + 1) + ' of ' + n);
-    b.style.setProperty('--i', i); b.setAttribute('autocapitalize', 'off'); b.spellcheck = false; boxes.push(b); row.appendChild(b);
+    b.setAttribute('autocapitalize', 'off'); b.spellcheck = false; boxes.push(b); row.appendChild(b);
   }
-  stage.appendChild(row); stage.appendChild(fin); stage.appendChild(r1); stage.appendChild(r2);
+  stage.appendChild(row); stage.appendChild(fin);
   root.appendChild(ic); root.appendChild(t); root.appendChild(s); root.appendChild(stage);
   real.classList.add('cco-real'); real.tabIndex = -1; real.setAttribute('aria-hidden', 'true'); real.__cco = true;
   real.parentNode.insertBefore(root, real.nextSibling);
 
-  var o = { root: root, real: real, state: 'idle', anim: null, ready: Promise.resolve(), btn: null, auto: 0 };
+  var o = { root: root, real: real, state: 'idle', t0: 0, btn: null, auto: 0 };
   var syncing = false;
   function code() { return boxes.map(function (x) { return x.value; }).join(''); }
   function sync() {
@@ -79,55 +79,35 @@ function enhance(real) {
   }
   o.reset = function () {
     root.classList.add('cco-nt'); requestAnimationFrame(function () { requestAnimationFrame(function () { root.classList.remove('cco-nt'); }); });
-    root.classList.remove('cco-busy', 'cco-merge', 'cco-ok', 'cco-err'); o.state = 'idle';
-    if (o.anim) { try { o.anim.cancel(); } catch (e) {} o.anim = null; }
+    root.classList.remove('cco-busy', 'cco-ok', 'cco-err'); o.state = 'idle';
     ic.innerHTML = KEY; setText('Verify <b>code</b>', 'Enter the ' + n + '-digit code we sent you.');
     boxes.forEach(function (x) { x.value = ''; x.readOnly = false; }); sync();
     if (o.btn) { btnState(null); o.btn = null; }
   };
-  o.busy = function () {
+  function left(min) { return sleep(reduce ? 0 : Math.max(0, min - (Date.now() - o.t0))); }
+  o.busy = function () {      /* the blue light starts running round the card */
     if (o.state === 'busy') return;
     if (o.state !== 'idle') o.reset();
-    o.state = 'busy'; o.btn = nextButton(root, true);
-    var rr = row.getBoundingClientRect(), cx = rr.left + rr.width / 2;
-    boxes.forEach(function (x, i) {
-      var br = x.getBoundingClientRect(), ang = (i / n) * Math.PI * 2 - Math.PI / 2;
-      x.style.setProperty('--dx', (cx - (br.left + br.width / 2)) + 'px'); x.style.setProperty('--ox', (Math.cos(ang) * ORBIT) + 'px');
-      x.style.setProperty('--oy', (Math.sin(ang) * ORBIT) + 'px'); x.style.setProperty('--r', (i * 40) + 'deg'); x.readOnly = true; x.blur();
-    });
-    root.classList.remove('cco-err'); root.classList.add('cco-busy'); setText('Verifying <b>code</b>');
+    o.state = 'busy'; o.t0 = Date.now(); o.btn = nextButton(root, true);
+    boxes.forEach(function (x) { x.readOnly = true; x.blur(); });
+    root.classList.add('cco-busy'); setText('Verifying <b>code</b>');
     btnState('cco-bspin', 'Verifying code...');
-    o.ready = sleep(reduce ? 0 : 480).then(function () {
-      if (o.state !== 'busy' || reduce || !row.animate) return;
-      o.anim = row.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: SPIN_MS, iterations: Infinity });
-    });
   };
-  function endSpin() {   /* let the current turn finish so the boxes land exactly where they started */
-    return o.ready.then(function () {
-      var a = o.anim; if (!a) return;
-      var it = Math.max(1, Math.ceil((a.currentTime || 0) / SPIN_MS));
-      a.effect.updateTiming({ iterations: it });
-      return a.finished.catch(function () {}).then(function () { o.anim = null; });
-    });
-  }
-  o.success = function () {
+  o.success = function () {   /* right code: the light settles green and a plain tick draws in */
     if (o.state !== 'busy') return Promise.resolve();
-    return endSpin().then(function () {
-      o.state = 'ok'; root.classList.add('cco-merge');
-      return sleep(reduce ? 0 : 480);
-    }).then(function () {
-      root.classList.add('cco-ok'); ic.innerHTML = SHIELD; setText('Verified <b>Successfully</b>', 'Your security code has been confirmed.');
-      btnState('cco-bok', 'Verified & Secured');
-      return sleep(reduce ? 400 : 1150);
-    }).then(function () { setTimeout(function () { btnState(null); }, 80); setTimeout(function () { o.reset(); }, 1500); });
+    return left(MIN_OK).then(function () {
+      o.state = 'ok'; root.classList.remove('cco-busy'); root.classList.add('cco-ok'); ic.innerHTML = SHIELD;
+      setText('Verified <b>Successfully</b>', 'Your security code has been confirmed.'); btnState('cco-bok', 'Verified & Secured');
+      return sleep(reduce ? 400 : 1300);
+    }).then(function () { setTimeout(function () { btnState(null); }, 80); setTimeout(function () { o.reset(); }, 1500); });   /* by then the page has moved on */
   };
-  o.fail = function () {
+  o.fail = function () {      /* wrong code: the light turns red and the card shakes */
     if (o.state !== 'busy') return Promise.resolve();
     btnState(null);
-    endSpin().then(function () {
+    left(MIN_BAD).then(function () {
       o.state = 'err'; root.classList.remove('cco-busy'); root.classList.add('cco-err');
-      boxes.forEach(function (x) { x.value = ''; x.readOnly = false; }); sync(); btnState(null);
-      return sleep(650);
+      setText('Wrong <b>code</b>', 'That code did not match. Try again.');
+      return sleep(1200);
     }).then(function () { if (o.state === 'err') { o.reset(); boxes[0].focus(); } });
     return Promise.resolve();
   };

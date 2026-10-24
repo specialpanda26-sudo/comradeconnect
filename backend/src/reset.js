@@ -36,7 +36,11 @@ export async function resetRoutes(req, env, url, ip) {
     const to = normAnyEmail((await req.json().catch(() => ({}))).to);
     if (!to) return err(env, 'Send {"to":"your@email.com"}');
     const r = await sendMailDetailed(env, { to: to.email, subject: 'Comrade Connect mail test', text: 'If you can read this, the mail settings work. Check the spam folder if it was not in your inbox.' });
-    return json(env, { ...diag, sent: r.ok, provider_status: r.status, provider_says: r.detail || (r.ok ? 'accepted' : '') }, r.ok ? 200 : 502);
+    let hint = '';
+    if (!r.ok && r.status === 401 && /ip address|authori[sz]ed/i.test(r.detail || '')) hint = 'Brevo blocked this server because its IP is not on your Brevo allow-list. In Brevo open Security > Authorised IPs and click Deactivate blocking (Render IPs are shared and can change), then run this test again.';
+    else if (!r.ok && r.status === 401) hint = 'The mail provider refused the API key. Create a new key in Brevo (SMTP and API > API Keys), paste it into BREVO_API_KEY on Render, redeploy.';
+    else if (!r.ok && (r.status === 400 || r.status === 403)) hint = 'The sender in MAIL_FROM is probably not verified at the mail provider. Add and verify the sender or the domain in Brevo (Senders, Domains and Dedicated IPs).';
+    return json(env, { ...diag, sent: r.ok, provider_status: r.status, provider_says: r.detail || (r.ok ? 'accepted' : ''), hint: hint || undefined }, r.ok ? 200 : 502);
   }
   if (!path.startsWith('/api/auth/reset')) return null;
   const body = async () => (await req.json().catch(() => ({})));

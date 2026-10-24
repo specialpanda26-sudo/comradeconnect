@@ -38,6 +38,14 @@ export async function nativeRoutes(req, env, url, ip) {
     return s ? json(env, { id: s.id, channel, native: true }, 201) : err(env, 'Could not start', 500);
   }
 
+  // Admin only: are the Agora keys set on this server? Shows the App ID tail and whether a certificate exists, never the certificate.
+  //   curl -s -H "X-Admin-Key: $ADMIN_KEY" $API/api/admin/live-check
+  if (path === '/api/admin/live-check' && m === 'GET') {
+    if (!isAdmin(req, env)) return err(env, 'Not allowed', 403);
+    const id = String(env.AGORA_APP_ID || env.CC_AGORA_ID || '').trim();
+    return json(env, { app_id_set: !!id, app_id_ends_with: id.slice(-4), certificate_set: hasAgoraCert(env), tokens_work: hasAgoraCert(env), note: hasAgoraCert(env) ? 'Server will hand out video tokens. The App ID must match CC_AGORA_ID in frontend/config.js.' : 'Add AGORA_APP_ID and AGORA_APP_CERTIFICATE on Render. Without the certificate, Go Live fails with bad gateway if the Agora project has the certificate switched on.' });
+  }
+
   // Video token for the Agora channel of a live that is running. The host gets a publishing token, everyone else a watch-only one.
   // No certificate set on the server = no token (the app then joins without one, which only works if the Agora project has the certificate switched off).
   if (path === '/api/live/token' && m === 'POST') {

@@ -6,6 +6,7 @@ import { trySendNow, reconcilePayouts } from './payouts.js';
 import { notify } from './notifications.js';
 import { passwordProblem } from './passwords.js';
 import { deviceGate, deviceClaim, deviceBindIfFree } from './device.js';
+import { normAnyEmail } from './recovery.js';
 
 export async function balance(env, aid) {
   const r = await sb(env, 'rpc/wallet_balance', { method: 'POST', body: JSON.stringify({ p: aid }) });
@@ -37,8 +38,22 @@ async function googleVerify(env, credential) {
     const g = await r.json();
     const okIss = g.iss === 'accounts.google.com' || g.iss === 'https://accounts.google.com';
     if (!g.sub || g.aud !== env.GOOGLE_CLIENT_ID || !okIss || Number(g.exp) * 1000 < Date.now()) return null;
-    return { sub: String(g.sub) };
+    return { sub: String(g.sub), email: String(g.email || ''), emailVerified: g.email_verified === true || g.email_verified === 'true' };
   } catch (e) { return null; }
+}
+// Google already proved the person owns this email, so it becomes their recovery email for "Forgot password" with no code needed.
+// It never replaces an email the person chose themselves, never blocks sign-in, and is skipped if another account already uses it.
+async function saveGoogleRecoveryEmail(env, aid, g) {
+  try {
+    if (!g || !g.email || !g.emailVerified) return;
+    const e = normAnyEmail(g.email); if (!e) return;
+    const [cur] = await rows(await sb(env, `profiles?select=recovery_email_hash&aid=eq.${enc(aid)}`));
+    if (!cur || cur.recovery_email_hash) return;
+    const h = await H(env, 'recemail:' + e.gmail);
+    const [taken] = await rows(await sb(env, `profiles?select=aid&recovery_email_hash=eq.${enc(h)}&aid=neq.${enc(aid)}&limit=1`));
+    if (taken) return;
+    await patch(env, `profiles?aid=eq.${enc(aid)}`, { recovery_email_hash: h });
+  } catch (e) { console.error('google recovery email: could not save'); }
 }
 // A guest account with orders, listings or money must not be silently abandoned.
 async function hasActivity(env, aid) {
@@ -118,12 +133,14 @@ export async function accountRoutes(req, env, url, ip) {
         return err(env, 'This phone has a guest account with orders or money. Restore it with its recovery code first.', 409);
       await patch(env, `profiles?aid=eq.${enc(existing.aid)}`, { token_hash: tokHash });
       await deviceBindIfFree(env, req, existing.aid);
+      await saveGoogleRecoveryEmail(env, existing.aid, g);
       return json(env, { aid: existing.aid, token });
     }
     // Sign-in picks the account you chose. The guest account on this phone is only adopted when you asked to add Google to it (mode link) or it already holds orders, money or listings.
     if (cur && !cur.banned && !cur.google_sub && (mode === 'link' || (await hasActivity(env, cur.aid)))) {
       const res = await patch(env, `profiles?aid=eq.${enc(cur.aid)}`, { google_sub: g.sub, token_hash: tokHash });
       if (res.status === 409) return err(env, 'This Google account is already in use', 409);
+      await saveGoogleRecoveryEmail(env, cur.aid, g);
       return json(env, { aid: cur.aid, token, linked: true });
     }
     const dg2 = await deviceGate(env, req); if (dg2) return dg2;
@@ -131,6 +148,7 @@ export async function accountRoutes(req, env, url, ip) {
     const res = await post(env, 'profiles', { aid, token_hash: tokHash, google_sub: g.sub, referral_code: refcode });
     if (!res.ok) return err(env, 'Could not create the account', 500);
     const dc3 = await deviceClaim(env, req, aid); if (dc3) return dc3;
+    await saveGoogleRecoveryEmail(env, aid, g);
     return json(env, { aid, token, referral_code: refcode, created: true }, 201);
   }
   // Sign out: the token this phone was using stops working (a new one is made by Google sign-in or the recovery code).

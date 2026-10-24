@@ -47,8 +47,10 @@ async function share() {
 }
 function draw() {
   var host = $('#ccgift'); if (!host || !D) return;
-  host.textContent = '';
-  host.appendChild(el('b', '', 'Gift link'));
+  host.textContent = ''; host.hidden = false;
+  var hd = el('div'); hd.style.cssText = 'display:flex;align-items:center;gap:10px';
+  hd.innerHTML = '<span aria-hidden="true" style="width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--aq,#A8DCE7);color:var(--nt,#101422);flex:none"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></span>';
+  var ht = el('div'); var t1 = el('b', '', 'My gift link'); t1.style.cssText = 'font-size:17px;display:block'; ht.appendChild(t1);   /* not an h3: the Me page hides every card that has an h3 behind its menu */ var hs = el('div', 'sub', 'Get gifts from friends and fans by M-Pesa'); hs.style.fontSize = '12px'; ht.appendChild(hs); hd.appendChild(ht); host.appendChild(hd);
   if (!D.link) {
     var t = el('p', 'sub', 'Get a link you can paste on your WhatsApp status, Instagram bio or page. When someone opens it they can buy you a coffee, lunch or any amount by M-Pesa, with no account needed. We keep ' + D.fee_percent + '% and the rest goes to your wallet.'); t.style.marginTop = '6px'; host.appendChild(t);
     var cb = btn('Create my gift link', 'p', edit); cb.style.cssText = 'width:100%;margin-top:10px'; host.appendChild(cb); return;
@@ -69,9 +71,11 @@ function draw() {
   });
 }
 function mount() {
-  if ($('#ccgift')) return;
-  var anchor = $('#ccw'); if (!anchor) return;
-  var box = el('div', 'box g'); box.id = 'ccgift'; anchor.after(box); load();
+  var cur = $('#ccgift');
+  if (cur) { var au0 = window.ccAuth && window.ccAuth(); if (au0 && au0.token) { if (!D && !busy) { busy = true; load().then(function () { busy = false; }, function () { busy = false; }); } } else { cur.hidden = true; D = null; } return; }
+  var anchor = $('#ccsetrow') || $('#mecard'); if (!anchor) return;
+  var au = window.ccAuth && window.ccAuth(); if (!au || !au.token) return;      // gifts are for signed-in accounts only
+  var box = el('div', 'box g'); box.id = 'ccgift'; box.hidden = true; anchor.after(box); load();
 }
 window.ccGiftsLoad = load;
 setInterval(function () { if (!document.hidden) mount(); }, 1500);

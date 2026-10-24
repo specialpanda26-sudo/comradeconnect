@@ -23,7 +23,11 @@ export function normStudentEmail(env, v) {
   const dom = studentDomains(env).find((d) => domain === d || domain.endsWith('.' + d));
   const local = local0.split('+')[0];
   if (!dom || !local) return null;
-  return { email: raw, canon: local + '@' + dom };
+  // A broad entry such as "ac.ke" or "edu" covers many universities: keep the university's own name in the fingerprint,
+  // so two different universities never share one canonical address.
+  const n = dom.split('.').length, broad = n <= 2 && /^(ac|edu|co|go)(\.|$)/.test(dom);
+  const canonDomain = broad ? domain.split('.').slice(-(n + 1)).join('.') : dom;
+  return { email: raw, canon: local + '@' + canonDomain };
 }
 const maskEmail = (e) => { const [l, d] = e.split('@'); return (l.length > 2 ? l.slice(0, 2) : l.slice(0, 1)) + '***@' + d; };
 

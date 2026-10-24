@@ -2,7 +2,7 @@
 // The video itself never touches our server; we only keep the stream row, hearts, comments and viewers.
 import { liveEmbed } from './media.js';
 import { agoraToken, hasAgoraCert } from './agora.js';
-import { viewerCounts, reapStale } from './live.js';
+import { viewerCounts, reapStale, hostsHere } from './live.js';
 import { json, err, sb, rows, one, post, patch, enc, str, randHex, user, isAdmin, throttle, tooMany } from './lib.js';
 
 const AVATAR = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
@@ -14,6 +14,9 @@ export async function nativeRoutes(req, env, url, ip) {
   if (path === '/api/live' && m === 'GET') {
     let r = await rows(await sb(env, 'live_streams?status=eq.live&order=created_at.desc&limit=10'));
     const gone = await reapStale(env, r); if (gone.size) r = r.filter((s) => !gone.has(s.id));   // hosts who left are ended here, so nobody sees a dead live
+    // A phone live whose host has been silent for 45s is hidden, so nobody joins an empty room. It is not ended: when the host comes back it shows again and carries on.
+    const here = await hostsHere(env, r.filter((s) => String(s.input_uid || '').startsWith('cc:')).map((s) => s.id));
+    r = r.filter((s) => !String(s.input_uid || '').startsWith('cc:') || here.has(s.id) || Date.parse(s.created_at) > Date.now() - 45e3);
     const vc = await viewerCounts(env, r.map((s) => s.id));
     return json(env, { streams: r.map((s) => {
       const nat = String(s.input_uid || '').startsWith('cc:');

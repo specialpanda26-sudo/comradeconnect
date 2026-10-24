@@ -4,7 +4,8 @@ import { voiceOf, voiceCheck, stripMarkers } from './voice.js';
 import { json, err, sb, rows, one, post, patch, enc, str, int, ago, sha256Hex, throttle, tooMany, user, isAdmin, contactBlock } from './lib.js';
 
 export const ONLINE_MS = 40e3;                 // a viewer counts as "watching" for 40 seconds after their last ping
-export const HOST_STALE_MS = 60e3;            // the host phone pings every 15s; silent for 60s = the host left, so the live ends
+export const HOST_AWAY_MS = 45e3;             // host silent for 45s = away: hidden from the Live list, NOT ended (the host can come back)
+export const HOST_STALE_MS = 5 * 60e3;        // the host phone pings every 15s; silent for 5 minutes = the host really left, so the live ends for everyone
 const ID = '([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})';
 
 // How many people are watching, for a list of streams (one query).
@@ -13,6 +14,12 @@ export async function viewerCounts(env, ids) {
   const r = await rows(await sb(env, `live_viewers?select=stream_id&stream_id=in.(${ids.join(',')})&viewer=neq.host&seen_at=gte.${ago(ONLINE_MS)}&limit=5000`));
   for (const x of r) out[x.stream_id] = (out[x.stream_id] || 0) + 1;
   return out;
+}
+
+// Ids of phone-camera lives whose host pinged in the last 45 seconds (the host is here).
+export async function hostsHere(env, ids) {
+  if (!ids.length) return new Set();
+  return new Set((await rows(await sb(env, `live_viewers?select=stream_id&viewer=eq.host&stream_id=in.(${ids.join(',')})&seen_at=gte.${ago(HOST_AWAY_MS)}&limit=100`))).map((x) => x.stream_id));
 }
 
 // Ends phone-camera lives whose host has gone quiet (closed the tab, lost signal, left the app). Returns the ids it ended.

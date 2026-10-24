@@ -79,7 +79,7 @@
   }
   function detach(box) {
     var st = box && box.__cc; if (!st) return;
-    st.dead = true; box.__cc = null;
+    st.dead = true; box.__cc = null; try { clearInterval(st.watch); } catch (e) {}
     try { st.tracks.forEach(function (t) { try { t.stop(); t.close(); } catch (e) {} }); } catch (e) {}
     try { st.cl && st.cl.leave().catch(function () {}); } catch (e) {}
     box.textContent = '';
@@ -96,15 +96,27 @@
       st.cl = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
       await st.cl.setClientRole(host ? 'host' : 'audience');
       if (!host) {
-        st.cl.on('user-published', async function (u, type) {
-          try { await st.cl.subscribe(u, type); } catch (e) { return; }
+        // Subscribe to whatever the host is publishing right now. It retries what failed and runs every 3 seconds,
+        // so the viewer can never stay stuck on "Waiting" after the host is back.
+        var pull = async function () {
           if (st.dead) return;
-          if (type === 'video') { v.textContent = ''; u.videoTrack.play(v); }
-          if (type === 'audio') { try { u.audioTrack.setVolume(st.muted ? 0 : 100); u.audioTrack.play(); } catch (e) {} }
-        });
+          var us = st.cl.remoteUsers || [];
+          for (var i = 0; i < us.length; i++) {
+            var u = us[i];
+            try {
+              if (u.hasVideo && !u.videoTrack) await st.cl.subscribe(u, 'video');
+              if (u.hasAudio && !u.audioTrack) await st.cl.subscribe(u, 'audio');
+            } catch (e) { continue; }
+            if (st.dead) return;
+            if (u.videoTrack && !u.videoTrack.isPlaying) { v.textContent = ''; u.videoTrack.play(v); }
+            if (u.audioTrack && !u.audioTrack.isPlaying) { try { u.audioTrack.setVolume(st.muted ? 0 : 100); u.audioTrack.play(); } catch (e) {} }
+          }
+        };
+        st.cl.on('user-published', function () { pull(); });
         st.cl.on('user-unpublished', function (u, type) { if (type === 'video' && !st.dead) { v.textContent = 'The host paused the video'; } });
-        st.cl.on('user-left', function () { if (!st.dead) { v.textContent = 'The host has left'; } });
+        st.cl.on('user-left', function () { if (!st.dead) { v.textContent = 'The host is away. Waiting for them to come back...'; } });
         v.textContent = 'Waiting for the host video...';
+        st.watch = setInterval(function () { if (st.dead) clearInterval(st.watch); else pull(); }, 3000);
       }
       var tk = null; try { tk = (await call('/api/live/token', { auth: !!host, body: { channel: s.channel, host: !!host } })).token || null; } catch (e) { if (host) throw e; }
       await st.cl.join(AGORA, s.channel, tk, null); if (st.dead) { try { st.cl.leave(); } catch (e) {} return; }
@@ -117,7 +129,7 @@
           say('Your microphone is blocked, so people will see you but not hear you. Allow the microphone for this site.');
         }
         st.tracks = t.filter(Boolean); st.mic = t[0]; st.cam = t[1]; if (st.dead) { detach(box); return; }
-        v.textContent = ''; t[1].play(v); await st.cl.publish(st.tracks);
+        v.textContent = ''; t[1].play(v); await st.cl.publish(st.tracks); st.ready = true;
       }
       return true;
     } catch (e) {
@@ -314,15 +326,25 @@
   function beat(id) {
     call('/api/live/' + id + '/host-ping', { body: {} }).then(function (d) {
       if (d && d.status === 'ended' && ME && ME.id === id) { say('Your live has ended'); force = true; try { leaveRoom(); } finally { force = false; } }
+      else resumeHost();
     }).catch(function () {});
   }
   function startBeat(id) { stopBeat(); beat(id); HB = setInterval(function () { beat(id); }, 15000); }
   function stopBeat() { if (HB) clearInterval(HB); HB = null; }
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && ME && ME.mine) beat(ME.id); });
+  /* The host came back (phone locked, another app, weak signal): if the video connection dropped, join and publish again so the live carries on. */
+  var resuming = false;
+  function resumeHost() {
+    var s = st(), me = ME; if (!me || !me.mine || !me.native || !me.s || resuming || !s || !s.ready) return;
+    var bad = !s.cl || s.cl.connectionState === 'DISCONNECTED' || (s.cam && s.cam.getMediaStreamTrack && s.cam.getMediaStreamTrack().readyState === 'ended');
+    if (!bad) return;
+    resuming = true;
+    attach(me.s, $('#rframe'), true).then(function () { drawCtl(); }).catch(function () {}).then(function () { resuming = false; });
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && ME && ME.mine) { beat(ME.id); resumeHost(); } });
 
   /* closing the tab or the browser: ask first, and end the live if they go */
   window.addEventListener('beforeunload', function (e) { if (ME && ME.mine) { e.preventDefault(); e.returnValue = ''; return ''; } });
-  window.addEventListener('pagehide', function () { if (ME && ME.mine) endBeacon(ME.id); });
+  // (no end-on-pagehide any more: switching apps must not kill the live. The server ends it after 5 minutes of silence, or when the host taps End live.)
 
   try {
     var _or = openRoom;
@@ -330,7 +352,7 @@
       if (miniOn()) unmini();
       var r = _or.apply(this, arguments);
       try {
-        ME = { id: s.id, mine: !!s.mine, native: !!s.native };
+        ME = { id: s.id, mine: !!s.mine, native: !!s.native, s: s };
         mountRoomViewers(); drawCtl();
         var re = $('#rend'); if (re) re.onclick = function () { if (ME && ME.mine) askHost(null); else leaveRoom(); };
         if (s && s.native) {

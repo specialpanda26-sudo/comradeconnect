@@ -45,8 +45,7 @@ function days(until) { return Math.max(0, Math.ceil((Date.parse(until) - Date.no
 function draw() {
   var host = $('#ccw'); if (!host || !W) return;
   host.textContent = '';
-  host.appendChild(el('div', 'sub', 'Wallet balance'));
-  var big = el('div', 'big', kes(W.balance)); big.id = 'ccw-bal'; host.appendChild(big);
+  host.appendChild(el('b', '', 'Deposit or withdraw'));
   var two = el('div', 'two'); two.style.marginTop = '12px';
   two.appendChild(btn('Deposit', 'btn p', deposit)); two.appendChild(btn('Withdraw', 'btn g', withdraw)); host.appendChild(two);
   var n = el('p', 'note', 'Deposit with M-Pesa, then pay for items and your wholesaler plan straight from your wallet. Sales money lands here too.'); n.style.marginTop = '8px'; host.appendChild(n);

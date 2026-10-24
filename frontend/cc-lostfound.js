@@ -51,7 +51,7 @@ function paint() {
   else if (S.err && !S.list.length) h += '<p class="sub" style="margin-top:14px">' + esc(S.err) + '</p><button class="btn g" data-lf="retry">Try again</button>';
   else if (!S.list.length) h += '<article class="box g" style="margin-top:14px"><h3>' + (S.view === 'returned' ? 'Nothing returned yet' : 'Nothing posted here yet') + '</h3><p class="sub" style="margin-top:6px">Found something? Post it without the number so the real owner can prove it. Lost something? Post it and check back.</p></article>';
   else h += S.list.map(function (x) {
-    return '<article class="box g lf-card" style="margin-top:12px"><div class="lf-h"><h3>' + esc(x.title) + (x.verified ? '<span class="lf-v">Verified</span>' : '') + '</h3><span class="lf-k ' + esc(x.kind) + '">' + (x.kind === 'lost' ? 'LOST' : 'FOUND') + '</span></div>'
+    return '<article class="box g lf-card" style="margin-top:12px"><div class="lf-h"><h3>' + esc(x.title) + (x.verified && window.ccVerified ? window.ccVerified(16) : '') + '</h3><span class="lf-k ' + esc(x.kind) + '">' + (x.kind === 'lost' ? 'LOST' : 'FOUND') + '</span></div>'
       + '<div class="lf-meta">' + esc(x.category) + (x.place ? ' · ' + esc(x.place) : '') + ' · ' + esc(when(x.happenedOn)) + '</div>'
       + (x.details ? '<p>' + esc(x.details) + '</p>' : '')
       + '<div class="lf-row">'

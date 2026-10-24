@@ -473,7 +473,7 @@ const SHLD = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12
 function sellerBits(l) {
   const s = l.seller || {}, a = [];
   if (s.rating && s.rating.count) a.push('\u2605 ' + Number(s.rating.avg) + ' (' + Number(s.rating.count) + ')');
-  if (s.verified) a.push('Verified seller'); else if (s.student) a.push('Student');
+  if (s.verified) a.push((window.ccVerified ? window.ccVerified(14) + ' ' : '') + 'Verified seller'); else if (s.student) a.push('Student');
   return a;
 }
 function draw() {

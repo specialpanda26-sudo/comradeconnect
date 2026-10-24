@@ -228,6 +228,7 @@ function raceCard(r, live) {
 function topCard(c, i) {
   return '<div class="kcard kt3" data-k="open" data-id="' + esc(c.id) + '"><div class="ph">' + photo(c) + '<span class="bd">' + (i === 0 ? I.crown : '') + '#' + (i + 1) + '</span></div><div class="in"><div class="cat">' + esc(c.category) + '</div><div class="nm">' + esc(c.name) + '</div><div class="un">' + esc(c.campus) + '</div><div class="vt"><span><b>' + nf(c.votes) + '</b><small>votes</small></span>' + I.arrow + '</div></div></div>';
 }
+function VB() { return window.ccVerified ? window.ccVerified(17) : I.check; }
 function packsStrip() {
   var p = season().packs || []; if (!p.length) return '';
   var unit = p[0] && p[0].votes ? Math.round(p[0].price / p[0].votes) : 10;
@@ -295,7 +296,7 @@ function loadBoard() {
 }
 function listItem(c) {
   var r = c.rank < 10 ? '0' + c.rank : c.rank;
-  return '<div class="kcard kli" data-k="open" data-id="' + esc(c.id) + '"><span class="rk">' + r + '</span><span class="av">' + photo(c) + '</span><span class="m"><b><span>' + esc(c.name) + '</span>' + (c.verified ? I.check : '') + '</b><small>' + esc(c.category) + ' · ' + esc(c.gender === 'female' ? 'Female' : 'Male') + ' · ' + esc(c.campus) + '</small></span><span class="v">' + I.chev + '<span><b>' + nf(c.votes) + '</b><small>VOTES</small></span></span></div>';
+  return '<div class="kcard kli" data-k="open" data-id="' + esc(c.id) + '"><span class="rk">' + r + '</span><span class="av">' + photo(c) + '</span><span class="m"><b><span>' + esc(c.name) + '</span>' + (c.verified ? VB() : '') + '</b><small>' + esc(c.category) + ' · ' + esc(c.gender === 'female' ? 'Female' : 'Male') + ' · ' + esc(c.campus) + '</small></span><span class="v">' + I.chev + '<span><b>' + nf(c.votes) + '</b><small>VOTES</small></span></span></div>';
 }
 
 /* ---------- tab 2: Leaderboard ---------- */
@@ -327,7 +328,7 @@ function loadBoard() {
 }
 function listItem(c) {
   var r = c.rank < 10 ? '0' + c.rank : c.rank;
-  return '<div class="kcard kli" data-k="open" data-id="' + esc(c.id) + '"><span class="rk">' + r + '</span><span class="av">' + photo(c) + '</span><span class="m"><b><span>' + esc(c.name) + '</span>' + (c.verified ? I.check : '') + '</b><small>' + esc(c.category) + ' · ' + esc(c.gender === 'female' ? 'Female' : 'Male') + ' · ' + esc(c.campus) + '</small></span><span class="v">' + I.chev + '<span><b>' + nf(c.votes) + '</b><small>VOTES</small></span></span></div>';
+  return '<div class="kcard kli" data-k="open" data-id="' + esc(c.id) + '"><span class="rk">' + r + '</span><span class="av">' + photo(c) + '</span><span class="m"><b><span>' + esc(c.name) + '</span>' + (c.verified ? VB() : '') + '</b><small>' + esc(c.category) + ' · ' + esc(c.gender === 'female' ? 'Female' : 'Male') + ' · ' + esc(c.campus) + '</small></span><span class="v">' + I.chev + '<span><b>' + nf(c.votes) + '</b><small>VOTES</small></span></span></div>';
 }
 
 /* ---------- contestant page ---------- */
@@ -344,7 +345,7 @@ function drawProfile(p, d) {
   var min = packs.length ? Math.min.apply(null, packs.map(function (k) { return Number(k.price); })) : 0;
   p.innerHTML = '<div class="kpw" data-id="' + esc(c.id) + '"><button class="kbk" data-k="pclose">' + I.back + ' All creators</button>'
     + '<div class="kpr"><div class="pic">' + photo(c) + '</div><div class="pi"><div class="keb" style="flex-wrap:wrap;font-size:9.5px">' + esc(c.category) + ' · ' + esc(c.gender === 'female' ? 'Female' : 'Male') + ' · ' + esc(c.campus) + '</div>'
-    + '<h1>' + esc(c.name) + (c.verified ? I.check : '') + '</h1><p class="ksub" style="margin:0">' + esc(c.tagline || 'Ready for your support.') + '</p>' + (c.bio ? '<p class="ksub" style="margin:8px 0 0;font-size:12px">' + esc(c.bio) + '</p>' : '') + (soc ? '<div>' + soc + '</div>' : '') + '</div></div>'
+    + '<h1>' + esc(c.name) + (c.verified ? VB() : '') + '</h1><p class="ksub" style="margin:0">' + esc(c.tagline || 'Ready for your support.') + '</p>' + (c.bio ? '<p class="ksub" style="margin:8px 0 0;font-size:12px">' + esc(c.bio) + '</p>' : '') + (soc ? '<div>' + soc + '</div>' : '') + '</div></div>'
     + '<div class="kns"><div><b>' + Number(c.votes).toLocaleString('en-KE') + '</b><small>Fan votes</small></div><div><b>' + (c.followers || 0) + '</b><small>Followers</small></div><div><b>#' + d.rank + '</b><small>Overall ranking</small></div></div>'
     + '<div class="kban">' + I.crown + '<span>' + (d.rank === 1 ? '#1 on Kura &mdash; fans, keep the crown!' : (d.gap + ' more vote' + (d.gap === 1 ? '' : 's') + ' to pass ' + esc(d.above) + ' for #' + (d.rank - 1))) + '</span></div>'
     + '<div class="kbtns"><button class="kb" data-k="vote"' + (open && packs.length ? '' : ' disabled') + '>' + I.heart + (open ? ' Vote now' : ' Voting closed') + '</button><button class="kb g" data-k="follow">' + I.user + ' ' + (d.following ? 'Following' : 'Follow') + '</button><button class="kb g" data-k="share" aria-label="Share">' + I.share + '</button></div>'

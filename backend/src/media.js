@@ -5,6 +5,7 @@ import { mediaUrl, MEDIA_BUCKET, PRIVATE_BUCKET } from './storage.js';
 import { isWholesaler } from './wholesale.js';
 import { getSettings } from './settings.js';
 import { HOSTEL_PHOTOS } from './hostels.js';
+import { SERVICE_PHOTOS, SERVICE_VIDEOS, SERVICE_VIDEO_MB } from './serviceworks.js';
 import { audit } from './lib.js';
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, randHex, throttle, tooMany, user, authProfile, isAdmin, ahead, DAY } from './lib.js';
 
@@ -23,15 +24,15 @@ export async function mediaRoutes(req, env, url, ip) {
   if (path === '/api/media/upload-url' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const b = await body(), kind = b.kind, ct = String(b.content_type || '').toLowerCase(), bytes = int(b.bytes, 1, 1e9);
-    if (!['clip', 'listing_photo', 'video', 'hostel_photo', 'story_photo', 'story_video'].includes(kind)) return err(env, 'Unknown media type');
-    const photo = kind === 'listing_photo' || kind === 'hostel_photo' || kind === 'story_photo', ext = (photo ? PHOTO_TYPES : VIDEO_TYPES)[ct];
+    if (!['clip', 'listing_photo', 'video', 'hostel_photo', 'story_photo', 'story_video', 'service_photo', 'service_video'].includes(kind)) return err(env, 'Unknown media type');
+    const photo = kind === 'listing_photo' || kind === 'hostel_photo' || kind === 'story_photo' || kind === 'service_photo', ext = (photo ? PHOTO_TYPES : VIDEO_TYPES)[ct];
     if (!ext) return err(env, photo ? 'Photos must be JPG, PNG or WebP' : 'Videos must be MP4 or WebM');
     if (!bytes || bytes > (photo ? limits(env).photo : limits(env).clip)) return err(env, `File too large (max ${photo ? 5 : Number(env.CLIP_MAX_MB || 25)} MB)`);
     if (/^story_/.test(kind)) {                                       // at most 10 live stories per person
       const live = await rows(await sb(env, `media?select=id&aid=eq.${enc(u.aid)}&kind=in.(story_photo,story_video)&status=in.(pending,ready)&created_at=gte.${new Date(Date.now() - DAY).toISOString()}`));
       if (live.length >= 10) return err(env, 'You can have up to 10 stories at a time. They disappear after 24 hours.');
     }
-    let listing_id = null, hostel_id = null;
+    let listing_id = null, hostel_id = null, service_id = null;
     if (kind === 'hostel_photo') {                                   // room photos: only the caretaker who posted the vacancy
       if (!UUID.test(String(b.hostel_id || ''))) return err(env, 'Pick a hostel');
       const h = await one(await sb(env, `hostels?select=id&id=eq.${b.hostel_id}&aid=eq.${enc(u.aid)}&hidden=eq.false`));
@@ -47,10 +48,19 @@ export async function mediaRoutes(req, env, url, ip) {
       const cap = isWholesaler(u) ? (await getSettings(env)).wholesale_photos : 5;
       if (have.length >= cap) return err(env, isWholesaler(u) ? `Up to ${cap} photos per listing` : 'Up to 5 photos per listing. Wholesalers can add more.', 400);
       listing_id = l.id;
+    } else if (kind === 'service_photo' || kind === 'service_video') {   // work photos and videos: only the person who posted the service
+      if (!UUID.test(String(b.service_id || ''))) return err(env, 'Pick a service');
+      const sv = await one(await sb(env, `services?select=id&id=eq.${b.service_id}&aid=eq.${enc(u.aid)}&hidden=eq.false`));
+      if (!sv) return err(env, 'Service not found', 404);
+      const vid = kind === 'service_video';
+      if (vid && bytes > SERVICE_VIDEO_MB * 1048576) return err(env, `Work videos can be up to ${SERVICE_VIDEO_MB} MB (about 20 seconds)`);
+      const have = await rows(await sb(env, `media?select=id&service_id=eq.${sv.id}&kind=eq.${kind}&status=in.(pending,ready)`));
+      if (have.length >= (vid ? SERVICE_VIDEOS : SERVICE_PHOTOS)) return err(env, vid ? `Up to ${SERVICE_VIDEOS} videos per service` : `Up to ${SERVICE_PHOTOS} photos per service`);
+      service_id = sv.id;
     }
     if (!(await throttle(env, ip, 'upload:' + kind, u.aid, photo ? 30 : 5, photo ? 100 : 20))) return tooMany(env);
     const key = `${kind}/${new Date().toISOString().slice(0, 7)}/${randHex(12)}.${ext}`;
-    const mres = await post(env, 'media', { aid: u.aid, kind, r2_key: key, content_type: ct, bytes, caption: str(b.caption, 140) || null, listing_id, ...(hostel_id ? { hostel_id } : {}) });
+    const mres = await post(env, 'media', { aid: u.aid, kind, r2_key: key, content_type: ct, bytes, caption: str(b.caption, 140) || null, listing_id, ...(hostel_id ? { hostel_id } : {}), ...(service_id ? { service_id } : {}) });
     const mtext = await mres.text().catch(() => ''); let row = null; try { const d = JSON.parse(mtext); row = Array.isArray(d) ? d[0] : null; } catch (e) {}
     if (!row) { console.error('media insert failed', mres.status, mtext.slice(0, 400)); return err(env, 'Could not start the upload', 500); }
     const upload_url = await store.signUpload(env, MEDIA_BUCKET(env), key);
@@ -209,7 +219,7 @@ export async function pruneMedia(env) {
   let total = ready.reduce((n, x) => n + Number(x.bytes || 0), 0);
   for (const x of ready) {
     if (total <= budget || out.pruned >= 20) break;
-    if (x.kind === 'listing_photo' || x.kind === 'hostel_photo') continue;
+    if (x.kind === 'listing_photo' || x.kind === 'hostel_photo' || x.kind === 'service_photo') continue;
     await store.remove(env, MEDIA_BUCKET(env), x.r2_key);
     await patch(env, `media?id=eq.${x.id}`, { status: 'hidden' });
     total -= Number(x.bytes || 0); out.pruned++;

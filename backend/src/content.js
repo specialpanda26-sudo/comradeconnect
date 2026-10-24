@@ -6,6 +6,7 @@ import { hostelParse, hostelText, decorateHostels, isCaretaker } from './hostels
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, throttle, tooMany, user, authProfile, contactBlock } from './lib.js';
 
 const ok = (v) => v !== null && v !== undefined;
+import { decorateServices } from './serviceworks.js';
 const CAMPUS_TABLES = new Set(['wifi', 'hostels', 'rooms', 'services']);   // these follow the campus you picked
 // Each resource: table, text fields (contact-filtered), a parser that returns the row to insert or an error string.
 const R = {
@@ -138,6 +139,7 @@ export async function contentRoutes(req, env, url, ip) {
     const r = await rows(lr); const list = r.slice(0, limit), ids = list.map((x) => x.id);
     let items = list.map((x) => pub(x, me));
     if (mm[1] === 'hostels') items = await decorateHostels(env, items, me);
+    if (mm[1] === 'services') items = await decorateServices(env, items);
     if (ids.length && mm[1] === 'polls') {
       const v = await rows(await sb(env, `poll_votes?select=poll_id,aid,option_idx&poll_id=${inList(ids)}`));
       items = items.map((p) => { const mine = v.find((x) => x.poll_id === p.id && me && x.aid === me.aid);

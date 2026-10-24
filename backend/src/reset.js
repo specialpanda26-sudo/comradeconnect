@@ -5,6 +5,7 @@ import { json, err, sb, rows, one, post, patch, enc, str, H, tsEqual, randHex, t
 import { mailReady, sendMail } from './mail.js';
 import { normStudentEmail, studentDomains, CODE_MINUTES, CODE_TRIES } from './trust.js';
 import { passwordProblem } from './passwords.js';
+import { normAnyEmail } from './recovery.js';
 
 const OK_MSG = 'If that username and student email match an account, a code is on its way.';
 
@@ -30,10 +31,13 @@ export async function resetRoutes(req, env, url, ip) {
     const b = await body(), who = str(b.who || b.handle || b.aid, 64);
     if (!who) return err(env, 'Enter your username or account ID');
     if (!(await throttle(env, ip, 'pwreset', who.toLowerCase(), 5, 15))) return tooMany(env);
-    const e = normStudentEmail(env, b.email);
-    if (!e) return err(env, 'Use the university email you verified, ending in ' + studentDomains(env).map((d) => '@' + d).join(' or '));
+    const e = normAnyEmail(b.email);
+    if (!e) return err(env, 'Enter the email address you saved on your account');
+    const se = normStudentEmail(env, b.email);
     const p = await findProfile(env, who);
-    if (p && !p.banned && p.student_email_hash && tsEqual(p.student_email_hash, await H(env, 'stuemail:' + e.canon))) {
+    const match = !!p && !p.banned && ((!!p.recovery_email_hash && tsEqual(p.recovery_email_hash, await H(env, 'recemail:' + e.canon)))
+      || (!!se && !!p.student_email_hash && tsEqual(p.student_email_hash, await H(env, 'stuemail:' + se.canon))));
+    if (match) {
       const [cur] = await rows(await sb(env, `password_resets?select=sent_at&aid=eq.${enc(p.aid)}`));
       if (!cur || Date.now() - Date.parse(cur.sent_at) >= 60e3) {
         const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e6).padStart(6, '0');

@@ -224,9 +224,9 @@ function promptRestore(msg, title) {
 // Forgot password: a 6-digit code goes to the student email you verified, then you choose a new password.
 function promptForgot(who) {
   if (document.getElementById('ccfgt')) return;
-  const m = sheet('<h3>Forgot password</h3><p class="sub" style="margin-top:6px">We email a 6-digit code to the university email you verified in Me > Verification. If you never verified one, use your recovery code instead.</p>'
+  const m = sheet('<h3>Forgot password</h3><p class="sub" style="margin-top:6px">We email a 6-digit code to the recovery email you saved (any email works). No email saved yet? Use your recovery code instead, and add an email in Me > Verification.</p>'
     + '<div class="fld" style="margin-top:10px"><input id="ccfg-w" placeholder="Username or account ID" autocomplete="off" autocapitalize="off" aria-label="Username or account ID"></div>'
-    + '<div class="fld"><input id="ccfg-m" type="email" placeholder="Your university email" autocomplete="email" autocapitalize="off" aria-label="University email"></div>'
+    + '<div class="fld"><input id="ccfg-m" type="email" placeholder="Your recovery email" autocomplete="email" autocapitalize="off" aria-label="Recovery email"></div>'
     + '<div id="ccfg-2" style="display:none"><div class="fld"><input id="ccfg-c" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" aria-label="6-digit code"></div>'
     + '<div class="fld"><input id="ccfg-p" type="password" placeholder="New password" autocomplete="new-password" aria-label="New password"></div></div>'
     + '<p class="sub" id="ccfg-e" style="min-height:18px"></p>'

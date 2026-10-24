@@ -1,7 +1,7 @@
 // Recovery email for ANY person (Gmail, Yahoo, university, anything). Optional. Used only for "Forgot password".
 // We never keep the address, only a keyed hash. A 6-digit code proves the person owns it before it is saved.
 import { json, err, sb, rows, post, patch, enc, H, tsEqual, throttle, tooMany, ahead, user } from './lib.js';
-import { mailReady, sendMail } from './mail.js';
+import { mailReady, sendMail, codeEmail } from './mail.js';
 import { CODE_MINUTES, CODE_TRIES, markUsed, USED_MSG } from './trust.js';
 
 export function normAnyEmail(v) {
@@ -42,7 +42,12 @@ export async function recoveryRoutes(req, env, url, ip) {
     if (!saved.ok) return err(env, 'Could not start. Run supabase/recovery-email.sql in Supabase first.', 500);
     const sent = await sendMail(env, {
       to: e.email, subject: 'Your Comrade Connect recovery email code',
-      text: `Your Comrade Connect code is ${code}\n\nIt works for ${CODE_MINUTES} minutes. Type it in the app to save this email for "Forgot password".\nIf you did not ask for this, ignore this email.\nNever share this code with anyone.`,
+      ...codeEmail(env, {
+        name: u.handle ? '@' + u.handle : '', code, minutes: CODE_MINUTES, heading: 'Confirm your recovery email',
+        lead: 'You asked to save this email as the recovery email for your Comrade Connect account. It is what lets you reset a forgotten password.',
+        steps: ['Open Comrade Connect and go to Me, then Verification.', 'Type the 6-digit code above.', 'Your recovery email is saved and Forgot password will work.'],
+        ignore: 'If you did not ask for this, you can ignore this email. Nothing is saved without the code.',
+      }),
     });
     if (!sent) { await sb(env, `recovery_email_codes?aid=eq.${enc(u.aid)}`, { method: 'DELETE' }); return err(env, 'Could not send the email. Check the address and try again.', 502); }
     return json(env, { ok: true, sent_to: mask(e.email), expires_minutes: CODE_MINUTES });

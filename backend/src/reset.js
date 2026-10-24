@@ -3,7 +3,7 @@
 // We never store the address, only a keyed hash, so we hash what was typed and look the account up by that hash.
 // Replies never reveal whether an account exists. Needs the mail settings (BREVO_API_KEY or RESEND_API_KEY, and MAIL_FROM).
 import { json, err, sb, rows, one, post, patch, enc, H, tsEqual, randHex, throttle, bump, tooMany, ahead, hashPassword, isAdmin } from './lib.js';
-import { mailReady, sendMailDetailed, mailDiagnosis } from './mail.js';
+import { mailReady, sendMailDetailed, mailDiagnosis, codeEmail } from './mail.js';
 import { normStudentEmail, studentDomains, CODE_MINUTES, CODE_TRIES, markUsed, USED_MSG } from './trust.js';
 import { passwordProblem } from './passwords.js';
 import { normAnyEmail } from './recovery.js';
@@ -69,7 +69,12 @@ export async function resetRoutes(req, env, url, ip) {
         if (!saved.ok) return err(env, 'Could not start the reset. Run supabase/password-reset.sql in Supabase first.', 500);
         const mailed = await sendMailDetailed(env, {
           to: e.email, subject: 'Your Comrade Connect password reset code',
-          text: `Your Comrade Connect password reset code is ${code}\n\nIt works for ${CODE_MINUTES} minutes. Type it in the app, then choose a new password.\nIf you did not ask for this, ignore this email: your password stays the same.\nNever share this code with anyone.`,
+          ...codeEmail(env, {
+            name: p.handle ? '@' + p.handle : '', code, minutes: CODE_MINUTES, heading: 'Reset your password',
+            lead: 'We got a request to reset the password of your Comrade Connect account. Use the code below to continue.',
+            steps: ['Open Comrade Connect and go to Forgot password.', 'Type the 6-digit code above.', 'Choose a new password you have not used before. Other phones signed in to your account will be signed out.'],
+            ignore: 'If you did not ask for this, you can ignore this email. Your password stays the same and nothing changes without the code.',
+          }),
         });
         if (!mailed.ok) { await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' }); return err(env, 'Could not send the email. Try again in a moment.', 502); }
       }

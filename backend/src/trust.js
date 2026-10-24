@@ -5,7 +5,7 @@ import { json, err, sb, rows, post, patch, enc, int, ahead, throttle, tooMany, u
 import { getSettings, feeOf, withdrawFee, boostPlans } from './settings.js';
 import { payMode, tinyKeys, manualMode } from './pay.js';
 import { autoPayout } from './payouts.js';
-import { mailReady, sendMail } from './mail.js';
+import { mailReady, sendMail, codeEmail } from './mail.js';
 
 export const TRUST_UPDATED = '2026-10-18';
 export const CODE_MINUTES = 15, CODE_TRIES = 5;
@@ -117,7 +117,12 @@ export async function trustRoutes(req, env, url, ip) {
     if (!saved.ok) return err(env, 'Could not start verification. Run the newest SQL (end of supabase/schema.sql) in Supabase first.', 500);
     const sent = await sendMail(env, {
       to: e.email, subject: 'Your Comrade Connect student code',
-      text: `Your Comrade Connect code is ${code}\n\nIt works for ${CODE_MINUTES} minutes. Type it in the app to confirm you are a student.\nIf you did not ask for this, ignore this email: nothing happens without the code.\nNever share this code with anyone.`,
+      ...codeEmail(env, {
+        name: u.handle ? '@' + u.handle : '', code, minutes: CODE_MINUTES, heading: 'Confirm you are a student',
+        lead: 'You asked to verify your student email on Comrade Connect. Use the code below to finish.',
+        steps: ['Open Comrade Connect and go to Me, then Verification.', 'Type the 6-digit code above.', 'Your student email is verified.'],
+        ignore: 'If you did not ask for this, you can ignore this email. Nothing happens without the code.',
+      }),
     });
     if (!sent) { await sb(env, `email_verifications?aid=eq.${enc(u.aid)}`, { method: 'DELETE' }); return err(env, 'Could not send the email. Check the address and try again.', 502); }
     return json(env, { ok: true, sent_to: maskEmail(e.email), expires_minutes: CODE_MINUTES });

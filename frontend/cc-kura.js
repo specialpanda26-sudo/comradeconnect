@@ -166,21 +166,6 @@ function loadHome() {
 }
 
 /* ---------- shell: header, tabs, page ---------- */
-function shell() {
-  var o = $('kura'); if (o) return o;
-  o = document.createElement('div'); o.id = 'kura'; o.hidden = true;
-  o.innerHTML = '<div class="kbar"><div class="kbr"><div class="kbrand">' + I.star + 'Kura</div><button class="kx" data-k="close" aria-label="Close">' + I.x + '</button></div>'
-    + '<div class="kts" id="ktabs"></div><div id="kseas"></div></div><div id="ktick"></div><div class="kw" id="kbody"></div>';
-  document.body.appendChild(o); o.addEventListener('click', onClick); o.addEventListener('change', onChange); o.addEventListener('input', onInput);
-  return o;
-}
-function openKura(tab) {
-  var o = shell(); o.hidden = false; if (tab) S.tab = tab; o.scrollTop = 0;
-  try { if (location.hash !== '#kura') history.replaceState(null, '', '#kura'); } catch (e) {}
-  paint(); loadHome().then(paint);
-}
-function closeKura() { shell().hidden = true; closePage(); closeSheet(); clearInterval(S.tick); try { if (location.hash === '#kura') history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
-function go(t) { S.tab = t; closePage(); $('kura').scrollTop = 0; paint(); }
 
 function paint() {
   var s = season(), t = S.tab;
@@ -228,6 +213,13 @@ function raceCard(r, live) {
 function topCard(c, i) {
   return '<div class="kcard kt3" data-k="open" data-id="' + esc(c.id) + '"><div class="ph">' + photo(c) + '<span class="bd">' + (i === 0 ? I.crown : '') + '#' + (i + 1) + '</span></div><div class="in"><div class="cat">' + esc(c.category) + '</div><div class="nm">' + esc(c.name) + '</div><div class="un">' + esc(c.campus) + '</div><div class="vt"><span><b>' + nf(c.votes) + '</b><small>votes</small></span>' + I.arrow + '</div></div></div>';
 }
+var ks2 = document.createElement('style');
+ks2.textContent = '.kstg{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:16px}.kstg>div{position:relative;padding:12px 13px;text-align:left;cursor:pointer}.kstg .n{font:600 10.5px Poppins,sans-serif;color:var(--mut);letter-spacing:.06em}.kstg b{display:block;font:700 14px Poppins,sans-serif;margin-top:6px}.kstg small{display:block;font-size:11px;color:var(--mut);margin-top:2px}.kstg .lv{position:absolute;right:10px;top:10px;font:700 9.5px Poppins,sans-serif;letter-spacing:.08em;padding:3px 8px;border-radius:999px;background:var(--ink);color:var(--inkfg)}.kstg .soon{opacity:.6;cursor:default}.kstg .soon .lv{background:var(--g);color:var(--mut);border:1px solid var(--gb)}@media(min-width:700px){.kstg{grid-template-columns:repeat(4,1fr)}}';
+document.head.appendChild(ks2);
+function stages() {
+  var L = [['01', 'Campus', 'Your university', 1], ['02', 'Inter-campus', 'Best across universities', 1], ['03', 'County', 'Nairobi, Kisumu, Mombasa...', 0], ['04', 'National', 'Kenya\'s top stars', 0]];
+  return '<div class="kstg">' + L.map(function (x) { return '<div class="kcard' + (x[3] ? '' : ' soon') + '"' + (x[3] ? ' data-k="tab" data-t="board"' : '') + '><span class="n">' + x[0] + '</span><span class="lv">' + (x[3] ? 'LIVE' : 'SOON') + '</span><b>' + x[1] + '</b><small>' + x[2] + '</small></div>'; }).join('') + '</div>';
+}
 function VB() { return window.ccVerified ? window.ccVerified(17) : I.check; }
 function packsStrip() {
   var p = season().packs || []; if (!p.length) return '';
@@ -258,7 +250,7 @@ function paintCompete() {
     + '<div class="kst"><div class="kcard"><b>' + (st.contestants || 0) + '</b><small>Contestants</small></div><div class="kcard"><b>' + (st.campuses || 0) + '</b><small>Campuses</small></div><div class="kcard"><b>' + nf(st.votes || 0) + '</b><small>Votes cast</small></div></div>'
     + (h.closest && h.closest.length ? '<div class="kh3"><span style="width:8px;height:8px;border-radius:50%;background:var(--bad)"></span>Closest races right now</div>' + h.closest.map(function (r) { return raceCard(r, false); }).join('') : '')
     + (h.live && h.live.length ? '<div class="kh3">' + I.grid + 'Every race, live <span class="ksub" style="margin-left:auto;font-weight:400;font-size:11px">Swipe →</span></div><div class="klive">' + h.live.map(function (r) { return raceCard(r, true); }).join('') + '</div>' : '')
-    + prizeCard(false)
+    + prizeCard(false) + stages()
     + (h.top && h.top.length ? '<div class="kh3">' + I.trophy + 'Leading the race<a class="ksub" data-k="tab" data-t="board" style="margin-left:auto;font-weight:600;font-size:12px;color:var(--fg);cursor:pointer">Full rankings ' + I.arrow + '</a></div><div class="klst" style="grid-template-columns:repeat(3,1fr);margin-top:0">' + h.top.map(topCard).join('') + '</div>' : (S.home ? '<p class="ksub" style="margin-top:20px">No contestants are live yet. Be the first to enter.</p>' : '<p class="ksub" style="margin-top:20px">Loading...</p>'))
     + packsStrip() + '<div class="kfoot"><span>Kura · Campus Star Awards</span><span>Votes are paid with M-Pesa</span></div>';
   // the little avatars in the race cards
@@ -412,7 +404,7 @@ function paintApply() {
     + '<h3>3. About you &amp; contact</h3><label>Your social pages <small>(optional)</small></label><div class="k2">'
     + [['ig', 'Instagram'], ['tt', 'TikTok'], ['yt', 'YouTube'], ['x', 'X (Twitter)'], ['fb', 'Facebook'], ['sc', 'Snapchat']].map(function (x) { return '<label>' + x[1] + '<input class="kinp" id="ka_' + x[0] + '" maxlength="40" placeholder="@username" autocapitalize="off"></label>'; }).join('') + '</div>'
     + '<label>Tagline <small>(optional)</small><input class="kinp" id="ka_tag" maxlength="80" placeholder="One line about you"></label><label>Bio <small>(optional)</small><textarea class="kinp" id="ka_bio" maxlength="300" placeholder="What do you do? Dance, comedy, music..."></textarea></label>'
-    + '<label>Phone number <small>(for payouts)</small><input class="kinp" id="ka_phone" inputmode="numeric" maxlength="10" placeholder="0712 345 678"></label><label>Email<input class="kinp" id="ka_email" type="email" maxlength="200" placeholder="you@example.com" autocapitalize="off"></label>'
+    + '<label>Phone number <small>(for payouts)</small><input class="kinp" id="ka_phone" inputmode="numeric" maxlength="10" placeholder="0712 345 678"></label><label>Email<input class="kinp" id="ka_email" type="email" maxlength="200" placeholder="you@example.com" autocapitalize="off"></label><p class="ksub" style="margin:6px 0 0;font-size:11px">Use this email to check your application status later.</p>'
     + '<p class="ksub" style="font-size:11px;margin:6px 0 0">Do not put phone numbers or links in your name or bio. Add your pages in the social fields.</p><p class="kmsg" id="kam"></p>'
     + '<button class="kb w" id="ka_go" data-k="submit" style="padding:15px;margin-top:6px">Apply to join</button><p class="kfine">Free to join. We review every application before your page goes live.</p></div>';
 }

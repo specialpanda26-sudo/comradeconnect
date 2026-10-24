@@ -23,6 +23,9 @@ services:
       - { key: TINYPESA_API_KEY, sync: false }   # TinyPesa link API key (the one shown with a link username)
       - { key: TINYPESA_USERNAME, sync: false }  # the link username that goes with the link API key
       - { key: CALLBACK_SECRET, sync: false }    # same string you put after ?s= in the TinyPesa callback URL
+      - { key: DEVICE_LOCK, value: "1" }
+      - { key: DEVICE_MAX_ACCOUNTS, value: "1" }
+      - { key: PASSKEY_RP_ID, value: comradeconnect.co.ke }
       - { key: MPESA_PAY_TYPE, value: send }
       - { key: MPESA_PAY_TO, sync: false }
       - { key: MPESA_PAY_NAME, sync: false }

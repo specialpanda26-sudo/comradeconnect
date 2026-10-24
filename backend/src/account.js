@@ -5,6 +5,7 @@ import { getSettings, withdrawFee, publicConfig } from './settings.js';
 import { trySendNow, reconcilePayouts } from './payouts.js';
 import { notify } from './notifications.js';
 import { passwordProblem } from './passwords.js';
+import { deviceGate, deviceClaim, deviceBindIfFree } from './device.js';
 
 export async function balance(env, aid) {
   const r = await sb(env, 'rpc/wallet_balance', { method: 'POST', body: JSON.stringify({ p: aid }) });
@@ -59,6 +60,7 @@ export async function accountRoutes(req, env, url, ip) {
     let aid = str(b.aid, 64);
     if (!/^[A-Za-z0-9_-]{6,64}$/.test(aid)) aid = 'u_' + randHex(8);
     if (await one(await sb(env, `profiles?select=aid&aid=eq.${enc(aid)}`))) return err(env, 'This account already exists. Use your recovery code.', 409);
+    const dg = await deviceGate(env, req); if (dg) return dg;
     const token = randHex(24), recovery = randHex(6).toUpperCase(), refcode = randHex(4).toUpperCase();
     if (b.password !== undefined && b.password !== null && b.password !== '') {       // the person chose a username and a password: no random code
       const handle = str(b.handle, 20), pw = String(b.password);
@@ -68,11 +70,13 @@ export async function accountRoutes(req, env, url, ip) {
       const res = await post(env, 'profiles', { aid, handle, token_hash: await H(env, 'tok:' + token), recovery_hash: await hashPassword(pw), referral_code: refcode });
       if (res.status === 409) return err(env, 'That username is already taken', 409);
       if (!res.ok) return err(env, 'Could not create the account', 500);
+      const dc = await deviceClaim(env, req, aid); if (dc) return dc;
       return json(env, { aid, handle, token, referral_code: refcode }, 201);
     }
     const res = await post(env, 'profiles', { aid, token_hash: await H(env, 'tok:' + token), recovery_hash: await H(env, `rec:${aid}:${recovery}`), referral_code: refcode });
     if (res.status === 409) return err(env, 'This account already exists. Use your recovery code.', 409);
     if (!res.ok) return err(env, 'Could not create the account', 500);
+    const dc2 = await deviceClaim(env, req, aid); if (dc2) return dc2;
     return json(env, { aid, token, recovery_code: recovery, referral_code: refcode }, 201);
   }
   // Google sign-in relay for the Android app. The callback page drops the Google sign-in here, keyed by the secret "state" that only the app knows,
@@ -113,6 +117,7 @@ export async function accountRoutes(req, env, url, ip) {
       if (cur && cur.aid !== existing.aid && (await hasActivity(env, cur.aid)))
         return err(env, 'This phone has a guest account with orders or money. Restore it with its recovery code first.', 409);
       await patch(env, `profiles?aid=eq.${enc(existing.aid)}`, { token_hash: tokHash });
+      await deviceBindIfFree(env, req, existing.aid);
       return json(env, { aid: existing.aid, token });
     }
     // Sign-in picks the account you chose. The guest account on this phone is only adopted when you asked to add Google to it (mode link) or it already holds orders, money or listings.
@@ -121,9 +126,11 @@ export async function accountRoutes(req, env, url, ip) {
       if (res.status === 409) return err(env, 'This Google account is already in use', 409);
       return json(env, { aid: cur.aid, token, linked: true });
     }
+    const dg2 = await deviceGate(env, req); if (dg2) return dg2;
     const aid = 'u_' + randHex(8), refcode = randHex(4).toUpperCase();
     const res = await post(env, 'profiles', { aid, token_hash: tokHash, google_sub: g.sub, referral_code: refcode });
     if (!res.ok) return err(env, 'Could not create the account', 500);
+    const dc3 = await deviceClaim(env, req, aid); if (dc3) return dc3;
     return json(env, { aid, token, referral_code: refcode, created: true }, 201);
   }
   // Sign out: the token this phone was using stops working (a new one is made by Google sign-in or the recovery code).
@@ -146,6 +153,7 @@ export async function accountRoutes(req, env, url, ip) {
     if (p.banned) return err(env, 'This account is suspended', 403);
     const aid = p.aid, token = randHex(24);
     await patch(env, `profiles?aid=eq.${enc(aid)}`, { token_hash: await H(env, 'tok:' + token) });
+    await deviceBindIfFree(env, req, aid);
     return json(env, { aid, token });
   }
 

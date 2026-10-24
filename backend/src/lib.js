@@ -2,7 +2,7 @@
 export const enc = encodeURIComponent;
 export const corsHeaders = (env) => ({
   'Access-Control-Allow-Origin': env.ALLOWED_ORIGINS || '*',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, X-Aid, X-Token, X-Campus',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, X-Aid, X-Token, X-Campus, X-Device-Id, X-Device-Kind',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
 });
 export const json = (env, data, status = 200) =>

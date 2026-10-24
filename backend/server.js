@@ -12,6 +12,7 @@ const DEFAULTS = {
   REFERRAL_UNLOCK_DAYS: '7', REFERRAL_REWARD: '20', ESCROW_AUTO_RELEASE_DAYS: '3', PLATFORM_FEE_PERCENT: '7',
   GOOGLE_CLIENT_ID: '', MEDIA_BUCKET: 'cc-media', PRIVATE_BUCKET: 'cc-private', BOOST_PRICE: '20',
   CLIP_MAX_MB: '25', MEDIA_BUDGET_MB: '800', WITHDRAW_REQUIRES_VERIFIED: '1',
+  DEVICE_LOCK: '1', DEVICE_MAX_ACCOUNTS: '1', PASSKEY_RP_ID: 'comradeconnect.co.ke',
 };
 const env = { ...DEFAULTS, ...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined && v !== '')) };
 

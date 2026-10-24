@@ -1,0 +1,45 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Unbounded:wght@600;800&display=swap");
+/* Comrade Connect static pages: palette + glass. Loaded after each page's own styles. */
+:root{--o:#A8DCE7;--r:#A8DCE7;--s:#272B3B;--bg:#101422;--fg:#fff;--mut:rgba(255,255,255,.7);--line:rgba(255,255,255,.14);--card:rgba(39,43,59,.16);--bad:#FFFFFF;--ok:#A8DCE7;--sh:0 16px 44px rgba(0,0,0,.45);--gl:rgba(255,255,255,.14)}
+@media (prefers-color-scheme:light){:root{--bg:#fff;--fg:#101422;--mut:rgba(16,20,34,.66);--line:rgba(16,20,34,.12);--card:rgba(255,255,255,.66);--bad:#101422;--ok:#101422;--sh:0 12px 36px rgba(39,43,59,.24);--gl:rgba(255,255,255,.9)}}
+html{accent-color:#A8DCE7}::selection{background:#A8DCE7;color:#101422}
+html body{background:var(--bg);color:var(--fg);position:relative;min-height:100vh}
+html body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(46vmax 46vmax at 12% 6%,rgba(168,220,231,.30),transparent 62%),radial-gradient(42vmax 42vmax at 92% 30%,rgba(168,220,231,.26),transparent 62%),radial-gradient(48vmax 48vmax at 40% 105%,rgba(39,43,59,.32),transparent 62%)}
+@media (prefers-color-scheme:light){html body::before{opacity:.7}}
+html header{width:calc(100% - 24px);max-width:736px;margin:12px auto 0;padding:8px 10px 8px 12px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--bg) 55%,transparent);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);box-shadow:var(--sh),inset 0 1px 0 var(--gl)}
+html a.cta,html a.b,html button.go,html body>main>button,html button:not([class]){background:#A8DCE7;color:#101422;border:0;border-radius:999px;font-weight:700;text-decoration:none;box-shadow:0 8px 22px rgba(168,220,231,.34)}
+html a.cta{padding:10px 20px}
+html .card,html .note,html .stats div,html .shots img{background:var(--card);border:1px solid var(--line);border-radius:26px;-webkit-backdrop-filter:blur(20px) saturate(170%);backdrop-filter:blur(20px) saturate(170%);box-shadow:var(--sh),inset 0 1px 0 var(--gl)}
+html .note{border-left:3px solid #A8DCE7;border-radius:0 22px 22px 0}
+html .shots img{border-radius:24px}
+html input{border-radius:18px;background:color-mix(in srgb,var(--fg) 6%,transparent);border:1px solid var(--line)}html input:focus{outline:0;border-color:#A8DCE7;box-shadow:0 0 0 3px rgba(168,220,231,.25)}
+html .pill{border-color:rgba(168,220,231,.5);background:rgba(168,220,231,.14)}
+html th{color:var(--fg)}html table{border-radius:18px;overflow:hidden}
+html a{color:#A8DCE7}html a.brand,html footer a{color:var(--fg)}
+html footer{border-top-color:var(--line)}
+html a.s{color:var(--mut)}
+html #res.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);border-color:var(--ok);color:var(--ok)}html #res.bad{background:color-mix(in srgb,var(--bad) 16%,transparent);border-color:var(--bad);color:var(--bad)}
+@media (max-width:420px){html a.brand{font-size:11.5px!important}html a.cta{padding:9px 12px!important;font-size:12.5px!important}html header{padding-left:8px!important;padding-right:8px!important}}
+
+/* ===== Section 2: flat aqua look, no glass (matches the app) ===== */
+html body::before{background:radial-gradient(120% 52% at 50% -8%,rgba(168,220,231,.2),transparent 62%)!important;opacity:1!important}
+html header{background:var(--s);border:0;border-radius:30px;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 10px 28px rgba(16,20,34,.35)}
+html header,html header a:not(.cta):not(.b){color:#FFFFFF}
+html .card,html .note,html .stats div,html .shots img{background:var(--s);border:1px solid rgba(255,255,255,.07);border-radius:28px;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+html .card,html .card p,html .card b{color:#FFFFFF}
+html .card p{color:rgba(255,255,255,.7)}
+html .note{border-left:3px solid #A8DCE7;border-radius:0 22px 22px 0}
+html a.cta,html a.b,html button.go,html body>main>button,html button:not([class]){box-shadow:none}
+html h1,html h2{font-family:Unbounded,Poppins,system-ui,sans-serif;font-weight:700;letter-spacing:-.01em}
+html input{background:rgba(255,255,255,.06);border:1px solid transparent;border-radius:18px}
+html input:focus{border-color:#A8DCE7;outline:0}
+@media (prefers-color-scheme:light){
+html body::before{background:linear-gradient(180deg,#A8DCE7 0,rgba(168,220,231,.35) 220px,rgba(255,255,255,0) 420px)!important}
+html header{background:#FFFFFF;border:1px solid var(--line);box-shadow:0 10px 28px rgba(16,20,34,.1)}
+html header,html header a:not(.cta):not(.b){color:#101422}
+html .card,html .note,html .stats div,html .shots img{background:color-mix(in srgb,#A8DCE7 16%,#FFFFFF);border:1px solid rgba(16,20,34,.07);box-shadow:0 6px 20px rgba(16,20,34,.05)}
+html .card,html .card b{color:#101422}
+html .card p{color:rgba(16,20,34,.66)}
+html input{background:rgba(16,20,34,.05)}
+html input:focus{border-color:#101422}
+}

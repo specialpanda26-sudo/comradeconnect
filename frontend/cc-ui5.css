@@ -1,0 +1,32 @@
+/* cc-ui5.css v1
+   1. Tech robot and its menu: always tappable.
+   2. "Sign in again" sheet spacing and 3. clean Google button (added in section 2). */
+#tkr{touch-action:manipulation;-webkit-tap-highlight-color:transparent;pointer-events:auto}
+#tkb{pointer-events:auto}
+#tkb .btn{touch-action:manipulation}
+
+/* ---------- 2. Sign in again sheet ---------- */
+#ccrst > .box{max-width:400px;width:100%;padding:24px 22px 22px;box-sizing:border-box}
+#ccrst h3{margin:0 0 4px;font-size:19px;letter-spacing:-.02em}
+#ccrst .sub{margin:0}
+#ccrst #ccrg{margin:16px auto 12px !important}
+#ccrst #ccrg + .sub{margin:0 0 14px;text-align:center}
+#ccrst .fld{margin:0 0 12px}
+#ccrst .fld input{display:block;width:100%;box-sizing:border-box;min-height:48px;padding:12px 16px;font-size:16px;text-overflow:ellipsis}
+#ccrst .fld input::placeholder{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+#ccrst #ccrst-e{min-height:0;margin:0}
+#ccrst #ccrst-e:not(:empty){margin:0 0 12px}
+#ccrst .two{display:flex;gap:12px;margin-top:6px}
+#ccrst .two>.btn{flex:1;min-height:48px;padding:12px 16px}
+
+/* ---------- 3. Google button: clean, no white box ---------- */
+iframe[src*="accounts.google.com"]{color-scheme:light !important;background:transparent !important;border:0 !important}
+#ccrg,#ccg,div:has(> div > iframe[src*="accounts.google.com/gsi/button"]){border-radius:999px;overflow:hidden;background:transparent !important}
+#ccrg,#ccg{width:fit-content;max-width:100%;margin-left:auto;margin-right:auto}
+#ccrg > div,#ccg > div{background:transparent !important}
+
+/* ---------- Market page: clear the top banner ----------
+   cc-market-ui.js set #v-market padding to 4px 0, which removed the 124px the page needs under the fixed banner,
+   so the location pin and the bell sat behind it and the cards touched the screen edges. */
+#v-market{padding:124px 6vw 170px !important;margin-top:0 !important;box-sizing:border-box}
+html[data-lay="desktop"] #v-market{padding:124px 22px 60px !important}

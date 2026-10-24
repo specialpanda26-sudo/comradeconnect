@@ -1,0 +1,8 @@
+/* cc-ui3.css v1: pop-up sheets and dialogs are NEARLY SOLID glass, so the page behind never shows through the text.
+   Also: placeholders are a little smaller so "Password or recovery code" is not cut off. */
+:root{--u-sheet-a:rgba(44,50,72,.97);--u-sheet-b:rgba(26,30,48,.97)}
+:root[data-theme="light"]{--u-sheet-a:rgba(255,255,255,.98);--u-sheet-b:rgba(240,246,249,.97)}
+.bx,.dsheet,#md .bx,#dm .bx,#cchp .bx,.ccn .bx,body>div[style*="position:fixed"]>.box.g,body>div[style*="position: fixed"]>.box.g{
+  background:linear-gradient(145deg,var(--u-sheet-a),var(--u-sheet-b)) !important}
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]){font-size:15px !important;padding-left:13px !important;padding-right:13px !important}
+input::placeholder,textarea::placeholder{font-size:14px !important}

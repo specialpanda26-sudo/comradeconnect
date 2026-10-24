@@ -1,0 +1,129 @@
+/* Comrade Connect: Aqua foundation (Section 1)
+   Palette, strictly: #A8DCE7 aqua, #101422 night, #FFFFFF white, #272B3B slate.
+   Loads last, overrides page styles. */
+:root{
+  --aq:#A8DCE7;--nt:#101422;--wh:#FFFFFF;--sl:#272B3B;
+  --bg:#101422;--fg:#FFFFFF;--mut:rgba(255,255,255,.62);
+  --g:#272B3B;--gb:rgba(255,255,255,.07);--gh:transparent;
+  --sh:0 18px 40px rgba(16,20,34,.45);--line:rgba(255,255,255,.1);
+  --ink:#A8DCE7;--inkfg:#101422;--bad:#FFFFFF;--ok:#A8DCE7;
+  --card:#272B3B;--soft:rgba(255,255,255,.06);--r:28px;
+  --disp:Unbounded,Poppins,system-ui,sans-serif;
+}
+:root[data-theme="light"]{
+  --bg:#FFFFFF;--fg:#101422;--mut:rgba(16,20,34,.62);
+  --g:color-mix(in srgb,#A8DCE7 16%,#FFFFFF);--gb:rgba(16,20,34,.07);--gh:transparent;
+  --sh:0 14px 34px rgba(16,20,34,.1);--line:rgba(16,20,34,.1);
+  --ink:#101422;--inkfg:#FFFFFF;--bad:#101422;--ok:#101422;
+  --card:#FFFFFF;--soft:rgba(16,20,34,.05);
+}
+html{accent-color:#A8DCE7;color-scheme:dark}
+html[data-theme="light"]{color-scheme:light;accent-color:#101422}
+::selection{background:#A8DCE7;color:#101422}
+body{background:var(--bg);color:var(--fg)}
+
+/* ---- background: flat, one soft aqua glow like the reference ---- */
+.bg{background:var(--bg)}
+.bg i,.bg svg,.bg .bw,.bg::before{display:none!important}
+.bg::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 52% at 50% -8%,rgba(168,220,231,.2),transparent 62%)}
+:root[data-theme="light"] .bg::after{background:linear-gradient(180deg,#A8DCE7 0,rgba(168,220,231,.35) 220px,rgba(255,255,255,0) 420px)}
+
+/* ---- surfaces: solid, no glass ---- */
+.g,.card,.stat,.pcard,.kcard,.ecard,.mecard,.box,.bx,.mtrust,.mc,.act,.btn:not(.p),.seg,.tab:not(.on),.vt button:not(.on){
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-image:none!important}
+html .g,html .card,html .stat,html .pcard,html .kcard,html .ecard,html .mecard,html .box.g,html .mc{
+  background-color:var(--g);border:1px solid var(--gb);box-shadow:none;border-radius:var(--r)}
+html[data-theme="light"] .g,html[data-theme="light"] .card,html[data-theme="light"] .pcard,html[data-theme="light"] .box.g,html[data-theme="light"] .mc{
+  box-shadow:0 6px 20px rgba(16,20,34,.05)}
+html .card,html .pcard,html .kcard,html .ecard,html .mecard,html .box.g{padding:20px}
+html #feed.grid>.card{border-radius:24px;padding:14px}
+html .card.in:hover,html .pcard:hover,html .kcard:hover,html .ecard:hover,html .stat:hover,html .mc:hover{
+  transform:translateY(-2px);border-color:rgba(168,220,231,.5)}
+html .card img,html .pcard img,html .kcard img,html .ecard img{border-radius:20px}
+.card{filter:none!important;transition:opacity .5s,transform .5s,border-color .25s}
+.card .bar{background:var(--soft);border:0;border-radius:999px;padding:5px;-webkit-backdrop-filter:none;backdrop-filter:none}
+
+/* ---- type: wide display headings like the reference ---- */
+.ph,.hero h1,.big,#md h2,.box h3,.pcard h3{font-family:var(--disp);letter-spacing:-.01em}
+.ph{font-size:22px;font-weight:700;margin:0 0 4px}
+.sub{color:var(--mut)}
+.hero h1{background:none!important;-webkit-background-clip:border-box;background-clip:border-box;color:var(--fg)!important;font-weight:700;font-size:clamp(28px,8vw,44px);line-height:1.15}
+.hero h3::after{background:var(--aq)}
+:root[data-theme="light"] .hero h3::after{background:var(--nt)}
+.mq div{color:color-mix(in srgb,var(--fg) 8%,transparent)}
+
+/* ---- top bar: floating slate pill ---- */
+html nav.g{background:var(--sl);border:0;border-radius:30px;box-shadow:0 10px 28px rgba(16,20,34,.35)}
+html[data-theme="light"] nav.g{background:var(--wh);border:1px solid var(--line);box-shadow:0 10px 28px rgba(16,20,34,.1)}
+nav b,nav .wm{color:var(--fg)}
+.ib{border-radius:50%;background:var(--soft)}
+.ib:hover{background:color-mix(in srgb,var(--aq) 25%,transparent)}
+
+/* ---- bottom bar: floating dark pill, active item in aqua ---- */
+html #tb{background:var(--sl);border:0;border-radius:36px;box-shadow:0 18px 40px rgba(16,20,34,.5);-webkit-backdrop-filter:none;backdrop-filter:none}
+html[data-theme="light"] #tb{background:var(--nt)}
+html #tb button{border-radius:30px;color:rgba(255,255,255,.7)}
+html #tb button.on{background:var(--aq);color:var(--nt);box-shadow:none}
+html #tb button.on .b,html nav.tabs button.on .b{background:var(--nt);color:var(--aq)}
+.b{background:var(--aq);color:var(--nt)}
+
+/* ---- buttons ---- */
+.btn{border-radius:999px;font-weight:600}
+.btn.p,html .btn.p{background:var(--ink)!important;color:var(--inkfg)!important;border:0;box-shadow:none}
+html .btn:not(.p){background:var(--g);color:var(--fg);border:1px solid var(--gb)}
+.btn:hover{transform:translateY(-2px)}
+#fab{background:var(--aq)!important;color:var(--nt)!important;box-shadow:0 14px 30px rgba(16,20,34,.45)}
+:root[data-theme="light"] #fab{background:var(--nt)!important;color:var(--wh)!important}
+
+/* ---- tabs, chips, segmented controls ---- */
+.tab,.vt button{background:var(--g);border:1px solid var(--gb);color:var(--mut)}
+.tab.on,.vt button.on{background:var(--ink)!important;color:var(--inkfg)!important;border-color:var(--ink)!important}
+.tab::after{display:none}
+html .seg{background:var(--g);border:1px solid var(--gb);padding:5px;box-shadow:none}
+.seg button{color:var(--mut)}
+.seg button.on{background:var(--ink);color:var(--inkfg);font-weight:600}
+.badge{background:color-mix(in srgb,var(--aq) 18%,transparent);border:0;color:var(--fg)}
+:root[data-theme="light"] .badge{background:var(--aq);color:var(--nt)}
+.act{background:var(--soft);border:0;color:var(--mut)}
+.act:hover{color:var(--fg);background:color-mix(in srgb,var(--aq) 22%,transparent)}
+html .act.liked{background:var(--ink);color:var(--inkfg)}
+html .act.wa{color:var(--fg);background:color-mix(in srgb,var(--aq) 22%,transparent)}
+
+/* ---- inputs: filled, rounded ---- */
+input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{
+  background:var(--soft);border:1px solid transparent;border-radius:18px;padding:13px 16px;color:var(--fg)}
+input:focus,textarea:focus,select:focus{border-color:var(--aq);outline:0;background:var(--soft)}
+:root[data-theme="light"] input:focus,:root[data-theme="light"] textarea:focus,:root[data-theme="light"] select:focus{border-color:var(--nt)}
+.fld::before,.fld::after{display:none}
+::placeholder{color:var(--mut)}
+
+/* ---- modals ---- */
+#md,#dm,#pv,#lk,#dcm{background:rgba(16,20,34,.72)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+.bx,#md .bx{background:var(--card)!important;border:1px solid var(--gb);border-radius:30px;box-shadow:var(--sh)}
+#toast{background:var(--aq);color:var(--nt);border:0;box-shadow:0 12px 30px rgba(16,20,34,.4)}
+:root[data-theme="light"] #toast{background:var(--nt);color:var(--wh)}
+
+/* ---- loader ---- */
+#loader{background:var(--bg)}
+#loader .ln i{background:var(--aq)!important;box-shadow:none!important}
+:root[data-theme="light"] #loader .ln i{background:var(--nt)!important}
+
+/* ---- progress bars, rows ---- */
+.pb{background:var(--soft);border-radius:99px}.pb i{background:var(--aq);border-radius:99px}
+:root[data-theme="light"] .pb i{background:var(--nt)}
+.rw{border-bottom:1px solid var(--line)}
+.stat.hot::after{background:var(--aq)}
+:focus-visible{outline:2px solid var(--aq)!important;outline-offset:3px}
+:root[data-theme="light"] :focus-visible{outline-color:var(--nt)!important}
+
+/* ---- Kura prize card (palette only) ---- */
+.kpa{position:relative;border-radius:24px;overflow:hidden;aspect-ratio:16/10;margin-bottom:14px}
+.kpa img{width:100%;height:100%;object-fit:cover;display:block}
+.kpa::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 45%,rgba(16,20,34,.6))}
+.kpq{display:grid;place-content:center;justify-items:center;gap:6px;background:var(--aq);color:var(--nt)}
+.kpq>*{position:relative;z-index:1}
+.kpq b{font:800 64px var(--disp);color:var(--nt);animation:kpq 2.6s ease-in-out infinite}
+.kpq span{font:600 11px Poppins,sans-serif;letter-spacing:.22em;color:var(--nt)}
+.kpq small{padding:5px 12px;border-radius:99px;background:var(--nt);color:var(--aq);font:500 11px Poppins,sans-serif}
+@keyframes kpq{50%{transform:scale(1.06)}}

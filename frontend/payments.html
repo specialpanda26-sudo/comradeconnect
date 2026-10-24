@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payments, escrow and payouts | Comrade Connect</title><meta name="description" content="Exactly how Comrade Connect holds your money in escrow, which payment gateway is used, every fee, and how payouts work."><meta name="robots" content="index,follow">
+<link rel="canonical" href="https://comradeconnect.co.ke/payments.html"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#101422">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Comrade Connect"><meta property="og:title" content="Payments, escrow and payouts | Comrade Connect"><meta property="og:description" content="Exactly how Comrade Connect holds your money in escrow, which payment gateway is used, every fee, and how payouts work."><meta property="og:url" content="https://comradeconnect.co.ke/payments.html"><meta property="og:image" content="https://comradeconnect.co.ke/og-image.png">
+<link rel="stylesheet" href="/trust.css"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="stylesheet" href="/cc-static.css?v=2"><link rel="stylesheet" href="cc-glass.css?v=3"><script src="cc-glass.js?v=3" defer></script></head><body>
+<header><a class="brand" href="/">COMRADE CONNECT</a><a class="cta" href="/">Open the app</a></header>
+<main><h1>Payments, escrow and payouts</h1>
+<p>Plain answers to: who holds my money, what do I pay, when does the seller get paid, and how do I get money out. <span id="live" class="small">Standard terms shown.</span></p>
+
+<h2>1. Who holds your money, and how</h2>
+
+<div data-mode="manual">
+<div class="card"><p><b>Payment method: M-Pesa sent directly to us.</b> No automatic payment gateway is used. At checkout the app shows the M-Pesa details to pay (Send Money, Till or Paybill). The account name on the M-Pesa confirmation must read <b data-t="payments.pay_to_name">the name shown at checkout</b>. If the name is different, do not pay.</p>
+<p><b>What happens next.</b> You enter the M-Pesa confirmation code in the app. An admin matches that code to our M-Pesa statement and confirms it. Only then is your order created and the item marked sold.</p></div>
+</div>
+<div data-mode="intasend" hidden>
+<div class="card"><p><b>Payment gateway: IntaSend.</b> When you pay, IntaSend sends an M-Pesa prompt to your phone. You enter your M-Pesa PIN on your phone. We never see or store your PIN. IntaSend collects the payment and passes it to us. We confirm every payment directly with IntaSend before your order is created; a message alone is never trusted.</p>
+<p data-show-if="payments.gateway.fallback">If IntaSend cannot send a prompt, we may use <b data-t="payments.gateway.fallback">another provider</b> instead. The same rules below apply.</p></div>
+</div>
+<div data-mode="tinypesa" hidden>
+<div class="card"><p><b>Payment gateway: TinyPesa.</b> When you pay, TinyPesa sends an M-Pesa prompt to your phone. You enter your M-Pesa PIN on your phone. We never see or store your PIN. We create your order only after the payment is confirmed.</p></div>
+</div>
+
+<p><b>What "held in escrow" means.</b> After your payment is confirmed, the money belongs to that one order. The seller cannot take it until a release event happens (section 3). Escrow is a record kept by <b data-t="operator.name">comradeconnect</b> in its own ledger. It is not a bank account, and money in escrow or in your wallet is not a bank deposit and earns no interest. The marketplace fee is worked out when the order is created and is only kept when a sale is released.</p>
+
+<h2>2. What it costs (our fee structure)</h2>
+<table>
+<tr><th>Charge</th><th>Who pays</th><th>Amount</th></tr>
+<tr><td>Marketplace fee</td><td>Seller, taken from the sale</td><td><b data-t="fees.platform_fee_percent" data-suf="%">7%</b> of the item price</td></tr>
+<tr><td>Fee to the buyer</td><td>Nobody</td><td><b data-t="fees.buyer_fee_percent" data-suf="%">0%</b>. You pay the item price only.</td></tr>
+<tr><td>Withdrawal fee</td><td>Person withdrawing</td><td><b data-t="fees.withdraw_fee_percent" data-suf="%">0%</b> plus <b data-t="fees.withdraw_fee_flat" data-fmt="kes">KSh 0</b></td></tr>
+<tr><td>Smallest withdrawal</td><td></td><td><b data-t="fees.withdraw_min" data-fmt="kes">KSh 1</b></td></tr>
+</table>
+<ul><li>The fee on an order is fixed when the order is created. If we change our fees later, it only applies to new orders.</li>
+<li>Your own mobile money provider may charge you for sending money. We do not add that charge and we do not receive it.</li>
+<li>Adverts (boosts) and Club or ticket purchases show their price before you pay.</li></ul>
+<div class="card"><p><b>Try it.</b> Item price in KSh:</p><input id="calcAmt" type="number" inputmode="numeric" min="1" max="150000" value="1000" aria-label="Item price in shillings"><div id="calcOut"></div></div>
+
+<h2>3. How an order moves, and when the seller is paid</h2>
+<div class="card"><p><b>1. Held.</b> Your payment is confirmed. The money is held for this order.</p>
+<p><b>2. Handed over.</b> The seller marks the item as handed over.</p>
+<p><b>3. Released.</b> The seller is paid into their wallet when any one of these happens:</p>
+<ul data-list="escrow.release_by"><li>the buyer gives the 6-digit code to the seller</li><li>the buyer taps "I received it"</li><li>the buyer stays silent after "handed over" for the auto-release time</li><li>an admin decides after a dispute</li></ul>
+<p>Auto-release time: <b data-t="escrow.auto_release_days" data-suf=" days">3 days</b> after "handed over". A dispute stops the clock.</p>
+<p><b>Wrong codes.</b> After <b data-t="escrow.code_attempt_limit">5</b> wrong codes the order stops so it can be disputed.</p></div>
+<h3>If something goes wrong with the payment</h3>
+<ul><li><b>Not confirmed in time.</b> An unconfirmed payment expires after <b data-t="payments.unconfirmed_expiry_minutes" data-suf=" minutes">30 minutes</b>. No order is created.</li>
+<li><b>Paid, but it expired.</b> If your money arrives after expiry, it is not lost. It goes to a person to review. If the item is still available we confirm it. If not, we return the money to your wallet.</li>
+<li><b>Item sold to someone else first.</b> The full amount goes to your wallet.</li>
+<li><b>You sent too little.</b> The payment is not accepted as a full payment. Contact us with your M-Pesa message.</li>
+<li><b>Wrong number or wrong amount sent.</b> Contact us with the M-Pesa code straight away.</li></ul>
+
+<h2>4. Your wallet, refunds and payouts</h2>
+<ul><li>Sale money and refunds are credited to your Comrade Connect wallet. You can see every entry in the wallet screen.</li>
+<li>To take money out, ask for a withdrawal to your own M-Pesa number. The smallest withdrawal is <b data-t="fees.withdraw_min" data-fmt="kes">KSh 1</b>. The fee is shown before you confirm.</li>
+<li><b>How it is paid:</b> <span data-t="payouts.method">M-Pesa, sent by our team to the number on your withdrawal request</span>. Each payout is recorded with its M-Pesa reference.</li>
+<li><b>How long:</b> we aim to pay within <b data-t="payouts.target_hours" data-suf=" hours">24 hours</b> of your request. This is a target, not a guarantee, and a delay for checks (below) can make it longer.</li>
+<li>You can cancel a withdrawal request until it has been paid. The money goes straight back to your wallet.</li>
+<li data-show-if="identity.withdraw_requires_id"><b>ID check.</b> You must be ID verified before you can withdraw. This applies to refunds too: a refund lands in your wallet, and you need to be ID verified to cash it out. See <a href="/trust.html">Trust centre</a>.</li></ul>
+
+<h2>5. When we may pause a payout</h2>
+<p>We may delay a release or a payout while we check for fraud, a stolen or mistaken payment, an abusive account, or a legal request. We will tell you the reason unless the law stops us, and we will not keep your money without a reason. You can dispute the delay by writing to us (see <a href="/refunds.html">Refunds and disputes</a>).</p>
+
+<h2>6. Paying outside Comrade Connect</h2>
+<p>Escrow and dispute help only cover payments made on Comrade Connect. If you pay a seller directly, or are asked to, we cannot refund you. Report it.</p>
+
+<div class="note"><p><b>Who runs this.</b> <span data-t="operator.name">comradeconnect</span>, <span data-t="operator.address">Kerugoya, Kirinyaga, Kenya</span>. <span data-show-if="operator.reg_no" hidden>Registration number: <b data-t="operator.reg_no"></b>.</span> Email <a href="mailto:support@comradeconnect.co.ke">support@comradeconnect.co.ke</a>.</p></div>
+<p class="small">This page explains how Comrade Connect works. It does not remove any rights you have under Kenyan law.</p>
+</main>
+<footer><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="/cookies.html">Cookies</a><a href="/refunds.html">Refunds &amp; disputes</a><a href="/payments.html">Payments &amp; payouts</a><a href="/trust.html">Trust centre</a><a href="/safety.html">Safety</a><a href="/contact.html">Contact</a><a href="/about.html">About</a><br>Comrade Connect. Run by comradeconnect.</footer><script src="/config.js"></script><script src="/cc-trust.js" defer></script><script src="/cc-getapp.js?v=5"></script><script src="/cc-pagebar.js?v=1"></script>
+<p style="text-align:center;opacity:.7;font-size:13px;margin:28px 16px">&copy; 2026 Comrade Connect. Owned and operated by Ogolla Tech. Founder and CEO: Henry O. Odhiambo.</p>
+</body></html>

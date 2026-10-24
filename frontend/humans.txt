@@ -1,0 +1,11 @@
+/* TEAM */
+Founder and CEO: Henry O. Odhiambo
+Company: Ogolla Tech
+Developer: Christian N.
+Developer: Peter M.
+Contact: support@comradeconnect.co.ke
+
+/* SITE */
+Name: Comrade Connect
+URL: https://comradeconnect.co.ke
+Standards: HTML5, CSS3, JavaScript

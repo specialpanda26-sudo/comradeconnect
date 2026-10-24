@@ -1,0 +1,13 @@
+.dev.vars
+.env
+.env.*
+!.env.example
+node_modules/
+.wrangler/
+__pycache__/
+*.pyc
+.DS_Store
+*.zip
+site-info.json
+*.bak
+*.orig

@@ -1,0 +1,56 @@
+/* Comrade Connect: Marketplace (Section 3). Palette only: #A8DCE7 #101422 #FFFFFF #272B3B */
+#v-market .ph{margin-top:2px}
+
+/* trust banner: compact, one row of pills */
+#v-market .mtrust{padding:16px;margin:12px 0 14px}
+.mt-h{gap:14px}
+.mt-h svg{width:44px;height:44px;padding:11px;border-radius:50%;background:var(--aq);stroke:var(--nt);flex-shrink:0}
+.mt-h b{font-size:14px}
+.mt-h small{font-size:12px}
+.mtb{display:flex;gap:6px;overflow-x:auto;margin-top:14px;padding-bottom:2px;scrollbar-width:none}
+.mtb::-webkit-scrollbar{display:none}
+.mtb .badge{flex:none;font-size:11px;font-weight:500;background:var(--soft);color:var(--mut)}
+
+/* controls */
+#mseg{margin:2px 0 4px}
+#mkq{padding-left:46px;border-radius:999px;
+  background:var(--soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A8DCE7' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") no-repeat 16px 50%/20px}
+:root[data-theme="light"] #mkq{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23101422' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
+
+/* product grid */
+.mgrid{gap:12px}
+html .mc{position:relative;padding:8px;border-radius:28px;text-align:left;display:block;transition:transform .25s,border-color .25s}
+.mc .mm{border-radius:22px;aspect-ratio:1;background:var(--sl)}
+.mc .mm.poster{place-items:center;background:var(--sl);color:var(--mut);font-weight:500;letter-spacing:.04em}
+:root[data-theme="light"] .mc .mm.poster{background:var(--soft)}
+.mc .mb{padding:12px 8px 8px;display:grid;gap:3px}
+.mc .mb b{font:600 13px Poppins,sans-serif;line-height:1.35;color:var(--fg);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* price sits on the photo as an aqua pill */
+.mc .mb em{position:absolute;top:16px;left:16px;font:700 12px var(--disp);font-style:normal;padding:7px 12px;border-radius:999px;background:var(--aq);color:var(--nt)}
+.mc .mb small{font-size:11px;color:var(--mut);font-weight:400}
+/* the escrow line repeats the banner, hide it on cards */
+.mc .mb small:nth-of-type(2){display:none}
+.mc .mb small.mtl{margin-top:2px;color:var(--mut)}
+.mc .mb small.mtl svg{stroke:var(--aq)}
+:root[data-theme="light"] .mc .mb small.mtl svg{stroke:var(--nt)}
+
+/* my listings and orders */
+.mst{background:var(--aq);color:var(--nt);border:0;font-weight:600}
+#mmine>.btn.p{margin-bottom:4px;padding:16px}
+#mmine .box.g,#olist .box.g{margin-top:12px}
+#mmine .box h3,#olist .box h3{font:600 15px Poppins,sans-serif}
+
+/* wallet: aqua feature card */
+#mord>.box.g:first-child{background-color:var(--aq);border-color:var(--aq);
+  --fg:#101422;--mut:rgba(16,20,34,.68);--soft:rgba(16,20,34,.08)}
+#mord>.box.g:first-child .big{font-size:34px;color:var(--nt)}
+#mord>.box.g:first-child .sub{color:rgba(16,20,34,.68)}
+#mord>.box.g:first-child .btn{background:var(--nt)!important;color:var(--aq)!important;border:0}
+
+/* order progress */
+.tl4 span{background:var(--soft);color:var(--mut);border-radius:999px;font-size:10px;padding:8px 2px}
+.tl4 span.on{background:var(--ink);color:var(--inkfg)}
+.dmo{border:1px dashed var(--line);background:transparent;border-radius:20px}
+
+/* desktop */
+html[data-lay="desktop"] .mgrid,html[data-lay="desktop"] #mgrid{gap:16px}

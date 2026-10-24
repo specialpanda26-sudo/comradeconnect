@@ -1,0 +1,126 @@
+/* cc-ui1.css v1: Section 1 UI pass. Loads LAST, after cc-glass.css.
+   1. Glass without glow: cards, buttons and bars are frosted glass (opacity runs from high to low across the surface),
+      with a black drop shadow underneath and the soft shading INSIDE the surface. Nothing glows outwards any more.
+   2. Top bar: the icons sit bare on the bar again (no circles, no borders), with even spacing.
+   3. Location chip sits under the top bar instead of behind it.
+   4. Light and dark mode: bottom bar labels, Kura button and toast are readable in both.
+   5. The robot (Tech) keeps floating and blinking even when the phone has "Remove animations" on. */
+
+/* ---------- tokens (dark first, light below) ---------- */
+:root{
+  --u-ga:rgba(255,255,255,.17);--u-gb:rgba(255,255,255,.04);--u-br:rgba(255,255,255,.22);
+  --u-sh:0 14px 28px -10px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.3);
+  --u-sh-sm:0 7px 14px -6px rgba(0,0,0,.55),0 1px 3px rgba(0,0,0,.3);
+  --u-hi:inset 0 1px 0 rgba(255,255,255,.32);
+  --u-lo:inset 0 -14px 20px -14px rgba(0,0,0,.42);
+  --u-pa:94%;--u-pb:60%;
+  --u-bar-fg:rgba(255,255,255,.82);
+}
+:root[data-theme="light"]{
+  --u-ga:rgba(255,255,255,.88);--u-gb:rgba(255,255,255,.44);--u-br:rgba(255,255,255,.95);
+  --u-sh:0 14px 28px -10px rgba(16,20,34,.32),0 2px 6px rgba(16,20,34,.12);
+  --u-sh-sm:0 7px 14px -6px rgba(16,20,34,.34),0 1px 3px rgba(16,20,34,.14);
+  --u-hi:inset 0 1px 0 rgba(255,255,255,1);
+  --u-lo:inset 0 -14px 20px -14px rgba(16,20,34,.16);
+  --u-pa:97%;--u-pb:78%;
+  --u-bar-fg:rgba(16,20,34,.78);
+}
+
+/* ---------- 1. cards, sheets, bars: frosted glass, black shadow, shading inside ---------- */
+.g,.box,.card,.bx,.dsheet,.savebar,#tb,#tkb,#tkr,.ccwb,.toast,#toast,nav.g{
+  background:linear-gradient(145deg,var(--u-ga),var(--u-gb)) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(165%) !important;backdrop-filter:blur(22px) saturate(165%) !important;
+  border:1px solid var(--u-br) !important;
+  box-shadow:var(--u-sh),var(--u-hi),var(--u-lo) !important}
+.card:hover,.box:hover{box-shadow:var(--u-sh),var(--u-hi),var(--u-lo) !important}
+#toast,.toast{color:var(--fg) !important}
+
+/* secondary buttons */
+.btn:not(.p):not([data-gs]):not(.kgo),html.cc-adm button:not(.p):not(.on):not([data-gs]),.ib:not(.on):not([data-gs]):not(.ccx-b){
+  background:linear-gradient(145deg,var(--u-ga),var(--u-gb)) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(165%) !important;backdrop-filter:blur(14px) saturate(165%) !important;
+  border:1px solid var(--u-br) !important;
+  box-shadow:var(--u-sh-sm),var(--u-hi),var(--u-lo) !important}
+.btn:not(.p):hover,html.cc-adm button:not(.p):not(.on):hover{box-shadow:var(--u-sh-sm),var(--u-hi),var(--u-lo) !important}
+
+/* tinted small things (chips, badges, tags) */
+[data-gs]{
+  --c:var(--tint,var(--ink,#A8DCE7));
+  background-color:transparent !important;
+  background-image:linear-gradient(160deg,color-mix(in srgb,var(--c) var(--u-pa),transparent),color-mix(in srgb,var(--c) var(--u-pb),transparent)) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(165%) !important;backdrop-filter:blur(12px) saturate(165%) !important;
+  border:1px solid color-mix(in srgb,var(--c) 40%,rgba(255,255,255,.55)) !important;
+  box-shadow:0 3px 8px -3px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -6px 10px -6px rgba(0,0,0,.3) !important}
+
+/* primary buttons: tinted glass, strong at the top, lighter at the bottom */
+.btn.p,button.p,.btnp.p,#fab,.ib.on,html.cc-adm button.on,#tb button.on,html .btn.kgo:not(.p){
+  --c:var(--ink,#A8DCE7);
+  background-color:transparent !important;
+  background-image:linear-gradient(160deg,color-mix(in srgb,var(--c) var(--u-pa),transparent),color-mix(in srgb,var(--c) var(--u-pb),transparent)) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(165%) !important;backdrop-filter:blur(14px) saturate(165%) !important;
+  border:1px solid color-mix(in srgb,var(--c) 45%,rgba(255,255,255,.55)) !important;
+  box-shadow:var(--u-sh-sm),inset 0 1px 0 rgba(255,255,255,.45),inset 0 -12px 18px -12px rgba(0,0,0,.4) !important}
+html .btn.kgo:not(.p){color:var(--inkfg) !important}
+.btn.p:active,button.p:active,#fab:active{transform:scale(.97)}
+.btn.p:hover{transform:none}
+
+
+/* inputs: sunken glass, plain focus ring (no glow) */
+:is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]){
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.28) !important}
+:root[data-theme="light"] :is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]){
+  box-shadow:inset 0 2px 5px rgba(16,20,34,.12) !important}
+:is(input,textarea,select):focus{
+  border-color:color-mix(in srgb,var(--fg) 55%,transparent) !important;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.2),0 0 0 2px color-mix(in srgb,var(--fg) 22%,transparent) !important}
+
+/* light mode inputs: a faint grey glass so the field can be seen on white, readable placeholder */
+:root[data-theme="light"] :is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]){
+  background:linear-gradient(145deg,rgba(16,20,34,.06),rgba(16,20,34,.02)) !important;border-color:rgba(16,20,34,.16) !important}
+::placeholder,input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--fg) 55%,transparent) !important;-webkit-text-fill-color:color-mix(in srgb,var(--fg) 55%,transparent) !important;opacity:1}
+
+/* the big coloured background orbs no longer glow */
+.cc-orbs i{box-shadow:none !important}
+
+/* ---------- 2. top bar: bare icons, no circles ---------- */
+nav.g{padding:0 6px 0 16px !important;gap:6px}
+nav.g .nb{flex:1 1 auto;min-width:0;gap:7px !important}
+nav.g .nb .wm{font-size:12px !important;letter-spacing:0 !important;white-space:nowrap;overflow:visible !important;text-overflow:clip !important;line-height:1.1}
+@media(max-width:430px){nav.g .nb .wm{white-space:normal;max-width:76px;line-height:1.08;word-spacing:0;font-size:11.5px !important}}
+@media(min-width:431px){nav.g .nb .wm{font-size:13px !important}}
+nav.g>div{flex:none;display:flex;align-items:center;gap:0 !important}
+nav.g .ib,nav.g .ib:not(.on):not([data-gs]),nav.g .ib.on,nav.g .ib.ccb{
+  width:34px !important;height:38px !important;border-radius:0 !important;
+  background:none !important;background-image:none !important;border:0 !important;box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  color:var(--fg) !important;position:relative;display:grid;place-items:center;padding:0 !important;flex:none}
+nav.g .ib:hover{background:none !important}
+nav.g .ib:active{opacity:.6}
+nav.g .ib.on{color:var(--fg) !important;opacity:1}
+nav.g .ib svg{width:21px;height:21px}
+nav.g .ib.ccb i{top:4px;right:3px}
+nav.g .ccn-b{top:3px;right:0;box-shadow:none}
+@media(max-width:340px){nav.g .ib,nav.g .ib:not(.on):not([data-gs]),nav.g .ib.on,nav.g .ib.ccb{width:30px !important}nav.g .ib svg{width:19px;height:19px}}
+
+/* ---------- 3. location chip: below the top bar, never behind it ---------- */
+#v-feed .cc-chipwrap{padding-top:calc(env(safe-area-inset-top,0px) + 76px) !important}
+#v-feed .cc-chipwrap .ccc-chip{margin-bottom:0}
+#v-feed .cc-chipwrap+#ccs-tray{padding-top:18px !important}
+#v-explore .ccc-chip{margin-top:6px}
+.ccc-chip{
+  background:linear-gradient(145deg,var(--u-ga),var(--u-gb)) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(165%);backdrop-filter:blur(14px) saturate(165%);
+  border:1px solid var(--u-br) !important;box-shadow:var(--u-sh-sm),var(--u-hi),var(--u-lo) !important;color:var(--fg)}
+
+/* ---------- 4. light and dark: bottom bar labels ---------- */
+html #tb button{color:var(--u-bar-fg) !important;background:none;box-shadow:none}
+html #tb button.on{color:var(--inkfg) !important}
+html #tb button:not(.on){background:none !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+html #tb button.on{box-shadow:var(--u-sh-sm),inset 0 1px 0 rgba(255,255,255,.45),inset 0 -12px 18px -12px rgba(0,0,0,.4) !important}
+
+/* ---------- 5. robot: keeps moving with "Remove animations" on ---------- */
+@media(prefers-reduced-motion:reduce){
+  #tkr{animation:tkf 3s ease-in-out infinite !important}
+}
+#tkr .tke{animation:none !important}
+#tkr{box-shadow:var(--u-sh-sm),var(--u-hi),var(--u-lo) !important}

@@ -1,0 +1,40 @@
+/* Comrade Connect: Home page layout (Section 2). Palette only: #A8DCE7 #101422 #FFFFFF #272B3B */
+.mq{display:none}
+.hero{max-width:680px;padding:112px 6vw 18px}
+.hero .gr{font:500 13px Poppins,sans-serif;color:var(--mut);margin-bottom:8px}
+.hero h1{font-size:clamp(26px,7.4vw,40px);max-width:15ch}
+.hero h3{font:600 15px Poppins,sans-serif;color:var(--mut);margin:12px 0 10px}
+.hero p{max-width:46ch;font-weight:400;line-height:1.7}
+.hero>div[style*="margin-top:28px"]{display:grid;grid-template-columns:1fr;gap:10px;margin-top:22px!important}
+.hero .btn{width:100%;margin:0!important;padding:16px 22px;font-size:14px}
+.chips{gap:8px;margin-top:18px}
+.chip{background:var(--g);border:1px solid var(--gb);color:var(--mut);padding:9px 15px}
+.chip b{color:var(--fg)}
+
+/* tab strip */
+.tabs{max-width:680px;padding:6px 6vw;gap:8px}
+html .tab{padding:10px 20px;font-size:12.5px}
+
+/* pulse cards: first one is the aqua feature card */
+.pulse{padding:10px 6vw 8px;gap:14px}
+html .pulse .pcard h3{font-size:14px;font-weight:700}
+html .pulse .pcard:first-child{background-color:var(--aq);border-color:var(--aq);color:var(--nt);
+  --fg:#101422;--mut:rgba(16,20,34,.68);--line:rgba(16,20,34,.14);--soft:rgba(16,20,34,.08)}
+html .pulse .pcard:first-child h3{font-size:19px;line-height:1.25}
+html .pulse .pcard:first-child .badge{background:var(--nt);color:var(--aq)}
+html .pulse .pcard:first-child .act{background:var(--nt);color:var(--aq)}
+html .pulse .pcard:first-child .act.wa{background:var(--nt);color:var(--aq)}
+html .pulse .pcard:first-child p{color:var(--nt)}
+.pcard .n{color:var(--mut)}
+
+/* feed */
+#feed{padding:12px 5vw 150px;gap:14px}
+html #feed.grid>.card{margin-bottom:12px}
+.card p.t{font-size:14.5px;line-height:1.65;margin:12px 0 14px}
+.card time{color:var(--mut);font-weight:400}
+.views{color:var(--mut)}
+.cm li{background:var(--soft);border-radius:18px}
+.vt{padding:6px 5vw 0}
+.empty{background:var(--g);border-radius:var(--r);margin:0 5vw}
+footer{padding-bottom:160px}
+.ccft .ft-sec{background:var(--g);border:1px solid var(--gb);border-radius:var(--r)}

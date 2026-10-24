@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Comrade Connect admin</title>
+<meta name="theme-color" content="#101422">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
+<style>
+/* Same look as the main site: black or white, glass cards, Poppins, pill buttons, drifting light. */
+:root{--bg:#101422;--fg:#fff;--mut:rgba(255,255,255,.62);--g:rgba(255,255,255,.07);--gb:rgba(255,255,255,.22);--gh:rgba(255,255,255,.4);--sh:0 10px 30px rgba(0,0,0,.6);--line:rgba(255,255,255,.14);--ink:#A8DCE7;--inkfg:#101422;--bad:#FFFFFF;--ok:#A8DCE7;box-sizing:border-box}
+:root[data-theme="light"]{--bg:#fff;--fg:#101422;--mut:rgba(16,20,34,.62);--g:rgba(255,255,255,.55);--gb:rgba(0,0,0,.14);--gh:rgba(255,255,255,.95);--sh:0 8px 32px rgba(0,0,0,.12);--line:rgba(0,0,0,.12);--ink:#101422;--inkfg:#FFFFFF;--bad:#101422;--ok:#101422}
+*,::before,::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:150px}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 14px/1.6 Poppins,system-ui,sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent;transition:background .5s,color .5s}
+h1,h2,h3,p{margin:0}
+.g{background:var(--g);border:1px solid var(--gb);-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);box-shadow:var(--sh),inset 0 1px 0 var(--gh)}
+/* drifting light and the big outlined word */
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--bg);transition:background .5s}
+.bg i{position:absolute;border-radius:50%;filter:blur(80px);animation:drift 18s ease-in-out infinite alternate}
+.bg i:nth-child(1){width:50vw;height:50vw;top:-12vw;left:-10vw;background:#fff;opacity:.2}
+.bg i:nth-child(2){width:42vw;height:42vw;top:30vh;right:-14vw;background:#A8DCE7;opacity:.22;animation-delay:-7s}
+:root[data-theme="light"] .bg i:nth-child(1){background:#000;opacity:.1}
+:root[data-theme="light"] .bg i:nth-child(2){background:#A8DCE7;opacity:.14}
+@keyframes drift{to{transform:translate(6vw,-5vh) scale(1.15)}}
+.bw{position:absolute;left:3vw;top:16vh;white-space:nowrap;font:700 min(30vw,300px)/.9 Poppins,sans-serif;letter-spacing:-.04em;color:color-mix(in srgb,var(--fg) 6%,transparent);-webkit-text-stroke:1px color-mix(in srgb,var(--fg) 18%,transparent);transform:translateX(calc((var(--p,0) - .5)*30vw))}
+/* top bar */
+.top{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(980px,94vw);height:54px;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 22px;border-radius:30px;animation:down .8s cubic-bezier(.2,.9,.3,1) both}
+@keyframes down{from{opacity:0;transform:translate(-50%,-30px)}}
+.wm{font-family:Unbounded,Poppins,system-ui,sans-serif;font-weight:800;text-transform:uppercase;white-space:nowrap;line-height:1;letter-spacing:.02em;font-size:13px;background:linear-gradient(100deg,var(--fg) 0%,var(--fg) 40%,var(--mut) 50%,var(--fg) 60%,var(--fg) 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 3s linear infinite}
+@keyframes shine{to{background-position:-250% 0}}
+.top .tag{margin-left:10px;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+.tools{display:flex;gap:2px}
+.ib{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--fg);background:none;border:0;cursor:pointer;transition:background .25s,transform .35s}
+.ib:hover{background:color-mix(in srgb,var(--fg) 10%,transparent)}.ib:active{transform:scale(.88) rotate(-12deg)}
+.ib svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body.out .tools .need{display:none}
+.wrap{max-width:980px;margin:0 auto;padding:96px 5vw 120px}
+/* stat tiles */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:8px 0 6px}
+.stat{border-radius:20px;padding:16px 18px;cursor:pointer;text-align:left;color:var(--fg);font:inherit;position:relative;overflow:hidden;transition:transform .35s cubic-bezier(.2,.9,.3,1.2),border-color .3s}
+.stat:hover{transform:translateY(-4px);border-color:var(--gh)}
+.stat b{display:block;font:600 30px/1.1 Poppins,sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--mut);letter-spacing:.06em;text-transform:uppercase;font-weight:500}
+.stat.hot::after{content:"";position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--fg);animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--fg) 55%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+/* tabs */
+nav.tabs{position:sticky;top:calc(78px + env(safe-area-inset-top,0px));z-index:40;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:10px 0;margin:6px 0}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:none;padding:9px 18px;border-radius:999px;font:500 12px Poppins,sans-serif;color:var(--mut);cursor:pointer;transition:all .3s;position:relative;overflow:hidden;white-space:nowrap;background:var(--g);border:1px solid var(--gb);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+nav.tabs button.on{background:var(--ink);color:var(--inkfg);border-color:var(--ink);font-weight:600}
+nav.tabs button::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(circle 46px at var(--x,50%) var(--y,50%),rgba(255,255,255,.7),transparent 70%);mix-blend-mode:screen}
+nav.tabs button.lit::after{opacity:1;transition-duration:.08s}
+:root[data-theme="light"] nav.tabs button::after{mix-blend-mode:multiply;background:radial-gradient(circle 46px at var(--x,50%) var(--y,50%),rgba(0,0,0,.3),transparent 70%)}
+.b{display:inline-block;min-width:20px;padding:0 6px;margin-left:8px;border-radius:99px;background:var(--fg);color:var(--bg);font-size:11px;font-weight:700;text-align:center}
+nav.tabs button.on .b{background:var(--inkfg);color:var(--ink)}
+/* cards: glass, rise in one by one, soft spotlight follows the pointer */
+.card{position:relative;border-radius:22px;padding:22px;margin:14px 0;overflow:hidden;background:var(--g);border:1px solid var(--gb);-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);box-shadow:var(--sh),inset 0 1px 0 var(--gh);transition:border-color .3s,transform .4s}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(420px circle at var(--mx,50%) var(--my,0%),color-mix(in srgb,var(--fg) 9%,transparent),transparent 60%)}
+.card:hover::after{opacity:1}.card:hover{border-color:var(--gh)}
+.rise .card,.rise .stat{opacity:0;animation:rise .8s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i,0)*70ms)}
+@keyframes rise{from{opacity:0;transform:translateY(34px);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+h1{font:800 clamp(22px,5vw,34px) Unbounded,Poppins,sans-serif;text-transform:uppercase;letter-spacing:.01em;margin:6px 0 4px}
+h3{font-size:16px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px}
+.sub{color:var(--mut);font-size:12.5px;font-weight:300;line-height:1.7;overflow-wrap:anywhere}
+.lead{color:var(--mut);font-weight:300;margin-bottom:6px}
+.empty{text-align:center;color:var(--mut);padding:50px 10px}
+/* inputs: underline that grows from both sides on focus */
+input,textarea,select{width:100%;font:400 14px Poppins,sans-serif;color:var(--fg);background:linear-gradient(var(--fg),var(--fg)) no-repeat center bottom/0 2px;border:0;border-bottom:1.5px solid color-mix(in srgb,var(--fg) 30%,transparent);padding:12px 2px;margin-top:6px;border-radius:0;transition:background-size .5s cubic-bezier(.4,0,.2,1),border-color .3s;outline:none}
+input:focus,textarea:focus,select:focus{background-size:100% 2px;border-bottom-color:transparent}
+textarea{resize:vertical;line-height:1.7}
+input[type=checkbox]{width:auto;accent-color:var(--fg)}
+select option{background:#101422;color:#fff}
+::placeholder{color:color-mix(in srgb,var(--fg) 40%,transparent)}
+/* buttons: pill, lift on hover */
+button{font-family:inherit}
+.card button,.row button,.savebar button,.btnp{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:999px;font:600 12.5px Poppins,sans-serif;color:var(--fg);background:var(--g);border:1px solid var(--gb);cursor:pointer;transition:transform .3s,background .3s,opacity .3s}
+.card button:hover,.row button:hover,.savebar button:hover{transform:translateY(-3px)}.card button:active,.row button:active,.savebar button:active{transform:scale(.96)}
+button.p,button.ok{background:var(--ink)!important;color:var(--inkfg)!important;border-color:var(--ink)!important}
+button.bad{color:var(--bad)!important;border-color:color-mix(in srgb,var(--bad) 50%,transparent)!important}
+button:disabled{opacity:.45;pointer-events:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.row>*{flex:1 1 auto}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.stat:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+.photos{display:flex;gap:8px;overflow-x:auto;margin:10px 0}.photos img{height:110px;border-radius:14px;transition:transform .3s}.photos img:hover{transform:scale(1.04)}
+.err{color:var(--bad);min-height:20px;font-size:12.5px;margin-top:8px}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;border-bottom:1px solid var(--line);padding:6px 0}.kv b{overflow-wrap:anywhere;text-align:right;font-weight:600}
+a{color:var(--fg);text-underline-offset:3px}
+#toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:300;padding:12px 22px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:.4s;background:var(--g);border:1px solid var(--gb);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:var(--sh)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+/* login */
+.login{max-width:440px;margin:12vh auto 0;text-align:center}
+.login .card{text-align:left;padding:28px}
+.login .wm{font-size:clamp(16px,5vw,26px);display:inline-block;margin-bottom:18px}
+/* site editor */
+.grp h3{display:flex;align-items:center;gap:10px}.grp h3::before{content:"";width:18px;height:2px;background:var(--fg);border-radius:2px}
+.fl{display:block;margin-top:16px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.fl small{display:block;text-transform:none;letter-spacing:0;font-weight:300;font-size:12px;margin-top:2px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.sw span{font-size:13.5px;font-weight:500}.sw small{display:block;font-weight:300;color:var(--mut);font-size:12px}
+.sw input{position:absolute;opacity:0;width:0;height:0}
+.sw i{flex:none;width:46px;height:26px;border-radius:99px;background:color-mix(in srgb,var(--fg) 18%,transparent);position:relative;transition:background .35s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--fg);transition:transform .4s cubic-bezier(.2,.9,.3,1.3),background .3s}
+.sw input:checked+i{background:var(--ink)}.sw input:checked+i::after{transform:translateX(20px);background:var(--inkfg)}
+.sw input:focus-visible+i{outline:2px solid var(--fg);outline-offset:3px}
+.savebar{position:sticky;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:30;border-radius:999px;padding:10px 12px 10px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
+.savebar span{font-size:12.5px;color:var(--mut)}.savebar button{flex:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rise .card,.rise .stat{opacity:1}}
+
+/* ===== Section 2: aqua palette (reference look). Palette only. ===== */
+:root{--aq:#A8DCE7;--nt:#101422;--wh:#FFFFFF;--sl:#272B3B;--bg:#101422;--fg:#FFFFFF;--mut:rgba(255,255,255,.62);--g:#272B3B;--gb:rgba(255,255,255,.07);--gh:transparent;--sh:0 18px 40px rgba(16,20,34,.45);--line:rgba(255,255,255,.1);--ink:#A8DCE7;--inkfg:#101422;--bad:#FFFFFF;--ok:#A8DCE7;--soft:rgba(255,255,255,.06);--r:28px;--disp:Unbounded,Poppins,system-ui,sans-serif}
+:root[data-theme="light"]{--bg:#FFFFFF;--fg:#101422;--mut:rgba(16,20,34,.62);--g:color-mix(in srgb,#A8DCE7 16%,#FFFFFF);--gb:rgba(16,20,34,.07);--sh:0 14px 34px rgba(16,20,34,.1);--line:rgba(16,20,34,.1);--ink:#101422;--inkfg:#FFFFFF;--bad:#101422;--ok:#101422;--soft:rgba(16,20,34,.05)}
+html{accent-color:#A8DCE7;color-scheme:dark}html[data-theme="light"]{color-scheme:light;accent-color:#101422}
+::selection{background:#A8DCE7;color:#101422}
+.bg i,.bg .bw{display:none!important}
+.bg::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 52% at 50% -8%,rgba(168,220,231,.2),transparent 62%)}
+:root[data-theme="light"] .bg::after{background:linear-gradient(180deg,#A8DCE7 0,rgba(168,220,231,.35) 220px,rgba(255,255,255,0) 420px)}
+.g,.card,.stat{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-image:none!important}
+html .g,html .card,html .stat{background-color:var(--g);border:1px solid var(--gb);box-shadow:none;border-radius:var(--r)}
+html[data-theme="light"] .card,html[data-theme="light"] .stat{box-shadow:0 6px 20px rgba(16,20,34,.05)}
+.card::after{display:none}
+html .card{padding:20px}
+html .card:hover,html .stat:hover{border-color:rgba(168,220,231,.5)}
+.photos img{border-radius:20px}
+h1{font-family:var(--disp);text-transform:none;font-weight:700;letter-spacing:-.01em;font-size:clamp(20px,5vw,28px)}
+h3{font-family:var(--disp);font-size:14px;font-weight:700;letter-spacing:-.01em}
+.sub,.lead{font-weight:400}
+html .top{background:var(--sl);border:0;border-radius:30px;box-shadow:0 10px 28px rgba(16,20,34,.35)}
+html[data-theme="light"] .top{background:#FFFFFF;border:1px solid var(--line);box-shadow:0 10px 28px rgba(16,20,34,.1)}
+.wm{background:none!important;-webkit-text-fill-color:currentColor;color:var(--fg);animation:none!important}
+.top .tag{background:var(--aq);color:var(--nt);border:0}
+.ib{background:var(--soft)}.ib:hover{background:color-mix(in srgb,var(--aq) 25%,transparent)}
+.stat b{font-family:var(--disp);font-weight:700;letter-spacing:-.02em}
+.stats .stat:first-child{--fg:#101422;--mut:rgba(16,20,34,.68);background-color:var(--aq);border-color:var(--aq);color:var(--nt)}
+.stat.hot::after{background:var(--aq)}
+html[data-theme="light"] .stat.hot::after{background:var(--nt)}
+html nav.tabs button{background:var(--g);border:1px solid var(--gb);color:var(--mut);-webkit-backdrop-filter:none;backdrop-filter:none}
+nav.tabs button::after{display:none}
+html nav.tabs button.on{background:var(--ink);color:var(--inkfg);border-color:var(--ink)}
+.b{background:var(--aq);color:var(--nt)}
+html nav.tabs button.on .b{background:var(--nt);color:var(--aq)}
+html[data-theme="light"] nav.tabs button.on .b{background:var(--aq);color:var(--nt)}
+.card button,.row button,.savebar button,.btnp{background:var(--soft);border:1px solid var(--gb);color:var(--fg);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+button.p,button.ok{background:var(--ink)!important;color:var(--inkfg)!important;border-color:var(--ink)!important}
+button.bad{border-style:dashed!important}
+input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{background:var(--soft);background-image:none;border:1px solid transparent;border-radius:18px;padding:13px 16px;color:var(--fg)}
+input:focus,textarea:focus,select:focus{background-image:none;border-color:var(--aq);outline:0}
+html[data-theme="light"] input:focus,html[data-theme="light"] textarea:focus,html[data-theme="light"] select:focus{border-color:var(--nt)}
+select option{background:var(--bg);color:var(--fg)}
+.sw input:checked+i{background:var(--ink)}
+.grp h3::before{background:var(--aq)}
+html[data-theme="light"] .grp h3::before{background:var(--nt)}
+html .savebar{background:var(--sl);border:0;border-radius:36px;box-shadow:0 18px 40px rgba(16,20,34,.5)}
+.savebar span{color:rgba(255,255,255,.7)}
+html .savebar button{color:#FFFFFF;background:rgba(255,255,255,.08);border-color:transparent}
+html .savebar button.p,html .savebar button.ok{background:var(--aq)!important;color:var(--nt)!important;border-color:var(--aq)!important}
+#toast{background:var(--aq);color:var(--nt);border:0;box-shadow:0 12px 30px rgba(16,20,34,.4)}
+html[data-theme="light"] #toast{background:var(--nt);color:#FFFFFF}
+:focus-visible{outline:2px solid var(--aq)!important;outline-offset:3px}
+html[data-theme="light"] :focus-visible{outline-color:var(--nt)!important}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="stylesheet" href="cc-aqua.css?v=1"><link rel="stylesheet" href="admin-pro.css?v=1">
+</head>
+<body class="out">
+<div class="bg"><i></i><i></i><span class="bw" aria-hidden="true">ADMIN</span></div>
+<header class="top g"><div style="display:flex;align-items:center"><span class="wm">Comrade Connect</span><span class="tag">Admin</span></div>
+  <div class="tools"><button class="ib need" id="rf" aria-label="Refresh" title="Refresh"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg></button>
+  <button class="ib" id="thm" aria-label="Switch light or dark" title="Light or dark"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+  <button class="ib need" id="out" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button></div></header>
+<main class="wrap"><div id="app"></div></main><div id="toast" role="status"></div>
+<script src="config.js?v=1"></script>
+<script>
+
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const kes = (n) => 'KSh ' + Number(n || 0).toLocaleString('en-KE');
+const when = (t) => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleString('en-KE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
+const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2800); };
+// The key lives in sessionStorage only: closing the tab signs you out.
+const store = { get: (k) => { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) {} }, del: (k) => { try { sessionStorage.removeItem(k); } catch (e) {} } };
+const base = () => (CC_API.indexOf('YOUR-SUBDOMAIN') < 0 ? CC_API : (localStorage.getItem('cc_admin_api') || '')).replace(/\/$/, '');
+let Q = null, tab = 'listings';
+
+async function api(path, body) {
+  const b = base(); if (!b) throw new Error('The server address is not set (config.js)');
+  let r;
+  try { r = await fetch(b + path, { method: body ? 'POST' : 'GET', headers: Object.assign({ 'X-Admin-Key': store.get('k') }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined }); }
+  catch (e) { throw new Error('Could not reach the server. Check your internet and try again.'); }
+  if (r.status === 403 && path !== '/api/admin/login') { store.del('k'); render(); throw new Error('Signed out. Enter the admin key again.'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'Something went wrong (' + r.status + ')');
+  return d;
+}
+
+function login(msg) {
+  const needUrl = CC_API.indexOf('YOUR-SUBDOMAIN') > -1;
+  document.body.classList.add('out'); window.__rise = true;
+  $('#app').innerHTML = '<div class="login rise"><span class="wm" style="--i:0">Comrade Connect</span><div class="card" style="--i:1"><h1 style="font-size:20px">Admin sign in</h1><p class="sub">Enter your ADMIN_KEY. It stays in this tab only, and closing the tab signs you out.</p>'
+    + (needUrl ? '<input id="u" placeholder="Worker URL, https://...workers.dev" value="' + esc(localStorage.getItem('cc_admin_api') || '') + '" autocomplete="off">' : '')
+    + '<input id="k" type="password" placeholder="Admin key" autocomplete="off"><p class="err" id="e">' + esc(msg || '') + '</p><button class="p" id="go" style="width:100%">Sign in</button></div></div>';
+  window.__rise = false;
+  const go = async () => {
+    const k = $('#k').value.trim(); if (!k) return;
+    if (needUrl) localStorage.setItem('cc_admin_api', ($('#u').value || '').trim());
+    store.set('k', k); $('#go').disabled = true;
+    try { await api('/api/admin/login', {}); window.__rise = true; await load(); }
+    catch (e) { store.del('k'); login(e.message); }
+  };
+  $('#go').onclick = go; $('#k').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+}
+
+let X = { events: [], products: [], orders: [], notices: [], sponsors: [] };
+async function loadExtra() {                                   // events, shop and orders to collect; a failure here never blocks the queue
+  const g = async (path) => { try { return await api(path); } catch (e) { return {}; } };
+  const [ev, pr, od, nt, sp, vd] = await Promise.all([g('/api/events'), g('/api/club/products'), g('/api/admin/club/orders?status=paid'), g('/api/notices'), g('/api/sponsors'), g('/api/media/admin/clips')]);
+  X = { events: ev.events || [], products: pr.products || [], orders: od.orders || [], notices: nt.notices || [], sponsors: sp.sponsors || [], videos: vd.clips || [] };
+}
+async function load() { Q = await api('/api/admin/queue'); await loadExtra(); render(); }
+
+const kv = (a) => a.filter((x) => x[1] !== undefined && x[1] !== null && x[1] !== '').map((x) => '<div class="kv"><span class="sub">' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>').join('');
+async function act(btn, fn, okMsg) {
+  btn.disabled = true;
+  try { await fn(); toast(okMsg); await load(); } catch (e) { toast(e.message); btn.disabled = false; }
+}
+function ask(msg, def) { const v = prompt(msg, def || ''); return v == null ? null : v.trim(); }
+
+const SECTIONS = {
+  listings: () => Q.listings.map((l) => '<div class="card" data-id="' + esc(l.id) + '"><h3>' + esc(l.title) + '</h3><b>' + kes(l.price) + '</b> <span class="sub">' + esc(l.category || '') + '</span>'
+    + (l.photos && l.photos.length ? '<div class="photos">' + l.photos.map((u) => '<img src="' + esc(u) + '" alt="" loading="lazy">').join('') + '</div>' : '<p class="sub">No photos</p>')
+    + '<p style="overflow-wrap:anywhere">' + esc(l.description) + '</p><p class="sub">Seller ' + esc(l.seller) + ', ' + when(l.createdAt) + '</p>'
+    + '<div class="row"><button class="ok" data-do="approve">Approve</button><button class="bad" data-do="reject">Reject</button></div></div>'),
+  withdrawals: () => Q.withdrawals.map((w) => '<div class="card" data-id="' + esc(w.id) + '"><h3>' + kes(w.amount) + '</h3>' + kv([['Send to', w.phone], ['Account', w.aid], ['Requested', when(w.created_at)]])
+    + '<p class="sub">Send the M-Pesa first, then mark it paid with the M-Pesa code.</p><div class="row"><button data-do="copy" data-v="' + esc(w.phone) + '">Copy number</button><button class="ok" data-do="paid">I sent it</button><button class="bad" data-do="wreject">Reject and refund wallet</button></div></div>'),
+  disputes: () => Q.disputes.map((o) => '<div class="card" data-id="' + esc(o.id) + '"><h3>' + esc(o.title || 'Order') + '</h3><b>' + kes(o.amount) + '</b>' + kv([['Status', o.status], ['Opened by', o.opened_by], ['Reason', o.reason], ['Buyer', o.buyer], ['Seller', o.seller]])
+    + '<div class="row"><button class="ok" data-do="orelease">Pay the seller</button><button class="bad" data-do="orefund">Refund the buyer</button></div></div>'),
+  verifications: () => Q.verifications.map((v) => {
+    const off = v.claimed_role && v.claimed_role !== 'Student', link = /^https?:\/\/\S+$/.test(v.group_link || '') ? v.group_link : '';
+    const BC = { match: 'Barcode matches the number', mismatch: 'Barcode does NOT match the number', unread: 'Barcode could not be read', unsupported: 'Barcode not checked (phone cannot)', none: '' };
+    return '<div class="card" data-id="' + esc(v.id) + '"><h3>' + esc(v.full_name) + '</h3>' + kv([['Account', v.aid], ['Role asked for', v.claimed_role || 'Student'], ['Admission or staff no.', v.id_number], ['Barcode', BC[v.barcode_check] || ''], ['Sent', when(v.created_at)]])
+      + (link ? '<div class="kv"><span class="sub">Group link</span><b><a href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">' + esc(link) + '</a></b></div>' : '')
+      + '<p class="sub">The photo shows the front of the ID on top and the back below it.</p>'
+      + '<div class="photos" data-img></div><div class="row"><button data-do="showid">Show ID photo</button><button class="ok" data-do="vapprove">' + (off ? 'Approve with ' + esc(v.claimed_role) + ' badge' : 'Approve') + '</button>'
+      + (off ? '<button data-do="vapprove_nb">Approve ID only</button>' : '') + '<button class="bad" data-do="vreject">Reject</button></div></div>';
+  }),
+  reports: () => Q.content_reports.map((r) => rep(r, 'content')).concat(Q.message_reports.map((r) => rep(r, 'message'))),
+  confirm: () => (Q.confirm || []).map((p) => '<div class="card" data-id="' + esc(p.id) + '"><h3>' + kes(p.amount) + ': check M-Pesa</h3>' + kv([['M-Pesa code', p.receipt], ['Buyer phone', p.phone], ['For', p.purpose], ['Sent', when(p.created_at)]])
+    + '<p class="sub">Open your M-Pesa messages. Approve only if a message shows this exact code and at least ' + esc(kes(p.amount)) + '.</p><div class="row"><button class="ok" data-do="payok">Money received</button><button class="bad" data-do="paybad">Not received</button></div></div>'),
+  payments: () => Q.underpaid.map((p) => '<div class="card"><h3>' + kes(p.amount) + ' underpaid</h3>' + kv([['Purpose', p.purpose], ['Account', p.aid], ['Receipt', p.receipt], ['Time', when(p.created_at)]]) + '<p class="sub">Handle by hand: contact the payer, refund or collect the balance.</p></div>'),
+  events: () => {
+    const form = '<div class="card"><h3>New event</h3><input id="ev_t" placeholder="Title, e.g. Fresher bash" maxlength="100"><input id="ev_d" placeholder="Date, YYYY-MM-DD" maxlength="10"><input id="ev_v" placeholder="Venue" maxlength="80"><input id="ev_p" placeholder="Ticket price in KSh (leave empty for no tickets)" inputmode="numeric" maxlength="5"><input id="ev_x" placeholder="Details" maxlength="400"><div class="row"><button class="p" id="evadd">Add event</button></div></div>';
+    const door = '<div class="card"><h3>Door check</h3><select id="dr_e">' + X.events.filter((e) => e.ticket_price).map((e) => '<option value="' + esc(e.id) + '">' + esc(e.title) + ', ' + esc(e.date) + '</option>').join('') + '</select><input id="dr_c" placeholder="8-digit code from the ticket" inputmode="numeric" maxlength="9" autocomplete="off"><p class="sub" id="dr_m"></p><div class="row"><button class="p" id="drgo">Check ticket</button></div></div>';
+    return [form, door].concat(X.events.map((e) => '<div class="card" data-id="' + esc(e.id) + '"><h3>' + esc(e.title) + '</h3>' + kv([['Date', e.date], ['Venue', e.venue], ['Tickets', e.ticket_price ? kes(e.ticket_price) : 'none']]) + '<div class="row"><button class="bad" data-do="evdel">Delete</button></div></div>'));
+  },
+  notices: () => {
+    const form = '<div class="card"><h3>New notice</h3><input id="nt_t" placeholder="Title, e.g. Exam timetable out" maxlength="100"><textarea id="nt_b" placeholder="Details students need to know" maxlength="600" style="height:90px"></textarea><input id="nt_x" placeholder="Hide after how many days? (empty = never)" inputmode="numeric" maxlength="3"><label class="sub" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="nt_p" style="width:auto;margin:0"> Pin to the top</label><div class="row"><button class="p" id="ntadd">Publish notice</button></div></div>';
+    return [form].concat(X.notices.map((n) => '<div class="card" data-id="' + esc(n.id) + '"><h3>' + esc(n.title) + (n.pinned ? ' (pinned)' : '') + '</h3><p class="sub" style="overflow-wrap:anywhere">' + esc(n.body || '') + '</p><p class="sub">' + when(new Date(n.createdAt).toISOString()) + '</p><div class="row"><button class="bad" data-do="ntdel">Delete</button></div></div>'));
+  },
+  sponsors: () => {
+    const form = '<div class="card"><h3>New sponsor</h3><input id="sp_n" placeholder="Sponsor name" maxlength="80"><input id="sp_b" placeholder="One line about them" maxlength="200"><input id="sp_l" placeholder="Link, must start with https://" maxlength="200"><div class="row"><button class="p" id="spadd">Add sponsor</button></div></div>';
+    return [form].concat(X.sponsors.map((x) => '<div class="card" data-id="' + esc(x.id) + '"><h3>' + esc(x.name) + '</h3>' + kv([['About', x.blurb], ['Link', x.link]]) + '<div class="row"><button class="bad" data-do="spdel">Delete</button></div></div>'));
+  },
+  club: () => {
+    const form = '<div class="card"><h3>New product</h3><input id="cp_n" placeholder="Name, e.g. Sugar 1kg" maxlength="80"><input id="cp_p" placeholder="Price in KSh" inputmode="numeric" maxlength="6"><input id="cp_q" placeholder="Stock to start with" inputmode="numeric" maxlength="6"><div class="row"><button class="p" id="cpadd">Add product</button></div></div>';
+    const name = (id) => (X.products.find((p) => p.id === id) || {}).name || 'Item';
+    return [form].concat(X.products.map((p) => '<div class="card" data-id="' + esc(p.id) + '"><h3>' + esc(p.name) + '</h3>' + kv([['Price', kes(p.price)], ['In stock', p.stock]]) + '<div class="row"><button data-do="cpstock">Set stock</button></div></div>'),
+      X.orders.map((o) => '<div class="card" data-id="' + esc(o.id) + '"><h3>Collect: ' + esc(name(o.product_id)) + ' x' + esc(o.qty) + '</h3>' + kv([['Ref', String(o.id).slice(0, 8).toUpperCase()], ['Amount', kes(o.amount)], ['Paid', when(o.created_at)]]) + '<div class="row"><button class="p" data-do="cocollect">Mark collected</button></div></div>'));
+  },
+  videos: () => (X.videos || []).map((v) => '<div class="card" data-id="' + esc(v.id) + '"><video controls playsinline preload="metadata" src="' + esc(v.url) + '" style="width:100%;max-height:320px;border-radius:12px;background:#000"></video><p style="overflow-wrap:anywhere">' + esc(v.caption || 'No caption') + '</p><p class="sub">By ' + esc(v.aid) + ', ' + when(v.createdAt) + '</p><div class="row"><button class="bad" data-do="vdel">Delete video</button></div></div>'),
+  users: () => ['<div class="card"><h3>Account actions</h3><input id="ua" placeholder="Account ID, e.g. u_ab12cd34" autocomplete="off"><select id="uact"><option value="ban">Ban</option><option value="unban">Unban</option><option value="mute">Mute (hours)</option><option value="unmute">Unmute</option><option value="role">Set role</option></select><input id="uv" placeholder="Hours for mute, or role: user, seller, club_admin, admin" autocomplete="off"><div class="row"><button class="p" id="ugo">Apply</button></div></div>'],
+};
+function rep(r, kind) { return '<div class="card" data-id="' + esc(r.id) + '" data-kind="' + kind + '"><h3>' + (kind === 'content' ? 'Reported ' + esc(r.target_type || 'item') : 'Reported message') + '</h3>' + kv([['Reason', r.reason], ['Message', r.snapshot], ['Reported account', r.reported_aid], ['Target', r.target_id], ['Reported', when(r.created_at)]])
+  + '<div class="row">' + (kind === 'content' ? '<button class="bad" data-do="ractionhide">Take action and hide it</button>' : '') + '<button data-do="raction">Mark as actioned</button><button data-do="rdismiss">Dismiss</button></div></div>'; }
+const LABEL = { listings: 'Listings', withdrawals: 'Withdrawals', disputes: 'Disputes', verifications: 'ID checks', reports: 'Reports', confirm: 'Confirm M-Pesa', payments: 'Underpaid', users: 'Accounts', events: 'Events', club: 'Club', notices: 'Notices', sponsors: 'Sponsors', videos: 'Videos' };
+const COUNT = () => ({ listings: Q.counts.listings, withdrawals: Q.counts.withdrawals, disputes: Q.counts.disputes, verifications: Q.counts.verifications, reports: Q.counts.reports, confirm: Q.counts.confirm, payments: Q.counts.underpaid, users: 0, events: 0, club: X.orders.length, notices: 0, sponsors: 0 });
+
+const TILES = [['listings', 'Listings'], ['confirm', 'To confirm'], ['withdrawals', 'Withdrawals'], ['verifications', 'ID checks'], ['disputes', 'Disputes'], ['reports', 'Reports']];
+function countUp(root) {
+  root.querySelectorAll('[data-n]').forEach((el) => {
+    const to = +el.dataset.n, t0 = performance.now(), d = 900;
+    if (!to || matchMedia('(prefers-reduced-motion:reduce)').matches) { el.textContent = to; return; }
+    const step = (t) => { const k = Math.min(1, (t - t0) / d); el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
+function render() {
+  if (!store.get('k')) return login();
+  if (!Q) return login();
+  document.body.classList.remove('out');
+  const c = COUNT(), rise = window.__rise, items = SECTIONS[tab]();
+  const stage = (html) => html.replace(/class="card"/g, (m) => m);                       // hook for later tweaks
+  $('#app').innerHTML = '<div class="' + (rise ? 'rise' : '') + '">'
+    + '<h1 style="--i:0">Control room</h1><p class="lead">Everything waiting for you, and every control for the site.</p>'
+    + '<section class="stats">' + TILES.map((t, i) => '<button class="stat g' + (c[t[0]] ? ' hot' : '') + '" data-tab="' + t[0] + '" style="--i:' + (i + 1) + '"><b data-n="' + (c[t[0]] || 0) + '">0</b><span>' + t[1] + '</span></button>').join('') + '</section>'
+    + '<nav class="tabs">' + Object.keys(LABEL).map((k) => '<button data-tab="' + k + '" class="' + (k === tab ? 'on' : '') + '">' + LABEL[k] + (c[k] ? '<span class="b">' + c[k] + '</span>' : '') + '</button>').join('') + '</nav>'
+    + '<div id="list">' + (items.length ? items.map((h, i) => stage(h).replace('class="card"', 'class="card" style="--i:' + (i + 3) + '"')).join('') : '<div class="card" style="--i:3"><p class="sub" style="text-align:center;padding:24px 0">Nothing waiting here. Enjoy the quiet.</p></div>') + '</div></div>';
+  window.__rise = false; countUp($('#app'));
+  const on = document.querySelector('nav.tabs button.on'); if (on && rise) on.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+}
+
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; window.__rise = true; render(); return scrollTo({ top: 0, behavior: 'smooth' }); }
+  if (e.target.closest('#thm')) return setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+  if (e.target.closest('#rf')) { document.querySelector('#rf svg').animate([{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }], { duration: 600, easing: 'ease' }); return load().then(() => toast('Updated')).catch((x) => toast(x.message)); }
+  if (e.target.closest('#out')) { store.del('k'); Q = null; return login(); }
+  if (e.target.closest('#ugo')) {
+    const aid = $('#ua').value.trim(), a = $('#uact').value, v = $('#uv').value.trim(); if (!aid) return toast('Enter the account ID');
+    const body = { action: a }; if (a === 'mute') body.hours = +v; if (a === 'role') body.role = v;
+    if (a === 'ban' && !confirm('Ban ' + aid + '?')) return;
+    return act(e.target, () => api('/api/admin/users/' + encodeURIComponent(aid), body), 'Done');
+  }
+  if (e.target.closest('#evadd')) {
+    const t = $('#ev_t').value.trim(), d = $('#ev_d').value.trim(), pr = $('#ev_p').value.trim();
+    if (t.length < 3 || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return toast('Add a title and a date like 2026-11-20');
+    const body = { title: t, date: d, venue: $('#ev_v').value.trim(), details: $('#ev_x').value.trim() }; if (pr) body.ticket_price = +pr;
+    return act(e.target, () => api('/api/admin/events', body), 'Event added');
+  }
+  if (e.target.closest('#drgo')) {
+    const ev = $('#dr_e').value, code = $('#dr_c').value.trim(), m = $('#dr_m'); if (!ev) return toast('Add an event with tickets first');
+    if (code.replace(/\D/g, '').length !== 8) return toast('Enter the 8-digit code');
+    e.target.disabled = true;
+    try { await api('/api/admin/tickets/validate', { event_id: ev, code }); m.textContent = 'VALID. Let them in.'; $('#dr_c').value = ''; }
+    catch (x) { m.textContent = 'NOT VALID: ' + x.message; }
+    e.target.disabled = false; return;
+  }
+  if (e.target.closest('#ntadd')) {
+    const t = $('#nt_t').value.trim(), x = $('#nt_x').value.trim(); if (t.length < 3) return toast('Add a title');
+    if (x && !/^\d+$/.test(x)) return toast('Days must be a number');
+    const body = { title: t, body: $('#nt_b').value.trim(), pinned: $('#nt_p').checked }; if (x) body.expires_days = +x;
+    return act(e.target, () => api('/api/admin/notices', body), 'Notice published');
+  }
+  if (e.target.closest('#spadd')) {
+    const n = $('#sp_n').value.trim(), l = $('#sp_l').value.trim(); if (n.length < 2) return toast('Add the sponsor name');
+    if (l && !/^https:\/\//.test(l)) return toast('The link must start with https://');
+    return act(e.target, () => api('/api/admin/sponsors', { name: n, blurb: $('#sp_b').value.trim(), link: l }), 'Sponsor added');
+  }
+  if (e.target.closest('#cpadd')) {
+    const n = $('#cp_n').value.trim(), pr = $('#cp_p').value.trim(), q = $('#cp_q').value.trim();
+    if (n.length < 2 || !/^\d+$/.test(pr)) return toast('Add a name and a price');
+    return act(e.target, () => api('/api/admin/club/products', { name: n, price: +pr, qty: /^\d+$/.test(q) ? +q : 0 }), 'Product added');
+  }
+  const b = e.target.closest('[data-do]'); if (!b) return;
+  const card = b.closest('.card'), id = card && card.dataset.id, d = b.dataset.do;
+  if (d === 'copy') { try { await navigator.clipboard.writeText(b.dataset.v); toast('Copied'); } catch (x) { toast(b.dataset.v); } return; }
+  if (d === 'vdel') { if (!confirm('Delete this video for everyone? This cannot be undone.')) return; return act(b, () => api('/api/clips/' + id + '/delete', {}), 'Video deleted'); }
+  if (d === 'ntdel') { if (!confirm('Delete this notice? Students will stop seeing it.')) return; return act(b, () => api('/api/admin/notices/' + id, { action: 'delete' }), 'Notice deleted'); }
+  if (d === 'spdel') { if (!confirm('Delete this sponsor?')) return; return act(b, () => api('/api/admin/sponsors/' + id, { action: 'delete' }), 'Sponsor deleted'); }
+  if (d === 'evdel') { if (!confirm('Delete this event? Tickets already sold stay valid in the database but the event disappears from the app.')) return; return act(b, () => api('/api/admin/events/' + id, { action: 'delete' }), 'Event deleted'); }
+  if (d === 'cpstock') { const v = ask('New stock quantity (the number on the shelf):'); if (v === null) return; if (!/^\d+$/.test(v)) return toast('Enter a number'); return act(b, () => api('/api/admin/club/stock', { product_id: id, qty: +v }), 'Stock updated'); }
+  if (d === 'payok') { if (!confirm('Approve? Only if your M-Pesa message shows this code and the full amount. This starts the order and cannot be undone.')) return; return act(b, () => api('/api/admin/payments/' + id, { action: 'approve' }), 'Payment confirmed'); }
+  if (d === 'paybad') { if (!confirm('Refuse this code? The buyer will see the payment as failed and must pay again.')) return; return act(b, () => api('/api/admin/payments/' + id, { action: 'reject' }), 'Payment refused'); }
+  if (d === 'cocollect') { if (!confirm('Mark as collected? Check the buyer\'s Ref first.')) return; return act(b, () => api('/api/admin/club/orders/' + id + '/collect', {}), 'Marked collected'); }
+  if (d === 'approve') return act(b, () => api('/api/admin/listings/' + id, { action: 'approve' }), 'Approved');
+  if (d === 'reject') { const r = ask('Reason for the seller (they will see it):'); if (!r) return; return act(b, () => api('/api/admin/listings/' + id, { action: 'reject', reason: r }), 'Rejected'); }
+  if (d === 'paid') {
+    const r0 = ask('Paste the M-Pesa message you got after sending (or just the code):'); if (!r0) return;
+    const hit = String(r0).toUpperCase().match(/\b(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{10}\b/), r = hit ? hit[0] : String(r0).trim().slice(0, 40);
+    if (!hit && !confirm('No 10-character M-Pesa code found. Save "' + r + '" as the code?')) return;
+    return act(b, () => api('/api/admin/withdrawals/' + id, { action: 'paid', payout_ref: r }), 'Marked paid, code ' + r);
+  }
+  if (d === 'wreject') { if (!confirm('Reject and return the money to the wallet?')) return; return act(b, () => api('/api/admin/withdrawals/' + id, { action: 'reject' }), 'Rejected, money returned'); }
+  if (d === 'orelease') { if (!confirm('Pay the seller? This cannot be undone.')) return; return act(b, () => api('/api/admin/orders/' + id, { action: 'release' }), 'Seller paid'); }
+  if (d === 'orefund') { if (!confirm('Refund the buyer? This cannot be undone.')) return; return act(b, () => api('/api/admin/orders/' + id, { action: 'refund' }), 'Buyer refunded'); }
+  if (d === 'vapprove_nb') { if (!confirm('Approve the ID but give no role badge? The photo is deleted after 7 days.')) return; return act(b, () => api('/api/admin/verifications/' + id, { action: 'approve', badge: false }), 'Verified, no badge'); }
+  if (d === 'vapprove') { if (!confirm('Approve this ID? The photo is deleted after 7 days.')) return; return act(b, () => api('/api/admin/verifications/' + id, { action: 'approve' }), 'Verified'); }
+  if (d === 'vreject') { const n = ask('Reason (optional, the user sees it):', ''); if (n === null) return; return act(b, () => api('/api/admin/verifications/' + id, { action: 'reject', note: n }), 'Rejected'); }
+  if (d === 'showid') {
+    b.disabled = true;
+    try {
+      const r = await fetch(base() + '/api/admin/verifications/' + id + '/image', { headers: { 'X-Admin-Key': store.get('k') } });
+      if (!r.ok) throw new Error('Image not available');
+      const u = URL.createObjectURL(await r.blob()); card.querySelector('[data-img]').innerHTML = '<img src="' + u + '" alt="ID photo" style="height:auto;max-width:100%">';
+    } catch (x) { toast(x.message); }
+    b.disabled = false; return;
+  }
+  if (d === 'raction' || d === 'ractionhide' || d === 'rdismiss') {
+    const kind = card.dataset.kind, body = { action: d === 'rdismiss' ? 'dismiss' : 'action' }; if (d === 'ractionhide') body.hide = true;
+    return act(b, () => api('/api/admin/reports/' + kind + '/' + id, body), 'Done');
+  }
+});
+function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem('cc_admin_theme', t); } catch (e) {} const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = t === 'light' ? '#ffffff' : '#101422'; }
+(function () { let t = 'dark'; try { t = localStorage.getItem('cc_admin_theme') || 'dark'; } catch (e) {} setTheme(t === 'light' ? 'light' : 'dark'); })();
+// pointer light: on cards (soft spotlight) and on tab pills (glow under the finger)
+document.addEventListener('pointermove', (e) => {
+  const c = e.target.closest && e.target.closest('.card'); if (c) { const r = c.getBoundingClientRect(); c.style.setProperty('--mx', (e.clientX - r.left) + 'px'); c.style.setProperty('--my', (e.clientY - r.top) + 'px'); }
+  const b = e.target.closest && e.target.closest('nav.tabs button'); if (b) { const r = b.getBoundingClientRect(); b.style.setProperty('--x', (e.clientX - r.left) + 'px'); b.style.setProperty('--y', (e.clientY - r.top) + 'px'); b.classList.add('lit'); clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('lit'), 120); }
+}, { passive: true });
+addEventListener('scroll', () => document.documentElement.style.setProperty('--p', Math.min(1, scrollY / Math.max(1, document.body.scrollHeight - innerHeight)).toFixed(3)), { passive: true });
+window.addEventListener('pageshow', () => { if (store.get('k')) load().catch((e) => { Q = null; login(e.message); }); else login(); });
+</script>
+<script src="admin-extra.js?v=3"></script>
+<script src="admin-site.js?v=1"></script>
+<script src="admin-landing.js?v=1"></script>
+<script src="admin-logos.js?v=1"></script>
+<script src="admin-live.js?v=1"></script>
+<script src="admin-grant.js?v=1"></script>
+<script src="admin-sql.js?v=1"></script>
+<script src="admin-zones.js?v=1"></script>
+<script src="admin-postrules.js?v=1"></script>
+<script src="admin-services.js?v=1"></script>
+<script src="admin-kura.js?v=4"></script>
+<script src="cc-closex.js?v=1"></script>
+<script src="admin-dash.js?v=4"></script>
+<script src="admin-pro.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+/* cc-ui2.css v1: Section 2. Lock screen and fingerprint screen: glass with a black shadow and shading inside, no glow. Light and dark. */
+#lk.lkg{--lg-o:#A8DCE7}
+:root[data-theme="light"] #lk.lkg{--lg-o:#12708A}
+
+#lk.lkg.on .bx.lkcard,#lk.lkg .bx.lkcard{
+  box-shadow:0 26px 50px -18px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.3),inset 0 1.5px 0 var(--lg-hi),inset 0 -16px 26px -16px rgba(0,0,0,.35)!important}
+:root[data-theme="light"] #lk.lkg.on .bx.lkcard{box-shadow:0 26px 50px -18px rgba(16,20,34,.4),0 2px 8px rgba(16,20,34,.15),inset 0 1.5px 0 var(--lg-hi),inset 0 -16px 26px -16px rgba(16,20,34,.12)!important}
+#lk.lkg .bx.lkcard:before{display:none}
+#lk.lkg.on .lkfp,#lk.lkg.on .lkfp2,#lk.lkg .lkfp,#lk.lkg .lkfp2{
+  box-shadow:0 10px 18px -8px rgba(0,0,0,.55),inset 0 1.5px 0 var(--lg-hi),inset 0 -10px 16px -10px rgba(0,0,0,.35)!important}
+#lk.lkg.on .lkpw,#lk.lkg.on .lkgo,#lk.lkg .lkpw,#lk.lkg .lkgo{
+  box-shadow:0 10px 18px -8px rgba(0,0,0,.5),inset 0 1.5px 0 var(--lg-hi),inset 0 -10px 16px -10px rgba(0,0,0,.3)!important}
+#lk.lkg.on .lkrec .fld,#lk.lkg .lkrec .fld{box-shadow:inset 0 2px 6px rgba(0,0,0,.3),inset 0 1.5px 0 var(--lg-hi)!important}
+#lk.lkg .lkrec .fld:focus-within{border-color:var(--lg-txt);box-shadow:inset 0 2px 6px rgba(0,0,0,.25),0 0 0 2px color-mix(in srgb,var(--lg-txt) 25%,transparent)!important}
+#lk.lkg #lkr{background:linear-gradient(150deg,color-mix(in srgb,var(--lg-o) 96%,transparent),color-mix(in srgb,var(--lg-o) 62%,transparent))!important;
+  border:1px solid rgba(255,255,255,.55);color:#101422;box-shadow:0 10px 18px -8px rgba(0,0,0,.55),inset 0 1.5px 0 rgba(255,255,255,.55),inset 0 -10px 16px -10px rgba(0,0,0,.35)!important}
+:root[data-theme="light"] #lk.lkg #lkr{color:#fff}
+#lk.lkg #lkr:disabled{color:var(--lg-mut);background:linear-gradient(150deg,rgba(255,255,255,.16),rgba(255,255,255,.05))!important;border-color:var(--lg-edge);box-shadow:inset 0 1.5px 0 var(--lg-hi)!important}
+:root[data-theme="light"] #lk.lkg #lkr:disabled{background:linear-gradient(150deg,rgba(16,20,34,.08),rgba(16,20,34,.03))!important}
+
+/* the animated "Hi, NAME / Welcome back" screen */
+#ccfp .fpx-b.p{box-shadow:0 10px 18px -8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.5),inset 0 -10px 16px -10px rgba(0,0,0,.35)}
+:root[data-theme="light"] #ccfp{--fpa:#12708A}
+:root[data-theme="light"] #ccfp .fpx-tab[aria-selected=true],:root[data-theme="light"] #ccfp .fpx-b.p{color:#fff}
+#ccfp .fpx-disc{box-shadow:0 12px 22px -10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.25),inset 0 -12px 18px -12px rgba(0,0,0,.3)}
+:root[data-theme="light"] #lk.lkg #lkr:disabled{color:rgba(16,20,34,.55)}
+:root[data-theme="light"] #lk.lkg .lkrec input::placeholder{color:rgba(16,20,34,.6)!important;-webkit-text-fill-color:rgba(16,20,34,.6)!important}

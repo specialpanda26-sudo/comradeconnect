@@ -1,0 +1,20 @@
+/* cc-guide.css v2 (solid card so the page behind never shows through): tidy layout for the "Need a hand?" guide popup (bot, bottom-left).
+   Header (bot + title + one close X), text, then neat buttons in a grid. */
+html body #tkb{box-sizing:border-box;left:12px;right:auto;width:min(320px,calc(100vw - 24px));padding:16px 16px 14px;border-radius:22px;overflow:visible;text-align:left;background:var(--card,var(--bg)) !important;background-image:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;border:1px solid var(--gb)}
+html body #tkb::after{content:"";position:absolute;left:24px;bottom:-7px;width:14px;height:14px;background:var(--card,var(--bg));border-right:1px solid var(--gb);border-bottom:1px solid var(--gb);transform:rotate(45deg);border-bottom-right-radius:4px}
+html[data-lay="desktop"] body #tkb::after{display:none}
+#tkb .ccx-b,#tkb .ccx-plain{display:none !important}
+#tkb .tk-h{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+#tkb .tk-av{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--g);border:1px solid var(--gb);color:var(--fg)}
+#tkb .tk-av svg{width:24px;height:24px}
+#tkb b.tk-t{flex:1;min-width:0;margin:0;font:700 15px/1.3 Poppins,system-ui,sans-serif;color:var(--fg);overflow-wrap:anywhere}
+#tkb .tk-x{all:unset;box-sizing:border-box;flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--fg);opacity:.75;-webkit-tap-highlight-color:transparent}
+#tkb .tk-x:hover,#tkb .tk-x:focus-visible{opacity:1;background:var(--g)}
+#tkb .tk-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+#tkb .tk-p{margin:0;font-size:13px;line-height:1.6;color:var(--mut)}
+html body #tkb .tr{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+html body #tkb .tr .btn{width:100%;min-height:40px;padding:9px 10px;font-size:12.5px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap}
+html body #tkb .tr .btn.p:first-child{grid-column:1/-1}
+html body #tkb .tr.s{display:flex}
+html body #tkb .tr.s .btn{flex:1 1 0;width:auto}
+html body #tkb .tr:not(.s) .btn:last-child:nth-child(odd){grid-column:1/-1}

@@ -1,0 +1,59 @@
+{
+  "name": "Comrade Connect | Kirinyaga Edition",
+  "short_name": "Comrade Connect",
+  "description": "Anonymous campus feed, safe marketplace and Hearts for Kirinyaga University comrades.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#101422",
+  "theme_color": "#101422",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "/",
+  "lang": "en-KE",
+  "categories": [
+    "social",
+    "shopping",
+    "education"
+  ],
+  "screenshots": [
+    {
+      "src": "/img/feed.webp",
+      "sizes": "390x780",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Anonymous campus feed"
+    },
+    {
+      "src": "/img/market.webp",
+      "sizes": "390x780",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Marketplace with escrow"
+    },
+    {
+      "src": "/img/explore.webp",
+      "sizes": "390x780",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Roommates, study groups and events"
+    }
+  ]
+}

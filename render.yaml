@@ -23,6 +23,9 @@ services:
       - { key: TINYPESA_API_KEY, sync: false }   # TinyPesa link API key (the one shown with a link username)
       - { key: TINYPESA_USERNAME, sync: false }  # the link username that goes with the link API key
       - { key: CALLBACK_SECRET, sync: false }    # same string you put after ?s= in the TinyPesa callback URL
+      - { key: MAIL_FROM, sync: false }          # e.g. Comrade Connect <noreply@comradeconnect.co.ke>. Needed for Forgot password (verified sender in Brevo or Resend)
+      - { key: BREVO_API_KEY, sync: false }      # starts with xkeysib- . Use this OR RESEND_API_KEY. Without one of them Forgot password answers "not switched on yet"
+      - { key: RESEND_API_KEY, sync: false }
       - { key: DEVICE_LOCK, value: "1" }
       - { key: DEVICE_MAX_ACCOUNTS, value: "1" }
       - { key: PASSKEY_RP_ID, value: comradeconnect.co.ke }

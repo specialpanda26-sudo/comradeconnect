@@ -129,6 +129,10 @@
     if (!r.ok) throw new Error(window.ccErr ? ccErr(r.status, d.error) : (d.error || 'Something went wrong'));
     return d;
   }
+  function busyBtn(b, on, label) {
+    if (window.ccBusy) return window.ccBusy(b, on, label);
+    b.disabled = on; if (label && on) { b.__l = b.textContent; b.textContent = label; } else if (b.__l) { b.textContent = b.__l; }
+  }
   function openCreate() {
     if (!live()) return say('We cannot reach the service right now. Please try again in a moment.');
     var m = sheet('<h3>Create your account</h3><p class="sub" style="margin-top:6px">Pick a username and a password. You will use them to sign in on any phone. Other people only see your username.</p>'
@@ -142,14 +146,14 @@
       var b = $('#ccp-go', m), h = $('#ccp-u', m).value.trim(), p1 = $('#ccp-p1', m).value, p2 = $('#ccp-p2', m).value, e = $('#ccp-e', m);
       var bad = problem(h, p1) || (p1 !== p2 ? 'The two passwords are not the same' : '');
       if (bad) { e.textContent = bad; return; }
-      b.disabled = true; e.textContent = '';
+      busyBtn(b, true, 'Creating account...'); e.textContent = '';
       try {
         var d = await post('/api/auth/register', { handle: h, password: p1 });
         localStorage.setItem('cc_auth', JSON.stringify({ aid: d.aid, token: d.token }));
         if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
         ME.aid = d.aid; ME.handle = d.handle || h; saveMe(); m.close();
         await afterSignIn(); say('Welcome, @' + (d.handle || h));
-      } catch (er) { e.textContent = er.message; b.disabled = false; }
+      } catch (er) { e.textContent = er.message; busyBtn(b, false); }
     };
   }
   function openCredentials() {
@@ -182,13 +186,22 @@
       + '<div class="fld" style="margin-top:10px"><input id="ccp-a" placeholder="Username or account ID" autocomplete="username" autocapitalize="off" aria-label="Username or account ID"></div>'
       + pwField('ccp-c', 'Password or recovery code', 'Password or recovery code', 'current-password') + SHOWPW
       + '<p class="sub" id="ccp-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
-      + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-r">Sign in</button></div>');
+      + '<div class="two"><button class="btn g" id="ccp-x">Cancel</button><button class="btn p" id="ccp-r">Sign in</button></div>'
+      + '<p class="sub" style="text-align:center;margin:14px 0 0"><a href="#" id="ccp-fg" style="font-weight:600;text-decoration:underline;color:inherit">Forgot password?</a></p>');
     showToggle(m, ['ccp-c']);
     $('#ccp-x', m).onclick = function () { m.close(); };
+    $('#ccp-fg', m).onclick = function (ev) {
+      ev.preventDefault();
+      var who = $('#ccp-a', m).value; m.close();
+      if (window.CC && window.CC.forgot) window.CC.forgot(who); else location.href = 'contact.html';   // contact page only if the app has not finished loading
+    };
     $('#ccp-r', m).onclick = async function () {
-      var b = $('#ccp-r', m); b.disabled = true; $('#ccp-e', m).textContent = '';
-      try { await window.CC.restoreAccount($('#ccp-a', m).value, $('#ccp-c', m).value); m.close(); say('Signed in'); await afterSignIn(); }
-      catch (e) { $('#ccp-e', m).textContent = e.message || 'Could not restore'; b.disabled = false; }
+      var b = $('#ccp-r', m), a = $('#ccp-a', m).value.trim(), c = $('#ccp-c', m).value;
+      $('#ccp-e', m).textContent = '';
+      if (!a || !c) { $('#ccp-e', m).textContent = 'Enter your username and password'; return; }
+      busyBtn(b, true, 'Signing in...');
+      try { await window.CC.restoreAccount(a, c); m.close(); say('Signed in'); await afterSignIn(); }
+      catch (e) { $('#ccp-e', m).textContent = e.message || 'Could not sign in'; busyBtn(b, false); }
     };
   }
 

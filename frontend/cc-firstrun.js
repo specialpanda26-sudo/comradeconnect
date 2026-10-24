@@ -52,6 +52,8 @@
     '#ccfrst .ccfrst-f input:focus{border-color:#A8DCE7 !important}',
     '#ccfrst .ccfrst-f.pw input{padding-right:52px !important}',
     '#ccfrst .ccfrst-f .ccfrst-eye{position:absolute;right:6px;bottom:6px;width:40px;height:40px;border:0;background:none;color:var(--mut,rgba(255,255,255,.62));display:grid;place-items:center;cursor:pointer;padding:0}',
+    '#ccfrst .ccfrst-forgot{display:block;text-align:right;margin:-4px 4px 14px;font:600 13.5px Poppins,system-ui,sans-serif;color:var(--fg,#fff);text-decoration:underline;cursor:pointer}',
+    '#ccfrst .ccspin{display:inline-block;width:1em;height:1em;margin-right:.55em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:ccfrspin .7s linear infinite;flex:none}@keyframes ccfrspin{to{transform:rotate(360deg)}}',
     '#ccfrst .ccfrst-hint{margin:-6px 4px 16px;font-size:12px;line-height:1.5;color:var(--mut,rgba(255,255,255,.62))}',
     '#ccfrst .ccpw-m{margin:-6px 4px 16px}',
     /* buttons */
@@ -96,7 +98,8 @@
       + '<form class="ccfrst-pn" data-pn="login" id="ccfrst-form" autocomplete="on" novalidate>'
       + field('ccfrst-u', 'Username or account ID', { attr: 'name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Enter your username"' })
       + field('ccfrst-p', 'Password', { pw: 1, attr: 'name="password" type="password" autocomplete="current-password" autocapitalize="off" placeholder="Enter your password"' })
-      + '<p class="ccfrst-hint">Lost your password? Type the recovery code you saved instead.</p>'
+      + '<a href="#" class="ccfrst-forgot" id="ccfrst-fg">Forgot password?</a>'
+      + '<p class="ccfrst-hint">Old account with a recovery code? Type that code in the password box instead.</p>'
       + '<button type="submit" class="ccfrst-btn" id="ccfrst-in">Log in</button></form>'
       /* SIGN UP */
       + '<div class="ccfrst-pn" data-pn="create" hidden>'
@@ -138,9 +141,19 @@
       };
     });
 
-    var busy = function (btn, on, txt, back) { btn.disabled = on; if (txt) btn.textContent = on ? txt : back; };
+    // while busy the button shows a round spinner and the label ("Logging in...")
+    var busy = function (btn, on, txt, back) {
+      btn.disabled = on; btn.textContent = '';
+      if (on) { var s = document.createElement('span'); s.className = 'ccspin'; s.setAttribute('aria-hidden', 'true'); btn.appendChild(s); btn.setAttribute('aria-busy', 'true'); } else btn.removeAttribute('aria-busy');
+      btn.appendChild(document.createTextNode((on ? txt : back) || ''));
+    };
     var fail = function (e) { if (e && e.message && !/sign in to continue/i.test(e.message)) err(e.message); };
 
+    $('#ccfrst-fg').onclick = function (ev) {
+      ev.preventDefault(); if (!ready()) return;
+      var w = $('#ccfrst-u').value;
+      if (window.CC && window.CC.forgot) CC.forgot(w);   // opens above this screen (z-index 9999 vs 9000), so closing it returns here
+    };
     $('#ccfrst-form').onsubmit = function (ev) {
       ev.preventDefault(); if (!ready()) return; err('');
       var u = $('#ccfrst-u').value.trim(), p = $('#ccfrst-p').value, b = $('#ccfrst-in');

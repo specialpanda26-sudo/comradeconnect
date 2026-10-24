@@ -25,6 +25,28 @@ async function loadConfig() {                              // fee %, boost price
 }
 if (typeof CC_API === 'string' && CC_API.indexOf('YOUR-SUBDOMAIN') < 0) loadConfig();
 
+/* ---------- button spinner: a small round loader inside the button while a call is running ---------- */
+(function () {
+  if (document.getElementById('cc-spin-css')) return;
+  const st = document.createElement('style'); st.id = 'cc-spin-css';
+  st.textContent = '.ccspin{display:inline-block;width:1em;height:1em;margin-right:.55em;vertical-align:-.15em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:ccspin .7s linear infinite;flex:none}@keyframes ccspin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.ccspin{animation-duration:2s}}';
+  document.head.appendChild(st);
+})();
+// ccBusy(button, true, 'Signing in...') shows the spinner and locks the button; ccBusy(button, false) puts the old label back.
+window.ccBusy = function (btn, on, label) {
+  if (!btn) return;
+  if (on) {
+    if (btn.__lbl === undefined) btn.__lbl = btn.textContent;
+    btn.disabled = true; btn.setAttribute('aria-busy', 'true');
+    btn.textContent = '';
+    const s = document.createElement('span'); s.className = 'ccspin'; s.setAttribute('aria-hidden', 'true');
+    btn.appendChild(s); btn.appendChild(document.createTextNode(label || btn.__lbl));
+  } else {
+    btn.disabled = false; btn.removeAttribute('aria-busy');
+    if (btn.__lbl !== undefined) { btn.textContent = btn.__lbl; btn.__lbl = undefined; }
+  }
+};
+
 /* ---------- small popup sheet ---------- */
 function sheet(html) {
   const m = document.createElement('div');
@@ -62,9 +84,10 @@ function registerFlow() {
       + '<button class="btn g" id="ccw-x" style="width:100%;margin-top:6px">Cancel</button>');
     const $q = (s) => m.querySelector(s), err = (t) => { $q('#ccw-e').textContent = t || ''; };
     const run = async (body) => {
-      $q('#ccw-go').disabled = $q('#ccw-rand').disabled = true; err('');
+      const spun = $q(body && body.handle ? '#ccw-go' : '#ccw-rand'), other = $q(body && body.handle ? '#ccw-rand' : '#ccw-go');
+      other.disabled = true; ccBusy(spun, true, 'Creating...'); err('');
       try { const d = await rawPost('/api/auth/register', body); m.close(); done(d); }
-      catch (e) { err(e.message); $q('#ccw-go').disabled = $q('#ccw-rand').disabled = false; }
+      catch (e) { err(e.message); ccBusy(spun, false); other.disabled = false; }
     };
     $q('#ccw-go').onclick = () => {
       const u = $q('#ccw-u').value.trim(), p = $q('#ccw-p').value;
@@ -216,9 +239,9 @@ function promptRestore(msg, title) {
   m.querySelector('#ccrst-fg').onclick = (ev) => { ev.preventDefault(); const w = m.querySelector('#ccrst-a').value; m.close(); promptForgot(w); };
   if (googleOn()) mountGoogle(m.querySelector('#ccrg'), () => { m.close(); toast('Signed in'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {} }, (e) => { m.querySelector('#ccrst-e').textContent = e; });
   m.querySelector('#ccrst-go').onclick = async () => {
-    const b = m.querySelector('#ccrst-go'); b.disabled = true;
+    const b = m.querySelector('#ccrst-go'); ccBusy(b, true, 'Signing in...'); m.querySelector('#ccrst-e').textContent = '';
     try { await restoreAccount(m.querySelector('#ccrst-a').value, m.querySelector('#ccrst-c').value); m.close(); toast('Account restored'); refreshAll(); }
-    catch (e) { m.querySelector('#ccrst-e').textContent = e.message; b.disabled = false; }
+    catch (e) { m.querySelector('#ccrst-e').textContent = e.message; ccBusy(b, false); }
   };
 }
 // Forgot password: only the email saved on the account is asked. A 6-digit code goes to it, then the person picks a new password.
@@ -242,7 +265,7 @@ function promptForgot(prefill) {
     try { const d = await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value }); msg(d.message || 'A new code is on its way.'); } catch (e) { msg(e.message, true); }   // the server waits a minute between codes
   };
   $('ccfg-go').onclick = async () => {
-    const b = $('ccfg-go'); b.disabled = true; msg('');
+    const b = $('ccfg-go'); ccBusy(b, true, step === 1 ? 'Sending code...' : 'Changing password...'); msg('');
     try {
       if (step === 1) {
         const d = await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value });
@@ -256,7 +279,8 @@ function promptForgot(prefill) {
         return;
       }
     } catch (e) { msg(e.message, true); }
-    b.disabled = false;
+    ccBusy(b, false);
+    if (step === 2) b.textContent = 'Change password';   // the label after step 1 is the second step's label, not the one saved at the start
   };
 }
 // Me > Restore an account now really restores (needs the account ID and the recovery code).

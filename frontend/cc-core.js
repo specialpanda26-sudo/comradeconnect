@@ -245,7 +245,7 @@ function promptRestore(msg, title) {
     + '<p class="sub" style="text-align:center;margin-top:12px"><a href="#" id="ccrst-fg">Forgot password?</a></p>');
   m.id = 'ccrst';
   m.querySelector('#ccrst-x').onclick = () => m.close();
-  m.querySelector('#ccrst-fg').onclick = (ev) => { ev.preventDefault(); const w = m.querySelector('#ccrst-a').value; m.close(); promptForgot(w); };
+  m.querySelector('#ccrst-fg').onclick = (ev) => { ev.preventDefault(); const w = m.querySelector('#ccrst-a').value; m.close(); promptForgot(w, () => promptRestore(msg, title)); };
   if (googleOn()) mountGoogle(m.querySelector('#ccrg'), () => { m.close(); toast('Signed in'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {} }, (e) => { m.querySelector('#ccrst-e').textContent = e; });
   m.querySelector('#ccrst-go').onclick = async () => {
     const b = m.querySelector('#ccrst-go'); ccBusy(b, true, 'Signing in...'); m.querySelector('#ccrst-e').textContent = '';
@@ -253,47 +253,99 @@ function promptRestore(msg, title) {
     catch (e) { m.querySelector('#ccrst-e').textContent = e.message; ccBusy(b, false); }
   };
 }
-// Forgot password: only the email saved on the account is asked. A 6-digit code goes to it, then the person picks a new password.
-function promptForgot(prefill) {
+// cc-forgot-page: Forgot password is a full page (not a small card). Step 1: the email saved on the account. Step 2: the 6-digit code and a new password.
+// back = what to open again when the person taps "Back to sign in" (the sign-in sheet they came from).
+function promptForgot(prefill, back) {
   if (document.getElementById('ccfgt')) return;
-  const m = sheet('<p class="sub" id="ccfg-st" style="margin:0 0 4px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;font-size:12px">Step 1 of 2</p><h3>Reset your password</h3><p class="sub" id="ccfg-in" style="margin-top:6px">Type the email saved on your account. We send a 6-digit code to it, then you choose a new password. No email saved yet? Sign in with your recovery code instead.</p>'
-    + '<div class="fld" style="margin-top:10px"><input id="ccfg-m" type="email" inputmode="email" placeholder="Email on your account" autocomplete="email" autocapitalize="off" aria-label="Email on your account"></div>'
-    + '<div id="ccfg-2" style="display:none"><div class="fld"><input id="ccfg-c" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" aria-label="6-digit code"></div>'
-    + '<div class="fld"><input id="ccfg-p" type="password" placeholder="New password" autocomplete="new-password" aria-label="New password"></div></div>'
-    + '<p class="sub" id="ccfg-e" style="min-height:18px"></p>'
-    + '<p class="sub" style="text-align:center;margin:0 0 8px"><a href="#" id="ccfg-have">I already have a code</a></p><div class="two"><button class="btn g" id="ccfg-x">Cancel</button><button class="btn p" id="ccfg-go">Send code</button></div>'
-    + '<p class="sub" style="text-align:center;margin:14px 0 0"><a href="#" id="ccfg-bk" style="font-weight:600;color:inherit">Back to sign in</a></p>');
-  m.id = 'ccfgt';
-  m.style.background = 'rgba(8,11,22,.97)'; m.style.webkitBackdropFilter = m.style.backdropFilter = 'blur(22px)';   // nothing of the screen behind shows through
-  const $ = (i) => m.querySelector('#' + i), msg = (t, bad) => { $('ccfg-e').textContent = t; $('ccfg-e').style.color = bad ? 'var(--bad,#FF6B6B)' : ''; };
+  const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+  const XICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const EYE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYEOFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  const pg = document.createElement('div');
+  pg.id = 'ccfgt'; pg.setAttribute('role', 'dialog'); pg.setAttribute('aria-modal', 'true'); pg.setAttribute('aria-label', 'Reset your password');
+  pg.innerHTML = '<div class="fp-top"><button type="button" class="fp-ic" id="ccfg-bk" aria-label="Back">' + ARROW + '</button>'
+    + '<div class="fp-brand"><img src="cc-mark.png" alt=""><span>Comrade Connect</span></div>'
+    + '<button type="button" class="fp-ic" id="ccfg-x" aria-label="Close">' + XICON + '</button></div>'
+    + '<div class="fp-body"><p class="fp-step" id="ccfg-st">Step 1 of 2</p><h1 id="ccfg-h">Reset your password</h1>'
+    + '<p class="fp-sub" id="ccfg-in">Type the email saved on your account. We send a 6-digit code to it, then you choose a new password.</p>'
+    + '<div class="fp-f" id="ccfg-f1"><label for="ccfg-m">Email on your account</label><input id="ccfg-m" type="email" inputmode="email" placeholder="name@gmail.com" autocomplete="email" autocapitalize="off" aria-label="Email on your account"></div>'
+    + '<div id="ccfg-2" hidden>'
+    + '<div class="fp-f"><label for="ccfg-c">6-digit code</label><input id="ccfg-c" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" aria-label="6-digit code"></div>'
+    + '<div class="fp-f"><label for="ccfg-p">New password</label><div class="fp-pw"><input id="ccfg-p" type="password" placeholder="8+ characters" autocomplete="new-password" autocapitalize="off" aria-label="New password"><button type="button" class="fp-eye" id="ccfg-eye" aria-label="Show password">' + EYEOFF + '</button></div></div>'
+    + '<div class="fp-f"><label for="ccfg-p2">Repeat the new password</label><div class="fp-pw"><input id="ccfg-p2" type="password" placeholder="Type it again" autocomplete="new-password" autocapitalize="off" aria-label="Repeat the new password"></div></div>'
+    + '</div>'
+    + '<p class="fp-msg" id="ccfg-e" role="status" aria-live="polite"></p>'
+    + '<button type="button" class="fp-go" id="ccfg-go">Send code</button>'
+    + '<button type="button" class="fp-link" id="ccfg-have">I already have a code</button>'
+    + '<button type="button" class="fp-link" id="ccfg-si">Back to sign in</button></div>';
+  document.body.appendChild(pg);
+  const $ = (i) => pg.querySelector('#' + i);
+  const msg = (t, bad) => { const e = $('ccfg-e'); e.textContent = t || ''; e.classList.toggle('bad', !!(bad && t)); };
+  const maskE = (v) => { const p = String(v).trim().split('@'); return p.length === 2 ? (p[0].length > 2 ? p[0].slice(0, 2) : p[0].slice(0, 1)) + '***@' + p[1] : v; };
+  const okMail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v).trim());
+  let step = 1, timer = null, until = 0;
+  const onKey = (ev) => { if (ev.key === 'Escape') pg.close(); };
+  pg.close = () => { clearInterval(timer); document.removeEventListener('keydown', onKey); pg.remove(); };
+  document.addEventListener('keydown', onKey);
   const pre = String(prefill || '').trim(); if (pre.indexOf('@') > 0) $('ccfg-m').value = pre;
-  $('ccfg-x').onclick = () => m.close();
-  $('ccfg-bk').onclick = (ev) => { ev.preventDefault(); m.close(); };
-  let step = 1;
-  const toStep2 = () => { step = 2; $('ccfg-st').textContent = 'Step 2 of 2'; $('ccfg-in').textContent = 'Type the 6-digit code we emailed you and choose a new password. Check your spam folder too.'; $('ccfg-2').style.display = 'block'; $('ccfg-go').textContent = 'Change password'; $('ccfg-have').textContent = 'Send me a new code'; $('ccfg-c').focus(); };
-  $('ccfg-have').onclick = async (ev) => {
-    ev.preventDefault(); if (!$('ccfg-m').value.trim()) return msg('Type your email first.', true);
-    if (step === 1) { toStep2(); return msg('Type the 6-digit code from your email and a new password.'); }
-    try { const d = await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value }); msg(d.message || 'A new code is on its way.'); } catch (e) { msg(e.message, true); }   // the server waits a minute between codes
+
+  // The server waits a minute between codes, so the page shows the same wait instead of letting people tap again too soon.
+  const tick = () => {
+    const left = Math.ceil((until - Date.now()) / 1000), h = $('ccfg-have');
+    if (step !== 2) return;
+    if (left > 0) { h.disabled = true; h.textContent = 'Send me a new code (' + left + 's)'; }
+    else { h.disabled = false; h.textContent = 'Send me a new code'; clearInterval(timer); }
   };
+  const wait = () => { until = Date.now() + 60e3; clearInterval(timer); timer = setInterval(tick, 1000); tick(); };
+  const toStep = (n) => {
+    step = n; const two = n === 2;
+    $('ccfg-st').textContent = 'Step ' + n + ' of 2';
+    $('ccfg-h').textContent = two ? 'Check your email' : 'Reset your password';
+    $('ccfg-in').textContent = two ? 'If ' + maskE($('ccfg-m').value) + ' is saved on an account, a 6-digit code is on its way. It can take a minute. Check your spam folder too.' : 'Type the email saved on your account. We send a 6-digit code to it, then you choose a new password.';
+    $('ccfg-2').hidden = !two; $('ccfg-f1').hidden = two;
+    $('ccfg-go').textContent = two ? 'Change password' : 'Send code';
+    $('ccfg-have').disabled = false; $('ccfg-have').textContent = two ? 'Send me a new code' : 'I already have a code';
+    msg('');
+    if (two) { $('ccfg-c').focus(); tick(); } else { clearInterval(timer); $('ccfg-m').focus(); }
+  };
+  const leave = () => { pg.close(); if (typeof back === 'function') back(); };
+  $('ccfg-x').onclick = () => pg.close();
+  $('ccfg-bk').onclick = () => { if (step === 2) toStep(1); else leave(); };
+  $('ccfg-si').onclick = leave;
+  $('ccfg-eye').onclick = () => { const show = $('ccfg-p').type === 'password'; [$('ccfg-p'), $('ccfg-p2')].forEach((i) => { i.type = show ? 'text' : 'password'; }); $('ccfg-eye').innerHTML = show ? EYE : EYEOFF; $('ccfg-eye').setAttribute('aria-label', show ? 'Hide password' : 'Show password'); };
+  $('ccfg-have').onclick = async () => {
+    if (!okMail($('ccfg-m').value)) return msg('Type your email first.', true);
+    if (step === 1) { toStep(2); wait(); return; }
+    try { const d = await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value }); msg(d.message || 'A new code is on its way.'); wait(); } catch (e) { msg(e.message, true); }
+  };
+  ['ccfg-m', 'ccfg-c', 'ccfg-p', 'ccfg-p2'].forEach((i) => $(i).addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); $('ccfg-go').click(); } }));
   $('ccfg-go').onclick = async () => {
-    const b = $('ccfg-go'); ccBusy(b, true, step === 1 ? 'Sending code...' : 'Changing password...'); msg('');
+    const b = $('ccfg-go'); msg('');
+    if (step === 1 && !okMail($('ccfg-m').value)) return msg('Enter a real email address, for example name@gmail.com', true);
+    if (step === 2) {
+      if (String($('ccfg-c').value).replace(/\D/g, '').length !== 6) return msg('The code has 6 digits.', true);
+      if ($('ccfg-p').value.length < 8) return msg('The new password needs at least 8 characters.', true);
+      if ($('ccfg-p').value !== $('ccfg-p2').value) return msg('The two passwords are not the same.', true);
+    }
+    ccBusy(b, true, step === 1 ? 'Sending code...' : 'Changing password...');
     try {
       if (step === 1) {
-        const d = await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value });
-        toStep2(); msg(d.message || 'If that email is saved on an account, a code is on its way. Check your inbox and spam folder.');
+        await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value });
+        toStep(2); wait();
       } else {
         const d = await rawPost('/api/auth/reset/confirm', { email: $('ccfg-m').value, code: $('ccfg-c').value, password: $('ccfg-p').value });
         saveAuth({ aid: d.aid, token: d.token }); ME.aid = d.aid; saveMe();
         setTimeout(() => { syncVer(); refreshReferral(true); }, 0);
-        m.close(); const lk = document.getElementById('lk'); if (lk) lk.classList.remove('on');   // opened from the lock screen: let the person in
+        pg.close(); const lk = document.getElementById('lk'); if (lk) lk.classList.remove('on');   // opened from the lock screen: let the person in
+        const fr = document.getElementById('ccfrst'); if (fr) fr.remove();                          // opened from the first screen: it is done
         toast('Password changed. You are signed in.'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {}
         return;
       }
     } catch (e) { msg(e.message, true); }
     ccBusy(b, false);
-    if (step === 2) b.textContent = 'Change password';   // the label after step 1 is the second step's label, not the one saved at the start
+    b.textContent = step === 2 ? 'Change password' : 'Send code';   // ccBusy puts back the label saved before the step changed
   };
+  setTimeout(() => $('ccfg-m').focus(), 60);
 }
 // Me > Restore an account now really restores (needs the account ID and the recovery code).
 (function wireRestore() {
@@ -1589,7 +1641,7 @@ async function createAccount(kind, creds) {
   setTimeout(() => { attributeRef(); syncVer(); refreshAll(); }, 0);
   return { aid: d.aid, token: d.token };
 }
-window.CC = { forgot: (e) => promptForgot(e), createAccount, signIn: (msg) => promptRestore(msg || 'Enter your username or account ID and your password or recovery code.', 'Log in'), needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid, payNow };
+window.CC = { forgot: (e, back) => promptForgot(e, back), createAccount, signIn: (msg) => promptRestore(msg || 'Enter your username or account ID and your password or recovery code.', 'Log in'), needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid, payNow };
 window.ccSteps = { paySteps, withdrawFlow, stepsCss };
 window.ccTools = { sheet, call, toast, copyText, sleep };   // used by cc-tickets.js   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections
 })();

@@ -7,7 +7,7 @@
 if (window.__ccPanels) return; window.__ccPanels = 1;
 
 var MODAL = '#md,#dm,#pv,#dcm,#ccp,.cchm,.cxm,.ccl-sh,.ccrp,.ccm-sh,.ccp-sheet,.ccdl-m,#cchp';
-var SCREEN = '#wfov,#ccrc,.ccr,#hszoom,#ccfind,#ccfid';
+var SCREEN = '#wfov,#ccrc,.ccr,#hszoom,#ccfind,#ccfid,#ccfgt';
 var QUIT = /^(cancel|close|not now|later|no thanks|done|dismiss)$/i;
 var native = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
 

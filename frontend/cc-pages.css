@@ -1,4 +1,58 @@
+/* cc-pages.css v1: Reset password is a full page (not a small card), and the sign-in cards are tidy compact squares.
+   Same night / aqua look as the rest of the site, light and dark. */
 
-/* cc-scrim: every popup backdrop is the same navy glass (no pure black). The photo viewer and the lock screen keep their own. */
+/* ---------- Reset password: full page ---------- */
+#ccfgt{position:fixed;inset:0;z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg,#101422);color:var(--fg,#fff);font-family:Poppins,system-ui,sans-serif}
+#ccfgt::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 52% at 50% -8%,rgba(168,220,231,.2),transparent 62%)}
+:root[data-theme="light"] #ccfgt::before{background:linear-gradient(180deg,#A8DCE7 0,rgba(168,220,231,.35) 220px,rgba(255,255,255,0) 420px)}
+#ccfgt .fp-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px}
+#ccfgt .fp-ic{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:0;background:none;box-shadow:none;color:var(--fg,#fff);padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#ccfgt .fp-ic:active{opacity:.5}
+#ccfgt .fp-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#ccfgt .fp-brand{display:flex;align-items:center;gap:8px;font:600 14px Poppins,system-ui,sans-serif;letter-spacing:-.01em}
+#ccfgt .fp-brand img{width:26px;height:26px;border-radius:8px;display:block}
+#ccfgt .fp-body{position:relative;z-index:1;width:100%;max-width:440px;margin:0 auto;padding:22px 22px calc(40px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
+#ccfgt .fp-step{margin:0 0 8px;font:600 12px Poppins,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mut,rgba(255,255,255,.62))}
+#ccfgt h1{margin:0 0 10px;font:600 28px/1.15 var(--disp,Poppins,system-ui,sans-serif);letter-spacing:-.02em;color:var(--fg,#fff)}
+#ccfgt .fp-sub{margin:0 0 22px;font-size:14px;line-height:1.6;color:var(--mut,rgba(255,255,255,.62))}
+#ccfgt .fp-f{margin:0 0 16px}
+#ccfgt .fp-f>label{display:block;margin:0 0 7px 4px;font:600 13px Poppins,system-ui,sans-serif;color:var(--fg,#fff)}
+#ccfgt .fp-pw{position:relative}
+#ccfgt input{display:block;width:100%;box-sizing:border-box;min-height:52px;margin:0;padding:12px 16px;border-radius:16px;border:1px solid var(--line,rgba(255,255,255,.14));background:var(--g,#272B3B);color:var(--fg,#fff);font:400 16px Poppins,system-ui,sans-serif;outline:0;-webkit-appearance:none;appearance:none}
+#ccfgt input::placeholder{color:var(--mut,rgba(255,255,255,.5));font-size:14px}
+#ccfgt input:focus{border-color:var(--aq,#A8DCE7);box-shadow:0 0 0 3px rgba(168,220,231,.22)}
+#ccfgt .fp-pw input{padding-right:52px!important}
+#ccfgt #ccfg-c{letter-spacing:.35em;font-weight:600;text-align:center}
+#ccfgt #ccfg-c::placeholder{letter-spacing:0;font-weight:400}
+#ccfgt .fp-eye{position:absolute;right:4px;top:4px;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:12px;background:none;color:var(--mut,rgba(255,255,255,.62));padding:0;cursor:pointer}
+#ccfgt .fp-eye svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#ccfgt .fp-msg{margin:0 0 14px;min-height:0;font-size:13px;line-height:1.55;color:var(--mut,rgba(255,255,255,.62))}
+#ccfgt .fp-msg:empty{display:none}
+#ccfgt .fp-msg.bad{padding:10px 14px;border-radius:14px;border:1px solid var(--line,rgba(255,255,255,.14));background:var(--soft,rgba(255,255,255,.06));color:var(--fg,#fff);font-weight:600}
+#ccfgt .fp-go{display:block;width:100%;min-height:54px;margin:4px 0 14px;border:0;border-radius:999px;background:var(--ink,#A8DCE7);color:var(--inkfg,#101422);font:600 15px Poppins,system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#ccfgt .fp-go:active{transform:scale(.98)}
+#ccfgt .fp-go:disabled{opacity:.55}
+#ccfgt .fp-link{display:block;width:100%;margin:0;padding:12px 8px;border:0;background:none;color:var(--fg,#fff);font:600 13.5px Poppins,system-ui,sans-serif;text-align:center;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#ccfgt .fp-link:disabled{opacity:.55;text-decoration:none}
+#ccfgt .ccpw-m{margin:8px 4px 0}
+#ccfgt [hidden]{display:none!important}
+@media(min-width:701px){#ccfgt .fp-body{padding-top:40px}}
+
+/* ---------- Sign-in and account cards: one compact, squarish card at every screen size ---------- */
+.ccp-sheet.ccp-ov{padding:20px!important;align-items:center!important;justify-content:center!important;place-items:center!important;background:rgba(16,20,34,.8)!important;-webkit-backdrop-filter:blur(10px)!important;backdrop-filter:blur(10px)!important}
+.ccp-sheet.ccp-ov>.ccp-card,.ccp-sheet>.ccp-card{width:100%!important;max-width:360px!important;height:auto!important;min-height:0!important;max-height:92vh!important;margin:0!important;padding:26px 22px 20px!important;border-radius:28px!important;border:1px solid var(--line,rgba(255,255,255,.14))!important;box-sizing:border-box}
+.ccp-sheet h3{margin:0 0 6px;font-size:20px;letter-spacing:-.02em}
+.ccp-sheet .sub{margin:0 0 14px;font-size:13px;line-height:1.5}
+.ccp-sheet .fld{margin:0 0 12px}
+.ccp-sheet .fld input{display:block;width:100%;box-sizing:border-box;min-height:50px;padding:12px 16px;font-size:16px;text-overflow:ellipsis}
+.ccp-sheet .fld input::placeholder{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.ccp-sheet input[type=checkbox]{width:18px!important;height:18px!important;min-height:0!important;padding:0!important;margin:0!important;flex:none;accent-color:var(--aq,#A8DCE7)}
+.ccp-sheet label.sub{display:flex!important;gap:10px;align-items:center;margin:0 0 14px!important;cursor:pointer}
+.ccp-sheet .two{display:flex;gap:12px;margin-top:4px}
+.ccp-sheet .two>.btn{flex:1;min-height:48px;padding:12px 16px}
+.ccp-sheet #ccp-e{min-height:0;margin:0}
+.ccp-sheet #ccp-e:not(:empty){margin:0 0 12px}
+
+/* ---------- Every popup backdrop is the same navy glass (no pure black). The photo viewer and the lock screen keep their own. ---------- */
 #md,#dm,#ccp,#dcm,#cchp,#ccuniv,#ccgate{background:rgba(16,20,34,.8)!important;-webkit-backdrop-filter:blur(10px)!important;backdrop-filter:blur(10px)!important}
 :root[data-theme="light"] #md,:root[data-theme="light"] #dm,:root[data-theme="light"] #ccp,:root[data-theme="light"] #dcm,:root[data-theme="light"] #cchp,:root[data-theme="light"] #ccuniv,:root[data-theme="light"] #ccgate{background:rgba(16,20,34,.5)!important}

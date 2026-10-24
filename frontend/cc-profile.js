@@ -196,7 +196,7 @@
     $('#ccp-fg', m).onclick = function (ev) {
       ev.preventDefault();
       var who = $('#ccp-a', m).value; m.close();
-      if (window.CC && window.CC.forgot) window.CC.forgot(who); else location.href = 'contact.html';   // contact page only if the app has not finished loading
+      if (window.CC && window.CC.forgot) window.CC.forgot(who, openRestore); else location.href = 'contact.html';   // contact page only if the app has not finished loading
     };
     $('#ccp-r', m).onclick = async function () {
       var b = $('#ccp-r', m), a = $('#ccp-a', m).value.trim(), c = $('#ccp-c', m).value;

@@ -32,6 +32,26 @@
     return (e && e.message) || 'Passkey failed. Try again.';
   };
 
+  // ---- a small styled question sheet (same look as the app's other sheets); resolves true / false ----
+  function ask(title, text, okLabel, noLabel) {
+    return new Promise(function (done) {
+      if (!$('#ccpk-css')) {
+        var st = document.createElement('style'); st.id = 'ccpk-css';
+        st.textContent = '.ccpk-sheet{position:fixed;inset:0;z-index:99999;background:rgba(16,20,34,.8);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}.ccpk-card{max-width:360px;width:100%}';
+        document.head.appendChild(st);
+      }
+      var m = document.createElement('div'); m.className = 'ccpk-sheet'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', title);
+      m.innerHTML = '<div class="box g ccpk-card"><h3>' + esc(title) + '</h3><p class="sub" style="margin-top:6px">' + esc(text) + '</p>'
+        + '<div class="two" style="margin-top:14px"><button type="button" class="btn g" data-r="0">' + esc(noLabel || 'Cancel') + '</button><button type="button" class="btn p" data-r="1">' + esc(okLabel || 'OK') + '</button></div></div>';
+      var key = function (e) { if (e.key === 'Escape') { e.stopPropagation(); fin(false); } };
+      var fin = function (v) { document.removeEventListener('keydown', key, true); m.remove(); done(v); };
+      m.addEventListener('click', function (e) { var b = e.target.closest('button[data-r]'); if (b) fin(b.getAttribute('data-r') === '1'); else if (e.target === m) fin(false); });
+      document.addEventListener('keydown', key, true);
+      document.body.appendChild(m);
+      var safe = m.querySelector('[data-r="0"]'); if (safe) safe.focus();   // focus the safe choice, so a stray Enter never deletes
+    });
+  }
+
   // ---- a readable name for each passkey, and a one-time offer after sign-up ----
   function deviceName() {
     var ua = navigator.userAgent || '';
@@ -43,8 +63,10 @@
     try { if (!supported() || localStorage.getItem('cc_pk_offered')) return Promise.resolve(); } catch (e) { return Promise.resolve(); }
     var a = window.ccAuth && ccAuth(); if (!a || !a.token) return Promise.resolve();
     try { localStorage.setItem('cc_pk_offered', '1'); } catch (e) {}
-    if (!window.confirm('Add a passkey? Next time you can sign in with your fingerprint, face or screen lock.')) return Promise.resolve();
-    return register(deviceName()).then(function () { say('Passkey added'); }, function (x) { var m = friendly(x); if (m !== 'Cancelled') say(m); });
+    return ask('Add a passkey?', 'Next time you can sign in with your fingerprint, face or screen lock. No password to remember.', 'Add passkey', 'Not now').then(function (yes) {
+      if (!yes) return;
+      return register(deviceName()).then(function () { say('Passkey added'); }, function (x) { var m = friendly(x); if (m !== 'Cancelled') say(m); });
+    });
   }
   function hookSignup() {   // cc-core calls window.ccAskEmailSignup after every new account; offer the passkey right after it
     var f = window.ccAskEmailSignup; if (typeof f !== 'function' || f.__pk) return;
@@ -82,10 +104,10 @@
   var KEY = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M17 6l3 3M14 9l2 2"/></svg>';
   async function drawBox(box) {
     var list = $('#ccpk-l', box), st = $('#ccpk-s', box), add = $('#ccpk-a', box);
-    if (inApp()) { st.textContent = 'Passkeys are made on the Comrade Connect website (comradeconnect.co.ke). Open it in your phone browser, sign in, and add a passkey under Me. This app keeps its own fingerprint lock above.'; add.hidden = true; list.innerHTML = ''; return; }
+    if (inApp()) { st.textContent = 'Passkeys are made on the Comrade Connect website (comradeconnect.co.ke). Open it in your phone browser, sign in, and add a passkey under Me. This app keeps its own fingerprint lock above.'; add.hidden = false; add.dataset.web = '1'; add.textContent = 'Open the website'; list.innerHTML = ''; return; }
     if (!supported()) { st.textContent = 'This browser does not support passkeys. Try Chrome, Safari or Edge on a phone with a screen lock.'; add.hidden = true; return; }
     var a = window.ccAuth && ccAuth(); if (!a || !a.token) { st.textContent = 'Create or sign in to an account first.'; add.hidden = true; return; }
-    st.textContent = 'Sign in with your fingerprint, face or screen lock. No password to remember.'; add.hidden = false;
+    st.textContent = 'Sign in with your fingerprint, face or screen lock. No password to remember.'; add.hidden = false; add.dataset.web = ''; add.innerHTML = KEY + 'Add a passkey';
     try {
       var d = await call('/api/passkey/list', null, 'GET');
       list.innerHTML = (d.passkeys || []).map(function (p) {
@@ -100,19 +122,36 @@
     box.innerHTML = '<h3>Passkeys</h3><p class="sub" id="ccpk-s"></p><div id="ccpk-l"></div><button class="btn g" id="ccpk-a" style="width:100%;margin-top:12px">' + KEY + 'Add a passkey</button>';
     anchor.parentNode.insertBefore(box, anchor.nextSibling);
     $('#ccpk-a', box).onclick = async function (e) {
-      var b = e.currentTarget; b.disabled = true;
+      var b = e.currentTarget;
+      if (b.dataset.web === '1') { try { if (!(window.ccApp && ccApp.open && await ccApp.open('https://comradeconnect.co.ke'))) window.open('https://comradeconnect.co.ke', '_blank'); } catch (x) {} return; }
+      b.disabled = true;
       try { await register(deviceName()); say('Passkey added'); } catch (x) { var m = friendly(x); if (m !== 'Cancelled') say(m); }
       b.disabled = false; drawBox(box);
     };
     box.addEventListener('click', async function (e) {
       var rm = e.target.closest('button[data-id]'); if (!rm) return;
-      if (!window.confirm('Remove this passkey? You will not be able to sign in with it any more.')) return;
+      if (!(await ask('Remove this passkey?', 'You will not be able to sign in with it any more. Your account and other passkeys stay as they are.', 'Remove', 'Keep'))) return;
       rm.disabled = true;
       try { await call('/api/passkey/delete', { id: rm.getAttribute('data-id') }); say('Passkey removed'); } catch (x) { say(friendly(x)); }
       drawBox(box);
     });
     drawBox(box);
     var tb = $('#tb'); if (tb) tb.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && b.dataset.v === 'me') drawBox(box); });
+  }
+
+  // ---- "Add a passkey" on the signed-in Welcome screen (next to Link Google), only while this account has none ----
+  function mountWelcome() {
+    var sec = $('#dm section[data-v="si"]'); if (!sec || sec.hidden || $('.ccpk-si', sec) || !supported()) return;
+    var a = window.ccAuth && ccAuth(); if (!a || !a.token) return;
+    var skip = $('#siS', sec); if (!skip) return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn g ccpk-si'; b.style.cssText = 'width:100%;margin-top:10px;display:none';
+    b.innerHTML = KEY + 'Add a passkey'; skip.parentNode.insertBefore(b, skip);
+    call('/api/passkey/list', null, 'GET').then(function (d) { if (!(d.passkeys || []).length) b.style.display = ''; }).catch(function () {});
+    b.onclick = async function () {
+      b.disabled = true;
+      try { await register(deviceName()); say('Passkey added'); b.remove(); }
+      catch (x) { var m = friendly(x); if (m !== 'Cancelled') say(m); b.disabled = false; }
+    };
   }
 
   // ---- "Sign in with a passkey" button on the restore screens ----
@@ -126,6 +165,7 @@
   function scan() {
     hookSignup();
     mountBox();
+    mountWelcome();
     var rrs = $('#rrs'); if (rrs) addSignIn(rrs.parentNode, rrs, null);
     var fr = $('#ccfrst-form'); if (fr) addSignIn(fr, null, function (m) { var e = $('#ccfrst-e'); if (e) { e.textContent = m; e.hidden = !m; } }, 'ccfrst-btn', 'margin-top:10px;background:transparent!important;border:1px solid rgba(255,255,255,.35)!important;color:inherit');
     var pr = $('#ccp-r'); if (pr) { var pf = $('#ccp-f'); if (pf) addSignIn(pf, null, function (m) { var e = $('#ccp-e'); if (e) e.textContent = m; }); }

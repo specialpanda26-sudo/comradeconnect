@@ -86,7 +86,7 @@ function derToRaw(der) {
 async function clientCheck(env, clientDataB64, type, purpose, aid) {
   const raw = unb64u(clientDataB64); let cd; try { cd = JSON.parse(td.decode(raw)); } catch (e) { return null; }
   if (cd.type !== type || cd.crossOrigin === true) return null;
-  if (!origins(env).includes(String(cd.origin || '').replace(/\/$/, ''))) return null;
+  if (!origins(env).includes(String(cd.origin || '').replace(/\/$/, ''))) { console.error('passkey refused: site address ' + cd.origin + ' is not in PASSKEY_ORIGINS (' + origins(env).join(', ') + ')'); return null; }
   if (!(await checkChallenge(env, cd.challenge, purpose, aid))) return null;
   return raw;
 }

@@ -287,19 +287,21 @@ export async function adminRoutes(req, env, url, ip) {
   // ---- what the company has earned ----
   if (path === '/api/admin/earnings' && m === 'GET') {
     const since = ago(30 * DAY), sum = (l, f) => l.reduce((s, x) => s + (Number(x[f]) || 0), 0), net = (l) => l.reduce((s, x) => s + (Number(x.net ?? x.amount) || 0), 0);
-    const [rel, held, boosts, paid, open, sp] = await Promise.all([
+    const [rel, held, boosts, paid, open, sp, gf] = await Promise.all([
       sb(env, 'orders?select=fee,released_at&status=eq.released&limit=20000'), sb(env, 'orders?select=fee&status=in.(held,handed,disputed)&limit=20000'),
       sb(env, 'payments?select=amount,paid_at&purpose=eq.boost&status=eq.paid&limit=20000'), sb(env, 'withdrawals?select=fee,net,amount,decided_at&status=eq.paid&limit=20000'),
       sb(env, 'withdrawals?select=net,amount&status=eq.requested&limit=2000'), sb(env, 'sponsors?select=amount&active=eq.true&limit=500'),
+      sb(env, 'gifts?select=fee,gross,paid_at&status=eq.paid&limit=20000'),
     ].map((p) => p.then(rows)));
     const recent = (l, f) => l.filter((x) => x[f] && x[f] >= since);
     const out = {
       market_fees: { total: sum(rel, 'fee'), last30: sum(recent(rel, 'released_at'), 'fee'), in_escrow: sum(held, 'fee') },
       boosts: { total: sum(boosts, 'amount'), last30: sum(recent(boosts, 'paid_at'), 'amount') },
       withdrawal_fees: { total: sum(paid, 'fee'), last30: sum(recent(paid, 'decided_at'), 'fee') },
+      gifts: { total: sum(gf, 'fee'), last30: sum(recent(gf, 'paid_at'), 'fee'), sent: sum(gf, 'gross'), count: gf.length },
       owed_to_sellers: net(open), paid_out: net(paid), sponsors_active: sum(sp, 'amount'),
     };
-    out.total_earned = out.market_fees.total + out.boosts.total + out.withdrawal_fees.total;
+    out.total_earned = out.market_fees.total + out.boosts.total + out.withdrawal_fees.total + out.gifts.total;
     return json(env, out);
   }
   // ---- grant money to someone's wallet (a gift, a prize, a goodwill refund). Safe to repeat: the same key can only pay once. Always in the audit log. ----

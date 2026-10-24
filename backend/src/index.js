@@ -29,6 +29,7 @@ import { siteContentRoutes } from './sitecontent.js';
 import { siteMediaRoutes } from './sitemedia.js';
 import { trustRoutes } from './trust.js';
 import { resetRoutes } from './reset.js';
+import { giftRoutes, giftPaid, giftFailed } from './gifts.js';
 import { recoveryRoutes } from './recovery.js';
 import { pointsRoutes } from './points.js';
 import { notificationRoutes } from './notifications.js';
@@ -53,6 +54,7 @@ hooks.onPaid = async (env, p) => {
   else if (p.purpose === 'wholesale') await extendWholesale(env, p.aid);
   else if (p.purpose === 'caretaker') await caretakerPaid(env, p);
   else if (p.purpose === 'kura') await kuraPaid(env, p);
+  else if (p.purpose === 'gift') await giftPaid(env, p);
 };
 // A boost adds time on top of any boost still running.
 async function boostPost(env, p) {
@@ -63,10 +65,11 @@ async function boostPost(env, p) {
 hooks.onFailed = async (env, p) => {
   if (p.purpose === 'club') await restoreClubOrder(env, p.ref_id);
   if (p.purpose === 'kura') await kuraFailed(env, p);
+  if (p.purpose === 'gift') await giftFailed(env, p);
   if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
 };
 
-const ROUTES = [pulseRoutes, campusRoutes, engageRoutes, storyRoutes, notificationRoutes, settingsRoutes, trustRoutes, resetRoutes, recoveryRoutes, siteContentRoutes, siteMediaRoutes, feedRoutes, payRoutes, passkeyRoutes, deviceAdminRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, myEventRoutes, kuraRoutes, adminUserRoutes, adminJoinRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
+const ROUTES = [pulseRoutes, campusRoutes, engageRoutes, storyRoutes, notificationRoutes, settingsRoutes, trustRoutes, resetRoutes, recoveryRoutes, giftRoutes, siteContentRoutes, siteMediaRoutes, feedRoutes, payRoutes, passkeyRoutes, deviceAdminRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, mediaRoutes, clubRoutes, myEventRoutes, kuraRoutes, adminUserRoutes, adminJoinRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

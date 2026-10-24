@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Send a gift | Comrade Connect</title><meta name="robots" content="noindex"><meta name="theme-color" content="#0E0F0B">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0E0F0B;--fg:#fff;--mut:rgba(255,255,255,.62);--gl:rgba(255,255,255,.08);--br:rgba(255,255,255,.2);--in:rgba(255,255,255,.07);--or:#FE813C;--ro:#BC656A;--sa:#727E6E;--bad:#ff8f8f}
+@media(prefers-color-scheme:light){:root{--bg:#f6f3ef;--fg:#0E0F0B;--mut:rgba(14,15,11,.62);--gl:rgba(255,255,255,.6);--br:rgba(255,255,255,.9);--in:rgba(14,15,11,.05);--bad:#b3261e}}
+*{box-sizing:border-box}html,body{margin:0}
+body{min-height:100vh;background:var(--bg);color:var(--fg);font:400 15px/1.5 Poppins,system-ui,sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+.o{position:fixed;border-radius:50%;filter:blur(70px);opacity:.55;z-index:0;pointer-events:none}.o1{width:260px;height:260px;background:var(--or);top:-70px;left:-60px}.o2{width:240px;height:240px;background:var(--ro);bottom:60px;right:-80px}.o3{width:200px;height:200px;background:var(--sa);bottom:-60px;left:10%}
+main{position:relative;z-index:1;max-width:460px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+.brand{font-weight:700;letter-spacing:.14em;font-size:12px;text-align:center;color:var(--mut);margin:4px 0 16px}
+.card{background:var(--gl);border:1px solid var(--br);border-radius:26px;padding:20px;-webkit-backdrop-filter:blur(26px) saturate(1.4);backdrop-filter:blur(26px) saturate(1.4);box-shadow:0 18px 50px rgba(254,129,60,.14)}
+.eye{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);font-weight:600}
+h1{margin:6px 0 4px;font-size:25px;line-height:1.2;font-weight:700;overflow-wrap:anywhere}
+.sub{color:var(--mut);margin:0 0 4px}.bl{margin:8px 0 0;color:var(--mut);font-size:14px;overflow-wrap:anywhere}
+h2{font-size:15px;margin:20px 0 10px;font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g{position:relative;text-align:left;font:inherit;color:inherit;background:var(--in);border:1px solid var(--br);border-radius:18px;padding:14px;cursor:pointer;min-height:98px;transition:border-color .15s,box-shadow .15s,background .15s}
+.g svg{width:26px;height:26px;display:block;margin-bottom:12px;stroke:var(--or)}
+.g b{display:block;font-weight:600}.g small{color:var(--mut);font-size:13px}
+.g.on{border-color:var(--or);box-shadow:0 0 0 1px var(--or),0 8px 24px rgba(254,129,60,.28);background:rgba(254,129,60,.12)}
+.pop{position:absolute;top:12px;right:12px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--fg);color:var(--bg)}
+label.l{display:block;font-weight:600;margin:20px 0 8px}
+input[type=text],input[type=tel],input[type=email],input[type=number],textarea{width:100%;font:inherit;color:inherit;background:var(--in);border:1px solid var(--br);border-radius:14px;padding:13px 14px;outline:none}
+input:focus,textarea:focus{border-color:var(--or)}textarea{resize:none;height:84px}
+.hint{font-size:13px;color:var(--mut);margin:7px 0 0}.fine{font-size:12.5px;color:var(--mut);margin:10px 0 0}
+.ck{display:flex;align-items:center;gap:12px;margin:14px 0 0;cursor:pointer}.ck input{appearance:none;-webkit-appearance:none;width:22px;height:22px;border-radius:7px;border:1.5px solid var(--br);background:var(--in);display:grid;place-content:center;margin:0;flex:none}
+.ck input:checked{background:var(--or);border-color:var(--or)}.ck input:checked::after{content:"";width:10px;height:5px;border-left:2.4px solid #0E0F0B;border-bottom:2.4px solid #0E0F0B;transform:rotate(-45deg) translate(1px,-1px)}
+.sub2{display:none;margin-top:10px}.sub2.show{display:block}
+hr{border:0;border-top:1px solid var(--br);margin:20px 0}
+.pay{font-size:18px;font-weight:700;margin:0}
+.btn{width:100%;font:600 15px Poppins,system-ui,sans-serif;border:0;border-radius:16px;padding:15px;margin-top:14px;cursor:pointer;color:#0E0F0B;background:var(--or);box-shadow:0 10px 26px rgba(254,129,60,.35)}
+.btn.alt{background:var(--in);color:var(--fg);border:1px solid var(--br);box-shadow:none;margin-top:10px}.btn:disabled{opacity:.45;cursor:default}
+.err{color:var(--bad);min-height:20px;font-size:13.5px;margin:10px 0 0}
+.steps{list-style:none;margin:18px 0 0;padding:0}.steps li{display:flex;align-items:center;gap:12px;padding:10px 0;color:var(--mut)}
+.steps i{width:22px;height:22px;border-radius:50%;border:2px solid var(--br);flex:none}.steps li.now{color:var(--fg)}.steps li.now i{border-color:var(--or);border-top-color:transparent;animation:sp .8s linear infinite}
+.steps li.done{color:var(--fg)}.steps li.done i{background:var(--sa);border-color:var(--sa)}@keyframes sp{to{transform:rotate(360deg)}}
+.okc{text-align:center;padding:10px 0}.okc svg{width:78px;height:78px;stroke:var(--or);fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.okc .ring{stroke-dasharray:190;stroke-dashoffset:190;animation:dr .6s ease forwards}.okc .tk{stroke-dasharray:50;stroke-dashoffset:50;animation:dr .4s .5s ease forwards}@keyframes dr{to{stroke-dashoffset:0}}
+.okc h1{margin-top:12px}[hidden]{display:none!important}
+</style></head><body>
+<div class="o o1"></div><div class="o o2"></div><div class="o o3"></div>
+<main><div class="brand">COMRADE CONNECT</div>
+<div class="card" id="load"><p class="sub">Loading...</p></div>
+<div class="card" id="off" hidden><h1>Link not active</h1><p class="sub">This gift link does not exist or has been paused by its owner.</p></div>
+<div class="card" id="form" hidden>
+<div class="eye">Support this creator</div><h1 id="t"></h1><p class="sub">Send a gift to support their work.</p><p class="bl" id="bl" hidden></p>
+<h2>Choose a gift</h2><div class="grid" id="gr"></div>
+<div class="sub2" id="cu"><label class="l" for="am" style="margin-top:14px">Your amount (KES)</label><input id="am" type="number" inputmode="numeric" min="1" placeholder="Amount"></div>
+<hr><label class="l" for="ph" style="margin-top:0">M-Pesa number</label>
+<input id="ph" type="tel" inputmode="numeric" autocomplete="tel" placeholder="07XX XXX XXX"><p class="hint">Used for payment and never shown to the creator.</p>
+<label class="ck"><input type="checkbox" id="cm"><span>Send the creator a message</span></label>
+<div class="sub2" id="cmb"><input id="nm" type="text" maxlength="24" placeholder="Your name (optional)" style="margin-bottom:8px"><textarea id="ms" maxlength="200" placeholder="Write a message"></textarea></div>
+<label class="ck" id="rcw" hidden><input type="checkbox" id="rc"><span>Email me a receipt</span></label>
+<div class="sub2" id="rcb"><input id="em" type="email" inputmode="email" placeholder="you@example.com"></div>
+<hr><p class="pay" id="py">You pay KES 0</p>
+<p class="fine">Gifts are voluntary support and do not purchase goods, services, or access. They are final except where Comrade Connect's refund policy provides otherwise.</p>
+<p class="err" id="er" role="alert"></p>
+<button class="btn" id="go" type="button" disabled>Send gift with M-Pesa</button><button class="btn alt" id="cd" type="button" hidden>Pay with card</button></div>
+<div class="card" id="wait" hidden><div class="eye">Sending your gift</div><h1 id="wt">Check your phone</h1>
+<ul class="steps" id="st"><li data-s="p"><i></i>M-Pesa prompt sent to your phone</li><li data-s="n"><i></i>Enter your M-Pesa PIN</li><li data-s="v"><i></i>Verifying payment</li></ul>
+<div id="man" hidden><p class="hint" id="mi"></p><input id="mc" type="text" maxlength="12" placeholder="M-Pesa code, e.g. SJK7ABC123" style="margin-top:10px"><button class="btn" id="mg" type="button">Confirm payment</button></div>
+<p class="err" id="we"></p><button class="btn alt" id="wb" type="button" hidden>Back</button></div>
+<div class="card okc" id="done" hidden><svg viewBox="0 0 80 80"><circle class="ring" cx="40" cy="40" r="30"/><path class="tk" d="M27 41l9 9 18-20"/></svg><h1>Gift sent</h1><p class="sub" id="dm"></p><button class="btn alt" id="again" type="button">Send another gift</button></div>
+</main>
+<script src="config.js"></script>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)},API=typeof CC_API==='string'?CC_API:'';
+var slug=new URLSearchParams(location.search).get('c')||(location.pathname.match(/\/g\/([^\/?#]+)/)||[])[1]||'';
+var IC=function(p){return '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>'};
+var ICONS={cake:IC('<path d="M4 20h16v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2z"/><path d="M4 16c2 1.2 4 1.2 5.3 0s3.4-1.2 5.4 0 3.4 1.2 5.3 0"/><path d="M12 12V8"/><path d="M12 5.5c.8-.9.8-1.6 0-2.5-.8.9-.8 1.6 0 2.5z"/>'),
+soda:IC('<path d="M6 8h12l-1.3 12a1 1 0 0 1-1 .9H8.3a1 1 0 0 1-1-.9z"/><path d="M5 8h14"/><path d="M13 8l1.5-5H17"/>'),
+coffee:IC('<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10.5h1.5a2.5 2.5 0 0 1 0 5H16.5"/><path d="M8 3v3M12 3v3"/>'),
+lunch:IC('<path d="M3 13h18a8 6 0 0 1-8 6h-2a8 6 0 0 1-8-6z"/><path d="M8 9c0-1.5 1-2 1-3.5M12 9c0-1.5 1-2 1-3.5M16 9c0-1.5 1-2 1-3.5"/>'),
+dinner:IC('<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3.5"/><path d="M2.5 4v6M5.5 4v6M4 10v10"/><path d="M21.5 4c-1.6 1.5-2 3.5-2 6h2v10"/>'),
+custom:IC('<path d="M12 3l2.1 5.6L20 11l-5.9 2.4L12 19l-2.1-5.6L4 11l5.9-2.4z"/><path d="M19 3v4M17 5h4"/>')};
+var D=null,sel=null,busy=false,payId=null;
+function show(id){['load','off','form','wait','done'].forEach(function(x){$(x).hidden=x!==id})}
+function amount(){if(!sel)return 0;if(sel==='custom'){var v=Math.floor(+$('am').value);return v>0?v:0}var p=D.presets.filter(function(x){return x.id===sel})[0];return p?p.amount:0}
+function refresh(){var a=amount();$('py').textContent='You pay KES '+(a?a.toLocaleString('en-KE'):0);$('go').disabled=!a||busy;$('cd').disabled=!a||busy}
+function draw(){var g=$('gr');g.textContent='';D.presets.concat([{id:'custom',label:'Custom gift'}]).forEach(function(p){
+ var b=document.createElement('button');b.type='button';b.className='g';b.setAttribute('aria-pressed','false');
+ b.innerHTML=ICONS[p.id]+'<b></b><small></small>';b.querySelector('b').textContent=p.label;b.querySelector('small').textContent=p.id==='custom'?'Choose your amount':'KES '+p.amount.toLocaleString('en-KE');
+ if(p.popular){var s=document.createElement('span');s.className='pop';s.textContent='Popular';b.appendChild(s)}
+ b.onclick=function(){sel=p.id;[].forEach.call(g.children,function(c){c.classList.remove('on');c.setAttribute('aria-pressed','false')});b.classList.add('on');b.setAttribute('aria-pressed','true');$('cu').classList.toggle('show',p.id==='custom');if(p.id==='custom')$('am').focus();$('er').textContent='';refresh()};g.appendChild(b)})}
+function api(path,o){return fetch(API+path,o).then(function(r){return r.json().catch(function(){return {}}).then(function(d){if(!r.ok){var e=new Error(d.error||'Something went wrong. Try again.');e.status=r.status;throw e}return d})})}
+function mark(s){var order=['p','n','v'],i=order.indexOf(s);[].forEach.call($('st').children,function(li,k){li.className=k<i?'done':k===i?'now':''})}
+function fail(m){busy=false;$('we').textContent=m;$('wb').hidden=false;$('wt').textContent='Gift not sent';mark('x');$('man').hidden=true}
+var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+async function poll(id){
+ var asked=false;
+ for(var i=0;i<60;i++){
+  if(i)await sleep(3000);
+  var st;try{st=await api('/api/pay/status?id='+encodeURIComponent(id))}catch(e){continue}
+  if(st.manual&&!asked){asked=true;$('man').hidden=false;$('mi').textContent='Pay '+st.manual.steps+'. Amount KES '+st.manual.amount+'. Then type the M-Pesa code you receive.';$('st').hidden=true;$('wt').textContent='Pay with M-Pesa';await new Promise(function(res){$('mg').onclick=async function(){try{await api('/api/gift/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,code:$('mc').value})});$('man').hidden=true;$('st').hidden=false;$('wt').textContent='Checking your payment';mark('v');$('we').textContent='Code received. Your gift shows once an admin confirms the payment.';return res(1)}catch(e){$('we').textContent=e.message}}});return 'manual'}
+  if(i===1)mark('n');
+  if(st.status==='paid')return 'paid';
+  if(st.status==='underpaid')throw new Error('The amount paid was less than required. Keep your M-Pesa message and contact support.');
+  if(st.status!=='pending'&&st.status!=='submitted'){var WHY={cancelled:'You cancelled the M-Pesa prompt. Nothing was charged.',insufficient:'Your M-Pesa balance was too low. Nothing was charged.',wrong_pin:'The M-Pesa PIN was wrong. Nothing was charged.'};throw new Error(WHY[st.reason]||'The payment was cancelled or failed. If you did pay, keep your M-Pesa message and contact support.')}
+ }
+ throw new Error('We have not had the M-Pesa confirmation yet. If you entered your PIN, the gift arrives once it is confirmed. Keep the M-Pesa SMS.');
+}
+async function send(card){
+ var er=$('er');er.textContent='';var a=amount(),ph=$('ph').value.replace(/\s/g,'');
+ if(!a)return er.textContent='Choose a gift first.';
+ if(sel==='custom'&&(a<D.min||a>D.max))return er.textContent='Enter an amount from KES '+D.min+' to KES '+D.max+'.';
+ if(!card&&!/^(07|01)\d{8}$/.test(ph))return er.textContent='Enter a Safaricom or Airtel number like 0712345678.';
+ var body={c:slug,item:sel,amount:a,phone:ph,method:card?'card':undefined,name:$('cm').checked?$('nm').value:'',message:$('cm').checked?$('ms').value:'',email:(card||$('rc').checked)?$('em').value:''};
+ if(card&&!/^\S+@\S+\.\S+$/.test(body.email)){$('rc').checked=true;$('rcb').classList.add('show');return er.textContent='Enter your email for the card payment.'}
+ busy=true;refresh();
+ try{
+  var d=await api('/api/gift/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(card&&d.url){location.href=d.url;return}
+  show('wait');$('wt').textContent='Check your phone';$('we').textContent='';$('wb').hidden=true;$('st').hidden=false;$('man').hidden=true;mark('p');
+  var res=await poll(d.id);busy=false;
+  if(res==='paid'){mark('v');await sleep(500);$('dm').textContent='Thank you for supporting '+D.title+'. You paid KES '+a.toLocaleString('en-KE')+'.';show('done')}
+  else{busy=false;$('wb').hidden=false}
+ }catch(e){if($('wait').hidden){busy=false;refresh();er.textContent=e.message}else fail(e.message)}
+}
+$('go').onclick=function(){send(false)};$('cd').onclick=function(){send(true)};
+$('am').oninput=refresh;
+$('cm').onchange=function(){$('cmb').classList.toggle('show',this.checked)};$('rc').onchange=function(){$('rcb').classList.toggle('show',this.checked)};
+$('wb').onclick=function(){busy=false;show('form');refresh()};$('again').onclick=function(){busy=false;sel=null;$('am').value='';$('ms').value='';draw();$('cu').classList.remove('show');show('form');refresh()};
+if(!slug){show('off')}else api('/api/gift/public?c='+encodeURIComponent(slug)).then(function(d){D=d;document.title='Send a gift to '+d.title+' | Comrade Connect';$('t').textContent='Show '+d.title+' some love';if(d.blurb){$('bl').textContent=d.blurb;$('bl').hidden=false}$('rcw').hidden=!d.receipts;$('cd').hidden=!d.card;draw();show('form');refresh()}).catch(function(){show('off')});
+})();
+</script></body></html>

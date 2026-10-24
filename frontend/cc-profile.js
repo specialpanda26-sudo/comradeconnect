@@ -91,7 +91,7 @@
     localStorage.setItem('cc_auth', JSON.stringify({ aid: d.aid, token: d.token }));
     if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
     ME.aid = d.aid; saveMe();
-    await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
+    await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {} try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
     await afterSignIn();
     say('Account created');
   }

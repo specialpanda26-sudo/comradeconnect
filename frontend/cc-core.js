@@ -215,7 +215,7 @@ async function ensureAccount() {
     saveAuth({ aid: d.aid, token: d.token });
     if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
     ME.aid = d.aid; saveMe();
-    await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
+    await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {} try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
     return { aid: d.aid, token: d.token };
   })();
   try { const a = await regBusy; setTimeout(() => { attributeRef(); syncVer(); }, 0); return a; } finally { regBusy = null; }
@@ -1641,7 +1641,7 @@ async function createAccount(kind, creds) {
   saveAuth({ aid: d.aid, token: d.token });
   if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
   ME.aid = d.aid; saveMe();
-  await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
+  await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {} try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
   setTimeout(() => { attributeRef(); syncVer(); refreshAll(); }, 0);
   return { aid: d.aid, token: d.token };
 }

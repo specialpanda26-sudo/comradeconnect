@@ -108,6 +108,12 @@
       call("/api/me/recovery-email").then(function (d) { if (d.has_email || !d.available || googleLinked()) return done(); ask(false, done); }).catch(function () { done(); });
     });
   };
+  window.ccAskEmailSignup = function () {
+    return new Promise(function (done) {
+      if (!auth()) return done();
+      call("/api/me/recovery-email").then(function (d) { if (d.has_email || !d.available || googleLinked()) return done(); ask(false, done); }).catch(function () { done(); });
+    });
+  };
   window.ccAskEmail = function () {                    // always works, even after "Not now" three times
     if (!auth()) return say('Sign in first.');
     call('/api/me/recovery-email').then(function (d) {

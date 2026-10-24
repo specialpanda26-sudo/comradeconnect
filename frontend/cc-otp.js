@@ -77,11 +77,13 @@ function enhance(real) {
     var b = o.btn; if (!b) return;
     b.classList.remove('cco-bspin', 'cco-bok'); if (cls) b.classList.add(cls); if (label) b.textContent = label;
   }
-  o.reset = function () {
+  o.reset = function (keep) {
+    var saved = real.value;
     root.classList.add('cco-nt'); requestAnimationFrame(function () { requestAnimationFrame(function () { root.classList.remove('cco-nt'); }); });
     root.classList.remove('cco-busy', 'cco-ok', 'cco-err'); o.state = 'idle';
     ic.innerHTML = KEY; setText('Verify <b>code</b>', 'Enter the ' + n + '-digit code we sent you.');
     boxes.forEach(function (x) { x.value = ''; x.readOnly = false; }); sync();
+    if (keep === true) real.value = saved;
     if (o.btn) { btnState(null); o.btn = null; }
   };
   function left(min) { return sleep(reduce ? 0 : Math.max(0, min - (Date.now() - o.t0))); }
@@ -99,7 +101,7 @@ function enhance(real) {
       o.state = 'ok'; root.classList.remove('cco-busy'); root.classList.add('cco-ok'); ic.innerHTML = SHIELD;
       setText('Verified <b>Successfully</b>', 'Your security code has been confirmed.'); btnState('cco-bok', 'Verified & Secured');
       return sleep(reduce ? 400 : 1300);
-    }).then(function () { setTimeout(function () { btnState(null); }, 80); setTimeout(function () { o.reset(); }, 1500); });   /* by then the page has moved on */
+    }).then(function () { setTimeout(function () { btnState(null); }, 80); setTimeout(function () { o.reset(true); }, 1500); });   /* by then the page has moved on */
   };
   o.fail = function () {      /* wrong code: the light turns red and the card shakes */
     if (o.state !== 'busy') return Promise.resolve();

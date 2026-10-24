@@ -287,7 +287,7 @@ function promptForgot(prefill, back) {
   const msg = (t, bad) => { const e = $('ccfg-e'); e.textContent = t || ''; e.classList.toggle('bad', !!(bad && t)); };
   const maskE = (v) => { const p = String(v).trim().split('@'); return p.length === 2 ? (p[0].length > 2 ? p[0].slice(0, 2) : p[0].slice(0, 1)) + '***@' + p[1] : v; };
   const okMail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v).trim());
-  let step = 1, timer = null, until = 0, forgotHandle = '';
+  let step = 1, timer = null, until = 0, forgotHandle = '', verifiedCode = '';
   const onKey = (ev) => { if (ev.key === 'Escape') pg.close(); };
   pg.close = () => { clearInterval(timer); document.removeEventListener('keydown', onKey); pg.remove(); };
   document.addEventListener('keydown', onKey);
@@ -334,10 +334,12 @@ function promptForgot(prefill, back) {
         await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value });
         toStep(2); wait();
       } else if (step === 2) {
-        const c = await rawPost('/api/auth/reset/confirm', { email: $('ccfg-m').value, code: $('ccfg-c').value, check: true });
-        forgotHandle = c.handle || ''; toStep(3);
+        const typed = String($('ccfg-c').value).replace(/\D/g, '');
+        const c = await rawPost('/api/auth/reset/confirm', { email: $('ccfg-m').value, code: typed, check: true });
+        verifiedCode = typed; forgotHandle = c.handle || ''; toStep(3);
       } else {
-        const d = await rawPost('/api/auth/reset/confirm', { email: $('ccfg-m').value, code: $('ccfg-c').value, password: $('ccfg-p').value });
+        if (verifiedCode.length !== 6) { ccBusy(b, false); toStep(2); return msg('Please type the 6-digit code again.', true); }
+        const d = await rawPost('/api/auth/reset/confirm', { email: $('ccfg-m').value, code: verifiedCode, password: $('ccfg-p').value });
         saveAuth({ aid: d.aid, token: d.token }); ME.aid = d.aid; saveMe();
         setTimeout(() => { syncVer(); refreshReferral(true); }, 0);
         pg.close(); const lk = document.getElementById('lk'); if (lk) lk.classList.remove('on');   // opened from the lock screen: let the person in

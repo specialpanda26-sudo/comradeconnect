@@ -3,11 +3,12 @@ import { feeFor } from './postrules.js';
 import { checkText } from './moderation.js';
 import { notify, notifySnippet } from './notifications.js';
 import { campusRow, campusQuery, CAMPUSES } from './campus.js';
+import { voiceOf, voiceCheck, stripMarkers } from './voice.js';
 
 // ---------- Feed ----------
 const CAT_OK = /^[A-Za-z0-9]{2,22}$/;
-const fmtPost = (r) => ({
-  _id: r.id, content: r.content, category: r.category, zone: r.zone || '', verified: !!r.verified, aid: r.aid,
+const fmtPost = (r, env) => ({
+  _id: r.id, content: voiceOf(env, r.content).text, audio: voiceOf(env, r.content).audio, category: r.category, zone: r.zone || '', verified: !!r.verified, aid: r.aid,
   campus: (CAMPUSES.find((c) => c.id === r.campus) || CAMPUSES[0]).name, likes: r.likes || 0, views: r.views || 0,
   boosted: !!(r.boosted_until && new Date(r.boosted_until) > new Date()),
   comments: (r.comments || []).sort((a, b) => a.created_at < b.created_at ? -1 : 1).map((c) => ({ text: c.text, createdAt: Date.parse(c.created_at) })),
@@ -27,17 +28,19 @@ export async function feedRoutes(req, env, url, ip) {
     if (zone && zone !== 'All') q += `&zone=eq.${encodeURIComponent(zone.slice(0, 30))}`;
     q += campusQuery(req);                                  // the campus you picked
     const r = await rows(await sb(env, q));
-    const posts = r.slice(0, limit).map(fmtPost).sort((a, b) => (b.boosted ? 1 : 0) - (a.boosted ? 1 : 0));
+    const posts = r.slice(0, limit).map((x) => fmtPost(x, env)).sort((a, b) => (b.boosted ? 1 : 0) - (a.boosted ? 1 : 0));
     return json(env, { posts, hasMore: r.length > limit });
   }
   // Create
   if (path === '/api/posts' && req.method === 'POST') {
     const b = await req.json().catch(() => ({}));
-    const aid = String(b.aid || '').slice(0, 64), content = String(b.content || '').trim().slice(0, 500);
+    const aid = String(b.aid || '').slice(0, 64), content = stripMarkers(String(b.content || '').trim()).slice(0, 500), vKey = b.voice ? String(b.voice) : null;
     const category = CAT_OK.test(String(b.category || '')) ? b.category : 'General';
     const zone = String(b.zone || '').slice(0, 30);
-    if (!aid || content.length < 2) return json(env, { error: 'Write something first' }, 400);
+    if (!aid || (content.length < 2 && !vKey)) return json(env, { error: 'Write something first' }, 400);
     { const blk = await standingBlock(env, aid); if (blk) return blk; }
+    if (vKey && !(await voiceCheck(env, vKey))) return json(env, { error: 'The voice note did not upload. Try again.' }, 400);
+    const stored = vKey ? (content + ' [vn:' + vKey + ']').trim() : content;
     if (category === 'Notices' && !isAdmin(req, env)) return json(env, { error: 'Only admins post notices' }, 403);
     if (hasContact(content)) return json(env, { error: 'Remove phone numbers, handles and links' }, 400);
     const ccMod = isAdmin(req, env) ? { action: 'allow' } : checkText(content, String(env.BLOCKED_NAMES || '').split(','));
@@ -50,12 +53,12 @@ export async function feedRoutes(req, env, url, ip) {
     const due = isAdmin(req, env) ? { fee: 0 } : await feeFor(env, content);
     if (due.fee > 0) {
       const u = await user(req, env, true); if (u instanceof Response) return u;       // paying needs a signed-in account
-      const [draft] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid: u.aid, content, category, zone, ip, hidden: true, fee_pending: due.fee, ...campusRow(req) }) }));
+      const [draft] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid: u.aid, content: stored, category, zone, ip, hidden: true, fee_pending: due.fee, ...campusRow(req) }) }));
       if (!draft) return json(env, { error: 'Could not save your post. Try again.' }, 500);
       return json(env, { payment_required: true, fee: due.fee, rule: due.rule, post_id: draft.id, error: `Posts about money cost KSh ${due.fee}. Pay to publish it.` }, 402);
     }
-    const [row] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid, content, category, zone, ip, verified: category === 'Notices', hidden: ccHold, ...campusRow(req) }) }));
-    return json(env, fmtPost({ ...row, comments: [] }), 201);
+    const [row] = await rows(await sb(env, 'posts', { method: 'POST', body: JSON.stringify({ aid, content: stored, category, zone, ip, verified: category === 'Notices', hidden: ccHold, ...campusRow(req) }) }));
+    return json(env, fmtPost({ ...row, comments: [] }, env), 201);
   }
   const m = path.match(/^\/api\/posts\/([0-9a-f-]{36})\/(like|view|comments|report)$/);
   if (m && req.method === 'POST') {
@@ -66,17 +69,17 @@ export async function feedRoutes(req, env, url, ip) {
     if (!post) return json(env, { error: 'Not found' }, 404);
     if (act === 'view') {
       const [u] = await rows(await sb(env, 'rpc/inc_post', { method: 'POST', body: JSON.stringify({ p: id, col: 'views' }) }));
-      return json(env, fmtPost({ ...post, views: u?.views ?? post.views }));
+      return json(env, fmtPost({ ...post, views: u?.views ?? post.views }, env));
     }
     if (!aid) return json(env, { error: 'Missing account' }, 400);
     if (act === 'comments') { const blk = await standingBlock(env, aid); if (blk) return blk; }
     if (act === 'like') {
       const ins = await rows(await sb(env, 'post_likes', { method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates,return=representation' }, body: JSON.stringify({ post_id: id, aid }) }));
-      if (!ins.length) return json(env, fmtPost(post));                        // already liked
+      if (!ins.length) return json(env, fmtPost(post, env));                        // already liked
       const [u] = await rows(await sb(env, 'rpc/inc_post', { method: 'POST', body: JSON.stringify({ p: id, col: 'likes' }) }));
       const nl = u?.likes ?? post.likes + 1;
-      if (post.aid && post.aid !== aid && [10, 25, 50, 100, 250, 500].includes(nl)) await notify(env, post.aid, 'like_milestone', 'Your story reached ' + nl + ' likes', notifySnippet(post.content), 'post', id);
-      return json(env, fmtPost({ ...post, likes: nl }));
+      if (post.aid && post.aid !== aid && [10, 25, 50, 100, 250, 500].includes(nl)) await notify(env, post.aid, 'like_milestone', 'Your story reached ' + nl + ' likes', notifySnippet(voiceOf(env, post.content).text || 'Voice note'), 'post', id);
+      return json(env, fmtPost({ ...post, likes: nl }, env));
     }
     if (act === 'comments') {
       const text = String(b.text || '').trim().slice(0, 200);
@@ -88,7 +91,7 @@ export async function feedRoutes(req, env, url, ip) {
       if (recent.length >= 30) return json(env, { error: 'Too many comments. Try again later.' }, 429);
       const [c] = await rows(await sb(env, 'comments', { method: 'POST', body: JSON.stringify({ post_id: id, aid, text }) }));
       if (post.aid && post.aid !== aid) await notify(env, post.aid, 'comment', 'New comment on your story', '\u201c' + notifySnippet(text) + '\u201d', 'post', id);
-      return json(env, fmtPost({ ...post, comments: [...(post.comments || []), c || { text, created_at: new Date().toISOString() }] }));
+      return json(env, fmtPost({ ...post, comments: [...(post.comments || []), c || { text, created_at: new Date().toISOString() }] }, env));
     }
     if (act === 'report') {
       await sb(env, 'reports', { method: 'POST', body: JSON.stringify({ post_id: id, aid, reason: String(b.reason || '').slice(0, 200) }) });

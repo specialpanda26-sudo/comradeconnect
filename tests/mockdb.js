@@ -52,6 +52,7 @@ SCHEMA.notif_state = T(['aid']);
 SCHEMA.media_comments = T(['id'], { defaults: { hidden: false } });
 SCHEMA.story_views = T(['media_id', 'viewer_aid']);
 SCHEMA.spots = T(['id'], { defaults: { hidden: false, likes: 0, campus: 'kirinyaga' } });
+SCHEMA.papers = T(['id'], { defaults: { hidden: false, likes: 0, campus: 'kirinyaga' } }); SCHEMA.paper_likes = T(['paper_id', 'aid']);
 SCHEMA.lost_found = T(['id'], { defaults: { hidden: false, status: 'open', campus: 'kirinyaga' } });
 SCHEMA.spot_likes = T(['spot_id', 'aid']);
 SCHEMA.gift_links = T(['id'], { defaults: { active: true, blurb: '' }, uniques: [nn('aid'), (r) => (r.slug ? String(r.slug).toLowerCase() : null)] });

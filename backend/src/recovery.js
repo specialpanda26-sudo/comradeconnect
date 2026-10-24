@@ -2,7 +2,7 @@
 // We never keep the address, only a keyed hash. A 6-digit code proves the person owns it before it is saved.
 import { json, err, sb, rows, post, patch, enc, H, tsEqual, throttle, tooMany, ahead, user } from './lib.js';
 import { mailReady, sendMail } from './mail.js';
-import { CODE_MINUTES, CODE_TRIES } from './trust.js';
+import { CODE_MINUTES, CODE_TRIES, markUsed, USED_MSG } from './trust.js';
 
 export function normAnyEmail(v) {
   const raw = String(v || '').trim().toLowerCase();
@@ -20,8 +20,8 @@ export async function recoveryRoutes(req, env, url, ip) {
   const u = await user(req, env, m !== 'GET'); if (u instanceof Response) return u;
 
   if (path === '/api/me/recovery-email' && m === 'GET') {
-    const [v] = await rows(await sb(env, `recovery_email_codes?select=expires_at&aid=eq.${enc(u.aid)}`));
-    return json(env, { available: mailReady(env), has_email: !!u.recovery_email_hash, code_pending: !!(v && Date.parse(v.expires_at) > Date.now()) });
+    const [v] = await rows(await sb(env, `recovery_email_codes?select=*&aid=eq.${enc(u.aid)}`));
+    return json(env, { available: mailReady(env), has_email: !!u.recovery_email_hash, code_pending: !!(v && !v.used_at && Date.parse(v.expires_at) > Date.now()), code_used: !!(v && v.used_at) });
   }
   if (path === '/api/me/recovery-email/start' && m === 'POST') {
     if (!mailReady(env)) return err(env, 'Email is not switched on yet', 503);
@@ -31,6 +31,7 @@ export async function recoveryRoutes(req, env, url, ip) {
     const [cur] = await rows(await sb(env, `recovery_email_codes?select=sent_at&aid=eq.${enc(u.aid)}`));
     if (cur && Date.now() - Date.parse(cur.sent_at) < 60e3) return err(env, 'Wait a minute before asking for another code', 429);
     const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e6).padStart(6, '0');
+    if (cur) await sb(env, `recovery_email_codes?aid=eq.${enc(u.aid)}`, { method: 'DELETE' });
     const saved = await post(env, 'recovery_email_codes', {
       aid: u.aid, email_hash: await H(env, 'recemail:' + e.canon), code_hash: await H(env, `reccode:${u.aid}:${code}`),
       expires_at: ahead(CODE_MINUTES * 60e3), attempts: 0, sent_at: new Date().toISOString(),
@@ -48,14 +49,15 @@ export async function recoveryRoutes(req, env, url, ip) {
     if (code.length !== 6) return err(env, 'The code has 6 digits');
     const [v] = await rows(await sb(env, `recovery_email_codes?aid=eq.${enc(u.aid)}`));
     if (!v) return err(env, 'Ask for a code first', 404);
-    if (Date.parse(v.expires_at) < Date.now()) { await sb(env, `recovery_email_codes?aid=eq.${enc(u.aid)}`, { method: 'DELETE' }); return err(env, 'That code expired. Ask for a new one.', 410); }
+    if (!v.used_at && Date.parse(v.expires_at) < Date.now()) { await sb(env, `recovery_email_codes?aid=eq.${enc(u.aid)}`, { method: 'DELETE' }); return err(env, 'That code expired. Ask for a new one.', 410); }
     if (v.attempts >= CODE_TRIES) return err(env, 'Too many wrong codes. Ask for a new one.', 429);
     const took = await rows(await patch(env, `recovery_email_codes?aid=eq.${enc(u.aid)}&attempts=eq.${v.attempts}`, { attempts: v.attempts + 1 }));
     if (!took.length) return err(env, 'Try again in a moment', 429);
     if (!tsEqual(v.code_hash, await H(env, `reccode:${u.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
+    if (v.used_at) return err(env, USED_MSG, 410);
     const res = await patch(env, `profiles?aid=eq.${enc(u.aid)}`, { recovery_email_hash: v.email_hash });
     if (!res.ok) return err(env, 'Could not save. Run supabase/recovery-email.sql in Supabase first.', 500);
-    await sb(env, `recovery_email_codes?aid=eq.${enc(u.aid)}`, { method: 'DELETE' });
+    await markUsed(env, 'recovery_email_codes', u.aid);
     return json(env, { ok: true, has_email: true });
   }
   if (path === '/api/me/recovery-email/remove' && m === 'POST') {

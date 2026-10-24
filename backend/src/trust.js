@@ -29,6 +29,12 @@ export function normStudentEmail(env, v) {
   const canonDomain = broad ? domain.split('.').slice(-(n + 1)).join('.') : dom;
   return { email: raw, canon: local + '@' + canonDomain };
 }
+// A code that worked is kept (used_at) so asking again says "already used". If used_at does not exist yet, fall back to deleting it.
+export async function markUsed(env, table, aid) {
+  const r = await patch(env, `${table}?aid=eq.${enc(aid)}`, { used_at: new Date().toISOString() });
+  if (!r.ok) await sb(env, `${table}?aid=eq.${enc(aid)}`, { method: 'DELETE' });
+}
+export const USED_MSG = 'This code has already been used. If you need to, ask for a new one.';
 const maskEmail = (e) => { const [l, d] = e.split('@'); return (l.length > 2 ? l.slice(0, 2) : l.slice(0, 1)) + '***@' + d; };
 
 const GATEWAYS = {
@@ -88,8 +94,8 @@ export async function trustRoutes(req, env, url, ip) {
 
   if (path === '/api/verify/email/status' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;
-    const [v] = await rows(await sb(env, `email_verifications?select=expires_at&aid=eq.${enc(u.aid)}`));
-    return json(env, { student_verified: !!u.student_verified, since: u.student_verified_at || null, available: mailReady(env), domains: studentDomains(env), code_pending: !!(v && Date.parse(v.expires_at) > Date.now()) });
+    const [v] = await rows(await sb(env, `email_verifications?select=*&aid=eq.${enc(u.aid)}`));
+    return json(env, { student_verified: !!u.student_verified, since: u.student_verified_at || null, available: mailReady(env), domains: studentDomains(env), code_pending: !!(v && !v.used_at && Date.parse(v.expires_at) > Date.now()), code_used: !!(v && v.used_at) });
   }
 
   // Step 1: send a 6-digit code. We store only a keyed hash of the email and of the code, never the address itself.
@@ -103,6 +109,7 @@ export async function trustRoutes(req, env, url, ip) {
     const [cur] = await rows(await sb(env, `email_verifications?select=sent_at&aid=eq.${enc(u.aid)}`));
     if (cur && Date.now() - Date.parse(cur.sent_at) < 60e3) return err(env, 'Wait a minute before asking for another code', 429);
     const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e6).padStart(6, '0');
+    if (cur) await sb(env, `email_verifications?aid=eq.${enc(u.aid)}`, { method: 'DELETE' });   // a fresh code replaces the old row, including a used one
     const saved = await post(env, 'email_verifications', {
       aid: u.aid, email_hash: await H(env, 'stuemail:' + e.canon), code_hash: await H(env, `stucode:${u.aid}:${code}`),
       expires_at: ahead(CODE_MINUTES * 60e3), attempts: 0, sent_at: new Date().toISOString(),
@@ -123,15 +130,16 @@ export async function trustRoutes(req, env, url, ip) {
     if (code.length !== 6) return err(env, 'The code has 6 digits');
     const [v] = await rows(await sb(env, `email_verifications?aid=eq.${enc(u.aid)}`));
     if (!v) return err(env, 'Ask for a code first', 404);
-    if (Date.parse(v.expires_at) < Date.now()) { await sb(env, `email_verifications?aid=eq.${enc(u.aid)}`, { method: 'DELETE' }); return err(env, 'That code expired. Ask for a new one.', 410); }
+    if (!v.used_at && Date.parse(v.expires_at) < Date.now()) { await sb(env, `email_verifications?aid=eq.${enc(u.aid)}`, { method: 'DELETE' }); return err(env, 'That code expired. Ask for a new one.', 410); }
     if (v.attempts >= CODE_TRIES) return err(env, 'Too many wrong codes. Ask for a new one.', 429);
     const took = await rows(await patch(env, `email_verifications?aid=eq.${enc(u.aid)}&attempts=eq.${v.attempts}`, { attempts: v.attempts + 1 }));
     if (!took.length) return err(env, 'Try again in a moment', 429);
     if (!tsEqual(v.code_hash, await H(env, `stucode:${u.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
+    if (v.used_at) return err(env, USED_MSG, 410);
     const res = await patch(env, `profiles?aid=eq.${enc(u.aid)}`, { student_verified: true, student_verified_at: new Date().toISOString(), student_email_hash: v.email_hash });
     if (res.status === 409) return err(env, 'That student email is already linked to another account', 409);
     if (!res.ok) return err(env, 'Could not save. Run the newest SQL (end of supabase/schema.sql) in Supabase first.', 500);
-    await sb(env, `email_verifications?aid=eq.${enc(u.aid)}`, { method: 'DELETE' });
+    await markUsed(env, 'email_verifications', u.aid);
     return json(env, { ok: true, student_verified: true });
   }
 

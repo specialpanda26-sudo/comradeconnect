@@ -3,7 +3,7 @@
 // Replies never reveal whether an account or email exists. Needs the mail settings (BREVO_API_KEY or RESEND_API_KEY, and MAIL_FROM).
 import { json, err, sb, rows, one, post, patch, enc, str, H, tsEqual, randHex, throttle, tooMany, ahead, hashPassword } from './lib.js';
 import { mailReady, sendMail } from './mail.js';
-import { normStudentEmail, studentDomains, CODE_MINUTES, CODE_TRIES } from './trust.js';
+import { normStudentEmail, studentDomains, CODE_MINUTES, CODE_TRIES, markUsed, USED_MSG } from './trust.js';
 import { passwordProblem } from './passwords.js';
 import { normAnyEmail } from './recovery.js';
 
@@ -41,6 +41,7 @@ export async function resetRoutes(req, env, url, ip) {
       const [cur] = await rows(await sb(env, `password_resets?select=sent_at&aid=eq.${enc(p.aid)}`));
       if (!cur || Date.now() - Date.parse(cur.sent_at) >= 60e3) {
         const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e6).padStart(6, '0');
+        if (cur) await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' });
         const saved = await post(env, 'password_resets', {
           aid: p.aid, code_hash: await H(env, `pwcode:${p.aid}:${code}`), expires_at: ahead(CODE_MINUTES * 60e3), attempts: 0, sent_at: new Date().toISOString(),
         }, 'resolution=merge-duplicates,return=representation');
@@ -66,16 +67,17 @@ export async function resetRoutes(req, env, url, ip) {
     if (!p || p.banned) return err(env, BAD, 400);
     const [v] = await rows(await sb(env, `password_resets?aid=eq.${enc(p.aid)}`));
     if (!v) return err(env, BAD, 400);
-    if (Date.parse(v.expires_at) < Date.now()) { await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' }); return err(env, BAD, 400); }
+    if (!v.used_at && Date.parse(v.expires_at) < Date.now()) { await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' }); return err(env, BAD, 400); }
     if (v.attempts >= CODE_TRIES) return err(env, 'Too many wrong codes. Ask for a new one.', 429);
     const took = await rows(await patch(env, `password_resets?aid=eq.${enc(p.aid)}&attempts=eq.${v.attempts}`, { attempts: v.attempts + 1 }));
     if (!took.length) return err(env, 'Try again in a moment', 429);
     if (!tsEqual(v.code_hash, await H(env, `pwcode:${p.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
+    if (v.used_at) return err(env, USED_MSG, 410);   // only someone who typed the real code learns it was used
     const weak = await passwordProblem(env, pw, p.handle); if (weak) return err(env, weak);
     const token = randHex(24);
     const res = await patch(env, `profiles?aid=eq.${enc(p.aid)}`, { recovery_hash: await hashPassword(pw), token_hash: await H(env, 'tok:' + token) });   // a new token cuts off any other phone
     if (!res.ok) return err(env, 'Could not save the new password', 500);
-    await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' });
+    await markUsed(env, 'password_resets', p.aid);
     return json(env, { ok: true, aid: p.aid, token });
   }
   return null;

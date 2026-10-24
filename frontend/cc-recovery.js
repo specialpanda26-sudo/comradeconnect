@@ -17,7 +17,7 @@ function view(st) {
   show('need', false); show('off', false); show('done', false); show('s1', false); show('s2', false);
   if (st.has_email) return show('done', true);
   if (!st.available) return show('off', true);
-  if (st.code_pending) { $('sent').textContent = 'A code was sent to your email. It works for 15 minutes.'; show('s2', true); } else show('s1', true);
+  if (st.code_pending) { $('sent').textContent = 'A code was sent to your email. It works for 15 minutes.'; show('s2', true); } else { show('s1', true); if (st.code_used) say('Your last code was already used. Ask for a new one if you need it.'); }
 }
 function load() {
   if (!API) return say('The app is not set up here yet.');
@@ -36,6 +36,10 @@ $('ok').addEventListener('click', function () {
   var b = $('ok'); say(''); busy(b, true, 'Checking...');
   call('/api/me/recovery-email/confirm', { code: $('cd').value }).then(function () { say('Saved. You can now reset your password by email.'); load(); })
     .catch(function (e) { say(e.message); }).then(function () { busy(b, false, 'Confirm'); });
+});
+$('have').addEventListener('click', function (ev) {   /* page refreshed after the email arrived: type the same code, no new one needed */
+  ev.preventDefault(); say(''); show('s1', false); show('s2', true);
+  $('sent').textContent = 'Type the 6-digit code from your email. You do not need to ask for a new one. If it was already used or has expired, we will tell you.'; $('cd').focus();
 });
 $('again').addEventListener('click', function (ev) { ev.preventDefault(); say(''); show('s2', false); show('s1', true); });
 $('unlink').addEventListener('click', function () {

@@ -230,12 +230,17 @@ function promptForgot(who) {
     + '<div id="ccfg-2" style="display:none"><div class="fld"><input id="ccfg-c" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" aria-label="6-digit code"></div>'
     + '<div class="fld"><input id="ccfg-p" type="password" placeholder="New password" autocomplete="new-password" aria-label="New password"></div></div>'
     + '<p class="sub" id="ccfg-e" style="min-height:18px"></p>'
-    + '<div class="two"><button class="btn g" id="ccfg-x">Cancel</button><button class="btn p" id="ccfg-go">Send code</button></div>');
+    + '<p class="sub" style="text-align:center;margin:0 0 8px"><a href="#" id="ccfg-have">I already have a code</a></p><div class="two"><button class="btn g" id="ccfg-x">Cancel</button><button class="btn p" id="ccfg-go">Send code</button></div>');
   m.id = 'ccfgt';
   const $ = (i) => m.querySelector('#' + i), msg = (t, bad) => { $('ccfg-e').textContent = t; $('ccfg-e').style.color = bad ? 'var(--bad,#FF6B6B)' : ''; };
   $('ccfg-w').value = String(who || '').trim();
   $('ccfg-x').onclick = () => m.close();
   let step = 1;
+  $('ccfg-have').onclick = (ev) => {   // got the email, then the page refreshed: skip asking for a new code
+    ev.preventDefault(); if (!$('ccfg-w').value.trim()) return msg('Type your username or account ID first, then your code.', true);
+    step = 2; $('ccfg-m').parentNode.style.display = 'none'; $('ccfg-2').style.display = 'block'; $('ccfg-go').textContent = 'Change password'; $('ccfg-have').parentNode.style.display = 'none';
+    msg('Type the 6-digit code from your email and a new password. A used or expired code will be refused.'); $('ccfg-c').focus();
+  };
   $('ccfg-go').onclick = async () => {
     const b = $('ccfg-go'); b.disabled = true; msg('');
     try {

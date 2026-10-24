@@ -6,7 +6,7 @@
   if (window.__ccNav) return; window.__ccNav = 1;
   var T0 = Date.now();
   var CLOSE_SEL = '[aria-label*="lose" i],[aria-label*="ismiss" i],[data-close],[data-dismiss],.x,.close,.cls,.clx,.xbtn,.cc-x';
-  var SKIP = 'nav,header,#tb,#loader,#lk,#ccfp,.toast,#toast,.bg';
+  var SKIP = 'nav,header,#tb,#loader,#lk,#ccfp,.toast,#toast,.bg,#rmedia,#ccl-mini';   // the live video is never a stuck popup
   var STATIC = new WeakSet(); try { [].forEach.call(document.querySelectorAll('body *'), function (e) { STATIC.add(e); }); } catch (e) {}
 
   function vis(el) {
@@ -100,7 +100,7 @@
     var A = (cap.Plugins && cap.Plugins.App) || (cap.registerPlugin ? cap.registerPlugin('App') : null);
     if (A && A.addListener) A.addListener('backButton', function () {
       var s = snap();                                                              // taken before the page's own back handler changes anything
-      setTimeout(function () { if (!changed(s, snap())) act(s, A); setTimeout(unloader, 600); }, 120);
+      setTimeout(function () { if (!changed(s, snap()) && Date.now() - (window.__cclBackAt || 0) > 800) act(s, A); setTimeout(unloader, 600); }, 120);
     });
   }
 

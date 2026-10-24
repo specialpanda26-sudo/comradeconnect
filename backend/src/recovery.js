@@ -55,6 +55,8 @@ export async function recoveryRoutes(req, env, url, ip) {
     if (!took.length) return err(env, 'Try again in a moment', 429);
     if (!tsEqual(v.code_hash, await H(env, `reccode:${u.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
     if (v.used_at) return err(env, USED_MSG, 410);
+    const [taken] = await rows(await sb(env, `profiles?select=aid&recovery_email_hash=eq.${enc(v.email_hash)}&aid=neq.${enc(u.aid)}&limit=1`));
+    if (taken) return err(env, 'That email is already saved on another account. Use a different email.', 409);   // one email, one account, so a reset by email is never ambiguous
     const res = await patch(env, `profiles?aid=eq.${enc(u.aid)}`, { recovery_email_hash: v.email_hash });
     if (!res.ok) return err(env, 'Could not save. Run supabase/recovery-email.sql in Supabase first.', 500);
     await markUsed(env, 'recovery_email_codes', u.aid);

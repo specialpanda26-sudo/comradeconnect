@@ -73,17 +73,17 @@
   function km(a,b,c,d){var r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)*Math.sin(y/2);return 12742*Math.asin(Math.sqrt(h))}
   var PIN='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
   var st=el('style');
-  st.textContent='#ccu{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,18,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}'
-  +'#ccu .cd{width:100%;max-width:420px;max-height:88vh;display:flex;flex-direction:column;padding:20px;border-radius:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);box-shadow:0 20px 60px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);color:#fff;font-family:inherit;position:relative}'
-  +'#ccu h2{margin:0 0 4px;font-size:20px;padding-right:34px}#ccu p{margin:0 0 12px;opacity:.7;font-size:13px;line-height:1.5}'
-  +'#ccu input{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:15px;outline:none;margin-bottom:10px}'
-  +'#ccu .ls{overflow:auto;display:flex;flex-direction:column;gap:6px;min-height:120px}'
-  +'#ccu .it{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;font-size:14px;cursor:pointer;font-family:inherit}'
-  +'#ccu .it small{opacity:.65;font-size:12px;white-space:nowrap}#ccu .it.on{border-color:rgba(168,220,231,.8);background:rgba(168,220,231,.16)}#ccu .it:active{background:rgba(255,255,255,.16)}'
-  +'#ccu .hd{margin:8px 2px 2px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;opacity:.6}'
-  +'#ccu .loc{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 14px;margin-bottom:10px;border-radius:14px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}'
-  +'#ccu .msg{margin:0 0 8px;font-size:12px;opacity:.8}'
-  +'#ccu .x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:18px;cursor:pointer}'
+  st.textContent='#ccuniv{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,18,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}'
+  +'#ccuniv .cd{width:100%;max-width:420px;max-height:88vh;display:flex;flex-direction:column;padding:20px;border-radius:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);box-shadow:0 20px 60px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);color:#fff;font-family:inherit;position:relative}'
+  +'#ccuniv h2{margin:0 0 4px;font-size:20px;padding-right:34px}#ccuniv p{margin:0 0 12px;opacity:.7;font-size:13px;line-height:1.5}'
+  +'#ccuniv input{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:15px;outline:none;margin-bottom:10px}'
+  +'#ccuniv .ls{overflow:auto;display:flex;flex-direction:column;gap:6px;min-height:120px}'
+  +'#ccuniv .it{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;font-size:14px;cursor:pointer;font-family:inherit}'
+  +'#ccuniv .it small{opacity:.65;font-size:12px;white-space:nowrap}#ccuniv .it.on{border-color:rgba(168,220,231,.8);background:rgba(168,220,231,.16)}#ccuniv .it:active{background:rgba(255,255,255,.16)}'
+  +'#ccuniv .hd{margin:8px 2px 2px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;opacity:.6}'
+  +'#ccuniv .loc{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 14px;margin-bottom:10px;border-radius:14px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}'
+  +'#ccuniv .msg{margin:0 0 8px;font-size:12px;opacity:.8}'
+  +'#ccuniv .x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:18px;cursor:pointer}'
   +'.ccc-chip{display:inline-flex;align-items:center;gap:8px;max-width:100%;margin:0 0 8px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:inherit;font:500 13px Poppins,sans-serif;cursor:pointer}'
   +'.ccc-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ccc-chip u{text-decoration:none;opacity:.7}';
   document.head.appendChild(st);
@@ -94,7 +94,7 @@
   }
   function show(list,must){
     if(open)return;open=true;
-    var o=el('div');o.id='ccu';o.setAttribute('role','dialog');o.setAttribute('aria-label','Choose your university');
+    var o=el('div');o.id='ccuniv';o.setAttribute('role','dialog');o.setAttribute('aria-label','Choose your university');
     var c=el('div','cd');
     function close(){o.remove();open=false}
     if(!must){var x=el('button','x','\u00d7');x.type='button';x.setAttribute('aria-label','Close');x.onclick=close;c.appendChild(x)}
@@ -142,7 +142,7 @@
       if(!(d&&d.campuses&&d.campuses.length))return;
       var have={};ALL.forEach(function(u){have[u.id]=1});
       var add=d.campuses.filter(function(u){return !have[u.id]});
-      if(add.length){add.forEach(function(u){ALL.splice(ALL.length-1,0,u)});var o=document.getElementById('ccu');if(o){o.remove();open=false;show(ALL,must)}}
+      if(add.length){add.forEach(function(u){ALL.splice(ALL.length-1,0,u)});var o=document.getElementById('ccuniv');if(o){o.remove();open=false;show(ALL,must)}}
     }).catch(function(){});
   }
   window.ccChangeCampus=function(){go(false)};

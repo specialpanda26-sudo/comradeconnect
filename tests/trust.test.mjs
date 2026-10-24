@@ -70,7 +70,7 @@ test('student email: full flow, anonymous (no plaintext email stored), one mailb
   const prof = w.row('profiles', (p) => p.aid === a.aid);
   assert.equal(prof.student_verified, true);
   assert.ok(prof.student_email_hash && !prof.student_email_hash.includes('jane'));
-  assert.equal(w.db.rows('email_verifications').length, 0);
+  assert.ok(w.db.rows('email_verifications').every((v) => v.used_at));   // a used code is kept, marked used, so it cannot be replayed
   assert.equal((await w.call('GET', '/api/me', { as: a })).data.student_verified, true);
   assert.equal((await w.call('GET', '/api/verify/email/status', { as: a })).data.student_verified, true);
   // the same mailbox (even with a +tag) cannot unlock a second account

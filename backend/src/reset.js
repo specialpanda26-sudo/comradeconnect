@@ -1,21 +1,22 @@
-// Forgot password: a 6-digit code is emailed to the student email the person verified earlier (Me > Verification).
-// We never store that address, only a keyed hash, so the person types it again and we compare hashes.
-// Replies never reveal whether an account or email exists. Needs the mail settings (BREVO_API_KEY or RESEND_API_KEY, and MAIL_FROM).
-import { json, err, sb, rows, one, post, patch, enc, str, H, tsEqual, randHex, throttle, tooMany, ahead, hashPassword } from './lib.js';
+// Forgot password, email only. The person types the email saved on their account (Me > Verification, or the
+// student email they verified). A 6-digit code is emailed to it, then they choose a new password.
+// We never store the address, only a keyed hash, so we hash what was typed and look the account up by that hash.
+// Replies never reveal whether an account exists. Needs the mail settings (BREVO_API_KEY or RESEND_API_KEY, and MAIL_FROM).
+import { json, err, sb, rows, one, post, patch, enc, H, tsEqual, randHex, throttle, tooMany, ahead, hashPassword } from './lib.js';
 import { mailReady, sendMail } from './mail.js';
 import { normStudentEmail, studentDomains, CODE_MINUTES, CODE_TRIES, markUsed, USED_MSG } from './trust.js';
 import { passwordProblem } from './passwords.js';
 import { normAnyEmail } from './recovery.js';
 
-const OK_MSG = 'If that username and student email match an account, a code is on its way.';
+const OK_MSG = 'If that email is saved on an account, a code is on its way. Check your inbox and spam folder.';
 
-async function findProfile(env, who) {
-  let p = who ? await one(await sb(env, `profiles?aid=eq.${enc(who)}`)) : null;
-  if (!p && /^[A-Za-z0-9_]{3,20}$/.test(who)) {
-    p = await one(await sb(env, `profiles?handle=eq.${enc(who)}`));
-    if (!p) { try { const c = await one(await sb(env, `profiles?handle=ilike.${enc(who.replace(/_/g, '\\_'))}`)); if (c && String(c.handle).toLowerCase() === who.toLowerCase()) p = c; } catch (e) { /* no case-insensitive match */ } }
-  }
-  return p;
+// The account whose saved email (recovery email first, then verified student email) matches what was typed.
+async function findByEmail(env, raw) {
+  const e = normAnyEmail(raw); if (!e) return null;
+  let p = await one(await sb(env, `profiles?recovery_email_hash=eq.${enc(await H(env, 'recemail:' + e.canon))}&order=created_at.desc&limit=1`));
+  const se = normStudentEmail(env, raw);
+  if (!p && se) p = await one(await sb(env, `profiles?student_email_hash=eq.${enc(await H(env, 'stuemail:' + se.canon))}&limit=1`));
+  return p ? { p, e } : { p: null, e };
 }
 
 export async function resetRoutes(req, env, url, ip) {
@@ -28,16 +29,11 @@ export async function resetRoutes(req, env, url, ip) {
   // Step 1: ask for a code.
   if (path === '/api/auth/reset/start' && m === 'POST') {
     if (!mailReady(env)) return err(env, 'Password reset by email is not switched on yet', 503);
-    const b = await body(), who = str(b.who || b.handle || b.aid, 64);
-    if (!who) return err(env, 'Enter your username or account ID');
-    if (!(await throttle(env, ip, 'pwreset', who.toLowerCase(), 5, 15))) return tooMany(env);
-    const e = normAnyEmail(b.email);
-    if (!e) return err(env, 'Enter the email address you saved on your account');
-    const se = normStudentEmail(env, b.email);
-    const p = await findProfile(env, who);
-    const match = !!p && !p.banned && ((!!p.recovery_email_hash && tsEqual(p.recovery_email_hash, await H(env, 'recemail:' + e.canon)))
-      || (!!se && !!p.student_email_hash && tsEqual(p.student_email_hash, await H(env, 'stuemail:' + se.canon))));
-    if (match) {
+    const b = await body(), e0 = normAnyEmail(b.email);
+    if (!e0) return err(env, 'Enter the email address saved on your account');
+    if (!(await throttle(env, ip, 'pwreset', e0.canon, 5, 15))) return tooMany(env);
+    const { p, e } = await findByEmail(env, b.email);
+    if (p && !p.banned) {
       const [cur] = await rows(await sb(env, `password_resets?select=sent_at&aid=eq.${enc(p.aid)}`));
       if (!cur || Date.now() - Date.parse(cur.sent_at) >= 60e3) {
         const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e6).padStart(6, '0');
@@ -56,14 +52,14 @@ export async function resetRoutes(req, env, url, ip) {
     return json(env, { ok: true, message: OK_MSG, expires_minutes: CODE_MINUTES });
   }
 
-  // Step 2: code + new password. Wrong guesses are counted with an optimistic lock so parallel guesses cannot beat the limit.
+  // Step 2: email + code + new password. Wrong guesses are counted with an optimistic lock so parallel guesses cannot beat the limit.
   if (path === '/api/auth/reset/confirm' && m === 'POST') {
-    const b = await body(), who = str(b.who || b.handle || b.aid, 64), code = String(b.code || '').replace(/\D/g, ''), pw = String(b.password || '').slice(0, 100);
-    if (!who) return err(env, 'Enter your username or account ID');
-    if (!(await throttle(env, ip, 'pwreset2', who.toLowerCase(), 10, 30))) return tooMany(env);
+    const b = await body(), e0 = normAnyEmail(b.email), code = String(b.code || '').replace(/\D/g, ''), pw = String(b.password || '').slice(0, 100);
+    if (!e0) return err(env, 'Enter the email address saved on your account');
+    if (!(await throttle(env, ip, 'pwreset2', e0.canon, 10, 30))) return tooMany(env);
     if (code.length !== 6) return err(env, 'The code has 6 digits');
     const BAD = 'Wrong code, or it expired. Ask for a new one.';
-    const p = await findProfile(env, who);
+    const { p } = await findByEmail(env, b.email);
     if (!p || p.banned) return err(env, BAD, 400);
     const [v] = await rows(await sb(env, `password_resets?aid=eq.${enc(p.aid)}`));
     if (!v) return err(env, BAD, 400);

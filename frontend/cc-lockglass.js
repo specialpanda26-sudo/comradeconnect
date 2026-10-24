@@ -22,6 +22,7 @@
   fld.appendChild(eye);
 
   var fg = document.createElement('a'); fg.className = 'lkforgot'; fg.href = 'contact.html'; fg.textContent = 'Forgot your Password?';
+  fg.onclick = function (e) { if (window.CC && window.CC.forgot) { e.preventDefault(); window.CC.forgot(); } };   // email-only reset; the page falls back to Contact if the app is not ready
   fld.insertAdjacentElement('afterend', fg);
 
   var act = document.createElement('div'); act.className = 'lkact';

@@ -221,38 +221,38 @@ function promptRestore(msg, title) {
     catch (e) { m.querySelector('#ccrst-e').textContent = e.message; b.disabled = false; }
   };
 }
-// Forgot password: a 6-digit code goes to the student email you verified, then you choose a new password.
-function promptForgot(who) {
+// Forgot password: only the email saved on the account is asked. A 6-digit code goes to it, then the person picks a new password.
+function promptForgot(prefill) {
   if (document.getElementById('ccfgt')) return;
-  const m = sheet('<h3>Forgot password</h3><p class="sub" style="margin-top:6px">We email a 6-digit code to the recovery email you saved (any email works). No email saved yet? Use your recovery code instead, and add an email in Me > Verification.</p>'
-    + '<div class="fld" style="margin-top:10px"><input id="ccfg-w" placeholder="Username or account ID" autocomplete="off" autocapitalize="off" aria-label="Username or account ID"></div>'
-    + '<div class="fld"><input id="ccfg-m" type="email" placeholder="Your recovery email" autocomplete="email" autocapitalize="off" aria-label="Recovery email"></div>'
+  const m = sheet('<h3>Forgot password</h3><p class="sub" style="margin-top:6px">Type the email saved on your account. We send a 6-digit code to it, then you choose a new password. No email saved yet? Sign in with your recovery code instead.</p>'
+    + '<div class="fld" style="margin-top:10px"><input id="ccfg-m" type="email" inputmode="email" placeholder="Email on your account" autocomplete="email" autocapitalize="off" aria-label="Email on your account"></div>'
     + '<div id="ccfg-2" style="display:none"><div class="fld"><input id="ccfg-c" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" aria-label="6-digit code"></div>'
     + '<div class="fld"><input id="ccfg-p" type="password" placeholder="New password" autocomplete="new-password" aria-label="New password"></div></div>'
     + '<p class="sub" id="ccfg-e" style="min-height:18px"></p>'
     + '<p class="sub" style="text-align:center;margin:0 0 8px"><a href="#" id="ccfg-have">I already have a code</a></p><div class="two"><button class="btn g" id="ccfg-x">Cancel</button><button class="btn p" id="ccfg-go">Send code</button></div>');
   m.id = 'ccfgt';
   const $ = (i) => m.querySelector('#' + i), msg = (t, bad) => { $('ccfg-e').textContent = t; $('ccfg-e').style.color = bad ? 'var(--bad,#FF6B6B)' : ''; };
-  $('ccfg-w').value = String(who || '').trim();
+  const pre = String(prefill || '').trim(); if (pre.indexOf('@') > 0) $('ccfg-m').value = pre;
   $('ccfg-x').onclick = () => m.close();
   let step = 1;
-  $('ccfg-have').onclick = (ev) => {   // got the email, then the page refreshed: skip asking for a new code
-    ev.preventDefault(); if (!$('ccfg-w').value.trim()) return msg('Type your username or account ID first, then your code.', true);
-    step = 2; $('ccfg-m').parentNode.style.display = 'none'; $('ccfg-2').style.display = 'block'; $('ccfg-go').textContent = 'Change password'; $('ccfg-have').parentNode.style.display = 'none';
-    msg('Type the 6-digit code from your email and a new password. A used or expired code will be refused.'); $('ccfg-c').focus();
+  const toStep2 = () => { step = 2; $('ccfg-2').style.display = 'block'; $('ccfg-go').textContent = 'Change password'; $('ccfg-have').textContent = 'Send me a new code'; $('ccfg-c').focus(); };
+  $('ccfg-have').onclick = async (ev) => {
+    ev.preventDefault(); if (!$('ccfg-m').value.trim()) return msg('Type your email first.', true);
+    if (step === 1) { toStep2(); return msg('Type the 6-digit code from your email and a new password.'); }
+    try { const d = await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value }); msg(d.message || 'A new code is on its way.'); } catch (e) { msg(e.message, true); }   // the server waits a minute between codes
   };
   $('ccfg-go').onclick = async () => {
     const b = $('ccfg-go'); b.disabled = true; msg('');
     try {
       if (step === 1) {
-        const d = await rawPost('/api/auth/reset/start', { who: $('ccfg-w').value, email: $('ccfg-m').value });
-        step = 2; $('ccfg-2').style.display = 'block'; b.textContent = 'Change password';
-        msg(d.message || 'If the details match, a code is on its way. Check your inbox and spam folder.');
+        const d = await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value });
+        toStep2(); msg(d.message || 'If that email is saved on an account, a code is on its way. Check your inbox and spam folder.');
       } else {
-        const d = await rawPost('/api/auth/reset/confirm', { who: $('ccfg-w').value, code: $('ccfg-c').value, password: $('ccfg-p').value });
+        const d = await rawPost('/api/auth/reset/confirm', { email: $('ccfg-m').value, code: $('ccfg-c').value, password: $('ccfg-p').value });
         saveAuth({ aid: d.aid, token: d.token }); ME.aid = d.aid; saveMe();
         setTimeout(() => { syncVer(); refreshReferral(true); }, 0);
-        m.close(); toast('Password changed. You are signed in.'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {}
+        m.close(); const lk = document.getElementById('lk'); if (lk) lk.classList.remove('on');   // opened from the lock screen: let the person in
+        toast('Password changed. You are signed in.'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {}
         return;
       }
     } catch (e) { msg(e.message, true); }
@@ -1553,7 +1553,7 @@ async function createAccount(kind, creds) {
   setTimeout(() => { attributeRef(); syncVer(); refreshAll(); }, 0);
   return { aid: d.aid, token: d.token };
 }
-window.CC = { createAccount, signIn: (msg) => promptRestore(msg || 'Enter your username or account ID and your password or recovery code.', 'Log in'), needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid, payNow };
+window.CC = { forgot: (e) => promptForgot(e), createAccount, signIn: (msg) => promptRestore(msg || 'Enter your username or account ID and your password or recovery code.', 'Log in'), needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid, payNow };
 window.ccSteps = { paySteps, withdrawFlow, stepsCss };
 window.ccTools = { sheet, call, toast, copyText, sleep };   // used by cc-tickets.js   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections
 })();

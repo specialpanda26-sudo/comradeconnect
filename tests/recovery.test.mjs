@@ -20,17 +20,17 @@ test('anyone can add a recovery email (Gmail) and use it for forgot password; no
   assert.equal((await w.call('GET', '/api/me/recovery-email', { as: a })).data.has_email, true);
 
   const before = sent(w).length;
-  r = await w.call('POST', '/api/auth/reset/start', { body: { who: a.aid, email: 'someone.else@gmail.com' }, ip: '6.6.6.1' });
+  r = await w.call('POST', '/api/auth/reset/start', { body: { email: 'someone.else@gmail.com' }, ip: '6.6.6.1' });
   assert.equal(r.status, 200); assert.equal(sent(w).length, before);
-  r = await w.call('POST', '/api/auth/reset/start', { body: { who: a.aid, email: 'mary.wanjiku@GMAIL.com' }, ip: '6.6.6.2' });
+  r = await w.call('POST', '/api/auth/reset/start', { body: { email: 'mary.wanjiku@GMAIL.com' }, ip: '6.6.6.2' });
   assert.equal(r.status, 200); assert.equal(sent(w).length, before + 1);
-  r = await w.call('POST', '/api/auth/reset/confirm', { body: { who: a.aid, code: lastCode(w), password: 'Xk7m-Pq2R-vN9t-Lw4c' }, ip: '6.6.6.3' });
+  r = await w.call('POST', '/api/auth/reset/confirm', { body: { email: 'mary.wanjiku@gmail.com', code: lastCode(w), password: 'Xk7m-Pq2R-vN9t-Lw4c' }, ip: '6.6.6.3' });
   assert.equal(r.status, 200); assert.equal(r.data.aid, a.aid);
 
   r = await w.call('POST', '/api/me/recovery-email/remove', { as: { aid: r.data.aid, token: r.data.token, ipn: a.ipn } });
   assert.equal(r.status, 200);
   const b2 = sent(w).length;
-  await w.call('POST', '/api/auth/reset/start', { body: { who: a.aid, email: 'mary.wanjiku@gmail.com' }, ip: '6.6.6.4' });
+  await w.call('POST', '/api/auth/reset/start', { body: { email: 'mary.wanjiku@gmail.com' }, ip: '6.6.6.4' });
   assert.equal(sent(w).length, b2);
   w.restore();
 });

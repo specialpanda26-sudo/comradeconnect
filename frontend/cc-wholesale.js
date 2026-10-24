@@ -38,18 +38,13 @@ var steps = function () { return window.ccSteps || null; };
 
 async function load() {
   var au = window.ccAuth && window.ccAuth(); if (!au || !au.token) return;   // signed out: never create an account just by opening the page
-  try { var r = await Promise.all([call('/api/wholesale/me'), call('/api/wallet')]); W = r[0]; W.wallet = r[1]; window.ccPhotoCap = W.active ? W.photos : 5; draw(); }
+  try { var r = await Promise.all([call('/api/wholesale/me'), call('/api/wallet')]); W = r[0]; W.wallet = r[1]; window.ccPhotoCap = W.active ? W.photos : 5; draw(); try { if (window.ccWalletTopLoad) window.ccWalletTopLoad(); } catch (e2) {} }
   catch (e) { }
 }
 function days(until) { return Math.max(0, Math.ceil((Date.parse(until) - Date.now()) / 86400e3)); }
 function draw() {
   var host = $('#ccw'); if (!host || !W) return;
   host.textContent = '';
-  host.appendChild(el('b', '', 'Deposit or withdraw'));
-  var two = el('div', 'two'); two.style.marginTop = '12px';
-  two.appendChild(btn('Deposit', 'btn p', deposit)); two.appendChild(btn('Withdraw', 'btn g', withdraw)); host.appendChild(two);
-  var n = el('p', 'note', 'Deposit with M-Pesa, then pay for items and your wholesaler plan straight from your wallet. Sales money lands here too.'); n.style.marginTop = '8px'; host.appendChild(n);
-  var hr = el('div'); hr.style.cssText = 'height:1px;background:var(--line,rgba(255,255,255,.12));margin:14px 0'; host.appendChild(hr);
   if (W.active) {
     host.appendChild(el('b', '', 'Wholesaler \u2713'));
     var s = el('p', 'sub', 'Active for ' + days(W.until) + ' more day' + (days(W.until) === 1 ? '' : 's') + '. Post as many items as you want, up to ' + W.photos + ' photos each.'); s.style.marginTop = '4px'; host.appendChild(s);
@@ -62,6 +57,8 @@ function draw() {
   }
 }
 window.ccWholesaleLoad = function () { return load(); };
+window.ccWalletDeposit = function () { return deposit(); };
+window.ccWalletWithdraw = async function () { if (!W) await load(); return withdraw(); };
 function mount() {
   var me = $('#mecard'); if (!me || $('#ccw')) return;
   var box = el('div', 'box g'); box.id = 'ccw'; me.after(box); load();

@@ -115,19 +115,34 @@ function openSheet() {
     box.appendChild(lg);
     box.appendChild(list('Where your money came from', B.inSrc, B.tin, '#A8DCE7'));
     box.appendChild(list('Where your money went', B.outSrc, B.tout, 'rgba(168,220,231,.55)'));
-    var go = el('button', 'btn p', 'Deposit or withdraw'); go.type = 'button'; go.style.cssText = 'width:100%;margin-top:22px';
-    go.onclick = function () { close(); var t = $('#ccw'); if (t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }; box.appendChild(go);
+    var acts = el('div', 'two'); acts.style.marginTop = '22px';
+    var dp = el('button', 'btn p', 'Deposit'); dp.type = 'button'; dp.onclick = function () { close(); act('ccWalletDeposit')(); };
+    var wd = el('button', 'btn g', 'Withdraw'); wd.type = 'button'; wd.onclick = function () { close(); act('ccWalletWithdraw')(); };
+    acts.appendChild(dp); acts.appendChild(wd); box.appendChild(acts);
   }
   paint();
   call('/api/wallet/stats').then(function (d) { DATA = d; BAL = d.balance; paintCard(); if ($('#ccwsheet')) paint(); }, function (e) { DATA = { balance: BAL, ledger: [] }; if ($('#ccwsheet')) paint(); });
 }
 
+var CHART = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-5 3 3 5-7"/></svg>';
+function act(name) { return function () { var f = window[name]; if (f) f(); else { try { toast('Please try again in a moment'); } catch (e) {} } }; }
 function paintCard() {
   var c = $('#ccwtop'); if (!c) return;
   c.textContent = '';
-  c.appendChild(el('div', 'sub', 'Wallet balance'));
-  var big = el('div', 'big', BAL == null ? '...' : kes(BAL)); big.style.color = AQ; c.appendChild(big);
-  var n = el('p', 'note', 'Tap to see how your money moves'); n.style.marginTop = '4px'; c.appendChild(n);
+  var top = el('div'); top.setAttribute('role', 'button'); top.tabIndex = 0; top.setAttribute('aria-label', 'See my money activity');
+  top.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer';
+  top.onclick = openSheet; top.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSheet(); } };
+  var left = el('div'); left.appendChild(el('div', 'sub', 'Wallet balance'));
+  var big = el('div', 'big', BAL == null ? '...' : kes(BAL)); big.style.marginTop = '2px'; left.appendChild(big);
+  var hint = el('div', 'sub', 'Tap to see how your money moves'); hint.style.cssText = 'font-size:12px;margin-top:2px'; left.appendChild(hint);
+  var ic = el('span'); ic.setAttribute('aria-hidden', 'true'); ic.innerHTML = CHART;
+  ic.style.cssText = 'width:46px;height:46px;border-radius:15px;display:grid;place-items:center;background:var(--aq,#A8DCE7);color:var(--nt,#101422);flex:none';
+  top.appendChild(left); top.appendChild(ic); c.appendChild(top);
+  var two = el('div', 'two'); two.style.marginTop = '16px';
+  var d = el('button', 'btn p', 'Deposit'); d.type = 'button'; d.onclick = act('ccWalletDeposit');
+  var w = el('button', 'btn g', 'Withdraw'); w.type = 'button'; w.onclick = act('ccWalletWithdraw');
+  two.appendChild(d); two.appendChild(w); c.appendChild(two);
+  var n = el('p', 'sub', 'Deposit with M-Pesa to pay for items and your wholesaler plan. Sales money lands here too.'); n.style.cssText = 'font-size:12px;margin:10px 0 0'; c.appendChild(n);
 }
 function load() {
   if (busy || !signedIn()) return; busy = true;
@@ -137,8 +152,7 @@ function mount() {
   var me = $('#mecard'); if (!me) return;
   if (!signedIn()) { var old = $('#ccwtop'); if (old) old.remove(); BAL = null; DATA = null; return; }
   if ($('#ccwtop')) return;
-  var c = el('div', 'box g'); c.id = 'ccwtop'; c.setAttribute('role', 'button'); c.tabIndex = 0; c.style.cursor = 'pointer';
-  c.onclick = openSheet; c.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSheet(); } };
+  var c = el('div', 'box g'); c.id = 'ccwtop';
   me.before(c); paintCard(); load();
 }
 window.ccWalletTopLoad = load;

@@ -1,5 +1,5 @@
 /* cc-otp.js v1: turns every 6-digit code field (autocomplete="one-time-code") into glass boxes and plays the verify animation.
-   Section 1 of 2. No page code needs changing: the real input stays in the page and always holds the typed code,
+   No page code needs changing: the real input stays in the page and always holds the typed code,
    and the confirm calls are watched through fetch, so the animation plays while the server checks the code. */
 (function () {
 'use strict';
@@ -119,7 +119,7 @@ function enhance(real) {
       root.classList.add('cco-ok'); ic.innerHTML = SHIELD; setText('Verified <b>Successfully</b>', 'Your security code has been confirmed.');
       btnState('cco-bok', 'Verified & Secured');
       return sleep(reduce ? 400 : 1150);
-    }).then(function () { setTimeout(function () { btnState(null); }, 80); setTimeout(function () { o.reset(); }, 1500); });   /* by then the page has moved on; this readies the boxes if it comes back */
+    }).then(function () { setTimeout(function () { btnState(null); }, 80); setTimeout(function () { o.reset(); }, 1500); });
   };
   o.fail = function () {
     if (o.state !== 'busy') return Promise.resolve();

@@ -1,5 +1,6 @@
 // Live extras: viewer count, hearts and chat for a stream the host runs on YouTube / Facebook / TikTok / Twitch.
 // The stream itself is not ours; we only add the people-count, the hearts and the comments around it.
+import { voiceOf, voiceCheck, stripMarkers } from './voice.js';
 import { json, err, sb, rows, one, post, patch, enc, str, int, ago, sha256Hex, throttle, tooMany, user, isAdmin, contactBlock } from './lib.js';
 
 export const ONLINE_MS = 40e3;                 // a viewer counts as "watching" for 40 seconds after their last ping
@@ -43,7 +44,7 @@ export async function liveRoutes(req, env, url, ip) {
     let cs = await rows(await sb(env, q)); if (!since) cs = cs.reverse();
     const viewers = (await viewerCounts(env, [s.id]))[s.id] || 0;
     const comment_count = (await rows(await sb(env, `live_comments?select=id&stream_id=eq.${s.id}&hidden=eq.false&limit=5000`))).length;
-    return json(env, { status: 'live', viewers, hearts: s.hearts || 0, comment_count, comments: cs.map((c) => ({ id: c.id, name: c.name, text: c.text, at: c.created_at })) });
+    return json(env, { status: 'live', viewers, hearts: s.hearts || 0, comment_count, comments: cs.map((c) => ({ id: c.id, name: c.name, text: voiceOf(env, c.text).text, audio: voiceOf(env, c.text).audio, at: c.created_at })) });
   }
 
   // The host phone says "I am still live" every 15 seconds. Stop hearing it and the live ends by itself.
@@ -60,12 +61,13 @@ export async function liveRoutes(req, env, url, ip) {
   // A comment. Needs an account, like every other write. No phone numbers, handles or links.
   if ((mm = path.match(new RegExp(`^/api/live/${ID}/comment$`)))) {
     const u = await user(req, env, true); if (u instanceof Response) return u;
-    const b = await body(), text = str(b.text, 140); if (!text) return err(env, 'Write something first');
-    const blocked = contactBlock(env, text); if (blocked) return blocked;
+    const b = await body(), vKey = b.voice ? String(b.voice) : null, text = vKey ? 'Voice note' : stripMarkers(str(b.text, 140)); if (!text) return err(env, 'Write something first');
+    if (vKey && !(await voiceCheck(env, vKey))) return err(env, 'The voice note did not upload. Try again.');
+    const blocked = vKey ? null : contactBlock(env, text); if (blocked) return blocked;
     if (!(await throttle(env, ip, 'lcm', u.aid, 300))) return tooMany(env);
     const s = await one(await sb(env, `live_streams?select=id,status&id=eq.${mm[1]}`)); if (!s || s.status !== 'live') return err(env, 'This stream has ended', 404);
-    const c = await one(await post(env, 'live_comments', { stream_id: s.id, aid: u.aid, name: u.handle || 'Comrade', text }, 'return=representation'));
-    return c ? json(env, { id: c.id, name: c.name, text: c.text, at: c.created_at }, 201) : err(env, 'Could not send', 500);
+    const c = await one(await post(env, 'live_comments', { stream_id: s.id, aid: u.aid, name: u.handle || 'Comrade', text: vKey ? text + ' [vn:' + vKey + ']' : text }, 'return=representation'));
+    return c ? json(env, { id: c.id, name: c.name, text: voiceOf(env, c.text).text, audio: voiceOf(env, c.text).audio, at: c.created_at }, 201) : err(env, 'Could not send', 500);
   }
 
   // Hearts: anyone can send them. The phone batches taps, so one request carries up to 10.

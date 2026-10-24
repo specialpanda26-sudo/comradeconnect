@@ -1,16 +1,10 @@
 name: Build desktop apps
 
-# Builds Comrade Connect for Windows, Mac and Linux. Runs by itself on every push that changes the website or desktop/ files,
-# and by hand: GitHub > Actions > Build desktop apps > Run workflow.
+# cc-manual-only: this no longer runs on every push (it was using up build minutes).
+# Builds Comrade Connect for Windows, Mac and Linux. Runs by hand only: GitHub > Actions > Build desktop apps > Run workflow.
 # The files join the same Release as the Android app, so the website's Download sheet always finds the newest ones.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'frontend/**'
-      - 'desktop/**'
-      - '.github/workflows/desktop.yml'
 
 concurrency:
   group: desktop-app

@@ -11,3 +11,8 @@ __pycache__/
 site-info.json
 *.bak
 *.orig
+# cc-keystore-guard: never commit signing keys
+*.jks
+*.keystore
+*.p12
+keystore.properties

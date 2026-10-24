@@ -26,6 +26,7 @@ css.textContent =
 '#ccstk .sk-d .on{background:var(--fg,#fff);border-color:var(--fg,#fff)}#ccstk .sk-d .td{border-color:var(--fg,#fff)}' +
 '#ccstk .sk-t{margin:12px 0 0;font-size:13px;line-height:1.6;color:var(--mut,var(--mut))}' +
 '#ccstk .sk-m{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}#ccstk .sk-m span{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.3));color:var(--mut,var(--mut))}' +
+'#ccstk .sk-r{all:unset;cursor:pointer;margin-top:12px;font-size:12px;font-weight:600;text-decoration:underline;color:var(--mut,#999)}' +
 '#ccstk .sk-m .on{background:var(--fg,#fff);border-color:var(--fg,#fff);color:var(--bg,#101422);font-weight:600}';
 document.head.appendChild(css);
 
@@ -42,6 +43,7 @@ function draw() {
   var msg = !D.checked_in ? (D.current ? 'Check in today to keep your streak.' : 'Check in today to start a streak.') : D.next ? D.to_next + (D.to_next === 1 ? ' more day' : ' more days') + ' to a ' + D.next + ' day streak.' : 'You have every badge. Keep it going.';
   card.appendChild(el('p', 'sk-t', msg));
   var m = el('div', 'sk-m'); D.milestones.slice(0, 5).forEach(function (x) { m.appendChild(el('span', x.reached ? 'on' : '', x.days + ' days')); }); card.appendChild(m);
+  if (D.checked_in && D.current) { var rp = el('button', 'sk-r', 'Replay streak animation'); rp.type = 'button'; rp.onclick = function () { play(false); }; card.appendChild(rp); }
 }
 function mount() {
   if (card) return;
@@ -50,10 +52,12 @@ function mount() {
 }
 function load() {
   if (!connected() || !signedIn() || busy) return; busy = true; mount();
-  window.ccCall('/api/streak', { auth: false }).then(function (d) { D = d; at = Date.now(); draw(); if (want && D.checked_in) { want = 0; play(true); } }).catch(function () {}).then(function () { busy = false; });
+  window.ccCall('/api/streak', { auth: false }).then(function (d) { D = d; at = Date.now(); draw(); if (want && D.checked_in) { want = 0; play(true); } else if (want === 2) want = 0; }).catch(function () {}).then(function () { busy = false; });
 }
 function onView() { if (document.body.dataset.view === 'rewards' && Date.now() - at > 20000) load(); }
 new MutationObserver(onView).observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
 var ci = document.getElementById('ci'); if (ci) ci.addEventListener('click', function () { want = 1; setTimeout(function () { at = 0; load(); }, 900); });
 onView();
+// when the app opens, if you already checked in today, play the animation once for the day
+setTimeout(function () { if (connected() && signedIn() && !want) { want = 2; at = 0; load(); } }, 2500);
 })();

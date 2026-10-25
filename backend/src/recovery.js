@@ -2,7 +2,7 @@
 // We never keep the address, only a keyed hash. A 6-digit code proves the person owns it before it is saved.
 import { json, err, sb, rows, post, patch, enc, H, tsEqual, throttle, tooMany, ahead, user } from './lib.js';
 import { mailReady, sendMail, codeEmail } from './mail.js';
-import { CODE_MINUTES, CODE_TRIES, markUsed, USED_MSG } from './trust.js';
+import { CODE_MINUTES, CODE_TRIES, CODE_SENDS, CODE_LIMIT_MSG, keepOld, hasHash, markUsed, USED_MSG } from './trust.js';
 
 export function normAnyEmail(v) {
   const raw = String(v || '').trim().toLowerCase();
@@ -30,13 +30,13 @@ export async function recoveryRoutes(req, env, url, ip) {
     if (!mailReady(env)) return err(env, 'Email is not switched on yet', 503);
     const e = normAnyEmail((await body()).email);
     if (!e) return err(env, 'Enter a real email address, for example name@gmail.com');
-    if (!(await throttle(env, ip, 'recemail', u.aid, 5, 15))) return tooMany(env);
-    const [cur] = await rows(await sb(env, `recovery_email_codes?select=sent_at&aid=eq.${enc(u.aid)}`));
+    const [cur] = await rows(await sb(env, `recovery_email_codes?select=*&aid=eq.${enc(u.aid)}`));
     if (cur && Date.now() - Date.parse(cur.sent_at) < 60e3) return err(env, 'Wait a minute before asking for another code', 429);
+    if (!(await throttle(env, ip, 'recemail', u.aid, CODE_SENDS, 30))) return err(env, CODE_LIMIT_MSG, 429);
     const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e6).padStart(6, '0');
     if (cur) await sb(env, `recovery_email_codes?aid=eq.${enc(u.aid)}`, { method: 'DELETE' });
     const saved = await post(env, 'recovery_email_codes', {
-      aid: u.aid, email_hash: await H(env, 'recemail:' + e.gmail), code_hash: await H(env, `reccode:${u.aid}:${code}`),
+      aid: u.aid, email_hash: await H(env, 'recemail:' + e.gmail), code_hash: keepOld(cur, await H(env, `reccode:${u.aid}:${code}`), await H(env, 'recemail:' + e.gmail)),
       expires_at: ahead(CODE_MINUTES * 60e3), attempts: 0, sent_at: new Date().toISOString(),
     }, 'resolution=merge-duplicates,return=representation');
     if (!saved.ok) return err(env, 'Could not start. Run supabase/recovery-email.sql in Supabase first.', 500);
@@ -62,7 +62,7 @@ export async function recoveryRoutes(req, env, url, ip) {
     if (v.attempts >= CODE_TRIES) return err(env, 'Too many wrong codes. Ask for a new one.', 429);
     const took = await rows(await patch(env, `recovery_email_codes?aid=eq.${enc(u.aid)}&attempts=eq.${v.attempts}`, { attempts: v.attempts + 1 }));
     if (!took.length) return err(env, 'Try again in a moment', 429);
-    if (!tsEqual(v.code_hash, await H(env, `reccode:${u.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
+    if (!hasHash(v.code_hash, await H(env, `reccode:${u.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
     if (v.used_at) return err(env, USED_MSG, 410);
     const [taken] = await rows(await sb(env, `profiles?select=aid&recovery_email_hash=eq.${enc(v.email_hash)}&aid=neq.${enc(u.aid)}&limit=1`));
     if (taken) return err(env, 'Could not save that email. Try another one.', 400);   // one email, one account, so a reset by email is never ambiguous

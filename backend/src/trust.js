@@ -8,7 +8,11 @@ import { autoPayout } from './payouts.js';
 import { mailReady, sendMail, codeEmail } from './mail.js';
 
 export const TRUST_UPDATED = '2026-10-18';
-export const CODE_MINUTES = 15, CODE_TRIES = 5;
+export const CODE_MINUTES = 15, CODE_TRIES = 5, CODE_SENDS = 2;   // CODE_SENDS: most codes one person can ask for in a day
+export const CODE_LIMIT_MSG = 'You can ask for 2 codes a day and both are used. Tap "I already have a code" and type the one in your email.';
+// A second code does not kill the first: while the first is unused and not expired (and goes to the same email), both work.
+export const keepOld = (cur, hash, emailHash) => (cur && !cur.used_at && Date.parse(cur.expires_at) > Date.now() && (emailHash === undefined || cur.email_hash === emailHash)) ? hash + ',' + String(cur.code_hash).split(',')[0] : hash;
+export const hasHash = (stored, h) => String(stored || '').split(',').some((x) => x && tsEqual(x, h));
 
 export const disputeHours = (env) => { const n = Number(env.DISPUTE_REVIEW_HOURS); return Number.isFinite(n) && n >= 1 && n <= 720 ? Math.floor(n) : 48; };
 export const studentDomains = (env) => String(env.STUDENT_EMAIL_DOMAINS || 'kyu.ac.ke').split(',').map((d) => d.trim().toLowerCase().replace(/^@/, '')).filter(Boolean);
@@ -105,13 +109,13 @@ export async function trustRoutes(req, env, url, ip) {
     if (u.student_verified) return err(env, 'Your student email is already verified', 409);
     const e = normStudentEmail(env, (await body()).email);
     if (!e) return err(env, 'Use your university email, ending in ' + studentDomains(env).map((d) => '@' + d).join(' or '));
-    if (!(await throttle(env, ip, 'stuemail', u.aid, 5, 15))) return tooMany(env);
-    const [cur] = await rows(await sb(env, `email_verifications?select=sent_at&aid=eq.${enc(u.aid)}`));
+    const [cur] = await rows(await sb(env, `email_verifications?select=*&aid=eq.${enc(u.aid)}`));
     if (cur && Date.now() - Date.parse(cur.sent_at) < 60e3) return err(env, 'Wait a minute before asking for another code', 429);
+    if (!(await throttle(env, ip, 'stuemail', u.aid, CODE_SENDS, 30))) return err(env, CODE_LIMIT_MSG, 429);
     const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e6).padStart(6, '0');
     if (cur) await sb(env, `email_verifications?aid=eq.${enc(u.aid)}`, { method: 'DELETE' });   // a fresh code replaces the old row, including a used one
     const saved = await post(env, 'email_verifications', {
-      aid: u.aid, email_hash: await H(env, 'stuemail:' + e.canon), code_hash: await H(env, `stucode:${u.aid}:${code}`),
+      aid: u.aid, email_hash: await H(env, 'stuemail:' + e.canon), code_hash: keepOld(cur, await H(env, `stucode:${u.aid}:${code}`), await H(env, 'stuemail:' + e.canon)),
       expires_at: ahead(CODE_MINUTES * 60e3), attempts: 0, sent_at: new Date().toISOString(),
     }, 'resolution=merge-duplicates,return=representation');
     if (!saved.ok) return err(env, 'Could not start verification. Run the newest SQL (end of supabase/schema.sql) in Supabase first.', 500);
@@ -139,7 +143,7 @@ export async function trustRoutes(req, env, url, ip) {
     if (v.attempts >= CODE_TRIES) return err(env, 'Too many wrong codes. Ask for a new one.', 429);
     const took = await rows(await patch(env, `email_verifications?aid=eq.${enc(u.aid)}&attempts=eq.${v.attempts}`, { attempts: v.attempts + 1 }));
     if (!took.length) return err(env, 'Try again in a moment', 429);
-    if (!tsEqual(v.code_hash, await H(env, `stucode:${u.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
+    if (!hasHash(v.code_hash, await H(env, `stucode:${u.aid}:${code}`))) return err(env, `Wrong code. ${CODE_TRIES - 1 - v.attempts} tries left.`, 400);
     if (v.used_at) return err(env, USED_MSG, 410);
     const res = await patch(env, `profiles?aid=eq.${enc(u.aid)}`, { student_verified: true, student_verified_at: new Date().toISOString(), student_email_hash: v.email_hash });
     if (res.status === 409) return err(env, 'That student email is already linked to another account', 409);

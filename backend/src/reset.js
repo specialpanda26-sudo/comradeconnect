@@ -4,7 +4,7 @@
 // Replies never reveal whether an account exists. Needs the mail settings (BREVO_API_KEY or RESEND_API_KEY, and MAIL_FROM).
 import { json, err, sb, rows, one, post, patch, enc, H, tsEqual, randHex, throttle, bump, tooMany, ahead, hashPassword, isAdmin } from './lib.js';
 import { mailReady, sendMailDetailed, mailDiagnosis, codeEmail } from './mail.js';
-import { normStudentEmail, studentDomains, CODE_MINUTES, CODE_TRIES, markUsed, USED_MSG } from './trust.js';
+import { normStudentEmail, studentDomains, CODE_MINUTES, CODE_TRIES, CODE_SENDS, CODE_LIMIT_MSG, keepOld, hasHash, markUsed, USED_MSG } from './trust.js';
 import { passwordProblem } from './passwords.js';
 import { normAnyEmail } from './recovery.js';
 
@@ -52,19 +52,19 @@ export async function resetRoutes(req, env, url, ip) {
     if (!mailReady(env)) return err(env, 'Password reset by email is not switched on yet', 503);
     const b = await body(), e0 = normAnyEmail(b.email);
     if (!e0) return err(env, 'Enter the email address saved on your account');
-    if (!(await throttle(env, ip, 'pwreset', e0.canon + '|' + ip, 5, 15))) return tooMany(env);
+    if (!(await throttle(env, ip, 'pwreset', e0.canon, CODE_SENDS, 30))) return err(env, CODE_LIMIT_MSG, 429);
     if (!(await bump(env, 'pwresetall:a:' + e0.canon, 30))) return tooMany(env);
     const { p, e } = await findByEmail(env, b.email);
     if (!p) console.log('reset: no account has that email saved (nothing sent)');
     else if (p.banned) console.log('reset: account is banned (nothing sent)');
     if (p && !p.banned) {
-      const [cur] = await rows(await sb(env, `password_resets?select=sent_at&aid=eq.${enc(p.aid)}`));
+      const [cur] = await rows(await sb(env, `password_resets?select=*&aid=eq.${enc(p.aid)}`));
       if (cur && Date.now() - Date.parse(cur.sent_at) < 60e3) console.log('reset: asked again within a minute (nothing sent)');
       if (!cur || Date.now() - Date.parse(cur.sent_at) >= 60e3) {
         const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e6).padStart(6, '0');
         if (cur) await sb(env, `password_resets?aid=eq.${enc(p.aid)}`, { method: 'DELETE' });
         const saved = await post(env, 'password_resets', {
-          aid: p.aid, code_hash: await H(env, `pwcode:${p.aid}:${code}`), expires_at: ahead(CODE_MINUTES * 60e3), attempts: 0, sent_at: new Date().toISOString(),
+          aid: p.aid, code_hash: keepOld(cur, await H(env, `pwcode:${p.aid}:${code}`)), expires_at: ahead(CODE_MINUTES * 60e3), attempts: 0, sent_at: new Date().toISOString(),
         }, 'resolution=merge-duplicates,return=representation');
         if (!saved.ok) return err(env, 'Could not start the reset. Run supabase/password-reset.sql in Supabase first.', 500);
         const mailed = await sendMailDetailed(env, {
@@ -100,7 +100,7 @@ export async function resetRoutes(req, env, url, ip) {
     if (v.attempts >= CODE_TRIES) return err(env, LOCK, 429);
     const took = await rows(await patch(env, `password_resets?aid=eq.${enc(p.aid)}&attempts=eq.${v.attempts}`, { attempts: v.attempts + 1 }));
     if (!took.length) return err(env, 'Try again in a moment', 429);
-    if (!tsEqual(v.code_hash, await H(env, `pwcode:${p.aid}:${code}`))) return err(env, BAD, 400);   // no "tries left": only real accounts could show it
+    if (!hasHash(v.code_hash, await H(env, `pwcode:${p.aid}:${code}`))) return err(env, BAD, 400);   // no "tries left": only real accounts could show it
     if (v.used_at) return err(env, USED_MSG, 410);   // only someone who typed the real code learns it was used
     if (b.check) {   // page step 2: the code is right. Show the username, put the try back, and keep the code alive for the password step
       await patch(env, `password_resets?aid=eq.${enc(p.aid)}&attempts=eq.${v.attempts + 1}`, { attempts: v.attempts });

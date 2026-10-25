@@ -43,16 +43,18 @@
     var msg = el('p', 'sub'); msg.style.cssText = 'min-height:18px;margin-top:8px'; msg.setAttribute('role', 'status'); msg.setAttribute('aria-live', 'polite');
     var go = el('button', 'btn p', 'Send code'); go.type = 'button'; go.style.cssText = 'width:100%;margin-top:6px';
     var alt = el('button', 'btn g', 'Not now'); alt.type = 'button'; alt.style.cssText = 'width:100%;margin-top:6px';
-    [h3, sub, f, msg, go, alt].forEach(function (n) { box.appendChild(n); });
+    var have = el('button', 'btn g', 'I have a code'); have.type = 'button'; have.id = 'ccea-have'; have.style.cssText = 'width:100%;margin-top:6px';
+    [h3, sub, f, msg, go, have, alt].forEach(function (n) { box.appendChild(n); });
 
     var step = 1, say2 = function (t, bad) { msg.textContent = t || ''; msg.style.color = bad ? 'var(--bad,#fff)' : ''; };
     function close() { open = false; m.close(); if (cb) cb(); }
     function snooze() { var s = st(); s.n = (s.n || 0) + 1; s.until = Date.now() + s.n * 2 * 864e5; save(s); close(); }
     function toStep(n) {
-      step = n; w1.hidden = n === 2; w2.hidden = n !== 2;
+      step = n; w1.hidden = n === 2; w2.hidden = n !== 2; have.hidden = n === 2;
       go.textContent = n === 2 ? 'Confirm' : 'Send code'; alt.textContent = n === 2 ? 'Use a different email' : 'Not now';
       say2(''); try { (n === 2 ? cd : em).focus(); } catch (e) {}
     }
+    have.onclick = function () { sub.textContent = 'Type the 6-digit code from your email. You do not need a new one. If it was already used or has expired, we will tell you.'; toStep(2); };
     alt.onclick = function () { if (step === 2) toStep(1); else if (force) close(); else snooze(); };
     m.addEventListener('click', function (e) { if (e.target === m) { if (force) close(); else snooze(); } });
     go.onclick = function () {

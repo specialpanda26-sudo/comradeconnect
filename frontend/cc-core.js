@@ -161,8 +161,14 @@ async function googleSignIn(credential, link) {                    // the fetch 
   return d;
 }
 /* One Tap on the website: signed-out visitors get Google's own account list by itself (like the phone). Not in the app (it has its own picker). */
+function ccCancelTap() {
+  try { if (window.google && google.accounts && google.accounts.id) google.accounts.id.cancel(); } catch (e) {}
+  try { ['credential_picker_container', 'credential_picker_iframe'].forEach(function (i) { var e = document.getElementById(i); if (e && e.parentNode) e.parentNode.removeChild(e); }); } catch (e) {}
+}
+window.ccCancelTap = ccCancelTap;
 async function ccOneTap() {
   try {
+    if (document.getElementById('ccgate') || window.ccFirstRunOpen || document.getElementById('ccrst')) return;
     if (!googleOn() || (window.ccApp && window.ccApp.native) || navigator.onLine === false) return;
     const a = window.ccAuth && window.ccAuth();
     if (ME.google || (a && a.token)) return;
@@ -256,7 +262,10 @@ function promptRestore(msg, title) {
     + '<div class="two"><button class="btn g" id="ccrst-x">Cancel</button><button class="btn p" id="ccrst-go">Restore</button></div>'
     + '<p class="sub" style="text-align:center;margin-top:12px"><a href="#" id="ccrst-fg">Forgot password?</a></p>');
   m.id = 'ccrst';
-  m.querySelector('#ccrst-x').onclick = () => m.close();
+  ccCancelTap();
+  const _close = m.close; m.close = () => { ccCancelTap(); _close(); };
+  m.querySelector('#ccrst-x').onclick = (ev) => { if (ev && ev.preventDefault) ev.preventDefault(); m.close(); };
+  const _esc = (ev) => { if (ev.key === 'Escape') { document.removeEventListener('keydown', _esc); m.close(); } }; document.addEventListener('keydown', _esc);
   m.querySelector('#ccrst-fg').onclick = (ev) => { ev.preventDefault(); const w = m.querySelector('#ccrst-a').value; m.close(); promptForgot(w, () => promptRestore(msg, title)); };
   if (googleOn()) mountGoogle(m.querySelector('#ccrg'), () => { m.close(); toast('Signed in'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {} }, (e) => { m.querySelector('#ccrst-e').textContent = e; });
   m.querySelector('#ccrst-go').onclick = async () => {

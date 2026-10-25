@@ -94,6 +94,23 @@
     }
     function hasLock() { try { return !!ME.bio; } catch (e) { return false; } }
 
+
+    /* Appearance: Light, Dark or match the phone */
+    if (!document.getElementById('ccset-ap-css')) {
+      var apc = el('style'); apc.id = 'ccset-ap-css';
+      apc.textContent = '.ccset-ck{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--line,rgba(16,20,34,.25));display:grid;place-items:center}.ccset-row.on .ccset-ck{background:var(--fg,#101422);border-color:var(--fg,#101422)}.ccset-row.on .ccset-ck::after{content:"";width:5px;height:9px;border:solid var(--bg,#fff);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}';
+      document.head.appendChild(apc);
+    }
+    var ap = card('Appearance'), apRows = [];
+    [['light', 'Light', 'Bright and clean', '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'],
+     ['dark', 'Dark', 'Easier on the eyes at night', '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'],
+     ['system', 'Match my phone', 'Follows your phone setting', '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>']].forEach(function (o) {
+      var r = row(ic(o[3]), o[1], o[2], '', function () { if (window.ccSetTheme) ccSetTheme(o[0]); apPaint(); });
+      r.appendChild(el('span', 'ccset-ck')); r.setAttribute('data-th', o[0]); ap.appendChild(r); apRows.push(r);
+    });
+    function apPaint() { var cur = window.ccGetTheme ? ccGetTheme() : 'light'; apRows.forEach(function (r) { r.classList.toggle('on', r.getAttribute('data-th') === cur); }); }
+    apPaint();
+
     /* Security: the lock is a switch (Face ID or fingerprint), the rest of the security entries sit under it */
     var sec = card('Security');
     var sw = el('div', 'ccset-row'); sw.setAttribute('role', 'switch'); sw.tabIndex = 0;

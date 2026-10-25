@@ -146,7 +146,15 @@ h2{font-family:Manrope,Poppins,sans-serif;font-weight:800;letter-spacing:-.02em}
 .gt b,.gsl h2{font-family:Manrope,Poppins,sans-serif;font-weight:800}
 .cd{border-color:#16130f;background:#fff}.st{border-color:#16130f}.st.b{background:#16130f}.gd b{border-color:#16130f}.gd b.on{background:#16130f}
 .gb #gn{background:#fff;color:#16130f;border-color:#16130f;box-shadow:0 4px 0 #16130f}.gb #gn:active{box-shadow:0 1px 0 #16130f}
-.invb{background:var(--aqt)!important;border:1.5px solid rgba(22,19,15,.09)}`;
+.invb{background:var(--aqt)!important;border:1.5px solid rgba(22,19,15,.09)}
+/* curve fix */
+.cv{overflow:visible}
+.sheet::before{content:"";position:absolute;left:0;right:0;top:-2px;height:calc(var(--ch)*.42);background:#16130f;transition:height 1.5s cubic-bezier(.65,0,.2,1)}
+.app.q .sheet::before,.app.typ .sheet::before{transition:height .5s cubic-bezier(.65,0,.2,1)}
+.app.typ{--ch:150px}
+.brand .bt,.brand p{transition:opacity .25s,transform .25s}
+.app.typ .brand .bt,.app.typ .brand p{opacity:0;transform:translateY(-6px)}
+`;
 var HTML = `<div class="app s" id="app" role="main">
 
 <div class="sp" aria-label="Comrade Connect"><img src="cc-mark.png" alt=""><div class="wm"><b>Comrade</b> <i>Connect</i></div><div class="tl">Your campus. Your voice.</div></div>
@@ -157,7 +165,7 @@ var HTML = `<div class="app s" id="app" role="main">
 <div class="brand"><div class="row"><img src="cc-mark.png" alt=""><b>Comrade Connect</b></div><h1 class="bt" id="bt">Welcome back!</h1><p id="bs">Log in to continue.</p></div>
 
 <div class="sheet">
- <svg class="cv" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H100V0C92 20 72 40 46 40C22 40 6 30 0 21Z"/></svg>
+ <svg class="cv" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H100V20C100 31 76 40 50 40C24 40 0 31 0 20Z"/></svg>
 
  <div class="pane" id="pw">
   <p class="sb">Spill, buy, sell and go live with Kenyan comrades. Always anonymous.</p>

@@ -27,11 +27,11 @@ function seg(){
  [['videos','Videos'],['live','Live']].forEach(function(p){
   var v=$('#v-'+p[0]);if(!v||$('.crd-seg',v))return;
   var d=document.createElement('div');d.className='crd-seg';
-  d.innerHTML='<button type="button" data-g="videos">Videos</button><button type="button" data-g="live">Live</button>';
-  d.onclick=function(e){var b=e.target.closest('button');if(b)go(b.dataset.g)};
+  d.innerHTML='<button type="button" data-sg="videos">Videos</button><button type="button" data-sg="live">Live</button>';
+  d.onclick=function(e){var b=e.target.closest('button');if(b)go(b.dataset.sg)};
   var h=$('.ph',v);if(h&&h.nextSibling)h.parentNode.insertBefore(d,h.nextSibling);else v.insertBefore(d,v.firstChild);
  });
- document.querySelectorAll('.crd-seg').forEach(function(d){var cur=document.body.dataset.view;d.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.g===cur)})});
+ document.querySelectorAll('.crd-seg').forEach(function(d){var cur=document.body.dataset.view;d.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.sg===cur)})});
 }
 function rewards(){
  var me=$('#v-me');if(me&&!$('.crd-rw',me)){
@@ -48,7 +48,7 @@ function sync(){
  var w=$('button[data-v="videos"]',t),m=$('button[data-v="me"]',t);
  if(w)w.classList.toggle('on2',v==='live');
  if(m)m.classList.toggle('on2',v==='rewards');
- document.querySelectorAll('.crd-seg').forEach(function(d){d.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.g===v)})});
+ document.querySelectorAll('.crd-seg').forEach(function(d){d.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.sg===v)})});
 }
 function run(){relabel();topbar();seg();rewards();sync()}
 function start(){run();

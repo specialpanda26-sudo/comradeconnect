@@ -18,12 +18,25 @@ export async function nativeRoutes(req, env, url, ip) {
     const here = await hostsHere(env, r.filter((s) => String(s.input_uid || '').startsWith('cc:')).map((s) => s.id));
     r = r.filter((s) => !String(s.input_uid || '').startsWith('cc:') || here.has(s.id) || Date.parse(s.created_at) > Date.now() - 45e3);
     const vc = await viewerCounts(env, r.map((s) => s.id));
-    return json(env, { streams: r.map((s) => {
-      const nat = String(s.input_uid || '').startsWith('cc:');
+    // Who is live: the host's profile name and picture, for the "Live now" circles at the top of Home. A bad or missing column never breaks the list.
+    const who = {};
+    const aids = [...new Set(r.map((s) => s.host_aid).filter((a) => a && a !== 'admin'))];
+    if (aids.length) {
+      const inList = aids.map((a) => '"' + String(a).replace(/[^\w.-]/g, '') + '"').join(',');
+      let ps = []; try { ps = await rows(await sb(env, `profiles?select=aid,handle,avatar,verified&aid=in.(${inList})&limit=20`)); } catch { ps = []; }
+      if (!ps.length) { try { ps = await rows(await sb(env, `profiles?select=aid,handle&aid=in.(${inList})&limit=20`)); } catch { ps = []; } }
+      for (const p of ps) who[p.aid] = p;
+    }
+    const out = r.map((s) => {
+      const nat = String(s.input_uid || '').startsWith('cc:'), p = who[s.host_aid] || {};
+      const av = typeof p.avatar === 'string' && p.avatar.length <= 30000 ? p.avatar : null;   // small pictures only: this list is polled
       return { id: s.id, title: s.title, native: nat, channel: nat ? s.input_uid.slice(3) : null,
         watch_url: nat ? null : s.input_uid, embed_url: nat ? null : liveEmbed(s.input_uid),
-        startedAt: Date.parse(s.created_at), viewers: vc[s.id] || 0, hearts: s.hearts || 0 };
-    }) });
+        startedAt: Date.parse(s.created_at), viewers: vc[s.id] || 0, hearts: s.hearts || 0,
+        host: { handle: s.host_aid === 'admin' ? 'Comrade Connect' : (p.handle || 'Comrade'), avatar: av, verified: s.host_aid === 'admin' || !!p.verified } };
+    });
+    out.sort((a, b) => (b.viewers - a.viewers) || (b.startedAt - a.startedAt));   // top lives first
+    return json(env, { streams: out });
   }
 
   // Start a live from the phone's own camera. Anyone with an account can go live (admins too).

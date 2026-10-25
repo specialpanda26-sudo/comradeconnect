@@ -180,6 +180,7 @@
         var d = await call('/api/live/start', { body: { title: t, native: true } });
         $('#ltitle').value = '';
         try { earn(10, 'Went live', 1); } catch (x) {}
+        changed();
         openRoom({ id: d.id, title: t, native: true, channel: d.channel, mine: true });
       } catch (er) { say(er.message); }
       b.disabled = false;
@@ -200,11 +201,13 @@
     x: SV('<path d="M6 6l12 12M18 6L6 18"/>')
   };
   var ME = null, HB = null, keep = false, force = false;
+  window.ccLiveMe = function () { return ME; };
+  var changed = function () { try { window.dispatchEvent(new Event('cc-live-changed')); } catch (e) {} };
   var media = function () { return $('#rmedia'); };
   var mini = function () { return $('#ccl-mini'); };
   var st = function () { var f = $('#rframe'); return f && f.__cc; };
 
-  function endOnServer(id) { return call('/api/live/' + id + '/end', { body: {} }).catch(function () {}); }
+  function endOnServer(id) { return call('/api/live/' + id + '/end', { body: {} }).catch(function () {}).then(function (r) { changed(); return r; }); }
   function endBeacon(id) {                                  // survives the tab closing
     try { fetch((typeof CC_API !== 'undefined' ? CC_API : '') + '/api/live/' + id + '/end', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(function () {}); } catch (e) {}
   }

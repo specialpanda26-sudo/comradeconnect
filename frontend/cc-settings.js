@@ -33,8 +33,12 @@
     '.ccset-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin-top:8px;border-radius:16px;border:1px solid var(--line,rgba(255,255,255,.14));background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}',
     '.ccset-row .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--aq,#A8DCE7) 22%,transparent)}',
     '.ccset-row .tx{flex:1;min-width:0}.ccset-row .tx b{display:block;font-size:14px}.ccset-row .tx small{display:block;color:var(--mut);font-size:12px;margin-top:1px;overflow-wrap:anywhere}',
-    '.ccset-row .go{font-size:13px;font-weight:600;color:var(--aq,#A8DCE7);flex:none}',
+    '.ccset-row .go{font-size:13px;font-weight:600;color:#101422;flex:none}',
     '.ccset-body .zz{background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:14px 2px!important;margin:0!important;border-top:1px solid var(--line,rgba(255,255,255,.12))!important}',
+    '.ccset-card{border-radius:16px;border:1px solid var(--line,rgba(16,20,34,.12));overflow:hidden;background:rgba(255,255,255,.5)}',
+    '.ccset-card .ccset-row{margin:0;border:0;border-radius:0;border-top:1px solid var(--line,rgba(16,20,34,.1))}.ccset-card .ccset-row:first-child{border-top:0}',
+    '.ccset-sw{flex:none;width:46px;height:28px;border-radius:999px;background:rgba(16,20,34,.18);position:relative;transition:background .2s}.ccset-sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}',
+    '[aria-checked=true]>.ccset-sw{background:#101422}[aria-checked=true]>.ccset-sw::after{transform:translateX(18px)}',
     '.ccset-body .zz{}'
   ].join('');
   document.head.appendChild(css);
@@ -78,22 +82,56 @@
     box.appendChild(el('p', 'sub', 'Everything you set once and rarely change lives here.'));
     var body = el('div', 'ccset-body'); box.appendChild(body);
 
-    body.appendChild(el('div', 'ccset-sec', 'Invite comrades'));
-    body.appendChild(row(SHARE, 'Share Comrade Connect', 'Send the app link to a WhatsApp group or a friend. If you are signed in, your invite link is used.', 'Share', window.ccShareApp));
+    var tm = null;
+    function card(label) { body.appendChild(el('div', 'ccset-sec', label)); var c = el('div', 'ccset-card'); body.appendChild(c); return c; }
+    function ic(p) { return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
+    function legal(key, href) {
+      return function () {
+        close(); var a = document.createElement('a');
+        if (key) { a.href = '#' + key; a.setAttribute('data-legal', key); } else a.href = href;
+        a.style.display = 'none'; document.body.appendChild(a); a.click(); a.remove();
+      };
+    }
+    function hasLock() { try { return !!ME.bio; } catch (e) { return false; } }
 
-    body.appendChild(el('div', 'ccset-sec', 'Your campus'));
-    body.appendChild(row(PIN, isAll() ? 'All universities' : campusName(), isAll() ? 'You see the feed from every university. Your posts go under your own one.' : 'Your feed, events and hostels follow this university.', 'Change', function () { close(); if (window.ccChangeCampus) ccChangeCampus(); }));
-
-    body.appendChild(el('div', 'ccset-sec', 'Account and safety'));
+    /* Security: the lock is a switch (Face ID or fingerprint), the rest of the security entries sit under it */
+    var sec = card('Security');
+    var sw = el('div', 'ccset-row'); sw.setAttribute('role', 'switch'); sw.tabIndex = 0;
+    sw.innerHTML = '<span class="ic">' + ic('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>') + '</span><span class="tx"><b>Face ID or fingerprint lock</b><small>Only you can open Comrade Connect on this phone.</small></span><span class="ccset-sw"></span>';
+    function paint() { sw.setAttribute('aria-checked', hasLock() ? 'true' : 'false'); }
+    paint();
+    function flip() {
+      var g = document.getElementById('sgo'), was = hasLock();
+      if (!g) { close(); if (window.ccOpenMe) ccOpenMe('Secure my account'); return; }
+      g.click();                                           // the real lock flow: the phone's own fingerprint / face prompt in the app
+      if (tm) clearInterval(tm); var n = 0;
+      tm = setInterval(function () { paint(); if (hasLock() !== was || ++n > 75) { clearInterval(tm); tm = null; } }, 400);
+    }
+    sw.onclick = flip; sw.onkeydown = function (e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); } };
+    sec.appendChild(sw);
     ITEMS.forEach(function (it) {
-      if (!hasCard(it[0])) return;
-      body.appendChild(row('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + it[3] + '</svg>', it[1], it[2], '', function () { close(); if (window.ccOpenMe) ccOpenMe(it[0]); }));
+      if (it[0] === 'Secure my account' || it[0] === 'Safety' || it[0] === 'Documentation' || !hasCard(it[0])) return;
+      sec.appendChild(row(ic(it[3]), it[1], it[2], '', function () { close(); if (window.ccOpenMe) ccOpenMe(it[0]); }));
     });
+
+    var gen = card('General');
+    gen.appendChild(row(PIN, isAll() ? 'All universities' : campusName(), isAll() ? 'You see the feed from every university. Your posts go under your own one.' : 'Your feed, events and hostels follow this university.', 'Change', function () { close(); if (window.ccChangeCampus) ccChangeCampus(); }));
+    gen.appendChild(row(SHARE, 'Share Comrade Connect', 'Send the app link to a WhatsApp group or a friend.', 'Share', window.ccShareApp));
+    ITEMS.forEach(function (it) {
+      if ((it[0] !== 'Safety' && it[0] !== 'Documentation') || !hasCard(it[0])) return;
+      gen.appendChild(row(ic(it[3]), it[1], it[2], '', function () { close(); if (window.ccOpenMe) ccOpenMe(it[0]); }));
+    });
+
+    var lg = card('Legal');
+    lg.appendChild(row(ic('<path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h6M8 11h6"/>'), 'Privacy policy', 'How we handle your information', '', legal('privacy')));
+    lg.appendChild(row(ic('<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M12 8v5M12 16h.01"/>'), 'Terms & conditions', 'The rules for using Comrade Connect', '', legal('terms')));
+    lg.appendChild(row(ic('<circle cx="12" cy="12" r="9"/><path d="M8.5 9.5h.01M14 8h.01M9 14.5h.01M15 14h.01"/>'), 'Cookie policy', 'What is stored on your phone', '', legal('cookies')));
+    lg.appendChild(row(ic('<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>'), 'Refunds & disputes', 'How refunds and disputes work', '', legal(null, '/refunds.html')));
 
     m.appendChild(box); document.body.appendChild(m); openSheet = m;
     function close() {
       if (!openSheet) return;
-      var s = openSheet; openSheet = null; Element.prototype.remove.call(s);
+      var s = openSheet; openSheet = null; if (tm) clearInterval(tm); Element.prototype.remove.call(s);
     }
     m.remove = close; m.close = close; x.onclick = close;
     m.addEventListener('click', function (e) { if (e.target === m) close(); });
@@ -104,10 +142,7 @@
   function mount() {
     var card = $('#mecard'); if (!card) return;
     slim();
-    if ($('#ccsetbtn')) return;
-    var ph = $('#v-me > .ph'); if (!ph) return;
-    var b = el('button'); b.id = 'ccsetbtn'; b.type = 'button'; b.setAttribute('aria-label', 'Settings'); b.title = 'Settings';
-    b.innerHTML = GEAR; b.onclick = open; ph.appendChild(b);
+    var old = $('#ccsetbtn'); if (old) old.remove();
   }
   window.ccOpenSettings = open;
   mount();

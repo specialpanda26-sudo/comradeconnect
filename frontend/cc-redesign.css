@@ -23,12 +23,12 @@ html body .ib{width:44px;height:44px;border-radius:50%;background:var(--g);box-s
 html body .tab,html body .vt button{border-radius:999px;background:var(--g);box-shadow:var(--sh);border:0;color:var(--fg);font-weight:700;padding:10px 18px}
 html body .tab.on,html body .vt button.on{background:var(--ink);color:var(--inkfg)}
 html body .fld{background:var(--g);border-radius:18px;box-shadow:var(--sh);padding:0 16px;border:0}
-html body .fld input,html body .fld textarea,html body .fld select,html body input.ccs-in{border:0;background:none;color:var(--fg)}
+html body .fld input,html body .fld textarea,html body .fld select,html body input.crd-in{border:0;background:none;color:var(--fg)}
 html body .mstats>div{background:rgba(255,255,255,.7);border-radius:20px;box-shadow:var(--sh)}
 html body .badge,html body .mpill{background:rgba(255,138,61,.13);color:var(--fg);border:0;border-radius:999px;font-weight:800}
 /* hero and blobs */
-html body .hero,html body .mecard,html body .box.g:first-of-type.ccblob{position:relative;overflow:hidden;isolation:isolate;background:#fff8f4;border-radius:36px;padding:22px;color:#16130f;box-shadow:var(--sh)}
-html body .hero::before,html body .mecard::before,.ccblob::before{content:"";position:absolute;inset:-25%;z-index:-1;filter:blur(30px);opacity:.95;background:radial-gradient(42% 52% at 24% 38%,#ff8a3d 0,transparent 72%),radial-gradient(44% 52% at 80% 60%,#c4727a 0,transparent 72%),radial-gradient(40% 40% at 45% 95%,#ffd9b8 0,transparent 72%)}
+html body .hero,html body .mecard,html body .box.g:first-of-type.crdblob{position:relative;overflow:hidden;isolation:isolate;background:#fff8f4;border-radius:36px;padding:22px;color:#16130f;box-shadow:var(--sh)}
+html body .hero::before,html body .mecard::before,.crdblob::before{content:"";position:absolute;inset:-25%;z-index:-1;filter:blur(30px);opacity:.95;background:radial-gradient(42% 52% at 24% 38%,#ff8a3d 0,transparent 72%),radial-gradient(44% 52% at 80% 60%,#c4727a 0,transparent 72%),radial-gradient(40% 40% at 45% 95%,#ffd9b8 0,transparent 72%)}
 html body .hero h1{font-size:44px;letter-spacing:-.045em;line-height:1;font-weight:800;color:#16130f}
 html body .hero p,html body .hero .gr{color:#16130f;font-weight:700}
 html body .hero .btn.p{width:100%}
@@ -56,13 +56,13 @@ html body #tb button[data-v="live"].on,html body #tb button[data-v="rewards"].on
 /* top bar: search pill plus round buttons */
 html body nav.g:not(#tb){background:linear-gradient(180deg,var(--bg) 70%,transparent);border:0;box-shadow:none;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none;gap:10px;padding:8px 14px;width:min(430px,100vw)}
 html body nav.g:not(#tb) .nb{display:none}
-html body .ccs-search{flex:1;height:48px;border-radius:999px;background:var(--g);box-shadow:var(--sh);display:flex;align-items:center;gap:10px;padding:0 18px;color:var(--mut);font-weight:600;font-size:14px;text-align:left;border:0}
-html body .ccs-seg{display:flex;background:var(--g);border-radius:999px;padding:5px;box-shadow:var(--sh);margin:6px 0 16px}
-html body .ccs-seg button{flex:1;height:40px;border-radius:999px;font-weight:800;font-size:13px;border:0;background:none;color:var(--fg)}
-html body .ccs-seg button.on{background:var(--ink);color:var(--inkfg)}
-html body .ccs-row{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 16px;background:var(--g);border-radius:22px;box-shadow:var(--sh);margin:0 0 14px;border:0;color:var(--fg)}
-html body .ccs-row b{display:block;font-weight:800;font-size:15px}html body .ccs-row small{color:var(--mut);font-size:12px}
-html body .ccs-back{background:none;border:0;font-weight:800;font-size:13px;color:var(--fg);padding:6px 0;margin-bottom:6px}
+html body .crd-search{flex:1;height:48px;border-radius:999px;background:var(--g);box-shadow:var(--sh);display:flex;align-items:center;gap:10px;padding:0 18px;color:var(--mut);font-weight:600;font-size:14px;text-align:left;border:0}
+html body .crd-seg{display:flex;background:var(--g);border-radius:999px;padding:5px;box-shadow:var(--sh);margin:6px 0 16px}
+html body .crd-seg button{flex:1;height:40px;border-radius:999px;font-weight:800;font-size:13px;border:0;background:none;color:var(--fg)}
+html body .crd-seg button.on{background:var(--ink);color:var(--inkfg)}
+html body .crd-row{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 16px;background:var(--g);border-radius:22px;box-shadow:var(--sh);margin:0 0 14px;border:0;color:var(--fg)}
+html body .crd-row b{display:block;font-weight:800;font-size:15px}html body .crd-row small{color:var(--mut);font-size:12px}
+html body .crd-back{background:none;border:0;font-weight:800;font-size:13px;color:var(--fg);padding:6px 0;margin-bottom:6px}
 /* fixes: beat earlier !important nav and tile rules, redesign tab order */
 html body #tb button{background:var(--g)!important;color:var(--fg)!important;box-shadow:var(--sh)!important}
 html body #tb button.on,html body #tb button.on2{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f06!important;box-shadow:0 8px 20px rgba(238,122,79,.35)!important}

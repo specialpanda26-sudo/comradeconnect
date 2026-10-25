@@ -1084,17 +1084,18 @@ R.market=()=>{
  const cats=['All','Books','Electronics','Furniture','Clothes','Food'];
  let L=PRODS.filter(p=>(S.mkCat==='All'||p.c===S.mkCat)&&(!S.mkQ||p.t.toLowerCase().includes(S.mkQ)));
  if(S.mkSort==='lo')L=[...L].sort((a,b)=>a.p-b.p);if(S.mkSort==='hi')L=[...L].sort((a,b)=>b.p-a.p);
- const V=S.mkView==='grid'?'grid':'near';
+ const V=(S.mkView==='grid'||S.mkView==='map')?S.mkView:'near',sel=L.find(x=>x.id==S.mkSel)||L[0];
  return `${head('Market','Buy and sell with other comrades',cartBtn())}
  <div class="seg">${[['browse','Browse'],['mine','My listings'],['orders','Orders']].map(([k,l])=>`<button class="${S.mkTab===k?'on':''}" data-act="mktab" data-arg="${k}">${l}</button>`).join('')}</div>
  <div class="mks">${ic('search','s')}<input id="mkq" value="${esc(S.mkQ||'')}" placeholder="Search beds, tables, fridges..." aria-label="Search the market"><button data-act="mksortn" aria-label="Sort">${ic('sliders','s')}</button></div>
  <div class="chips">${cats.map(c=>`<button class="chip pill ${S.mkCat===c?'on':''}" data-act="mkcat" data-arg="${c}"><i>${ic(CI[c],'s')}</i>${c}</button>`).join('')}</div>
  <div class="promo gb b2"><div><b>Pay safe, get 5 points</b><span>On your first purchase held in escrow</span><button data-act="shopnow">Shop now</button></div><i>${ic('shield')}</i></div>
- <div class="vt">${[['near','Near you'],['grid','Grid']].map(([k,l])=>`<button class="${V===k?'on':''}" data-act="mkview" data-arg="${k}">${l}</button>`).join('')}</div>
- ${V==='grid'?`<div class="pgrid">${L.map(p=>`<div class="pc"><div class="im gb ${grads[p.id%5]}">${heart(p)}<button class="addb ab" data-act="addcart" data-arg="${p.id}" aria-label="Add to cart">${ic('plus','s')}</button></div><button class="bd" data-act="prod" data-arg="${p.id}" style="text-align:left;width:100%;display:block"><b>${esc(p.t)}</b><div class="pr">${kes(p.p)}</div><small>${p.st?p.st.toFixed(1)+' ★':'New'}</small></button></div>`).join('')||'<div class="empty">No items match.</div>'}</div>`
+ <div class="vt">${[['near','Near you'],['grid','Grid'],['map','Map']].map(([k,l])=>`<button class="${V===k?'on':''}" data-act="mkview" data-arg="${k}">${l}</button>`).join('')}</div>
+ ${V==='map'?(sel?`<div class="mmap"><div class="road r1"></div><div class="road r2"></div><div class="road r3"></div><div class="park"></div><span class="mme"></span>${L.map(p=>`<button class="pin gb ${grads[p.id%5]} ${sel.id===p.id?'on':''}" style="left:${12+((p.id*29)%72)}%;top:${10+((p.id*43)%64)}%" data-act="mkpin" data-arg="${p.id}" aria-label="${esc(p.t)}"></button>`).join('')}</div><div class="mcard"><div class="mt3"><div><b>${esc(sel.t)}</b><span>${esc(sel.z||'')} · by ${esc(sel.s)}</span></div>${heart(sel)}</div><div class="th2 gb ${grads[sel.id%5]}" data-act="prod" data-arg="${sel.id}"></div><div class="mb3"><b>${kes(sel.p)}</b><button class="addb lg" data-act="addcart" data-arg="${sel.id}" aria-label="Add to cart">${ic('cart','s')}</button></div></div>`:'<div class="empty">No items match.</div>')
+ :V==='grid'?`<div class="pgrid">${L.map(p=>`<div class="pc"><div class="im gb ${grads[p.id%5]}">${heart(p)}<button class="addb ab" data-act="addcart" data-arg="${p.id}" aria-label="Add to cart">${ic('plus','s')}</button></div><button class="bd" data-act="prod" data-arg="${p.id}" style="text-align:left;width:100%;display:block"><b>${esc(p.t)}</b><div class="pr">${kes(p.p)}</div><small>${p.st?p.st.toFixed(1)+' ★':'New'}</small></button></div>`).join('')||'<div class="empty">No items match.</div>'}</div>`
  :`<div class="sx"><b>Items near you</b><button data-act="mkview" data-arg="grid">View all</button></div><div class="hs">${[...L].slice(0,5).map(nearCard).join('')||'<div class="empty">No items match.</div>'}</div>
  <div class="sx"><b>Recommended for you</b><button data-act="mkview" data-arg="grid">View all</button></div>${L.map(recCard).join('')}`}`};
-A.mkview=a=>{S.mkView=a;refresh()};
+A.mkview=a=>{S.mkView=a;refresh()};A.mkpin=a=>{S.mkSel=+a;refresh()};
 A.mksortn=()=>{S.mkSort=S.mkSort==='new'?'lo':S.mkSort==='lo'?'hi':'new';toast('Sorted: '+({new:'Newest',lo:'Price low to high',hi:'Price high to low'})[S.mkSort]);refresh()};
 A.shopnow=()=>{S.mkView='near';refresh();toast('Tap + on anything to add it to your cart')};
 A.addcart=a=>{S.mc[a]=(S.mc[a]||0)+1;const p=PRODS.find(x=>x.id==a);toast(esc(p.t)+' added to cart');if($('#sheet').classList.contains('on')&&$('#cartsum'))cartSheet();else refresh()};

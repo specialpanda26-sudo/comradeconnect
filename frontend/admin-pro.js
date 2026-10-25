@@ -49,7 +49,7 @@ const _load = load;
 load = async function () { await _load(); await loadPro(); render(); };
 
 /* ---------- small chart helpers ---------- */
-const COLORS = ['#2563eb', '#06b6d4', '#60a5fa', '#8b5cf6', '#f59e0b', '#ec4899'];
+const COLORS = ['#101422', '#06b6d4', '#60a5fa', '#8b5cf6', '#f59e0b', '#ec4899'];
 function area(series) {
   const W = 640, H = 230, L = 34, R = 10, T = 16, B = 28, n = series.length;
   const mx = Math.max(1, ...series.map((s) => s.n)), step = mx <= 4 ? 1 : Math.ceil(mx / 4), top = step * Math.ceil(mx / step) || 1;
@@ -67,7 +67,7 @@ function area(series) {
   let pk = 0; series.forEach((s, i) => { if (s.n >= series[pk].n) pk = i; });
   const tx = Math.min(W - 70, Math.max(L, p[pk][0] - 38)), ty = Math.max(2, p[pk][1] - 46);
   const tip = series[pk].n ? '<line x1="' + p[pk][0].toFixed(1) + '" x2="' + p[pk][0].toFixed(1) + '" y1="' + p[pk][1].toFixed(1) + '" y2="' + (H - B) + '" stroke="var(--pa)" stroke-opacity=".35"/><circle cx="' + p[pk][0].toFixed(1) + '" cy="' + p[pk][1].toFixed(1) + '" r="5" fill="var(--pa)" stroke="var(--pc)" stroke-width="2"/>'
-    + '<rect x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" width="76" height="36" rx="8" fill="#0f172a"/><text x="' + (tx + 38).toFixed(1) + '" y="' + (ty + 15).toFixed(1) + '" text-anchor="middle" style="fill:#fff;font-weight:600;font-size:12px">' + series[pk].n + ' joined</text><text x="' + (tx + 38).toFixed(1) + '" y="' + (ty + 28).toFixed(1) + '" text-anchor="middle" style="fill:#cbd5e1;font-size:10px">' + esc(lab(series[pk])) + '</text>' : '';
+    + '<rect x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" width="76" height="36" rx="8" fill="#101422"/><text x="' + (tx + 38).toFixed(1) + '" y="' + (ty + 15).toFixed(1) + '" text-anchor="middle" style="fill:#fff;font-weight:600;font-size:12px">' + series[pk].n + ' joined</text><text x="' + (tx + 38).toFixed(1) + '" y="' + (ty + 28).toFixed(1) + '" text-anchor="middle" style="fill:#cbd5e1;font-size:10px">' + esc(lab(series[pk])) + '</text>' : '';
   const hits = series.map((s, i) => '<rect x="' + (x(i) - 8).toFixed(1) + '" y="' + T + '" width="16" height="' + (H - T - B) + '" fill="transparent"><title>' + esc(lab(s)) + ': ' + s.n + ' joined</title></rect>').join('');
   return '<svg class="pc" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="New users per day, last 30 days"><defs><linearGradient id="pgf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--pa)" stop-opacity=".28"/><stop offset="1" stop-color="var(--pa)" stop-opacity="0"/></linearGradient></defs>'
     + grid + xs + '<path d="' + fill + '" fill="url(#pgf)"/><path d="' + d + '" fill="none" stroke="var(--pa)" stroke-width="2.5" stroke-linecap="round"/>' + hits + tip + '</svg>';

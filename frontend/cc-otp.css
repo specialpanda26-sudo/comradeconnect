@@ -5,8 +5,8 @@
   background:linear-gradient(155deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 50%,rgba(255,255,255,.09));
   -webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);
   border:1px solid var(--edge);box-shadow:0 24px 54px rgba(0,0,0,.4),inset 0 1.5px 0 var(--hi),inset 0 0 36px rgba(255,255,255,.04);transition:box-shadow .5s,border-color .4s}
-:root[data-theme="light"] .cco{--a:#3f8fa3;--rc:#2f7de1;--g:#12a86b;--bad:#e5383b;--fg:#101422;--mut:rgba(16,20,34,.66);--edge:rgba(16,20,34,.16);--hi:rgba(255,255,255,.9);--bf1:rgba(255,255,255,.95);--bf2:rgba(255,255,255,.55);box-shadow:0 18px 40px rgba(16,20,34,.14),inset 0 1.5px 0 var(--hi)}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]):not([data-theme="light"]) .cco{--a:#3f8fa3;--rc:#2f7de1;--g:#12a86b;--bad:#e5383b;--fg:#101422;--mut:rgba(16,20,34,.66);--edge:rgba(16,20,34,.16);--hi:rgba(255,255,255,.9);--bf1:rgba(255,255,255,.95);--bf2:rgba(255,255,255,.55);box-shadow:0 18px 40px rgba(16,20,34,.14),inset 0 1.5px 0 var(--hi)}}
+:root[data-theme="light"] .cco{--a:#101422;--rc:#101422;--g:#101422;--bad:#101422;--fg:#101422;--mut:rgba(16,20,34,.66);--edge:rgba(16,20,34,.16);--hi:rgba(255,255,255,.9);--bf1:rgba(255,255,255,.95);--bf2:rgba(255,255,255,.55);box-shadow:0 18px 40px rgba(16,20,34,.14),inset 0 1.5px 0 var(--hi)}
+:root:not([data-theme="dark"]):not([data-theme="light"]) .cco{--a:#101422;--rc:#101422;--g:#101422;--bad:#101422;--fg:#101422;--mut:rgba(16,20,34,.66);--edge:rgba(16,20,34,.16);--hi:rgba(255,255,255,.9);--bf1:rgba(255,255,255,.95);--bf2:rgba(255,255,255,.55);box-shadow:0 18px 40px rgba(16,20,34,.14),inset 0 1.5px 0 var(--hi)}
 .cco:before{content:"";position:absolute;left:-30%;top:-55%;width:90%;height:100%;background:radial-gradient(closest-side,rgba(168,220,231,.3),transparent);transform:rotate(-18deg);z-index:-1;pointer-events:none}
 /* the border light: a bright blue arc that runs round the edge of the card */
 .cco:after{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:3px;pointer-events:none;z-index:3;opacity:0;transition:opacity .35s;filter:drop-shadow(0 0 5px var(--rc));
@@ -42,7 +42,7 @@
 .cco input.cco-real,input.cco-real{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;left:-9999px!important}
 button.cco-bspin,button.cco-bok{opacity:1!important}
 button.cco-bspin::before{content:"";display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:cco-sp .7s linear infinite}
-button.cco-bok{background:linear-gradient(135deg,#34d399,#16a34a)!important;color:#04170d!important;border-color:transparent!important;box-shadow:0 10px 26px rgba(34,197,94,.38)!important}
+button.cco-bok{background:linear-gradient(135deg,#34d399,#101422)!important;color:#04170d!important;border-color:transparent!important;box-shadow:0 10px 26px rgba(34,197,94,.38)!important}
 .cco.cco-nt,.cco.cco-nt *{transition:none!important}
 @keyframes cco-run{to{--cco-ang:360deg}}
 @keyframes cco-shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-9px)}35%{transform:translateX(8px)}55%{transform:translateX(-6px)}75%{transform:translateX(4px)}}

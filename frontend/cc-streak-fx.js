@@ -8,7 +8,7 @@ function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c
 var css = el('style'); css.textContent =
 '#ccfx{position:fixed;inset:0;z-index:1100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden;background:var(--bg,#101422);color:var(--fg,#fff);padding:24px 24px calc(24px + env(safe-area-inset-bottom,0px));animation:fxin .3s ease both}' +
 '@keyframes fxin{from{opacity:0}}' +
-'#ccfx .fx-flood{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:#FE813C;transform:scale(0);transition:transform .9s cubic-bezier(.65,0,.2,1)}' +
+'#ccfx .fx-flood{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:#A8DCE7;transform:scale(0);transition:transform .9s cubic-bezier(.65,0,.2,1)}' +
 '#ccfx.s2 .fx-flood{transform:scale(70)}' +
 '#ccfx .fx-flame{position:relative;width:128px;height:166px;transition:transform .4s}' +
 '#ccfx .fx-flame svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}' +
@@ -30,10 +30,10 @@ var css = el('style'); css.textContent =
 '#ccfx .fx-week{position:relative;display:flex;gap:10px;margin-top:26px}' +
 '#ccfx .fx-d{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11px;font-weight:600;opacity:0;transform:scale(.4);transition:all .45s cubic-bezier(.3,1.5,.5,1)}' +
 '#ccfx.s5 .fx-d{opacity:1;transform:none}' +
-'#ccfx .fx-c{width:30px;height:30px;border-radius:50%;box-sizing:border-box;display:grid;place-items:center;border:2px solid rgba(255,255,255,.45);color:#FE813C}' +
+'#ccfx .fx-c{width:30px;height:30px;border-radius:50%;box-sizing:border-box;display:grid;place-items:center;border:2px solid rgba(255,255,255,.45);color:#A8DCE7}' +
 '#ccfx .fx-c.on{background:#fff;border-color:#fff}#ccfx .fx-c svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}' +
 '#ccfx .fx-c.td{box-shadow:0 0 0 4px rgba(255,255,255,.35)}' +
-'#ccfx .fx-go{all:unset;position:relative;box-sizing:border-box;cursor:pointer;margin-top:34px;padding:14px 46px;border-radius:999px;font-size:15px;font-weight:700;letter-spacing:.04em;color:#FE813C;background:#fff;box-shadow:0 14px 30px -10px rgba(0,0,0,.35);opacity:0;transform:translateY(14px);pointer-events:none;transition:all .5s}' +
+'#ccfx .fx-go{all:unset;position:relative;box-sizing:border-box;cursor:pointer;margin-top:34px;padding:14px 46px;border-radius:999px;font-size:15px;font-weight:700;letter-spacing:.04em;color:#A8DCE7;background:#fff;box-shadow:0 14px 30px -10px rgba(0,0,0,.35);opacity:0;transform:translateY(14px);pointer-events:none;transition:all .5s}' +
 '#ccfx.s6 .fx-go{opacity:1;transform:none;pointer-events:auto}#ccfx .fx-go:focus-visible{outline:2px solid #fff;outline-offset:3px}' +
 '@media(prefers-reduced-motion:reduce){#ccfx *,#ccfx{animation:none!important;transition:none!important}}';
 document.head.appendChild(css);
@@ -44,7 +44,7 @@ function flame(col) {
   if (!col) { s.innerHTML = '<path d="' + body + '" fill="rgba(255,255,255,.2)"/>'; return s; }
   s.innerHTML = '<defs><linearGradient id="fxg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF3C4"/><stop offset="1" stop-color="#FFB93D"/></linearGradient></defs>' +
     '<path d="' + body + '" fill="url(#fxg)"/><path d="M50 62C60 76 70 84 70 98C70 110 61 118 50 118C39 118 30 110 30 98C30 88 40 78 50 62Z" fill="#fff" opacity=".85"/>' +
-    '<circle cx="42" cy="92" r="3.4" fill="#0E0F0B"/><circle cx="58" cy="92" r="3.4" fill="#0E0F0B"/><path d="M43 102Q50 108 57 102" fill="none" stroke="#0E0F0B" stroke-width="2.6" stroke-linecap="round"/>';
+    '<circle cx="42" cy="92" r="3.4" fill="#101422"/><circle cx="58" cy="92" r="3.4" fill="#101422"/><path d="M43 102Q50 108 57 102" fill="none" stroke="#101422" stroke-width="2.6" stroke-linecap="round"/>';
   return s;
 }
 function end() { var o = document.getElementById('ccfx'); if (o) { o.style.transition = 'opacity .25s'; o.style.opacity = '0'; setTimeout(function () { o.remove(); }, 260); } document.removeEventListener('keydown', esc); }

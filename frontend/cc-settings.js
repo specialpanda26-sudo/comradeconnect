@@ -1,5 +1,5 @@
 /* cc-settings.js v1: a Settings button on the Me page.
-   Campus, light/dark, security, recovery code, restore, safety and help move out of the long Me menu into one Settings sheet.
+   Campus, security, recovery code, restore, safety and help move out of the long Me menu into one Settings sheet.
    Each entry opens the same card the Me menu opened before (window.ccOpenMe), so no card is rebuilt or moved. */
 (function () {
   'use strict';
@@ -71,9 +71,6 @@
 
     body.appendChild(el('div', 'ccset-sec', 'Your campus'));
     body.appendChild(row(PIN, isAll() ? 'All universities' : campusName(), isAll() ? 'You see the feed from every university. Your posts go under your own one.' : 'Your feed, events and hostels follow this university.', 'Change', function () { close(); if (window.ccChangeCampus) ccChangeCampus(); }));
-    body.appendChild(el('div', 'ccset-sec', 'Appearance'));
-    var th = row(SUN, 'Light or dark', 'Switch the look of the whole app.', 'Switch', function () { var t = document.getElementById('theme'); if (t) t.click(); });
-    body.appendChild(th);
 
     body.appendChild(el('div', 'ccset-sec', 'Account and safety'));
     ITEMS.forEach(function (it) {
@@ -103,4 +100,12 @@
   window.ccOpenSettings = open;
   mount();
   new MutationObserver(function () { mount(); }).observe(document.body, { childList: true, subtree: true });
+  /* Settings tab in the bottom bar: opens the same sheet, never switches the page underneath */
+  window.ccSettingsOpen = open;
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#ccsettab');
+    if (!b) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    open();
+  }, true);
 })();

@@ -34,6 +34,8 @@ html body .kpod .kt3:nth-child(2){border-color:#ee7a4f!important;box-shadow:0 0 
 html body .ksh{background:rgba(22,19,15,.55)!important}\
 html body .crd-xbtn{position:absolute!important;top:12px;right:14px;z-index:5;width:40px!important;height:40px!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:50%!important;background:var(--g)!important;box-shadow:var(--sh)!important;color:var(--fg)!important;display:grid!important;place-items:center;cursor:pointer}\
 html body .crd-xbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}\
+html body .badge.badge{background:#e3ebdf!important;color:#3f4d3a!important;border:0!important;border-radius:999px!important;font-weight:800!important}\
+html:root[data-theme="dark"] body .badge.badge{background:rgba(169,184,162,.2)!important;color:#c9d6c3!important}\
 ';
 function add(){if(document.getElementById('crd-extras-css'))return;var s=document.createElement('style');s.id='crd-extras-css';s.textContent=CSS;document.head.appendChild(s)}
 add();

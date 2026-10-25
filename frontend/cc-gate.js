@@ -81,7 +81,7 @@ h2{font:600 24px/1.1 Unbounded,Poppins,sans-serif;margin:0 0 2px;letter-spacing:
 .hm{position:absolute;inset:0;display:grid;place-items:center;color:var(--mut);font-size:13px}
 .rp{all:unset;position:absolute;z-index:2;right:18px;top:calc(env(safe-area-inset-top,0px) + 20px);cursor:pointer;font-size:13px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.25);color:#101422}
 .rp:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
-.app.su{--ch:250px}.su .brand{top:calc(env(safe-area-inset-top,0px) + 50px)}.app.s{background:#000}
+.app.su{--ch:250px}.su .brand{top:calc(env(safe-area-inset-top,0px) + 50px)}.app.s{background:radial-gradient(120% 52% at 50% -8%,rgba(168,220,231,.75),transparent 62%),#fff}
 .app.w .sheet{transform:translateY(100%)}
 .gs{position:absolute;inset:0;z-index:5;background:linear-gradient(180deg,#A8DCE7 0,rgba(168,220,231,.35) 220px,rgba(255,255,255,0) 420px),#fff;color:#101422;display:flex;flex-direction:column;visibility:hidden;opacity:0;touch-action:pan-y;user-select:none;transition:opacity .5s,visibility .5s}.w .gs{visibility:visible;opacity:1}
 .gt{display:flex;justify-content:center;align-items:center;gap:10px;padding-top:calc(env(safe-area-inset-top,0px) + 26px);flex:none}.gt img{width:30px;height:auto;filter:invert(1)}.gt b{font:300 15px Poppins,sans-serif;letter-spacing:.3em;text-transform:uppercase}
@@ -102,7 +102,7 @@ h2{font:600 24px/1.1 Unbounded,Poppins,sans-serif;margin:0 0 2px;letter-spacing:
 .app.typ{--ch:130px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-delay:0s!important;transition-duration:.01s!important}}
 
-.skp{all:unset;cursor:pointer;display:block;margin:6px auto 0;padding:8px 12px;font-size:12.5px;color:rgba(16,20,34,.55)}.fine u{cursor:pointer;text-decoration:underline}.socs .gbx{min-height:44px;display:flex;justify-content:center}.socs .gbx:not(:has(p)){width:52px;height:52px;border-radius:50%;background:var(--aqt);display:grid;place-items:center;overflow:hidden}.cover.on{display:block}`;
+.skp{all:unset;cursor:pointer;display:block;margin:6px auto 0;padding:8px 12px;font-size:12.5px;color:rgba(16,20,34,.55)}.fine u{cursor:pointer;text-decoration:underline}.socs .gbx{min-height:44px;display:flex;justify-content:center}.socs .gbx:not(:has(p)){width:52px;height:52px;border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(16,20,34,.18);display:grid;place-items:center;overflow:hidden}.gbx .cc-gbtn{all:unset;box-sizing:border-box;cursor:pointer;width:100%;height:100%;display:grid;place-items:center;border-radius:50%;-webkit-tap-highlight-color:transparent}.gbx .cc-gbtn svg{width:22px;height:22px;display:block}.gbx .cc-gbtn:active{transform:scale(.94)}.cover.on{display:block}`;
 var HTML = `<div class="app s" id="app" role="main">
 
 <div class="sp" aria-label="Comrade Connect"><img src="cc-mark.png" alt=""><div class="wm"><b>Comrade</b> <i>Connect</i></div><div class="tl">Your campus. Your voice.</div></div>

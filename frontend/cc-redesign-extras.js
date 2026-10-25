@@ -32,7 +32,26 @@ html body .kbrand svg,html body .kpza svg,html body .kban svg,html body .kbo svg
 html body .kh1 .ka{background:linear-gradient(90deg,#ff8a3d,#c4727a)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important}\
 html body .kpod .kt3:nth-child(2){border-color:#ee7a4f!important;box-shadow:0 0 0 1px rgba(238,122,79,.4),var(--sh)!important}\
 html body .ksh{background:rgba(22,19,15,.55)!important}\
+html body .crd-xbtn{position:absolute!important;top:12px;right:14px;z-index:5;width:40px!important;height:40px!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:50%!important;background:var(--g)!important;box-shadow:var(--sh)!important;color:var(--fg)!important;display:grid!important;place-items:center;cursor:pointer}\
+html body .crd-xbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}\
 ';
 function add(){if(document.getElementById('crd-extras-css'))return;var s=document.createElement('style');s.id='crd-extras-css';s.textContent=CSS;document.head.appendChild(s)}
 add();
+var XSVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function hasX(box){
+ return !!box.querySelector('.crd-xbtn,.xb,.ccs-x,[aria-label*="lose" i],[aria-label*="ancel" i],[data-x]');
+}
+function addX(ov){
+ if(ov.__crdX)return;var box=ov.firstElementChild;if(!box||ov.id==='dm'||ov.id==='ccal')return;
+ ov.__crdX=1;if(hasX(box))return;
+ var b=document.createElement('button');b.type='button';b.className='crd-xbtn';b.setAttribute('aria-label','Close');b.innerHTML=XSVG;
+ b.onclick=function(e){e.stopPropagation();
+  var c=[].slice.call(ov.querySelectorAll('button')).filter(function(x){return x!==b&&/^(close|cancel|done|not now|no thanks)$/i.test((x.textContent||'').trim())})[0];
+  if(c){c.click();return}
+  ov.click();setTimeout(function(){if(ov.isConnected)ov.remove()},60)};
+ box.appendChild(b);
+}
+function scanX(){[].forEach.call(document.querySelectorAll('div.crd-ov'),addX)}
+new MutationObserver(function(){scanX()}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+scanX();
 })();

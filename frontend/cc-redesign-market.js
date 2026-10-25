@@ -64,6 +64,7 @@ html body #v-market .mgrid .mc .mb em{position:static!important;background:none!
 html body #v-market #mbrowse .fld input#mkq,html body #v-market #mbrowse .fld input{border:0!important;background:none!important;box-shadow:none!important;height:100%;min-height:50px;padding:0!important;border-radius:0!important}\
 html body #v-market .ccf input,html body #v-market .ccf select,html body #v-market #mbrowse select{height:48px;border-radius:999px;border:0!important;background:var(--g);box-shadow:var(--sh);padding:0 18px;font:600 14px Manrope,sans-serif;color:var(--fg)}\
 html body #v-market #mbrowse .ccf input,html body #v-market #mbrowse .ccf select,html body #v-market #mbrowse input[type=number],html body #v-market #mbrowse input[inputmode],html body #v-market #mbrowse select{height:48px!important;border-radius:999px!important;border:0!important;background:var(--g)!important;box-shadow:var(--sh)!important;padding:0 18px!important}\
+html body #v-market select,html body #v-market select:focus{height:48px!important;border-radius:999px!important;border:0!important;border-bottom:0!important;background-color:var(--g)!important;box-shadow:var(--sh)!important;padding:0 18px!important;font:600 14px Manrope,sans-serif!important;color:var(--fg)!important;width:100%;box-sizing:border-box}\
 html body #v-market .mu-ban{background:#fff8f4!important;background-image:none!important}\
 html body #v-market .mu-ban::after{display:none!important}\
 html body #v-market .mu-ban .tag{background:rgba(255,255,255,.7);color:#16130f;border-radius:999px;padding:4px 10px}\

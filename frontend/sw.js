@@ -34,6 +34,7 @@ const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
+  if (req.method === 'POST' && new URL(req.url).pathname === '/share-target') { e.respondWith(ccShare(req)); return; }
   if (req.method !== 'GET' || req.headers.has('range')) return;
   const url = new URL(req.url);
   if (url.pathname.startsWith('/admin') || url.pathname.startsWith('/scan')) return;
@@ -66,3 +67,15 @@ self.addEventListener('fetch', (e) => {
     })());
   }
 });
+
+const SHARE_HOME = '/app/';   // where shared things open. Change to '/' once the new app is the main page.
+async function ccShare(req) {
+  try {
+    const fd = await req.formData(), file = fd.get('media'), c = await caches.open('cc-share');
+    for (const k of await c.keys()) await c.delete(k);
+    const meta = { title: String(fd.get('title') || ''), text: String(fd.get('text') || ''), url: String(fd.get('url') || ''), name: (file && file.name) || '', type: (file && file.type) || '', size: (file && file.size) || 0 };
+    await c.put('/shared-meta', new Response(JSON.stringify(meta), { headers: { 'content-type': 'application/json' } }));
+    if (file && file.size) await c.put('/shared-file', new Response(file, { headers: { 'content-type': file.type || 'video/mp4' } }));
+  } catch (x) {}
+  return Response.redirect(SHARE_HOME + '?shared=1', 303);
+}

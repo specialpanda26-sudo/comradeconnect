@@ -140,6 +140,17 @@ body.desk .sheet.on{transform:translate(-50%,0)}
 .ldoc ol{counter-reset:n}.ldoc ol>li{counter-increment:n;padding-left:30px}.ldoc ol>li::before{content:counter(n);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;background:var(--tint);color:var(--o2);font:800 11.5px/22px Manrope,sans-serif;text-align:center}
 .ldoc table{display:block;overflow-x:auto;border-collapse:collapse;margin:10px 0;font-size:13.5px}.ldoc th,.ldoc td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;min-width:96px}.ldoc th{color:var(--ink)}
 .ldoc .card{background:var(--card);border-radius:18px;padding:4px 14px;margin:10px 0;box-shadow:none}
+.livep{position:absolute;top:22px;right:22px;z-index:2;display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.9);color:#16130f;font-weight:800;font-size:12.5px;letter-spacing:.04em}
+.livep i{width:9px;height:9px;border-radius:50%;background:#9a928a}.livep.on i{background:#d9334a;animation:lvp 1.4s infinite}
+@keyframes lvp{50%{opacity:.35;transform:scale(1.4)}}
+#sheet.mini{top:auto;left:12px;right:auto;bottom:calc(98px + env(safe-area-inset-bottom,0px));width:min(230px,58vw);max-height:none;overflow:hidden;padding:6px;border-radius:22px;box-shadow:0 16px 38px rgba(0,0,0,.4);z-index:42;transform:none}
+body.desk #sheet.mini{left:24px;transform:none}
+#sheet.mini>*{display:none!important}
+#sheet.mini>#rm{display:grid!important;height:128px!important;border-radius:16px!important}
+#sheet.mini>.ccmbar{display:flex!important}
+.cctools{display:flex;gap:8px;margin:12px 0 0;flex-wrap:wrap}.ccmbar{display:none;gap:6px;margin-top:6px}
+.cctools button,.ccmbar button{flex:1;height:40px;border-radius:999px;background:var(--card);box-shadow:var(--sh);font-weight:800;font-size:12.5px;padding:0 10px;white-space:nowrap}
+.ccmbar button{height:34px;font-size:11.5px}
 .banner{cursor:pointer;display:flex;align-items:center;gap:10px;justify-content:space-between;background:linear-gradient(135deg,#ffa05a,#ee7a4f);color:#1d0f06;border-radius:20px;padding:6px 6px 6px 16px;font-weight:800;font-size:13px;margin-bottom:14px;min-height:50px}.banner span{flex:1;padding:6px 0}.banner .bx{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(29,15,6,.12);color:#1d0f06}.banner .bx:active{transform:scale(.92)}
 .hero{border-radius:36px;padding:22px 22px 22px;box-shadow:var(--sh);min-height:372px;display:flex;flex-direction:column;color:#16130f}
 .hero .hi{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.85);display:grid;place-items:center;margin-bottom:14px}
@@ -565,11 +576,11 @@ R.home=()=>{
   const lb=Object.keys(ZLB).sort((a,b)=>zscore(b)-zscore(a));
   const list=vis();
  return `
- <div class="top"><button class="search" data-act="find">${ic('search')}<span>${T('Search anything...')}</span></button><button class="rb dk" data-act="settings" aria-label="Settings">${ic('gear')}</button></div>
+ <div class="top"><button class="search" data-act="find">${ic('search')}<span>${T('Search anything...')}</span></button><button class="rb" data-act="theme" aria-label="Light or dark mode">${ic(isDark()?'sun':'moon')}</button><button class="rb dk" data-act="settings" aria-label="Settings">${ic('gear')}</button></div>
  <div class="meta"><button class="chip sm" data-act="campus">${ic('pin','s')}${esc(S.campus)} · Change</button><span style="display:flex;gap:8px"><button class="rb sm" data-act="safety" aria-label="Safety tools">${ic('shield','s')}</button><button class="rb sm" data-act="bell" aria-label="Notifications">${ic('bell','s')}${S.unread?'<i class="dot"></i>':''}</button></span></div>
  ${S.banner?`<div class="banner" data-act="bannergo" role="button" tabindex="0"><span>${esc(S.banner)}</span><button type="button" class="bx" data-act="bannerx" aria-label="Dismiss">${ic('x','s')}</button></div>`:''}
  ${!S.signed?`<div class="card gb b4" style="color:#16130f"><h3>Welcome, comrade</h3><p class="sub1" style="color:#16130f">Sign up to post, comment and earn points. Your stories always stay anonymous.</p><div class="two" style="margin-top:12px"><button class="btn k sm" data-act="signup" style="width:100%">Sign up</button><button class="btn w sm" data-act="login" style="width:100%">Log in</button></div></div>`:''}
- <div class="hero gb b1">
+ <div class="hero gb b1"><button class="livep${LIVES.length?' on':''}" data-act="livenow" aria-label="Live now"><i></i>Live${LIVES.length?' · '+LIVES.length:''}</button>
   <span class="hi">${ic('mega')}</span><div class="gr">${T('Niaje comrade,')}</div><h1>Spill it.</h1>
   <p>${T('Nobody will know it was you.')}</p><div class="fill"></div>
   <p style="font-size:12px;opacity:.85">The anonymous campus feed for ${esc(S.campus)}. No name, no trace. Drop the tea, read what the hostels are saying, and share the juicy ones to WhatsApp.</p>
@@ -772,7 +783,8 @@ A.iact=a=>{const [id,i,act]=a.split('|');const it=SEC[id].items[+i];
  if(act==='work')return openSheet('My work',`<p class="sub1" style="margin-bottom:12px">Show finished jobs. Up to 6 photos and 2 short videos (15 MB each) per service.</p><div class="pgrid">${[0,1,2,3].map(k=>`<div class="pc"><div class="im gb ${grads[k]}"></div></div>`).join('')}</div><button class="btn k" style="margin-top:14px" data-act="upl">Add photos or video</button>`)};
 function rateItem(it){let v=0;openSheet('Write a review',`<p class="sub1" style="margin-bottom:10px">${esc(it.t)}</p><div class="stars" id="rst" style="margin-bottom:14px">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join('')}</div>${field('Honest review','<textarea class="in" id="rtx" maxlength="200" placeholder="What was it really like?"></textarea>')}<button class="btn k" id="rgo" disabled>Post review</button>`,sh=>{$$('#rst button',sh).forEach(b=>b.onclick=()=>{v=+b.dataset.n;$$('#rst button',sh).forEach(x=>x.classList.toggle('on',+x.dataset.n<=v));$('#rgo',sh).disabled=false});$('#rgo',sh).onclick=()=>{it.s=it.s?(it.s+v)/2:v;closeSheet();refresh();pts(2,'review posted')}})}
 A.upl=()=>toast('Uploads are not connected yet');
-A.share=a=>{const t=a||'Comrade Connect';if(navigator.share){navigator.share({title:t,text:t}).catch(()=>{})}else toast('Link copied to share')};
+A.share=a=>{const t=a||'Comrade Connect',app=t==='Comrade Connect',url='https://comradeconnect.co.ke/get',text=app?'Join me on Comrade Connect, the campus app for Kenyan comrades. Get the app here:':t;
+ if(navigator.share){navigator.share(app?{title:t,text:text,url:url}:{title:t,text:t}).catch(()=>{})}else if(app)copyText(url,'App link copied');else toast('Sharing is not available here')};
 A.cal=()=>toast('Added to your calendar');A.doorlink=()=>toast('Door-scan link copied');
 A.secform=id=>{
  const c=SEC[id],fs=fillZ(c.form||[['Details','area']]);
@@ -929,7 +941,7 @@ R.me=()=>{
  ${row('robot','Support','Ask AI, help and contact','support')}
  ${footer()}`;
 };
-A.theme=()=>{const cur=document.documentElement.dataset.theme;const n=cur==='dark'?'light':'dark';document.documentElement.dataset.theme=n;ls.set('cc_theme',n);toast(n==='dark'?'Dark mode':'Light mode')};
+A.theme=()=>{const cur=document.documentElement.dataset.theme;const n=cur==='dark'?'light':'dark';document.documentElement.dataset.theme=n;ls.set('cc_theme',n);toast(n==='dark'?'Dark mode':'Light mode');refresh()};
 A.settings=()=>push('settings');A.support=()=>push('support');A.gift=()=>push('gift');
 A.msgs=()=>openSheet('Messages',`<p class="sub1" style="margin-bottom:12px">Anonymous threads. Neither of you sees the other's name.</p><p class="note">No messages yet.</p>`);
 A.editprof=()=>openSheet('Edit profile',`${field('Username','<input class="in" id="un" value="'+esc(S.handle)+'" maxlength="24">')}${field('Profile picture',`<button class="btn w" data-act="upl">${ic('plus','s')} Choose a picture</button>`)}<button class="btn k" id="ps">Save</button><p class="note">Your handle is never shown on your posts.</p>`,sh=>{$('#ps',sh).onclick=()=>{S.handle=$('#un',sh).value.trim()||S.handle;closeSheet();refresh();toast('Profile saved')}});
@@ -1060,7 +1072,7 @@ SUB.legal=k=>{const d=LDOC[k]||LDOC.terms;
  <p class="note" style="margin-top:20px">Owned and operated by Ogolla Tech, founded by Henry O. Odhiambo. <a href="${d.u}" target="_blank" rel="noopener">Open the web version</a></p></article>`};
 A.legal=a=>{closeSheet();const k=lkey(a),top=S.stack[S.stack.length-1];if(top&&top.name==='legal'){top.arg=k;refresh();$('#sub').scrollTop=0}else{push('legal',k)}};
 A.legalto=a=>{const top=S.stack[S.stack.length-1];if(top&&top.name==='legal'){top.arg=a;render();$('#sub').scrollTop=0}};
-A.getapp=()=>openSheet('Get the app',`<p class="sub1" style="margin-bottom:12px">Install Comrade Connect on Android in three steps.</p>${['Download the latest APK','Allow installs from this source when asked','Open Comrade Connect and sign in'].map((t,i)=>`<div class="row"><span class="ri" style="font-weight:800">${i+1}</span><span class="rx"><b>${t}</b></span></div>`).join('')}<button class="btn o" data-act="closesheet">Download the app</button><button class="btn w" style="margin-top:10px" data-act="share" data-arg="Comrade Connect">Share the app link</button>`);
+A.getapp=()=>openSheet('Get the app',`<p class="sub1" style="margin-bottom:12px">Install Comrade Connect on Android in three steps.</p>${['Download the latest APK','Allow installs from this source when asked','Open Comrade Connect and sign in'].map((t,i)=>`<div class="row"><span class="ri" style="font-weight:800">${i+1}</span><span class="rx"><b>${t}</b></span></div>`).join('')}<button class="btn o" data-act="dlapp">Download the app</button><button class="btn w" style="margin-top:10px" data-act="share" data-arg="Comrade Connect">Share the app link</button>`);
 A.mkq=()=>{};
 
 /* ===== GATE, LOCK, SIGN-UP ===== */
@@ -2498,6 +2510,7 @@ function pickClip(camera){
  i.onchange=function(){uploadClip(i.files&&i.files[0])};i.click()}
 A.vrec=function(){if(!signedIn())return need();pickClip(true)};
 A.vup=function(){if(!signedIn())return need();pickClip(false)};
+window.CCUPLOADCLIP=uploadClip;
 
 A.clike=async function(a){
  var c=CLIPS[+a];if(!c||!c.id)return;
@@ -3752,6 +3765,53 @@ async function load(){
 }
 load();
 document.addEventListener('visibilitychange',function(){if(!document.hidden)load()});
+})();
+</script>
+<script>/* cc-minilive: Live buttons, mini-player, sound, and sharing into the app */
+(function(){
+'use strict';
+var sh=document.getElementById('sheet'),bg=document.getElementById('sbg');
+function mini(on){sh.classList.toggle('mini',!!on);if(on)bg.classList.remove('on');else if(sh.classList.contains('on'))bg.classList.add('on')}
+var _os=openSheet;openSheet=function(){sh.classList.remove('mini');return _os.apply(this,arguments)};
+var _cs=closeSheet;closeSheet=function(){sh.classList.remove('mini');return _cs.apply(this,arguments)};
+A.livenow=function(){S.wTab='live';A.tab('watch')};
+var _ar=A.room;
+A.room=function(a){var r=_ar.apply(this,arguments),rm=document.getElementById('rm');
+ if(rm&&!document.getElementById('cctools'))rm.insertAdjacentHTML('afterend','<div class="cctools" id="cctools"><button data-act="ccmin">Minimize</button><button data-act="ccfull">Full screen</button><button data-act="ccsound">Sound on</button></div><div class="ccmbar"><button data-act="ccmax">Expand</button><button data-act="ccsound">Sound</button><button data-act="closesheet">Leave</button></div>');
+ return r};
+A.ccmin=function(){mini(true)};A.ccmax=function(){mini(false)};
+A.ccfull=function(){var rm=document.getElementById('rm');if(!rm)return;var f=rm.requestFullscreen||rm.webkitRequestFullscreen;
+ if(f){try{f.call(rm)}catch(e){toast('Full screen is not available here')}}else{var v=rm.querySelector('video');if(v&&v.webkitEnterFullscreen){try{v.webkitEnterFullscreen()}catch(e){}}else toast('Full screen is not available on this phone')}};
+A.ccsound=function(){var rm=document.getElementById('rm');if(!rm)return;
+ var f=rm.querySelector('iframe');
+ if(f&&f.src&&!f.dataset.snd){var u=f.src.replace(/([?&])mute=1/,'$1mute=0');if(!/[?&]autoplay=/.test(u))u+=(u.indexOf('?')<0?'?':'&')+'autoplay=1';if(!/[?&]mute=/.test(u))u+=(u.indexOf('?')<0?'?':'&')+'mute=0';f.dataset.snd='1';f.src=u}
+ [].forEach.call(rm.querySelectorAll('video,audio'),function(m){try{m.muted=false;m.volume=1;var q=m.play();if(q&&q.catch)q.catch(function(){})}catch(e){}});
+ var b=rm.querySelector('#rav button');if(b)b.click();
+ toast('Sound on. Still silent? Raise your phone volume.')};
+
+try{if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}catch(e){}
+A.dlapp=function(){closeSheet();window.open('https://comradeconnect.co.ke/get','_blank','noopener')};
+var LINK='';
+A.sharelive=function(){closeSheet();S.wTab='live';A.tab('watch');setTimeout(function(){var u=document.getElementById('lu'),t=document.getElementById('lt');if(u)u.value=LINK;if(t)t.focus()},250)};
+function show(m,f,link){
+ if(f&&/^video\//.test(f.type||m.type||'')){
+  var url=URL.createObjectURL(f);S.wTab='clips';A.tab('watch');
+  openSheet('Share to Comrade Connect','<video src="'+url+'" controls playsinline style="width:100%;border-radius:18px;max-height:42vh;background:#000"></video><div class="fld" style="margin-top:12px"><label>Caption (optional)</label><input class="in" id="shcap" maxlength="140" placeholder="Add a caption"></div><button class="btn o" id="shgo">Post as a clip</button><p class="note">Clips must be MP4 or WebM and under 25 MB.</p>',function(x){
+   document.getElementById('shgo').onclick=function(){var v=document.getElementById('vcap');if(v)v.value=(document.getElementById('shcap').value||'').trim();closeSheet();
+    if(window.CCUPLOADCLIP)CCUPLOADCLIP(new File([f],m.name||'clip.mp4',{type:f.type||m.type||'video/mp4'}))}});return}
+ if(f){toast('Only videos can be shared into Comrade Connect for now');return}
+ if(link){LINK=link;var tk=/tiktok\.com/i.test(link);
+  openSheet('Link shared with you','<p class="sub1" style="margin-bottom:10px;overflow-wrap:anywhere">'+esc(link)+'</p>'+(tk?'<p class="note" style="margin-bottom:12px">TikTok only shares a link, not the video file. To post the video itself, save it to your gallery, then share it from the gallery to Comrade Connect.</p>':'')+'<button class="btn o" data-act="sharelive">I am live: use as my live link</button><button class="btn w" style="margin-top:10px" data-act="closesheet">Not now</button>')}}
+async function take(){
+ if(!/[?&]shared=1/.test(location.search)||!window.caches)return;
+ var m=null,f=null;
+ try{var c=await caches.open('cc-share'),r=await c.match('/shared-meta');if(r)m=await r.json();var fr=await c.match('/shared-file');if(fr)f=await fr.blob();
+  var ks=await c.keys();for(var i=0;i<ks.length;i++)await c.delete(ks[i])}catch(e){}
+ try{history.replaceState(null,'',location.pathname)}catch(e){}
+ if(!m)return;
+ var link=(m.url||((m.text||'').match(/https?:\/\/\S+/)||[''])[0]||'').trim();
+ setTimeout(function(){show(m,f,link)},900)}
+take();
 })();
 </script>
 </body></html>

@@ -1,0 +1,74 @@
+/* cc-watch2.css v1: the new Watch page (Videos and Live). Layout and looks only; every button keeps its old id and handler. */
+html body #v-videos.w2>.sub,html body #v-live.w2>.sub{color:var(--mut);font-size:13px;line-height:1.55}
+
+/* ---- live banner on the Videos tab ---- */
+html body .w2-livebar{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%;margin:2px 0 14px;padding:12px 16px;border-radius:22px;background:linear-gradient(135deg,#d9334a,#ee7a4f);color:#fff;font:800 13px Manrope,Poppins,sans-serif;box-shadow:0 10px 24px rgba(217,51,74,.28)}
+html body .w2-livebar[hidden]{display:none}
+html body .w2-livebar i{width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 0 0 0 rgba(255,255,255,.7);animation:w2p 1.6s infinite;flex:none}
+html body .w2-livebar span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body .w2-livebar b{font-weight:800;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.22)}
+@keyframes w2p{70%{box-shadow:0 0 0 8px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+
+/* ---- create card ---- */
+html body .w2-create{position:relative;overflow:hidden;isolation:isolate;border-radius:30px;padding:18px;margin:4px 0 22px;background:#fff8f4;color:#16130f;box-shadow:var(--sh)}
+html body .w2-create::before{content:"";position:absolute;inset:-30%;z-index:-1;filter:blur(34px);opacity:.9;background:radial-gradient(42% 52% at 20% 25%,#ffb27a 0,transparent 72%),radial-gradient(44% 52% at 85% 70%,#e7a0a6 0,transparent 72%),radial-gradient(40% 40% at 50% 100%,#ffe7d2 0,transparent 72%)}
+html body .w2-create h3{margin:0;font:800 19px Manrope,Poppins,sans-serif;letter-spacing:-.02em;color:#16130f}
+html body .w2-create p{margin:4px 0 14px;font-size:12.5px;line-height:1.5;color:#3d352c}
+html body .w2-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+html body .w2-tiles>button,html body .w2-tiles>.btn{all:unset;box-sizing:border-box;cursor:pointer;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:7px;height:78px;border-radius:22px;background:rgba(255,255,255,.78);color:#16130f;font:800 12px Manrope,Poppins,sans-serif;text-align:center;-webkit-tap-highlight-color:transparent;box-shadow:0 4px 14px rgba(22,19,15,.08);transition:transform .15s}
+html body .w2-tiles>button:active{transform:scale(.95)}
+html body .w2-tiles>button:focus-visible{outline:2px solid #16130f;outline-offset:2px}
+html body .w2-tiles>button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+html body .w2-tiles>#vrec{background:#16130f;color:#fff}
+html body .w2-tiles>#w2-golive{background:linear-gradient(135deg,#ffa05a,#ee7a4f);color:#1d0f06}
+html body .w2-create .fld{margin-top:12px;background:rgba(255,255,255,.75);box-shadow:none}
+html body .w2-create .fld input{height:46px}
+
+/* ---- section title ---- */
+html body .w2-sec{display:flex;align-items:baseline;justify-content:space-between;margin:2px 4px 12px}
+html body .w2-sec h3{margin:0;font:800 18px Manrope,Poppins,sans-serif;letter-spacing:-.02em}
+html body .w2-sec span{font:700 12px Manrope,Poppins,sans-serif;color:var(--mut)}
+
+/* ---- clips: tall reel cards ---- */
+html body #v-videos.w2 #vl.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:0}
+html body #v-videos.w2 #vl .vcard{position:relative;display:block;aspect-ratio:3/4.3;padding:0!important;border-radius:26px;overflow:hidden;background:#16130f!important;box-shadow:var(--sh);border:0;isolation:isolate}
+html body #v-videos.w2 #vl .vcard::before{content:"";position:absolute;left:50%;top:44%;width:46px;height:46px;transform:translate(-50%,-50%);z-index:2;border-radius:50%;pointer-events:none;background:rgba(255,255,255,.28) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M9 6.5v11l9-5.5z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E") center/24px no-repeat;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+html body #v-videos.w2 #vl .vcard::after{content:"";display:block;position:absolute;inset:auto 0 0 0;height:62%;z-index:2;pointer-events:none;background:linear-gradient(transparent,rgba(22,19,15,.86))}
+html body #v-videos.w2 #vl .vcard>div:first-child{position:absolute;top:10px;left:10px;right:10px;z-index:4;display:flex;justify-content:space-between;align-items:center}
+html body #v-videos.w2 #vl .vcard>div:first-child .badge{background:rgba(255,255,255,.92);color:#16130f;font-size:10px;padding:4px 9px}
+html body #v-videos.w2 #vl .vcard>div:first-child time{color:#fff;font-size:11px;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+html body #v-videos.w2 #vl .vcard>div:nth-child(2){position:absolute;inset:0;margin:0!important;height:auto;z-index:1}
+html body #v-videos.w2 #vl .vcard video,html body #v-videos.w2 #vl .vcard .poster{position:absolute;inset:0;width:100%;height:100%;max-height:none;aspect-ratio:auto;border-radius:0;object-fit:cover;pointer-events:none;background-color:#2a241d}
+html body #v-videos.w2 #vl .vcard .poster{font-size:0;background-image:var(--crdp,none)}
+html body #v-videos.w2 #vl .vcard .poster::after{display:none}
+html body #v-videos.w2 #vl .vcard>p{position:absolute;left:12px;right:12px;bottom:54px;z-index:3;margin:0!important;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5);font-size:13px!important;font-weight:800;line-height:1.3!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+html body #v-videos.w2 #vl .vcard .bar{position:absolute;left:10px;right:10px;bottom:10px;z-index:4;display:flex;gap:6px;align-items:center;margin:0;padding:0;background:none;border:0;box-shadow:none}
+html body #v-videos.w2 #vl .vcard .bar .act{height:34px;min-width:34px;padding:0 11px;border-radius:999px;border:0;color:#fff;background:rgba(255,255,255,.2);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+html body #v-videos.w2 #vl .vcard .bar .vlk.liked{background:#fff;color:#d9334a}
+html body #v-videos.w2 #vl .vcard .bar .vlk svg{width:15px;height:15px}
+html body #v-videos.w2 #vl .vcard .bar .wa{display:none}
+html body #v-videos.w2 #vl .vcard .bar .vdl{color:#fff!important;background:rgba(217,51,74,.7)}
+html body #v-videos.w2 #vl #vmore{grid-column:1/3}
+
+/* ---- empty states ---- */
+html body #v-videos.w2 #vl>p.sub,html body .w2-empty{grid-column:1/3;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:34px 20px;border-radius:28px;background:var(--g);box-shadow:var(--sh);font-size:13px;line-height:1.5;color:var(--mut)}
+html body #v-videos.w2 #vl>p.sub::before,html body .w2-empty::before{content:"";width:54px;height:54px;border-radius:50%;margin-bottom:6px;background:linear-gradient(135deg,#ffa05a,#ee7a4f) center/26px no-repeat;background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M9 6.5v11l9-5.5z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E"),linear-gradient(135deg,#ffa05a,#ee7a4f)}
+html body .w2-empty b{display:block;font:800 16px Manrope,Poppins,sans-serif;color:var(--fg)}
+html body .w2-empty .btn{margin-top:10px;min-width:160px}
+html body #v-videos.w2>.w2-foot{margin:18px 6px 0;font-size:12px;color:var(--mut);text-align:center}
+
+/* ---- Live tab ---- */
+html body #v-live.w2 #lvl article.box{border-radius:30px;padding:18px 18px 16px}
+html body .w2-host{display:flex;align-items:center;gap:10px;margin:12px 0 0}
+html body .w2-av{flex:none;width:38px;height:38px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.7);color:#16130f;font:800 15px Manrope,Poppins,sans-serif;box-shadow:0 0 0 2px #fff}
+html body .w2-av img{width:100%;height:100%;object-fit:cover;display:block}
+html body .w2-host b{font:800 13px Manrope,Poppins,sans-serif;color:#16130f;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body #v-live.w2 #lvl article.box h3{margin:10px 0 14px}
+html body #v-live.w2 #lvl>p.sub{display:none}
+html body #v-live.w2 #lvset{border-radius:30px;padding:20px}
+html body #v-live.w2 #lvset h3{font:800 19px Manrope,Poppins,sans-serif;letter-spacing:-.02em}
+
+@media (prefers-reduced-motion:reduce){html body .w2-livebar i{animation:none}}
+
+/* the card is the player: hide the browser's own video controls on the grid */
+html body #v-videos.w2 #vl .vcard video::-webkit-media-controls,html body #v-videos.w2 #vl .vcard video::-webkit-media-controls-enclosure,html body #v-videos.w2 #vl .vcard video::-webkit-media-controls-panel{display:none!important;-webkit-appearance:none}

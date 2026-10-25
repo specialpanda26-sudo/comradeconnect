@@ -282,6 +282,16 @@ html[data-lay="desktop"] #tkb{left:92px;bottom:calc(20px + env(safe-area-inset-b
 html[data-lay="desktop"] #toast{bottom:28px;left:calc(50% + 52px)}
 html[data-lay="desktop"] #ck{bottom:28px;left:calc(50% + 52px)}
 html[data-lay="desktop"] #fab{right:28px;bottom:28px}
+/* desktop mode: nothing may run off the screen */
+html[data-lay="desktop"] nav:not(#tb){width:min(1040px,calc(100vw - 124px))}
+html[data-lay="desktop"] #tb{grid-auto-rows:clamp(34px,calc((100vh - 40px) / 8),62px);max-height:calc(100vh - 16px);overflow-y:auto;scrollbar-width:none}
+html[data-lay="desktop"] #tb::-webkit-scrollbar{display:none}
+@media(max-height:470px){html[data-lay="desktop"] #tb button{font-size:0}html[data-lay="desktop"] #tb{width:60px;padding:4px}html[data-lay="desktop"] body{padding-left:84px}html[data-lay="desktop"] nav:not(#tb){left:calc(50% + 42px);width:min(1040px,calc(100vw - 104px))}}
+@media(max-height:680px){html[data-lay="desktop"] #tkr{left:auto;right:28px;bottom:92px}}
+#layrot{position:fixed;inset:0;z-index:9800;display:grid;place-items:center;padding:24px;background:rgba(255,255,255,.97);color:#101422;text-align:center}
+#layrot .lr-b{max-width:300px}#layrot h3{margin:14px 0 6px;font-size:20px;font-weight:700}#layrot p{margin:0 0 20px;font-size:14px;line-height:1.55;color:rgba(16,20,34,.65)}
+#layrot .lr-i{width:64px;height:64px;fill:none;stroke:#101422;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;animation:lrrot 2.4s ease-in-out infinite}@keyframes lrrot{0%,25%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+#layrot .lr-s{all:unset;cursor:pointer;padding:12px 26px;border-radius:999px;border:2px solid #101422;font-size:14px;font-weight:600;box-shadow:0 3px 0 #101422}
 #lay{display:grid}
 /* site editor: announcement banner and maintenance cover (cc-site.js) */
 #cc-banner{position:fixed;top:0;left:0;right:0;z-index:520;padding:calc(7px + env(safe-area-inset-top,0px)) 14px 7px;text-align:center;font:500 12px Poppins,sans-serif;background:var(--ink);color:var(--inkfg);letter-spacing:.01em}
@@ -1052,12 +1062,23 @@ const root=document.documentElement;root.dataset.theme='light';try{localStorage.
 const LAYP='<svg class="i" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>',LAYD='<svg class="i" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>';
 const vpm=document.querySelector('meta[name="viewport"]'),vp0=vpm?vpm.content:'';
 let layPref='auto';try{layPref=localStorage.getItem('cs_layout')||'auto'}catch(e){}
-function layNow(){return layPref==='auto'?(innerWidth>=1024?'desktop':'mobile'):layPref}
+/* Desktop mode on a phone only works sideways. Upright, the phone keeps its phone layout and is asked to rotate. */
+const layPhone=()=>{try{return Math.min(screen.width,screen.height)<700&&matchMedia('(pointer:coarse)').matches}catch(e){return false}};
+const layUpright=()=>{try{return matchMedia('(orientation:portrait)').matches}catch(e){return innerHeight>innerWidth}};
+function layNow(){if(layPref==='auto')return innerWidth>=1024?'desktop':'mobile';if(layPref==='desktop'&&layPhone()&&layUpright())return 'mobile';return layPref}
+function layRotate(){
+ const need=layPref==='desktop'&&layPhone()&&layUpright();let o=document.getElementById('layrot');
+ if(!need){if(o)o.remove();return}
+ if(o)return;
+ o=document.createElement('div');o.id='layrot';o.setAttribute('role','dialog');o.setAttribute('aria-label','Rotate your phone');
+ o.innerHTML='<div class="lr-b"><svg class="lr-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg><h3>Rotate your phone</h3><p>Desktop mode works in landscape. Turn your phone sideways to continue.</p><button type="button" class="lr-s">Stay in phone layout</button></div>';
+ o.querySelector('.lr-s').onclick=()=>{layPref='mobile';try{localStorage.setItem('cs_layout','mobile')}catch(e){}layApply()};
+ document.body.appendChild(o)}
 function layApply(){const l=layNow();root.dataset.lay=l;
- if(vpm){vpm.content=(layPref==='desktop'&&screen.width<900)?'width=1100':vp0}
- $('#lay').innerHTML=l==='desktop'?LAYP:LAYD;$('#lay').title=l==='desktop'?'Switch to phone layout':'Switch to desktop layout'}
-$('#lay').onclick=()=>{layPref=layNow()==='desktop'?'mobile':'desktop';try{localStorage.setItem('cs_layout',layPref)}catch(e){}layApply();toast(layPref==='desktop'?'Desktop layout':'Phone layout')};
-addEventListener('resize',()=>{if(layPref==='auto')layApply()});layApply();
+ if(vpm)vpm.content=vp0;
+ $('#lay').innerHTML=l==='desktop'?LAYP:LAYD;$('#lay').title=l==='desktop'?'Switch to phone layout':'Switch to desktop layout';layRotate()}
+$('#lay').onclick=()=>{layPref=(layPref==='desktop'||layNow()==='desktop')?'mobile':'desktop';try{localStorage.setItem('cs_layout',layPref)}catch(e){}layApply();toast(layNow()==='desktop'?'Desktop layout':layPref==='desktop'?'Turn your phone sideways for desktop mode':'Phone layout')};
+addEventListener('resize',layApply);addEventListener('orientationchange',()=>setTimeout(layApply,150));layApply();
 
 /* ---------- data layer ----------
    Same shape as the planned REST API (GET/POST /api/posts, /like, /comment, /view).

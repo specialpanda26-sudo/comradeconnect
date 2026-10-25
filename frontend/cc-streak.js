@@ -59,5 +59,5 @@ new MutationObserver(onView).observe(document.body, { attributes: true, attribut
 var ci = document.getElementById('ci'); if (ci) ci.addEventListener('click', function () { want = 1; setTimeout(function () { at = 0; load(); }, 900); });
 onView();
 // when the app opens, if you already checked in today, play the animation once for the day
-setTimeout(function () { if (connected() && signedIn() && !want) { want = 2; at = 0; load(); } }, 2500);
+/* no automatic replay on app open: the animation plays only when you check in */
 })();

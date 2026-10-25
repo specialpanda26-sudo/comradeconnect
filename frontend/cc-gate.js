@@ -140,6 +140,7 @@ var HTML = `<div class="app s" id="app" role="main">
   <div class="f"><label for="se">Username</label><div class="in"><input id="se" type="text" maxlength="20" placeholder="Choose a username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false"></div></div>
   <div class="f"><label for="sp">Password</label><div class="in"><input id="sp" type="password" placeholder="Create a password" autocomplete="new-password"><button type="button" class="eye" data-eye="sp" aria-label="Show password"><svg class="ey" viewBox="0 0 24 24"><path d="M2 12s3.600-7 10-7 10 7 10 7-3.600 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eo" viewBox="0 0 24 24"><path d="M3 3l18 18M10.600 5.100A10 10 0 0112 5c6.400 0 10 7 10 7a17 17 0 01-3.200 4M6.600 6.600C3.800 8.400 2 12 2 12s3.600 7 10 7c1.600 0 3-.4 4.300-1M9.900 9.900a3 3 0 004.200 4.200"/></svg></button></div></div>
   <div class="f"><label for="sc">Confirm password</label><div class="in"><input id="sc" type="password" placeholder="Repeat your password" autocomplete="new-password"><button type="button" class="eye" data-eye="sc" aria-label="Show password"><svg class="ey" viewBox="0 0 24 24"><path d="M2 12s3.600-7 10-7 10 7 10 7-3.600 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eo" viewBox="0 0 24 24"><path d="M3 3l18 18M10.600 5.100A10 10 0 0112 5c6.400 0 10 7 10 7a17 17 0 01-3.200 4M6.600 6.600C3.800 8.400 2 12 2 12s3.600 7 10 7c1.600 0 3-.4 4.300-1M9.900 9.900a3 3 0 004.200 4.200"/></svg></button></div></div>
+  <div class="f"><label for="sr">Invite code (optional)</label><div class="in"><input id="sr" type="text" maxlength="12" placeholder="Have a friend's code? Enter it" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" style="text-transform:uppercase"></div></div>
   <p class="err" id="e2" role="alert"></p>
   <button class="btn" type="submit"><span class="t">Sign up</span><i class="sn"><b></b><b></b><b></b></i></button>
   <div class="or" data-or>Or</div>
@@ -253,12 +254,18 @@ function wire() {
     CC.restoreAccount(u, p).then(function () { try { if (window.ccRemember) ccRemember(u, p); } catch (x) {} sweep(function () { location.reload(); }); },
       function (er) { b.classList.remove('ld'); m.textContent = (er && er.message) || 'That username or password is not right.'; });
   };
+  (function fillRef(n) {                      // invite link ?ref=CODE fills the box by itself; typing a code saves it too (works for Google sign-up as well)
+    var i = $('#sr'); if (!i) return;
+    if (window.ccGetRef) { if (!i.value) i.value = ccGetRef() || ''; i.oninput = function () { i.value = i.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); if (window.ccSetRef) ccSetRef(i.value); }; }
+    else if (n < 20) setTimeout(function () { fillRef(n + 1); }, 250);
+  })(0);
   $('#pu').onsubmit = function (e) {
     e.preventDefault(); var m = $('#e2'), u = $('#se').value.trim(), p = $('#sp').value, b = this.querySelector('.btn');
     if (!/^[A-Za-z0-9_]{3,20}$/.test(u)) return m.textContent = 'Username: 3 to 20 letters, numbers or _';
     if (p.length < 8) return m.textContent = 'Use at least 8 characters.';
     if (p.toLowerCase() === u.toLowerCase()) return m.textContent = 'The password cannot be your username.';
     if (p !== $('#sc').value) return m.textContent = 'The passwords do not match.';
+    if (window.ccSetRef && !ccSetRef(($('#sr') || {}).value)) return m.textContent = 'That invite code does not look right. Leave it empty to skip.';
     if (!window.CC || !CC.createAccount) return wait(m); m.textContent = ''; b.classList.add('ld');
     var r; try { r = CC.createAccount('password', { handle: u, password: p }); } catch (x) { b.classList.remove('ld'); return m.textContent = x.message || 'Could not create the account.'; }
     r.then(function () { sweep(finish); }, function (er) { b.classList.remove('ld'); m.textContent = (er && er.message) || 'Could not create the account. Try again.'; });

@@ -37,7 +37,7 @@
       '#lk .lkfp:after{content:"";position:absolute;left:18%;right:18%;top:16%;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,var(--fg,#fff),transparent);opacity:0;animation:lks 2.3s ease-in-out 1.2s infinite}',
       '@keyframes lks{0%{top:16%;opacity:0}15%{opacity:.85}85%{opacity:.85}100%{top:80%;opacity:0}}',
       '#lk .lkfp.ok{color:var(--ok)}@media(prefers-reduced-motion:reduce){#lk .lkfp *,#lk .lkfp:before,#lk .lkfp:after{outline:0}}',
-      '#lk .lkgo{width:100%;max-width:420px;margin:10px auto 0;display:flex;align-items:center;justify-content:center;gap:10px}'
+      '#lk .lkgo{width:52px;height:52px;padding:0;border-radius:50%;margin:12px auto 0;display:flex;align-items:center;justify-content:center;background:#fff;border:0;box-shadow:0 6px 18px rgba(16,20,34,.18)}'
     ].join('');
     document.head.appendChild(st);
 
@@ -92,7 +92,7 @@
     // "sign in with my account": the Google account you used before opens the app again (the app keeps the account on this phone)
     var pw = document.getElementById('lkpw');
     if (native && pw && typeof CC_GOOGLE_ID === 'string' && CC_GOOGLE_ID && !document.getElementById('lkgo')) {
-      var g = document.createElement('button'); g.type = 'button'; g.id = 'lkgo'; g.className = 'btn g lkgo'; g.textContent = 'Sign in with my Google account';
+      var g = document.createElement('button'); g.type = 'button'; g.id = 'lkgo'; g.className = 'btn g lkgo'; g.innerHTML = '<svg class="lkgo-g" width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.9 2.3-8.5 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>'; g.setAttribute('aria-label', 'Sign in with my Google account'); g.title = 'Sign in with Google';
       pw.insertAdjacentElement('afterend', g);
       g.onclick = function () {
         if (!(window.ccApp && ccApp.googleLogin && window.ccGoogle && ccGoogle.signIn)) return;

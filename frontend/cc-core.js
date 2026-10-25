@@ -885,6 +885,8 @@ try {                                                                   // remem
   const q = (new URLSearchParams(location.search).get('ref') || '').trim().toUpperCase();
   if (REF_RE.test(q)) ST.set('cc_ref', q);
 } catch (e) {}
+window.ccGetRef = () => ST.get('cc_ref', '');
+window.ccSetRef = (c) => { c = String(c || '').trim().toUpperCase(); if (!c) { ST.set('cc_ref', ''); return true; } if (!REF_RE.test(c)) return false; ST.set('cc_ref', c); return true; };
 let refBusy = false;
 async function attributeRef() {                                         // after the account exists; safe to call any time
   const code = ST.get('cc_ref', ''), a = window.ccAuth && window.ccAuth();

@@ -15,9 +15,9 @@ var CSS = `
 .sp img{width:64px;height:auto;display:block;margin:0 auto 18px;opacity:0;filter:brightness(0)}
 .wm{font:300 15px/1 Poppins,sans-serif;letter-spacing:.34em;text-transform:uppercase;padding-left:.34em;opacity:0;white-space:nowrap}.wm,.wm b,.wm i{font-weight:300;font-style:normal;color:#000}
 .tl{font-size:10.5px;line-height:1;color:#000;margin-top:18px;opacity:0}
-.s .sp img{animation:cgwio 5s .1s cubic-bezier(.4,0,.2,1) both}
-.s .wm{animation:cgwio 5s .1s cubic-bezier(.4,0,.2,1) both}
-.s .tl{animation:cgwio 5s .1s cubic-bezier(.4,0,.2,1) both}
+.s .sp img{animation:cgwio 6s .1s cubic-bezier(.4,0,.2,1) both}
+.s .wm{animation:cgwio 6s .1s cubic-bezier(.4,0,.2,1) both}
+.s .tl{animation:cgwio 6s .1s cubic-bezier(.4,0,.2,1) both}
 .w .sp,.a .sp{display:none}
 @keyframes cgwio{0%{opacity:0;transform:translateX(-26px)}22%{opacity:1;transform:translateX(0)}65%{opacity:1;transform:translateX(14px)}100%{opacity:0;transform:translateX(190px)}}
 @keyframes cgio{0%{opacity:0}22%{opacity:1}65%{opacity:1;transform:translateX(14px)}100%{opacity:0;transform:translateX(190px)}}
@@ -102,7 +102,7 @@ h2{font:600 24px/1.1 Unbounded,Poppins,sans-serif;margin:0 0 2px;letter-spacing:
 .app.typ{--ch:130px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-delay:0s!important;transition-duration:.01s!important}}
 
-.skp{all:unset;cursor:pointer;display:block;margin:6px auto 0;padding:8px 12px;font-size:12.5px;color:rgba(16,20,34,.55)}.fine u{cursor:pointer;text-decoration:underline}.socs .gbx{min-height:44px;display:flex;justify-content:center}.socs .gbx:not(:has(p)){width:52px;height:52px;border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(16,20,34,.18);display:grid;place-items:center;overflow:hidden}.gbx .cc-gbtn{all:unset;box-sizing:border-box;cursor:pointer;width:100%;height:100%;display:grid;place-items:center;border-radius:50%;-webkit-tap-highlight-color:transparent}.gbx .cc-gbtn svg{width:22px;height:22px;display:block}.gbx .cc-gbtn:active{transform:scale(.94)}.cover.on{display:block}`;
+.skp{all:unset;cursor:pointer;display:block;margin:6px auto 0;padding:8px 12px;font-size:12.5px;color:rgba(16,20,34,.55)}.fine u{cursor:pointer;text-decoration:underline}.socs .gbx{min-height:44px;display:flex;justify-content:center}.socs .gbx:not(:has(p)){width:52px;height:52px;border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(16,20,34,.18);display:grid;place-items:center;overflow:hidden}.gbx .cc-gbtn{all:unset;box-sizing:border-box;cursor:pointer;width:100%;height:100%;display:grid;place-items:center;border-radius:50%;-webkit-tap-highlight-color:transparent}.gbx .cc-gbtn svg{width:22px;height:22px;display:block}.gbx .cc-gbtn:active{transform:scale(.94)}.gs{background:#F3F6F7}.gt{height:32px;box-sizing:content-box}.gt img{height:28px;width:auto}.gt b{font:800 17px Unbounded,Poppins,sans-serif;letter-spacing:0;text-transform:none}.gsl{justify-content:flex-start;padding-top:clamp(18px,5vh,56px)}.art{margin-bottom:50px}.art::before,.art::after{content:"";position:absolute;width:26px;height:26px;z-index:3;background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z%27 fill=%27none%27 stroke=%27%23101422%27 stroke-width=%271.6%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E") center/contain no-repeat;animation:cgfl 5s ease-in-out infinite}.art::before{left:-14px;bottom:44px}.art::after{right:-6px;top:78px;width:20px;height:20px;animation-delay:-2s}.gd{position:absolute;left:0;right:0;margin:0;top:calc(env(safe-area-inset-top,0px) + 58px + clamp(18px,5vh,56px) + 250px + 20px);z-index:2}.gd b{width:9px;height:9px;background:transparent;border:1.5px solid #101422}.gd b.on{width:30px;background:#101422}.gsl h2{font:800 clamp(27px,4.6vh,36px)/1.1 Unbounded,Poppins,sans-serif;letter-spacing:-.02em;margin:0 0 12px}.gsl p{font-size:14px;max-width:300px}.gb #gn{width:min(260px,80%);margin:0 auto;background:#fff;color:#101422;border:2px solid #101422;box-shadow:0 4px 0 #101422;font-weight:600;transition:transform .12s,box-shadow .12s}.gb #gn:active{transform:translateY(3px);box-shadow:0 1px 0 #101422}.cover.on{display:block}`;
 var HTML = `<div class="app s" id="app" role="main">
 
 <div class="sp" aria-label="Comrade Connect"><img src="cc-mark.png" alt=""><div class="wm"><b>Comrade</b> <i>Connect</i></div><div class="tl">Your campus. Your voice.</div></div>
@@ -149,7 +149,7 @@ var HTML = `<div class="app s" id="app" role="main">
  </form>
 </div>
 
-<div class="gs" id="gs"><div class="gt"><img class="gl" alt=""><b>Comrade</b></div>
+<div class="gs" id="gs"><div class="gt"><img class="gl" alt=""><b>Comrade Connect</b></div>
 <div class="gv"><div class="gk" id="gk">
 <div class="gsl on"><div class="art"><div class="cd c1"><img alt="" src="img/intro/feed1.webp"></div><div class="cd c2"><img alt="" src="img/intro/feed2.webp"></div><div class="cd c3"><img alt="" src="img/intro/feed3.webp"></div><i class="st a"></i><i class="st b"></i><i class="st c"></i></div><h2>Spill it. Nobody will know it was you.</h2><p>The anonymous campus feed for Kirinyaga comrades. No name, no trace.</p></div>
 <div class="gsl"><div class="art"><div class="cd c1"><img alt="" src="img/intro/mkt1.webp"></div><div class="cd c2"><img alt="" src="img/intro/mkt2.webp"></div><div class="cd c3"><img alt="" src="img/intro/mkt3.webp"></div><i class="st a"></i><i class="st b"></i><i class="st c"></i></div><h2>Buy and sell safely.</h2><p>Your money stays in escrow until you confirm the item with your handover code.</p></div>
@@ -187,7 +187,7 @@ function build(state, mode) {
     tm = setTimeout(function () {
       var next = function () { if (!host || !spl) return; spl = false; if (wantW) toWelcome(); else finish(); };
       if (document.readyState === 'complete') next(); else { window.addEventListener('load', next, { once: true }); setTimeout(next, 6000); }
-    }, 5300);
+    }, 6300);
   } else if (state === 'w') { go('w'); app.className = 'app w'; app.style.setProperty('--b', '0s'); }
   else { go('w'); app.className = 'app w'; app.style.setProperty('--b', '0s'); requestAnimationFrame(function () { requestAnimationFrame(function () { go(mode || 'l'); }); }); }
 }

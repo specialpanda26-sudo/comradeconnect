@@ -82,6 +82,7 @@ function go(i, user) {
   clearInterval(timer); timer = setInterval(function () { go(idx + 1); }, 4800);
 }
 function open() {
+  if (window.ccGate) { window.ccGate.welcome(); return; }      // the new Get started cards (cc-gate.js)
   if (L) return;
   L = document.createElement('div'); L.id = ID; L.setAttribute('role', 'dialog'); L.setAttribute('aria-label', 'Welcome to Comrade Connect');
   if (window.ccApp && window.ccApp.native && window.ccAppIntro) {      // the Android app gets the animated cards (cc-appintro.js); the website keeps the page below
@@ -114,7 +115,7 @@ function done() {
 
 /* ---- gate lifts when the loader is gone and this page is closed ---- */
 var lift = setInterval(function () {
-  if (document.getElementById('loader') || document.getElementById(ID)) return;
+  if (document.getElementById('loader') || document.getElementById('ccgate') || document.getElementById(ID)) return;
   clearInterval(lift); H.classList.remove('cc-gate'); window.ccIsReady = true;
   try { document.dispatchEvent(new CustomEvent('cc-ready')); } catch (e) {}
 }, 300);

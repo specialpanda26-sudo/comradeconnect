@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   if (window.__ccXc) return; window.__ccXc = 1;
-  var SKIP = 'nav,header,#tb,#tkb,#ccl,#ccland,#loader,#lk,.toast,#toast,.bg,#ccfrst,#ccfp,#ck,#cookie,.cookie,.ccx-plain';
+  var SKIP = 'nav,header,#tb,#tkb,#ccl,#ccland,#loader,#ccgate,#lk,.toast,#toast,.bg,#ccfrst,#ccfp,#ck,#cookie,.cookie,.ccx-plain';
   var HAS = '[aria-label*="lose" i],[aria-label*="ancel" i],[aria-label*="ismiss" i],[data-close],[data-dismiss],.x,.close,.cls,.clx,.xbtn,.cc-x,[data-ccx]';
   var LOOKS = '[class*="modal"],[class*="sheet"],[class*="dialog"],[class*="popup"],[class*="drawer"],[class*="dlg"],[id*="modal"],[id*="sheet"],[id*="dialog"]';
   var TXT = /^(\u00d7|\u2715|\u2716|\u2717|x|close|cancel|dismiss)$/i;
@@ -81,7 +81,7 @@
     var list = document.querySelectorAll('body *');
     for (var i = 0; i < list.length; i++) {
       var el = list[i];
-      if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'SVG' || el.matches(SKIP) || el.closest('nav,header,#tb,#tkb,#ccl,#ccland,#loader,#lk')) continue;
+      if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'SVG' || el.matches(SKIP) || el.closest('nav,header,#tb,#tkb,#ccl,#ccland,#loader,#ccgate,#lk')) continue;
       var cs = getComputedStyle(el), pos = cs.position;
       var role = el.getAttribute('role') === 'dialog' || el.getAttribute('aria-modal') === 'true';
       var looks = false; try { looks = el.matches(LOOKS); } catch (e) {}

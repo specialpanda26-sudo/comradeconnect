@@ -168,6 +168,7 @@
     b.onclick=function(){go(false)};w.appendChild(b);v.insertBefore(w,v.firstChild);
   }
   function start(){chip();new MutationObserver(chip).observe(document.body,{childList:true,subtree:true})}
-  if(!cur()){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){go(true)});else go(true)}
+  function later(f){var n=0;(function w(){if(document.getElementById('ccgate')&&n++<600)return setTimeout(w,300);f()})()}   // wait for the opening screens (ccgate)
+  if(!cur()){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){later(function(){go(true)})});else later(function(){go(true)})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();

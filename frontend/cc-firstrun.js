@@ -183,8 +183,7 @@
       if (signedIn()) { close(true); say('You are in, comrade'); }
     }, 500);
   }
-  window.ccAuthPanel = open;
+  window.ccAuthPanel = window.ccAuthPanel || open;       // cc-gate.js answers first; this old panel is only a fallback
 
-  function first() { if (!seen() && !signedIn()) open('login'); else if (window.ccFirstRunOpen) close(false); }
-  if (document.readyState === 'complete') setTimeout(first, 250); else window.addEventListener('load', function () { setTimeout(first, 250); });
+  // (it used to open by itself here; the Get started cards and sheet in cc-gate.js do that now)
 })();

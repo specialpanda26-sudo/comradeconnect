@@ -103,7 +103,7 @@
   // wait until the person is signed in and nothing else is on screen, then ask once
   function busy() {
     var l = document.getElementById('loader'), lk = document.getElementById('lk');
-    return !!(document.getElementById('ccfrst') || document.getElementById('ccfp') || (lk && lk.classList.contains('on')) || (l && getComputedStyle(l).display !== 'none' && l.getBoundingClientRect().height > 0));
+    return !!(document.getElementById('ccgate') || document.getElementById('ccfrst') || document.getElementById('ccfp') || (lk && lk.classList.contains('on')) || (l && getComputedStyle(l).display !== 'none' && l.getBoundingClientRect().height > 0));
   }
   var asking = false;
   var timer = setInterval(function () {

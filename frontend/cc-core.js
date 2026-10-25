@@ -138,6 +138,7 @@ function showRecovery(d) {
 /* ---------- Google sign-in (one tap, works on any phone) ---------- */
 const googleOn = () => typeof CC_GOOGLE_ID === 'string' && CC_GOOGLE_ID.length > 10;
 let gsiP = null;
+const gst = { back: 0, signing: false };
 function loadGsi() {
   if (window.google && google.accounts && google.accounts.id) return Promise.resolve(true);
   if (gsiP) return gsiP;
@@ -181,8 +182,18 @@ async function mountGoogle(box, onDone, onErr, opts) {
   if (!googleOn()) return false;
   if (window.ccApp && window.ccApp.native) return window.ccApp.mountGoogle(box, onDone, onErr, opts, googleSignIn);
   if (!(await loadGsi())) { box.innerHTML = '<p class="sub">Google sign-in could not load. Check your internet.</p>'; return false; }
-  google.accounts.id.initialize({ client_id: CC_GOOGLE_ID, callback: async (resp) => { try { onDone(await googleSignIn(resp.credential, !!(opts && opts.link))); } catch (e) { onErr(e.message); } } });
-  google.accounts.id.renderButton(box, Object.assign({ theme: 'outline', size: 'large', type: 'icon', shape: 'circle' }, opts || {}, { type: 'icon', shape: 'circle' }));
+  const bn = !!(opts && opts.banner), busy = bn && typeof opts.busy === 'function' ? opts.busy : null;
+  google.accounts.id.initialize({ client_id: CC_GOOGLE_ID, callback: async (resp) => {
+    clearTimeout(gst.back); gst.signing = true; if (busy) busy(true);
+    try { onDone(await googleSignIn(resp.credential, !!(opts && opts.link))); } catch (e) { gst.signing = false; if (busy) busy(false); onErr(e.message); } } });
+  if (bn) {
+    const o = Object.assign({ theme: 'outline', size: 'large', type: 'standard', shape: 'pill', text: 'continue_with' }, opts); delete o.banner; delete o.busy;
+    google.accounts.id.renderButton(box, o);
+    if (busy) {   // Google's button is an iframe we cannot listen to: when it takes focus, Google's window is opening, so show the busy look
+      window.addEventListener('blur', () => { const r = box.getRootNode && box.getRootNode(), a = r && r.activeElement; if (a && box.contains(a) && !gst.signing) { clearTimeout(gst.back); busy(true); } });
+      window.addEventListener('focus', () => { clearTimeout(gst.back); if (!gst.signing) gst.back = setTimeout(() => { if (!gst.signing) busy(false); }, 1600); });
+    }
+  } else google.accounts.id.renderButton(box, Object.assign({ theme: 'outline', size: 'large', type: 'icon', shape: 'circle' }, opts || {}, { type: 'icon', shape: 'circle' }));
   if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !(location.protocol === 'https:' && !location.port) && box.parentNode && !box.parentNode.querySelector('.cc-lhint')) {
     const n = document.createElement('p'); n.className = 'sub cc-lhint'; n.style.cssText = 'font-size:11px;margin-top:8px;text-align:center';
     n.textContent = 'Local test: Google must list ' + location.origin + ' under Authorized JavaScript origins.'; box.insertAdjacentElement('afterend', n);

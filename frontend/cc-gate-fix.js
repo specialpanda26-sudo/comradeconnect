@@ -1,7 +1,7 @@
 /* cc-gate-fix.js v1: sign-up invite code opens and closes like a panel; the header curve keeps one fixed height. */
 (function(){'use strict';
-var CSS='.app.a{--ch:270px}.app.a.su{--ch:250px}.app.a.typ{--ch:270px}.app.a.su.typ{--ch:250px}'
-+'.su .brand{top:calc(env(safe-area-inset-top,0px) + 50px)}.app .cv{transition:none}'
+var CSS='.app.a{--ch:236px}.app.a.su{--ch:218px}.app.a.typ{--ch:236px}.app.a.su.typ{--ch:218px}'
++'.su .brand{top:calc(env(safe-area-inset-top,0px) + 30px)}.app .cv{transition:none}'
 +'.invb{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:14px 16px;border-radius:18px;background:var(--aqt);font-size:14px;font-weight:500;color:var(--ink)}'
 +'.invb span{flex:1}.invb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}'
 +'.invb .ch{transition:transform .3s}.inv.open .ch{transform:rotate(180deg)}'

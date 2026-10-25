@@ -219,10 +219,11 @@
 
   window.ccApp.mountGoogle = function (box, onDone, onErr, opts, sign) {
     box.innerHTML = '';
-    var b = document.createElement('button'); b.type = 'button'; b.className = 'cc-gbtn'; b.innerHTML = G; b.setAttribute('aria-label', 'Continue with Google'); b.title = 'Continue with Google';
+    var bn = !!(opts && opts.banner), bz = bn && typeof opts.busy === 'function' ? opts.busy : null;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'cc-gbtn'; b.innerHTML = bn ? G + '<span class="gb-t">Continue with Google</span><i class="gb-sp"></i>' : G; b.setAttribute('aria-label', 'Continue with Google'); b.title = 'Continue with Google';
     b.onclick = function () {
-      b.disabled = true;
-      window.ccApp.googleLogin().then(function (tok) { return sign(tok, !!(opts && opts.link)); }).then(onDone, function (e) { if (!(e && e.cancelled)) onErr(oops(e)); }).then(function () { b.disabled = false; });
+      var ok = false; b.disabled = true; if (bz) bz(true);
+      window.ccApp.googleLogin().then(function (tok) { return sign(tok, !!(opts && opts.link)); }).then(function (r) { ok = true; return onDone(r); }, function (e) { if (!(e && e.cancelled)) onErr(oops(e)); }).then(function () { if (!ok || !bn) { b.disabled = false; if (bz) bz(false); } });
     };
     box.appendChild(b);
     return true;

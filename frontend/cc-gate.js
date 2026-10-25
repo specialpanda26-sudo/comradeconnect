@@ -30,9 +30,10 @@ var CSS = `
 /* brand at top left (over the black) */
 .brand{position:absolute;z-index:3;left:22px;top:calc(env(safe-area-inset-top,0px) + 30px);opacity:0;transition:opacity .7s 1.2s,top .5s cubic-bezier(.65,0,.2,1);pointer-events:none}
 .a .brand{opacity:1;transition-delay:.3s}
-.brand .row{display:flex;align-items:center;gap:12px}.brand img{width:46px;height:auto}
-.brand b{font:300 17px Poppins,sans-serif;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap}
-.brand p{margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.65)}
+.brand .row{display:flex;align-items:center;gap:11px}.brand img{width:40px;height:auto;display:block}
+.brand b{font:500 13.5px Poppins,sans-serif;letter-spacing:.17em;text-transform:uppercase;white-space:nowrap}
+.brand .bt{margin:20px 0 0;font:800 25px/1.1 Unbounded,Poppins,sans-serif;letter-spacing:-.02em;color:#fff}
+.brand p{margin:8px 0 0;font-size:15px;line-height:1.35;color:rgba(255,255,255,.74)}
 .s .pane.on>*{animation:none;opacity:0}
 /* welcome: big logo and loud headline in the black area */
 .bm,.hl,.bk{display:none!important}.bm{position:absolute;z-index:3;left:22px;top:calc(env(safe-area-inset-top,0px) + 30px);width:clamp(100px,17vh,140px);height:auto;opacity:0;filter:drop-shadow(0 12px 30px rgba(254,129,60,.35));transition:opacity .5s}
@@ -102,7 +103,26 @@ h2{font:600 24px/1.1 Unbounded,Poppins,sans-serif;margin:0 0 2px;letter-spacing:
 .app.typ{--ch:130px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-delay:0s!important;transition-duration:.01s!important}}
 
-.skp{all:unset;cursor:pointer;display:block;margin:6px auto 0;padding:8px 12px;font-size:12.5px;color:rgba(16,20,34,.55)}.fine u{cursor:pointer;text-decoration:underline}.socs .gbx{min-height:44px;display:flex;justify-content:center}.socs .gbx:not(:has(p)){width:52px;height:52px;border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(16,20,34,.18);display:grid;place-items:center;overflow:hidden}.gbx .cc-gbtn{all:unset;box-sizing:border-box;cursor:pointer;width:100%;height:100%;display:grid;place-items:center;border-radius:50%;-webkit-tap-highlight-color:transparent}.gbx .cc-gbtn svg{width:22px;height:22px;display:block}.gbx .cc-gbtn:active{transform:scale(.94)}.gs{background:#F3F6F7}.gt{height:32px;box-sizing:content-box}.gt img{height:28px;width:auto}.gt b{font:800 17px Unbounded,Poppins,sans-serif;letter-spacing:0;text-transform:none}.gsl{justify-content:flex-start;padding-top:clamp(18px,5vh,56px)}.art{margin-bottom:50px}.art::before,.art::after{content:"";position:absolute;width:26px;height:26px;z-index:3;background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z%27 fill=%27none%27 stroke=%27%23101422%27 stroke-width=%271.6%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E") center/contain no-repeat;animation:cgfl 5s ease-in-out infinite}.art::before{left:-14px;bottom:44px}.art::after{right:-6px;top:78px;width:20px;height:20px;animation-delay:-2s}.gd{position:absolute;left:0;right:0;margin:0;top:calc(env(safe-area-inset-top,0px) + 58px + clamp(18px,5vh,56px) + 250px + 20px);z-index:2}.gd b{width:9px;height:9px;background:transparent;border:1.5px solid #101422}.gd b.on{width:30px;background:#101422}.gsl h2{font:800 clamp(27px,4.6vh,36px)/1.1 Unbounded,Poppins,sans-serif;letter-spacing:-.02em;margin:0 0 12px}.gsl p{font-size:14px;max-width:300px}.gb #gn{width:min(260px,80%);margin:0 auto;background:#fff;color:#101422;border:2px solid #101422;box-shadow:0 4px 0 #101422;font-weight:600;transition:transform .12s,box-shadow .12s}.gb #gn:active{transform:translateY(3px);box-shadow:0 1px 0 #101422}.cover.on{display:block}`;
+.skp{all:unset;cursor:pointer;display:block;margin:6px auto 0;padding:8px 12px;font-size:12.5px;color:rgba(16,20,34,.55)}.fine u{cursor:pointer;text-decoration:underline}.gs{background:#F3F6F7}.gt{height:32px;box-sizing:content-box}.gt img{height:28px;width:auto}.gt b{font:800 17px Unbounded,Poppins,sans-serif;letter-spacing:0;text-transform:none}.gsl{justify-content:flex-start;padding-top:clamp(18px,5vh,56px)}.art{margin-bottom:50px}.art::before,.art::after{content:"";position:absolute;width:26px;height:26px;z-index:3;background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z%27 fill=%27none%27 stroke=%27%23101422%27 stroke-width=%271.6%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E") center/contain no-repeat;animation:cgfl 5s ease-in-out infinite}.art::before{left:-14px;bottom:44px}.art::after{right:-6px;top:78px;width:20px;height:20px;animation-delay:-2s}.gd{position:absolute;left:0;right:0;margin:0;top:calc(env(safe-area-inset-top,0px) + 58px + clamp(18px,5vh,56px) + 250px + 20px);z-index:2}.gd b{width:9px;height:9px;background:transparent;border:1.5px solid #101422}.gd b.on{width:30px;background:#101422}.gsl h2{font:800 clamp(27px,4.6vh,36px)/1.1 Unbounded,Poppins,sans-serif;letter-spacing:-.02em;margin:0 0 12px}.gsl p{font-size:14px;max-width:300px}.gb #gn{width:min(260px,80%);margin:0 auto;background:#fff;color:#101422;border:2px solid #101422;box-shadow:0 4px 0 #101422;font-weight:600;transition:transform .12s,box-shadow .12s}.gb #gn:active{transform:translateY(3px);box-shadow:0 1px 0 #101422}.cover.on{display:block}
+/* Google banner: white pill, turns grey with a spinner while Google is working (like Claude's sign-in) */
+.socs{display:block}
+.gbx{position:relative;display:block;width:100%;max-width:400px;height:52px;margin:0 auto;border-radius:999px}
+.gbx .gb-vis,.gbx .cc-gbtn{all:unset;box-sizing:border-box;position:absolute;left:0;top:0;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;height:52px;border-radius:999px;background:#fff;border:1.5px solid rgba(16,20,34,.16);box-shadow:0 2px 10px rgba(16,20,34,.07);color:#101422;font:600 15px Poppins,system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .2s,color .2s,border-color .2s,transform .12s}
+.gbx .cc-gbtn:active{transform:scale(.985)}
+.gbx .gb-vis svg,.gbx .cc-gbtn svg{width:20px;height:20px;display:block;flex:none;transition:opacity .2s}
+.gbx .gb-vis span,.gbx .cc-gbtn .gb-t{white-space:nowrap}
+.gb-sp{display:none;position:absolute;right:20px;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;border:2.2px solid rgba(16,20,34,.18);border-top-color:rgba(16,20,34,.7);animation:cgrot .8s linear infinite}
+.gbx.ld .gb-vis,.gbx .cc-gbtn:disabled{background:#E3E5E9;border-color:transparent;color:rgba(16,20,34,.5);box-shadow:none;cursor:default}
+.gbx.ld .gb-vis svg,.gbx .cc-gbtn:disabled svg{opacity:.5}
+.gbx.ld .gb-sp,.gbx .cc-gbtn:disabled .gb-sp{display:block}
+.gb-hit{position:absolute;left:0;top:0;width:100%;height:40px;transform-origin:0 0;transform:scaleY(1.3);opacity:.01;overflow:hidden;z-index:2}
+.gb-hit iframe{display:block}
+.gerr{margin:0;font-size:12.5px;line-height:52px;text-align:center;color:var(--mut)}
+.app.gl::after{content:"";position:absolute;inset:0;z-index:30;background:rgba(16,20,34,.42);pointer-events:none;animation:cgfade .25s both}
+@keyframes cgfade{from{opacity:0}}
+.pane{gap:11px}.in input{height:48px}.pane .sw{padding-top:4px}
+.pane .fine.tm{margin:0;padding:0 6px;line-height:1.55;font-size:11px}
+.fine.tm u{color:#101422;text-decoration:underline;cursor:pointer}`;
 var HTML = `<div class="app s" id="app" role="main">
 
 <div class="sp" aria-label="Comrade Connect"><img src="cc-mark.png" alt=""><div class="wm"><b>Comrade</b> <i>Connect</i></div><div class="tl">Your campus. Your voice.</div></div>
@@ -110,7 +130,7 @@ var HTML = `<div class="app s" id="app" role="main">
 <img class="bm" src="cc-mark.png" alt="Comrade Connect">
 <h1 class="hl" aria-label="Your campus. Your voice."><span class="l1">Your campus.</span><br><span class="l2">Your</span> <span class="l3 v">voice.</span></h1>
 <button class="bk" data-go="w" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-<div class="brand"><div class="row"><img src="cc-mark.png" alt=""><b>Comrade Connect</b></div><p id="bs">Welcome back! Log in to continue.</p></div>
+<div class="brand"><div class="row"><img src="cc-mark.png" alt=""><b>Comrade Connect</b></div><h1 class="bt" id="bt">Welcome back!</h1><p id="bs">Log in to continue.</p></div>
 
 <div class="sheet">
  <svg class="cv" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H100V0C92 20 72 40 46 40C22 40 6 30 0 21Z"/></svg>
@@ -133,6 +153,7 @@ var HTML = `<div class="app s" id="app" role="main">
   <div class="or" data-or>Or</div>
   <div class="socs"><span class="gbx"></span></div>
   <p class="sw">Don't have an account? <button type="button" data-go="u">Sign up</button></p>
+  <p class="fine tm">By continuing, you agree to Comrade Connect's <u data-t="/terms.html">Terms</u> and <u data-t="/terms.html">Usage Policy</u>, and acknowledge our <u data-t="/privacy.html">Privacy Policy</u>.</p>
  </form>
 
  <form class="pane" id="pu" novalidate>
@@ -146,6 +167,7 @@ var HTML = `<div class="app s" id="app" role="main">
   <div class="or" data-or>Or</div>
   <div class="socs"><span class="gbx"></span></div>
   <p class="sw">Already have an account? <button type="button" data-go="l">Log in</button></p>
+  <p class="fine tm">By continuing, you agree to Comrade Connect's <u data-t="/terms.html">Terms</u> and <u data-t="/terms.html">Usage Policy</u>, and acknowledge our <u data-t="/privacy.html">Privacy Policy</u>.</p>
  </form>
 </div>
 
@@ -201,7 +223,9 @@ function toWelcome() {
 function go(k) {
   all('.pane').forEach(function (p) { p.classList.remove('on'); });
   $(k === 'u' ? '#pu' : k === 'l' ? '#pl' : '#pw').classList.add('on');
-  $('#bs').textContent = k === 'u' ? 'Create your account to get started.' : 'Welcome back! Log in to continue.';
+  $('#bt').textContent = k === 'u' ? 'Join the comrades' : 'Welcome back!';
+  $('#bs').textContent = k === 'u' ? 'Create your account to get started.' : 'Log in to continue.';
+  gLoad(false);
   app.className = 'app ' + (k === 'w' ? 'w' : 'a' + (k === 'u' ? ' su' : ''));
   if (k !== 'w') mountG();
 }
@@ -229,13 +253,19 @@ function mountG() {
     if (!ccGoogle.on()) return hideG();
     all('.gbx').forEach(function (b) {
       try {
-        ccGoogle.mount(b, function () { sweep(function () { location.reload(); }); },
-          function (t) { var e = $('.pane.on .err'); if (e) e.textContent = t || 'Google sign-in failed. Try again.'; },
-          { theme: 'outline', type: 'icon', shape: 'circle', size: 'large' });
+        var nat = !!(window.ccApp && ccApp.native), hit = b;
+        if (!nat) { b.innerHTML = '<div class="gb-vis" aria-hidden="true">' + GSVG + '<span>Continue with Google</span><i class="gb-sp"></i></div><div class="gb-hit"></div>'; hit = b.querySelector('.gb-hit'); }
+        var w = Math.max(200, Math.min(400, (app.clientWidth || 390) - 48));
+        var r = ccGoogle.mount(hit, function () { sweep(function () { location.reload(); }); },
+          function (t) { gLoad(false); var e = $('.pane.on .err'); if (e) e.textContent = t || 'Google sign-in failed. Try again.'; },
+          { theme: 'outline', type: 'standard', shape: 'pill', size: 'large', text: 'continue_with', width: w, banner: true, busy: gLoad });
+        if (r && r.then) r.then(function (ok) { if (ok === false) b.innerHTML = '<p class="gerr">Google sign-in could not load. Check your internet.</p>'; });
       } catch (e) {}
     });
   })();
 }
+var GSVG = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.9 2.3-8.5 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>';
+function gLoad(on) { if (!app) return; app.classList.toggle('gl', !!on); all('.gbx').forEach(function (b) { b.classList.toggle('ld', !!on); }); }
 function hideG() { all('[data-or],.socs').forEach(function (e) { e.style.display = 'none'; }); }
 
 function wire() {

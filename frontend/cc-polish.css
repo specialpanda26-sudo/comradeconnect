@@ -1,0 +1,30 @@
+/* cc-polish.css v1: search fix, unboxed footer links, bottom nav that fits, smoother panels. Loaded last. */
+
+/* 1. Search: the heart-animation class .fh was hiding the search header (opacity 0). Undo it inside the search overlay. */
+html body #ccfind .fh{position:static!important;bottom:auto!important;width:auto!important;height:auto!important;opacity:1!important;animation:none!important;transform:none!important;color:inherit!important;display:flex!important}
+html body #ccfind{opacity:0;transition:opacity .22s ease}
+html body #ccfind.on{opacity:1}
+html body #ccfind .fw{animation:ccpUp .32s cubic-bezier(.22,1,.36,1) both}
+@keyframes ccpUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* 2. Footer: Legal and Company are plain links, not a card */
+html body .ccft .ft-sec[aria-label="Legal and company"]{background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:0!important;padding:8px 4px 0!important;margin-top:18px}
+html body .ccft .ft-cols{gap:6px 28px}
+html body .ccft .ft-col h4{margin:0 0 6px;font:800 11px Manrope,Poppins,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+html body .ccft .ft-cols a{border-bottom:0!important;padding:8px 0;font:800 15px/1.25 Manrope,Poppins,system-ui,sans-serif;color:var(--fg)}
+html body .ccft .cp{max-width:520px;margin:18px auto 0!important;padding:0 4px;text-align:left!important;font-size:13px;line-height:1.5;color:var(--mut)}
+html body .ccft .pw{display:flex!important;width:max-content;max-width:100%;margin:12px auto 0 max(4px,calc((100% - 520px)/2 + 4px))!important;padding:9px 16px;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(255,138,61,.16)!important;color:var(--mut);font-weight:800;font-size:12px}
+html body .ccft .pw b{color:var(--mut);font-weight:800}
+
+/* 3. Bottom nav: always fits the screen, equal spacing, expanded tab gets a clean gap and dot */
+html:not([data-lay="desktop"]) body #tb{width:calc(100vw - 24px)!important;max-width:420px!important;justify-content:space-between!important;align-items:center;gap:2px!important;padding:6px!important;border-radius:999px!important;background:var(--g)!important;box-shadow:var(--sh)!important;-webkit-backdrop-filter:blur(18px)!important;backdrop-filter:blur(18px)!important;box-sizing:border-box}
+html:not([data-lay="desktop"]) body #tb button{flex:1 1 0!important;min-width:0!important;width:auto!important;height:48px!important;background:none!important;box-shadow:none!important;padding:0!important}
+html:not([data-lay="desktop"]) body #tb button.on,html:not([data-lay="desktop"]) body #tb button.on2{flex:0 0 auto!important;gap:8px!important;padding:0 14px 0 14px!important;font-size:13px!important;white-space:nowrap;background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;box-shadow:0 8px 20px rgba(238,122,79,.35)!important}
+html:not([data-lay="desktop"]) body #tb button.on:not(.dot)::after,html:not([data-lay="desktop"]) body #tb button.on2:not(.dot)::after{content:"";width:5px;height:5px;border-radius:50%;background:#16130f;flex:none;margin-left:2px}
+@media(max-width:360px){html:not([data-lay="desktop"]) body #tb button.on,html:not([data-lay="desktop"]) body #tb button.on2{padding:0 10px!important;gap:6px!important;font-size:12px!important}}
+
+/* 4. Smoother panels */
+html{scroll-behavior:smooth}
+.dsheet,.sheet,[class*="sheet"],#ccfind,.ccwb{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.dsheet,.sheet{will-change:transform;backface-visibility:hidden;transition-timing-function:cubic-bezier(.22,1,.36,1)}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.01ms!important;transition-duration:.01ms!important}}

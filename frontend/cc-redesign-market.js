@@ -58,7 +58,16 @@ html body #v-market #mord>.box.g .btn.g{background:rgba(255,255,255,.9);color:#1
 html body #v-market #olist .box,html body #v-market #mlist .box,html body #v-market #olist article,html body #v-market #mlist article{border-radius:26px;padding:16px;background:var(--g);box-shadow:var(--sh);border:0}\
 html body #v-market .badge{background:rgba(255,138,61,.13);color:var(--fg);border:0;border-radius:999px;font-weight:800}\
 html body #v-market .act{background:rgba(255,138,61,.13);color:var(--fg);border:0;border-radius:999px;font-weight:800}\
-html body #v-market .btn.p{background:var(--ink);color:var(--inkfg)}';
+html body #v-market .btn.p{background:var(--ink);color:var(--inkfg)}\
+\
+html body #v-market .mgrid .mc .mb em{position:static!important;background:none!important;width:auto!important;height:auto!important;padding:0!important;margin:2px 0 0!important;box-shadow:none!important;border:0!important;border-radius:0!important;transform:none!important;inset:auto!important}\
+html body #v-market #mbrowse .fld input#mkq,html body #v-market #mbrowse .fld input{border:0!important;background:none!important;box-shadow:none!important;height:100%;min-height:50px;padding:0!important;border-radius:0!important}\
+html body #v-market .ccf input,html body #v-market .ccf select,html body #v-market #mbrowse select{height:48px;border-radius:999px;border:0!important;background:var(--g);box-shadow:var(--sh);padding:0 18px;font:600 14px Manrope,sans-serif;color:var(--fg)}\
+html body #v-market #mbrowse .ccf input,html body #v-market #mbrowse .ccf select,html body #v-market #mbrowse input[type=number],html body #v-market #mbrowse input[inputmode],html body #v-market #mbrowse select{height:48px!important;border-radius:999px!important;border:0!important;background:var(--g)!important;box-shadow:var(--sh)!important;padding:0 18px!important}\
+html body #v-market .mu-ban{background:#fff8f4!important;background-image:none!important}\
+html body #v-market .mu-ban::after{display:none!important}\
+html body #v-market .mu-ban .tag{background:rgba(255,255,255,.7);color:#16130f;border-radius:999px;padding:4px 10px}\
+html body #v-market .mgrid .mc small.mtl{display:none!important}';
 var st=document.createElement('style');st.id='cc-redesign-market-css';st.textContent=CSS;document.head.appendChild(st);
 var $=function(s,r){return(r||document).querySelector(s)};
 function run(){

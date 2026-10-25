@@ -8,6 +8,7 @@ t = open(F, encoding='utf-8').read()
 bad = []; done = []; skipped = []
 
 def rep(name, old, new, marker):
+    """replace the exact text `old` (must occur once) with `new`; skip if `marker` is already in the file"""
     global t
     if marker in t: skipped.append(name); return
     n = t.count(old)
@@ -15,20 +16,21 @@ def rep(name, old, new, marker):
     t = t.replace(old, new); done.append(name)
 
 def rep_re(name, pattern, new, marker, flags=re.M | re.S):
+    """replace the single regex match with `new`"""
     global t
     if marker in t: skipped.append(name); return
     m = list(re.finditer(pattern, t, flags))
     if len(m) != 1: bad.append('%s: pattern found %d times (need 1)' % (name, len(m))); return
     t = t[:m[0].start()] + new + t[m[0].end():]; done.append(name)
 
-# ---- 1. reset flicker hardening
+# ---------------------------------------------------------------- 1. reset flicker hardening
 rep('boot: remember the token the boot check used',
     "(function(){var a=window.ccAuth();if(!(a&&a.token&&connected()))return;\n loadMe().then(",
     "(function(){var a=window.ccAuth();if(!(a&&a.token&&connected()))return;var bootTk=a.token;\n loadMe().then(",
     "var bootTk=a.token")
 rep('boot: a late 401 must not delete a newer login',
     "function(e){if(e&&e.status===401){try{localStorage.removeItem('cc_auth')}catch(x){}}})})();",
-    "function(e){if(e&&e.status===401){var cur=window.ccAuth();if(!cur||cur.token===bootTk){try{localStorage.removeItem('cc_auth')}catch(x){}}}})})();",
+    "function(e){if(e&&e.status===401){/* only drop the token this check used: a slow answer must never erase a login made meanwhile (reset, restore) */var cur=window.ccAuth();if(!cur||cur.token===bootTk){try{localStorage.removeItem('cc_auth')}catch(x){}}}})})();",
     "cur.token===bootTk")
 rep('gate close toast: Password updated after a reset',
     "window.ccAfterGate=()=>{S.signed=true;refresh();toast('Welcome, comrade')};",
@@ -43,7 +45,7 @@ rep('new password saved: clean hand-over',
     "   S.fromGate=false;S.signed=true;S.pwDone=true;setTimeout(function(){S.pwDone=false},2000);\n   try{if(window.ccGate&&ccGate.close)ccGate.close()}catch(e){}\n   try{refresh()}catch(e){}hideLock();try{A.zone(S.zone)}catch(e){}toast('Password updated')",
     "S.fromGate=false;S.signed=true;S.pwDone=true")
 
-# ---- 2. show/hide password eye
+# ---------------------------------------------------------------- 2. show/hide password eye
 rep('icon: eyeoff',
     "\nmail:'<rect x=\"3\" y=\"5\"",
     "\neyeoff:'<path d=\"M3 3l18 18M10.6 5.1A10 10 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1M9.9 9.9a3 3 0 004.2 4.2\"/>',\nmail:'<rect x=\"3\" y=\"5\"",
@@ -63,8 +65,8 @@ rep('restore sheet: the Restore button really restores',
     "A.rest=()=>{const sh=$('#sheet'),ins=sh?[...sh.querySelectorAll('input')]:[],u=(ins[0]||{}).value||'',p=(ins[1]||{}).value||'',b=sh&&sh.querySelector('[data-act=\"rest\"]');if(!(window.CC&&CC.restoreAccount)){closeSheet();toast('Account restored');return}if(b)b.disabled=true;CC.restoreAccount(u,p).then(()=>{try{window.ccRemember&&ccRemember(u,p)}catch(e){}closeSheet();S.signed=true;refresh();toast('Account restored')},e=>{if(b)b.disabled=false;toast(e&&e.status===401?'Wrong account ID or recovery code':((e&&e.message)||'Could not restore the account'))})};",
     "CC.restoreAccount(u,p).then(()=>{try{window.ccRemember")
 
-# ---- 3. reset screens in the sign-in look
-CSS = r'''/* reset screens: same look as the Login sheet */
+# ---------------------------------------------------------------- 3. reset screens in the sign-in look
+CSS = r'''/* reset screens: same look as the Login sheet (white or dark navy, Poppins, light-blue inputs, navy pill buttons) */
 .lock.rs{--rs-sheet:#fff;--rs-ink:#101422;--rs-mut:rgba(16,20,34,.62);--rs-in:#eef8fa;--rs-ph:rgba(16,20,34,.45);--rs-btn:#101422;--rs-btnt:#fff;--rs-bowl:#101422;--rs-foc:#101422;--rs-tile:#dcf0f5;--rs-line:rgba(16,20,34,.16);padding:0;background:var(--rs-sheet);color:var(--rs-ink);font-family:Poppins,system-ui,sans-serif;overflow:hidden}
 :root[data-theme="dark"] .lock.rs{--rs-sheet:#0d1120;--rs-ink:#f4f7fb;--rs-mut:rgba(244,247,251,.62);--rs-in:rgba(168,220,231,.11);--rs-ph:rgba(244,247,251,.4);--rs-btn:#A8DCE7;--rs-btnt:#101422;--rs-bowl:#1a2138;--rs-foc:#A8DCE7;--rs-tile:rgba(168,220,231,.16);--rs-line:rgba(244,247,251,.2)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .lock.rs{--rs-sheet:#0d1120;--rs-ink:#f4f7fb;--rs-mut:rgba(244,247,251,.62);--rs-in:rgba(168,220,231,.11);--rs-ph:rgba(244,247,251,.4);--rs-btn:#A8DCE7;--rs-btnt:#101422;--rs-bowl:#1a2138;--rs-foc:#A8DCE7;--rs-tile:rgba(168,220,231,.16);--rs-line:rgba(244,247,251,.2)}}
@@ -102,7 +104,7 @@ rep('helpers for the reset screens', "function lockHtml(page){", HELP + "functio
 
 FORGOT = r''' if(page==='forgot')return `<div class="rs-w">${rsHead('lpw','Reset your password')}<div class="rs-body"><div class="rs-ic">${ic('key')}</div><h2 class="rs-h">Reset password</h2><p class="rs-p">Enter the email saved on your account. We will send you a 6-digit code.</p>${rsF('Email','fem','<div class="rs-in"><input id="fem" type="email" placeholder="you@example.com" autocomplete="email" autocapitalize="off" spellcheck="false"></div>')}<button class="rs-btn" data-act="lsendcode">Send code</button><button class="rs-btn o" data-act="lpw">Back to log in</button><p class="note" style="margin-top:16px">No email saved? Use Restore an account with your recovery code, or contact support.</p></div></div>`;'''
 OTP = r''' if(page==='otp')return `<div class="rs-w">${rsHead('lforgot','Check your email')}<div class="rs-body" style="text-align:center"><div class="rs-ic" style="margin:0 auto 12px">${ic('mail')}</div><h2 class="rs-h">Enter the code</h2><p class="rs-p" style="margin-bottom:0">We sent a 6-digit code to your email.</p><div class="otpb" id="otpb">${[0,1,2,3,4,5].map(i=>`<input maxlength="1" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit ${i+1}">`).join('')}</div><p class="note" id="otpm" style="min-height:20px"></p><button class="rs-btn" id="otpv" disabled>Verify</button><p class="note" id="otpt" style="margin-top:14px">Resend code in <b id="otps">30</b>s</p><button class="rs-btn o" id="otpr" hidden>Resend code</button></div></div>`;'''
-rep_re('forgot screen', r"^ if\(page==='forgot'\)return `.*?`;$", FORGOT, "rsHead('lpw','Reset your password')", re.M)
+rep_re('forgot screen', r"^ if\(page==='forgot'\)return `.*?`;$", FORGOT, 'rsHead(\'lpw\',\'Reset your password\')', re.M)
 rep_re('code screen', r"^ if\(page==='otp'\)return `.*?`;$", OTP, "rsHead('lforgot','Check your email')", re.M)
 
 NEWPW = r''' if(page!=='newpw')return _lh.apply(this,arguments);

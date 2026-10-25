@@ -1,5 +1,5 @@
 /* TEAM */
-Founder and CEO: Henry O. Odhiambo
+
 Company: Ogolla Tech
 Developer: Christian N.
 Developer: Peter M.

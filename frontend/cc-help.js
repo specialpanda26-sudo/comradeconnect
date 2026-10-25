@@ -82,7 +82,7 @@ var HELP = [
   ['Something went wrong with an order', 'Open the order in Market and tap Report a problem before you give the code. An admin reviews both sides and either refunds you or pays the seller.'],
   ['My post was blocked', 'Posts with phone numbers, links, social handles or requests to pay outside the app are blocked. Remove them and post again.'],
   ['How do I get verified?', 'Go to Me, then Verification, and follow the steps. Only admins see your ID photos.'],
-  ['Who runs Comrade Connect?', 'Comrade Connect was founded by Henry O. Odhiambo, Founder and CEO of Ogolla Tech. Christian N. and Peter M. are the developers. Write to support@comradeconnect.co.ke for help.']
+  ['Who runs Comrade Connect?', 'Comrade Connect is built and run by Ogolla Tech. Christian N. and Peter M. are the developers. Write to support@comradeconnect.co.ke for help.']
 ];
 function bots(tab) {
   tab = tab || 0;

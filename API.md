@@ -71,4 +71,4 @@ Run `supabase/user-events.sql` once. Any signed-in account can host up to 5 upco
 - `GET /api/scan/info?e=<event_id>&k=<key>` and `POST /api/scan/check {event_id, key, code}` are the door scanner (no account, the key in the link is the pass). A ticket can be used once.
 
 ## Credits
-Comrade Connect is built by Ogolla Tech. Founder and CEO: Henry O. Odhiambo. Developers: Christian N., Peter M.
+Comrade Connect is built by Ogolla Tech. Developers: Christian N., Peter M.

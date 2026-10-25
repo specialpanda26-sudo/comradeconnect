@@ -32,4 +32,4 @@ After the site is live: `python3 set-domain.py YOUR-DOMAIN [GOOGLE_VERIFICATION_
 
 
 ## Credits
-Built by **Ogolla Tech**. Founder and CEO: **Henry O. Odhiambo**. Developers: **Christian N.**, **Peter M.**
+Built by **Ogolla Tech**. Developers: **Christian N.**, **Peter M.**

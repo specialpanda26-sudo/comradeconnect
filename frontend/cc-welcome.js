@@ -23,7 +23,7 @@ box.innerHTML = '<button type="button" class="ccwx" aria-label="Close welcome">\
   + '<h2>Welcome to Comrade Connect</h2>'
   + '<p>The campus app for Kirinyaga comrades: spill anonymously, buy and sell safely, and find every event in one place.</p>'
   + '<div class="ccwr"><button type="button" class="btn p" data-wb="start">Create my account</button><button type="button" class="btn g" data-wb="explore">See what is on</button></div>'
-  + '<small>Built by Ogolla Tech. Founder and CEO: Henry O. Odhiambo.</small>';
+  + '<small>Built by Ogolla Tech.</small>';
 function dismiss() { try { sessionStorage.setItem(KEY, '1'); } catch (e) {} box.remove(); }
 box.addEventListener('click', function (e) {
   var b = e.target.closest('button'); if (!b) return;

@@ -161,8 +161,6 @@ export async function accountRoutes(req, env, url, ip) {
   if (path === '/api/auth/recover' && m === 'POST') {
     const b = await body(); const who = str(b.aid || b.handle || b.username, 64), raw = String(b.password ?? b.recovery_code ?? '').slice(0, 100);   // account ID or username; recovery code or password
     const whoKey = who.toLowerCase() || 'x';
-    if (!(await throttle(env, ip, 'recover', whoKey + '|' + ip, 10, 30))) return tooMany(env);   // 10 tries a day per account per IP, 30 per IP
-    if (!(await bump(env, 'recoverall:a:' + whoKey, 300))) return tooMany(env);                  // ceiling across all IPs
     let p = who ? await one(await sb(env, `profiles?aid=eq.${enc(who)}`)) : null;
     if (!p && /^[A-Za-z0-9_]{3,20}$/.test(who)) {                                    // not an account ID: try it as a username
       p = await one(await sb(env, `profiles?handle=eq.${enc(who)}`));

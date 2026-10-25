@@ -78,7 +78,7 @@
   function scan() {
     prune();
     var vw = innerWidth, vh = innerHeight, min = 0.12 * vw * vh;
-    var list = document.querySelectorAll('body *');
+    var list = document.querySelectorAll('body > *, [role="dialog"], [aria-modal="true"], ' + LOOKS);
     for (var i = 0; i < list.length; i++) {
       var el = list[i];
       if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'SVG' || el.matches(SKIP) || el.closest('nav,header,#tb,#tkb,#ccl,#ccland,#loader,#ccgate,#lk')) continue;
@@ -95,7 +95,7 @@
       addX(el);
     }
   }
-  var t = 0, queue = function () { clearTimeout(t); t = setTimeout(scan, 250); };
+  var t = 0, queue = function () { clearTimeout(t); t = setTimeout(scan, 500); };
   new MutationObserver(queue).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
   queue();
 })();

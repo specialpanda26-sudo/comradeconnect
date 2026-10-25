@@ -72,7 +72,7 @@ function init(){
  if(!document.getElementById('crd-sheets-css')){var s=document.createElement('style');s.id='crd-sheets-css';s.textContent=CSS;document.head.appendChild(s)}
  scan();
  new MutationObserver(function(m){for(var i=0;i<m.length;i++)for(var j=0;j<m[i].addedNodes.length;j++)tag(m[i].addedNodes[j])}).observe(document.body,{childList:true});
- setInterval(scan,1500);
+ setInterval(scan,5000);
 }
 if(document.body)init();else document.addEventListener('DOMContentLoaded',init);
 })();

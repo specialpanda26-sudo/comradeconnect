@@ -16,6 +16,10 @@ export const FIELDS = {
   notice_title: { kind: 'text', max: 60, group: 'Notification bell', label: 'Notification title', help: 'Example: Maintenance tonight' },
   notice_text: { kind: 'text', max: 300, group: 'Notification bell', label: 'Notification message', multi: true, help: 'Example: The Market will be down from 10pm to 11pm.' },
 
+  chip_1: { kind: 'text', max: 40, group: 'Home countdown chips', label: 'Chip 1', help: 'Small pill under the Spill it card. Example: CATs in 12 days. Empty = hidden.' },
+  chip_2: { kind: 'text', max: 40, group: 'Home countdown chips', label: 'Chip 2', help: 'Example: Semester ends in 6 weeks' },
+  chip_3: { kind: 'text', max: 40, group: 'Home countdown chips', label: 'Chip 3', help: 'Example: Strike watch: 0 days' },
+
   hero_greeting: { kind: 'text', max: 60, group: 'Home page words', label: 'Greeting above the title', help: 'Built-in: Niaje comrade,' },
   hero_title: { kind: 'text', max: 120, group: 'Home page words', label: 'Main title', help: 'Built-in: Spill it. Nobody will know it was you.' },
   hero_text: { kind: 'text', max: 400, group: 'Home page words', label: 'Paragraph under the title', multi: true },

@@ -563,11 +563,12 @@ R.home=()=>{
   <button class="btn k" data-act="spill">${T('Drop Tea / Spill Secret')} ${ic('arrow','s')}</button>
   <button class="lnk" data-act="tour">${T('Take the 1-minute tour')}</button>
  </div>
+ ${(S.chips&&S.chips.length)?`<div class="cds" aria-label="Semester countdown">${S.chips.map(x=>`<span class="badge">${ic('cal','s')}${esc(x)}</span>`).join('')}</div>`:''}
  <div class="stories" aria-label="Stories, disappear after 24 hours"><button class="st me" data-act="story" data-arg="new"><span class="ring"><i>${ic('plus')}</i></span>Your story</button>${STORIES.map((s,i)=>`<button class="st" data-act="story" data-arg="${i}"><span class="ring"><i>${s[0][0]}</i></span>${s[0].split(' ')[0]}</button>`).join('')}</div>
 
  <div class="sec"><h2>${T('Around campus')}</h2><button class="lk" data-act="tab" data-arg="explore">View All</button></div>
  <div class="hs">
-  <button class="tile gb b1" data-act="sec" data-arg="hostels"><span class="ic">${ic('building')}</span><b>Hostels</b><small>Find a room</small></button>
+  <button class="tile gb b1" data-act="sec" data-arg="hostels"><span class="ic">${ic('building')}</span><b>Hostels</b><small>${S.vac>0?S.vac+(S.vac===1?' vacancy open':' vacancies open'):'Find a room'}</small></button>
   <button class="tile gb b2" data-act="tab" data-arg="market"><span class="ic">${ic('bag')}</span><b>Market</b><small>Buy and sell safely</small></button>
   <button class="tile gb b3" data-act="kura"><span class="ic">${ic('trophy')}</span><b>Kura</b><small>Campus Star Awards</small></button>
   <button class="tile gb b4" data-act="sec" data-arg="events"><span class="ic">${ic('ticket')}</span><b>Events</b><small>Tickets and notices</small></button>
@@ -3684,6 +3685,38 @@ window.ccAuthPanel = openAuth;
 
 /* the splash plays once per visit (reloads skip it, like the old loading screen) */
 if(!/#app/.test(location.hash)){build('s');welcome();}
+})();
+</script>
+<script>/* Section 2: site-editor banner, countdown chips, hostel vacancy count. */
+(function(){
+'use strict';
+var KEY='cc_banner_x';
+function api(){return typeof CC_API==='string'?CC_API:''}
+function get(p){return fetch(api()+p).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
+function dismissed(t){try{return localStorage.getItem(KEY)===t}catch(e){return false}}
+var _bx=A.bannerx;
+A.bannerx=function(){try{localStorage.setItem(KEY,S.banner||'')}catch(e){}if(_bx)_bx.apply(this,arguments);else{S.banner='';refresh()}};
+async function load(){
+ if(!api())return;
+ var changed=false;
+ var sc=await get('/api/site-content'),c=sc&&sc.content;
+ if(c){
+  var bt=(c.banner_on==='1'&&c.banner_text)?String(c.banner_text):'';
+  var nb=(bt&&!dismissed(bt))?bt:'';
+  if(S.banner!==nb){S.banner=nb;changed=true}
+  var ch=[c.chip_1,c.chip_2,c.chip_3].filter(function(x){return x&&String(x).trim()}).map(String);
+  if(JSON.stringify(ch)!==JSON.stringify(S.chips||[])){S.chips=ch;changed=true}
+ }
+ var h=await get('/api/c/hostels?limit=100'),n=0;
+ if(h&&Array.isArray(h.items)){
+  h.items.forEach(function(x){if(x&&x.kind==='vacancy'&&x.vacancies>0)n+=Number(x.vacancies)||0});
+  if(S.vac!==n){S.vac=n;changed=true}
+  if(typeof XT!=='undefined'&&XT[0]&&XT[0][0]==='hostels'){var lab=n>0?n+(n===1?' vacancy':' vacancies'):'Vacant rooms';if(XT[0][3]!==lab){XT[0][3]=lab;changed=true}}
+ }
+ if(changed&&!S.stack.length&&(S.tab==='home'||S.tab==='explore')){try{refresh()}catch(e){}}
+}
+load();
+document.addEventListener('visibilitychange',function(){if(!document.hidden)load()});
 })();
 </script>
 </body></html>

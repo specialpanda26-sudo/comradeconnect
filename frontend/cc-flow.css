@@ -1,0 +1,87 @@
+/* cc-flow.css v1 (section 3 of 4): the verification-code boxes, the recovery-email panel and button waiting states,
+   all in the redesign look (Manrope, cream and white, orange, rose, sage, big soft corners). Loaded after cc-motion.css. */
+:root{--cf-o:#ff8a3d;--cf-o2:#e8744f;--cf-r:#c4727a;--cf-sage:#5f7a59;--cf-bad:#d8493e}
+
+/* ---------- 1. verification code (the 6 boxes) ---------- */
+:root:root:root:root .cco{--a:#e8744f;--rc:#ff8a3d;--g:#5f7a59;--bad:#d8493e;--fg:#16130f;--mut:#6a625a;--edge:rgba(22,19,15,.07);--hi:rgba(255,255,255,.9);--bf1:#fff;--bf2:#fff6f1;
+  font-family:Manrope,system-ui,-apple-system,Segoe UI,sans-serif;border-radius:28px;padding:22px 16px 18px;border:0;
+  background:linear-gradient(160deg,#fff 0%,#fff4ee 55%,#fbe6e3 100%);
+  box-shadow:0 14px 34px rgba(140,80,50,.14),inset 0 1px 0 #fff;-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-theme="dark"]:root:root:root .cco{--fg:#f6efe9;--mut:#b6aca2;--edge:rgba(255,255,255,.1);--bf1:rgba(255,255,255,.1);--bf2:rgba(255,255,255,.05);background:linear-gradient(160deg,#2c2520,#241d19);box-shadow:0 14px 34px rgba(0,0,0,.4)}
+:root:root:root:root .cco:before{background:radial-gradient(closest-side,rgba(255,160,90,.28),transparent)}
+:root:root:root:root .cco.cco-busy{box-shadow:0 14px 34px rgba(140,80,50,.14),0 0 28px rgba(255,138,61,.28)}
+:root:root:root:root .cco.cco-ok{--rc:var(--g);box-shadow:0 14px 34px rgba(140,80,50,.12),0 0 26px rgba(95,122,89,.25)}
+:root:root:root:root .cco.cco-err{--rc:var(--bad);box-shadow:0 14px 34px rgba(140,80,50,.12),0 0 26px rgba(216,73,62,.22)}
+:root:root:root:root .cco:after{background:conic-gradient(from var(--cco-ang),transparent 0%,transparent 45%,var(--rc) 85%,#ffd9b8 100%);filter:drop-shadow(0 0 5px var(--rc))}
+:root:root:root:root .cco .cco-ic{border-radius:16px;width:42px;height:42px;color:var(--a);background:rgba(255,138,61,.13);border:0}
+:root:root:root:root .cco-busy .cco-ic{color:var(--rc);background:rgba(255,138,61,.2)}
+:root:root:root:root .cco-ok .cco-ic{color:var(--g);background:rgba(95,122,89,.15)}
+:root:root:root:root .cco .cco-t{font-size:20px;font-weight:800;letter-spacing:-.02em}
+:root:root:root:root .cco .cco-s{font-size:13px;font-weight:500}
+:root:root:root:root .cco .cco-t b{color:var(--a)}
+:root:root:root:root .cco-busy .cco-t b{color:var(--rc)}:root:root:root:root .cco-ok .cco-t b{color:var(--g)}:root:root:root:root .cco-err .cco-t b{color:var(--bad)}
+:root:root:root:root .cco input.cco-b{font:800 22px/1 Manrope,system-ui,sans-serif!important;border:1.5px solid transparent!important;border-radius:16px!important;
+  background:var(--bf2)!important;box-shadow:inset 0 0 0 1px var(--edge)!important;max-width:46px!important;color:var(--fg)!important;caret-color:var(--cf-o2);transition:transform .25s cubic-bezier(.34,1.45,.5,1),border-color .25s,box-shadow .25s,background .25s}
+:root:root:root:root .cco input.cco-b.cco-f{border-color:rgba(255,138,61,.55)!important;background:#fff!important}
+:root[data-theme="dark"]:root:root:root .cco input.cco-b.cco-f{background:rgba(255,255,255,.14)!important}
+:root:root:root:root .cco input.cco-b:focus{border-color:var(--cf-o)!important;transform:translateY(-2px);box-shadow:0 0 0 4px rgba(255,138,61,.2),0 8px 18px rgba(232,116,79,.18)!important}
+:root:root:root:root .cco.cco-busy input.cco-b{border-color:rgba(255,138,61,.6)!important}
+:root:root:root:root .cco.cco-err input.cco-b{border-color:var(--bad)!important;color:var(--bad)!important;box-shadow:0 0 0 3px rgba(216,73,62,.14)!important}
+:root:root:root:root .cco .cco-final{color:var(--g)}
+@media (prefers-reduced-motion:no-preference){:root:root:root:root .cco input.cco-b.cco-f{animation:cf-key .28s cubic-bezier(.34,1.45,.5,1)}@keyframes cf-key{0%{transform:scale(.86)}100%{transform:none}}}
+:root:root:root:root button.cco-bok{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f08!important;box-shadow:0 10px 24px rgba(238,122,79,.35)!important}
+
+/* ---------- 2. the recovery-email panel (#ccea) ---------- */
+#ccea .bx{text-align:center}
+.cf-ea{display:flex;flex-direction:column;align-items:stretch;gap:0;font-family:Manrope,system-ui,sans-serif}
+.cf-ic{width:54px;height:54px;margin:2px auto 12px;border-radius:20px;display:grid;place-items:center;color:var(--cf-o2);background:linear-gradient(135deg,rgba(255,160,90,.26),rgba(196,114,122,.2))}
+.cf-ic svg{width:26px;height:26px}
+.cf-h{margin:0;font-size:22px;font-weight:800;letter-spacing:-.025em;color:var(--fg)}
+.cf-s{margin:8px 4px 16px;font-size:13px;line-height:1.55;color:var(--mut)}
+.cf-f input{width:100%;height:54px;border-radius:999px;border:1.5px solid transparent;background:rgba(255,255,255,.9);box-shadow:inset 0 0 0 1px rgba(22,19,15,.07);padding:0 20px;font:600 15px Manrope,system-ui,sans-serif;color:var(--fg);outline:0;text-align:center;transition:border-color .2s,box-shadow .25s}
+.cf-f input:focus{border-color:var(--cf-o);box-shadow:0 0 0 4px rgba(255,138,61,.18)}
+:root[data-theme="dark"] .cf-f input{background:rgba(255,255,255,.08);color:var(--fg)}
+.cf-m{min-height:20px;margin:10px 0 4px;font-size:12.5px;font-weight:600;color:var(--mut)}
+.cf-m.bad{color:var(--cf-bad)}
+.cf-go{width:100%;height:54px;border-radius:999px;margin-top:4px}
+.cf-go:disabled{opacity:.7}
+.cf-lnk{all:unset;cursor:pointer;margin:14px auto 0;font-size:13.5px;font-weight:700;color:var(--fg);text-decoration:underline;text-underline-offset:3px;padding:6px 10px}
+.cf-hint{margin:6px 0 0;font-size:12px;color:var(--mut)}
+.cf-done{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0 6px}
+.cf-done b{font-size:20px;font-weight:800}.cf-done span{font-size:13px;color:var(--mut)}
+.cf-dic{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#ffa05a,#ee7a4f);box-shadow:0 12px 28px rgba(238,122,79,.4)}
+.cf-dic svg{width:30px;height:30px;stroke-dasharray:26;stroke-dashoffset:26}
+.cf-ic svg,.cf-dic svg{display:block}
+@media (prefers-reduced-motion:no-preference){
+ .cf-ea>*{animation:cf-in .5s cubic-bezier(.2,.9,.3,1) backwards}
+ .cf-ea>*:nth-child(2){animation-delay:.05s}.cf-ea>*:nth-child(3){animation-delay:.1s}.cf-ea>*:nth-child(4){animation-delay:.15s}.cf-ea>*:nth-child(n+5){animation-delay:.2s}
+ .cf-ic{animation:cf-ic .6s cubic-bezier(.34,1.45,.5,1) backwards!important}
+ @keyframes cf-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+ @keyframes cf-ic{from{opacity:0;transform:scale(.5) rotate(-12deg)}to{opacity:1;transform:none}}
+ .cf-shake{animation:cf-shk .42s ease}
+ @keyframes cf-shk{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+ .cf-dic{animation:cm-heart .55s cubic-bezier(.34,1.45,.5,1)}
+ .cf-dic svg{animation:cm-draw .5s ease .15s forwards}
+}
+@media (prefers-reduced-motion:reduce){.cf-dic svg{stroke-dashoffset:0}}
+
+/* ---------- 3. buttons that are waiting for the server (cc-flow.js adds .cf-wait) ---------- */
+.cf-wait{position:relative;overflow:hidden;pointer-events:none}
+.cf-wait::before{content:"";display:inline-block;width:14px;height:14px;margin-right:9px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:cf-sp .7s linear infinite}
+.cf-wait::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 25%,rgba(255,255,255,.28) 50%,transparent 75%);transform:translateX(-100%);animation:cm-shim 1.1s linear infinite}
+@keyframes cf-sp{to{transform:rotate(360deg)}}
+.cf-fine{animation:cm-heart .5s cubic-bezier(.34,1.45,.5,1)}
+@media (prefers-reduced-motion:reduce){.cf-wait::before{animation:none}.cf-wait::after{display:none}}
+
+/* ---------- 4. no more doubles ---------- */
+#ccrecnudge,.cf-hide,.cf-dupe{display:none!important}
+
+/* ---------- 5. panel polish: centred, white fields, and the code boxes sit flat inside it (the panel already has its own heading) ---------- */
+#ccea .cf-ea{text-align:center}
+#ccea .cf-f input{background:#fff;box-shadow:inset 0 0 0 1px rgba(22,19,15,.08)}
+#ccea .cf-f input::placeholder{color:rgba(22,19,15,.38);font-weight:500}
+:root[data-theme="dark"] #ccea .cf-f input{background:rgba(255,255,255,.08)}
+:root:root:root:root #ccea .cco{background:none;box-shadow:none;padding:4px 0 2px;margin:0}
+:root:root:root:root #ccea .cco:before{display:none}
+:root:root:root:root #ccea .cco .cco-ic,:root:root:root:root #ccea .cco .cco-t,:root:root:root:root #ccea .cco .cco-s{display:none}
+:root:root:root:root #ccea .cco-stage{height:60px}

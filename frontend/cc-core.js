@@ -154,7 +154,7 @@ async function googleSignIn(credential, link) {                    // the fetch 
   saveAuth({ aid: d.aid, token: d.token });
   ME.aid = d.aid; ME.google = 1;
   try { const j = JSON.parse(atob(credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); if (j.email) { const [u, dom] = String(j.email).split('@'); ME.gmask = u.slice(0, 2) + '***@' + dom; } ME.gfirst = String(j.given_name || String(j.name || '').split(' ')[0] || '').slice(0, 30); } catch (e) {}
-  try { if (d.created) { localStorage.removeItem('cc_setup_done'); localStorage.setItem('cc_setup_new', '1'); } } catch (e) {}   // a brand new Google account is asked for a username right away
+  try { if (d.created) { localStorage.removeItem('cc_setup_done'); localStorage.setItem('cc_setup_new', '1'); localStorage.setItem('cc_ask_email_new', '1'); } } catch (e) {}   // a brand new Google account is asked for a username right away
   saveMe();
   setTimeout(() => { attributeRef(); syncVer(); }, 0);
   return d;
@@ -213,7 +213,7 @@ async function ensureAccount() {
     saveAuth({ aid: d.aid, token: d.token });
     if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
     ME.aid = d.aid; saveMe();
-    await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {} try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
+    await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
     return { aid: d.aid, token: d.token };
   })();
   try { const a = await regBusy; setTimeout(() => { attributeRef(); syncVer(); }, 0); return a; } finally { regBusy = null; }
@@ -1643,7 +1643,7 @@ async function createAccount(kind, creds) {
   saveAuth({ aid: d.aid, token: d.token });
   if (ME.aid && ME.aid !== d.aid) ME.oldAid = ME.aid;
   ME.aid = d.aid; saveMe();
-  await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {} try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
+  await showRecovery(d); try { if (window.ccAskEmailSignup) await window.ccAskEmailSignup(); } catch (e) {}
   setTimeout(() => { attributeRef(); syncVer(); refreshAll(); }, 0);
   return { aid: d.aid, token: d.token };
 }

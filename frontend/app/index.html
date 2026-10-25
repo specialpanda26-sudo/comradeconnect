@@ -127,7 +127,7 @@ body.desk .sheet.on{transform:translate(-50%,0)}
 .top{display:flex;gap:12px;align-items:center}
 .search{flex:1;height:52px;border-radius:999px;background:var(--card);box-shadow:var(--sh);display:flex;align-items:center;gap:12px;padding:0 20px;color:var(--mut);font-weight:600;cursor:pointer;text-align:left}
 .meta{display:flex;justify-content:space-between;align-items:center;margin:12px 0}
-.banner{display:flex;align-items:center;gap:10px;justify-content:space-between;background:linear-gradient(135deg,#ffa05a,#ee7a4f);color:#1d0f06;border-radius:20px;padding:13px 16px;font-weight:800;font-size:13px;margin-bottom:14px}
+.banner{cursor:pointer;display:flex;align-items:center;gap:10px;justify-content:space-between;background:linear-gradient(135deg,#ffa05a,#ee7a4f);color:#1d0f06;border-radius:20px;padding:6px 6px 6px 16px;font-weight:800;font-size:13px;margin-bottom:14px;min-height:50px}.banner span{flex:1;padding:6px 0}.banner .bx{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(29,15,6,.12);color:#1d0f06}.banner .bx:active{transform:scale(.92)}
 .hero{border-radius:36px;padding:22px 22px 22px;box-shadow:var(--sh);min-height:372px;display:flex;flex-direction:column;color:#16130f}
 .hero .hi{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.85);display:grid;place-items:center;margin-bottom:14px}
 .hero h1{font-size:46px;letter-spacing:-.045em;line-height:1;font-weight:800}
@@ -554,7 +554,7 @@ R.home=()=>{
  return `
  <div class="top"><button class="search" data-act="find">${ic('search')}<span>${T('Search anything...')}</span></button><button class="rb dk" data-act="settings" aria-label="Settings">${ic('gear')}</button></div>
  <div class="meta"><button class="chip sm" data-act="campus">${ic('pin','s')}${esc(S.campus)} · Change</button><span style="display:flex;gap:8px"><button class="rb sm" data-act="safety" aria-label="Safety tools">${ic('shield','s')}</button><button class="rb sm" data-act="bell" aria-label="Notifications">${ic('bell','s')}${S.unread?'<i class="dot"></i>':''}</button></span></div>
- ${S.banner?`<div class="banner"><span>${esc(S.banner)}</span><button data-act="bannerx" aria-label="Dismiss">${ic('x','s')}</button></div>`:''}
+ ${S.banner?`<div class="banner" data-act="bannergo" role="button" tabindex="0"><span>${esc(S.banner)}</span><button type="button" class="bx" data-act="bannerx" aria-label="Dismiss">${ic('x','s')}</button></div>`:''}
  ${!S.signed?`<div class="card gb b4" style="color:#16130f"><h3>Welcome, comrade</h3><p class="sub1" style="color:#16130f">Sign up to post, comment and earn points. Your stories always stay anonymous.</p><div class="two" style="margin-top:12px"><button class="btn k sm" data-act="signup" style="width:100%">Sign up</button><button class="btn w sm" data-act="login" style="width:100%">Log in</button></div></div>`:''}
  <div class="hero gb b1">
   <span class="hi">${ic('mega')}</span><div class="gr">${T('Niaje comrade,')}</div><h1>Spill it.</h1>
@@ -594,7 +594,16 @@ function footer(){return `<div class="ft"><div class="card" style="margin:0"><h3
  <div class="cols"><div><h4>Legal</h4><a data-act="legal" data-arg="Terms &amp; Conditions">Terms &amp; Conditions</a><a data-act="legal" data-arg="Privacy Policy">Privacy Policy</a><a data-act="legal" data-arg="Cookie Policy">Cookie Policy</a><a data-act="legal" data-arg="Refunds &amp; disputes">Refunds &amp; disputes</a></div><div><h4>Company</h4><a data-act="legal" data-arg="About">About</a><a data-act="legal" data-arg="Safety">Safety</a><a data-act="legal" data-arg="Contact">Contact</a></div></div>
  <p>&copy; 2026 Comrade Connect. Owned and operated by Ogolla Tech, founded by Henry O. Odhiambo. All rights reserved.</p><p style="margin-top:6px"><span class="badge">Powered by Comrade Connect</span></p></div>`}
 
-A.bannerx=()=>{S.banner='';refresh()};
+A.bannerx=()=>{try{localStorage.setItem('cc_banner_x',S.banner||'')}catch(e){}S.banner='';refresh()};
+A.bannergo=()=>{const t=(S.banner||'').toLowerCase();
+ if(/hostel|vacan|room/.test(t))return A.sec('hostels');
+ if(/market|escrow|sale|buy|sell|shop/.test(t))return go('market');
+ if(/event|ticket/.test(t))return A.sec('events');
+ if(/live|stream/.test(t)){S.wTab='live';return go('watch')}
+ if(/kura|vote|award/.test(t))return A.kura();
+ if(/reward|point|streak/.test(t))return A.rewards();
+ return A.bell()};
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[role=button][data-act]')){e.preventDefault();e.target.click()}});
 A.lay=a=>{S.layout=a;refresh()};
 A.zone=a=>{S.zone=a;refresh()};
 A.cat=a=>{S.cat=a;refresh()};
@@ -828,6 +837,7 @@ const CLIPS=[];
 const LIVES=[];
 R.watch=()=>`${head('Watch','Clips and live from campus')}
 <div class="seg"><button class="${S.wTab==='clips'?'on':''}" data-act="wtab" data-arg="clips">Videos</button><button class="${S.wTab==='live'?'on':''}" data-act="wtab" data-arg="live">Live</button></div>
+<button class="btn o" id="glb" data-act="golivejump" style="margin-bottom:16px">${ic('video','s')} Go live</button>
 ${S.wTab==='clips'?`<p class="sub1" style="margin-bottom:12px">Show what is happening on campus. Record on your phone or upload a clip. Please do not film people without their consent.</p>
  ${field('Caption (optional)','<input class="in" id="vcap" maxlength="140" placeholder="Add a caption" aria-label="Clip caption">')}
  <div class="two"><button class="btn k" data-act="vrec">${ic('video','s')} Record</button><button class="btn w" data-act="vup">${ic('download','s')} Upload clip</button></div>
@@ -840,6 +850,7 @@ ${S.wTab==='clips'?`<p class="sub1" style="margin-bottom:12px">Show what is happ
  <div class="card"><h3>Go live</h3><p class="sub1" style="margin-bottom:12px">Start your live on YouTube, Facebook, TikTok or Twitch, then paste its link here. Comrades watch it and chat here. Anyone with an account can go live.</p>
  ${field('Title','<input class="in" id="lt" maxlength="80" placeholder="What is happening?">')}${field('Live link','<input class="in" id="lu" inputmode="url" placeholder="https://...">')}<button class="btn o" data-act="golive">Go live</button></div>`}`;
 A.wtab=a=>{S.wTab=a;refresh()};
+A.golivejump=()=>{if(S.wTab!=='live')A.wtab('live');setTimeout(()=>{const e=$('#lt');if(e){e.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>{try{e.focus({preventScroll:true})}catch(x){}},350)}},120)};
 A.vrec=()=>toast('Video upload is not connected yet');
 A.vup=()=>toast('Video upload is not connected yet');
 A.clike=a=>{CLIPS[+a][1]++;refresh()};
@@ -1090,7 +1101,7 @@ R.market=()=>{
  <div class="seg">${[['browse','Browse'],['mine','My listings'],['orders','Orders']].map(([k,l])=>`<button class="${S.mkTab===k?'on':''}" data-act="mktab" data-arg="${k}">${l}</button>`).join('')}</div>
  <div class="mks">${ic('search','s')}<input id="mkq" value="${esc(S.mkQ||'')}" placeholder="Search beds, tables, fridges..." aria-label="Search the market"><button data-act="mksortn" aria-label="Sort">${ic('sliders','s')}</button></div>
  <div class="chips">${cats.map(c=>`<button class="chip pill ${S.mkCat===c?'on':''}" data-act="mkcat" data-arg="${c}"><i>${ic(CI[c],'s')}</i>${c}</button>`).join('')}</div>
- <div class="promo gb b2"><div><b>Pay safe, get 5 points</b><span>On your first purchase held in escrow</span><button data-act="shopnow">Shop now</button></div><i>${ic('shield')}</i></div>
+ <div class="promo gb b2" data-act="escrowinfo" role="button" tabindex="0" aria-label="How escrow protects you"><div><b>Pay safe, get 5 points</b><span>On your first purchase held in escrow</span><button data-act="shopnow">Shop now</button></div><i>${ic('shield')}</i></div>
  <div class="vt">${[['near','Near you'],['grid','Grid'],['map','Map']].map(([k,l])=>`<button class="${V===k?'on':''}" data-act="mkview" data-arg="${k}">${l}</button>`).join('')}</div>
  ${V==='map'?(sel?`<div class="mmap"><div class="road r1"></div><div class="road r2"></div><div class="road r3"></div><div class="park"></div><span class="mme"></span>${L.map(p=>`<button class="pin gb ${grads[p.id%5]} ${sel.id===p.id?'on':''}" style="left:${12+((p.id*29)%72)}%;top:${10+((p.id*43)%64)}%" data-act="mkpin" data-arg="${p.id}" aria-label="${esc(p.t)}"></button>`).join('')}</div><div class="mcard"><div class="mt3"><div><b>${esc(sel.t)}</b><span>${esc(sel.z||'')} · by ${esc(sel.s)}</span></div>${heart(sel)}</div><div class="th2 gb ${grads[sel.id%5]}" data-act="prod" data-arg="${sel.id}"></div><div class="mb3"><b>${kes(sel.p)}</b><button class="addb lg" data-act="addcart" data-arg="${sel.id}" aria-label="Add to cart">${ic('cart','s')}</button></div></div>`:'<div class="empty">No items match.</div>')
  :V==='grid'?`<div class="pgrid">${L.map(p=>`<div class="pc"><div class="im gb ${grads[p.id%5]}">${heart(p)}<button class="addb ab" data-act="addcart" data-arg="${p.id}" aria-label="Add to cart">${ic('plus','s')}</button></div><button class="bd" data-act="prod" data-arg="${p.id}" style="text-align:left;width:100%;display:block"><b>${esc(p.t)}</b><div class="pr">${kes(p.p)}</div><small>${p.st?p.st.toFixed(1)+' ★':'New'}</small></button></div>`).join('')||'<div class="empty">No items match.</div>'}</div>`
@@ -1098,7 +1109,9 @@ R.market=()=>{
  <div class="sx"><b>Recommended for you</b><button data-act="mkview" data-arg="grid">View all</button></div>${L.map(recCard).join('')}`}`};
 A.mkview=a=>{S.mkView=a;refresh()};A.mkpin=a=>{S.mkSel=+a;refresh()};
 A.mksortn=()=>{S.mkSort=S.mkSort==='new'?'lo':S.mkSort==='lo'?'hi':'new';toast('Sorted: '+({new:'Newest',lo:'Price low to high',hi:'Price high to low'})[S.mkSort]);refresh()};
-A.shopnow=()=>{S.mkView='near';refresh();toast('Tap + on anything to add it to your cart')};
+A.shopnow=()=>{if(S.tab!=='market'||S.stack.length){S.stack=[];S.tab='market'}S.mkTab='browse';S.mkView='grid';render();const el=$('#v-market');if(el)el.scrollTop=0;setTimeout(()=>{const v=$('#v-market .vt');if(v&&el)el.scrollTo({top:Math.max(0,v.offsetTop-12),behavior:'smooth'})},80);toast('Tap + on anything to add it to your cart')};
+A.escrowinfo=()=>openSheet('How escrow protects you',`<p class="sub1" style="margin-bottom:12px">Your money is held safely. The seller only gets paid after you have the item.</p><ol class="prog" style="gap:10px;margin-bottom:12px">${['You pay. The money is held in escrow, not sent to the seller.','You meet the seller on campus and check the item.','Give the seller your 6-digit code only when you are happy.','The seller is paid. Problem? Open a dispute and an admin reviews it.'].map(t=>`<li class="done" style="color:var(--ink)"><i style="width:26px;height:26px">${ic('check','s')}</i>${t}</li>`).join('')}</ol><p class="note" style="margin-bottom:14px">Your first escrow purchase earns you 5 points. Admins watch the Market and remove anything unsafe.</p><button class="btn o" data-act="escrowgo">Shop now</button><button class="btn w" style="margin-top:10px" data-act="legal" data-arg="Refunds &amp; disputes">Refunds and disputes</button>`);
+A.escrowgo=()=>{closeSheet();A.shopnow()};
 A.addcart=a=>{S.mc[a]=(S.mc[a]||0)+1;const p=PRODS.find(x=>x.id==a);toast(esc(p.t)+' added to cart');if($('#sheet').classList.contains('on')&&$('#cartsum'))cartSheet();else refresh()};
 A.cartqty=a=>{const[i,d]=a.split(':');S.mc[i]=(S.mc[i]||0)+ +d;if(S.mc[i]<=0)delete S.mc[i];cartSheet();refresh()};
 function cartSheet(){
@@ -3693,9 +3706,8 @@ if(!/#app/.test(location.hash)){build('s');welcome();}
 var KEY='cc_banner_x';
 function api(){return typeof CC_API==='string'?CC_API:''}
 function get(p){return fetch(api()+p).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
-function dismissed(t){try{return localStorage.getItem(KEY)===t}catch(e){return false}}
-var _bx=A.bannerx;
-A.bannerx=function(){try{localStorage.setItem(KEY,S.banner||'')}catch(e){}if(_bx)_bx.apply(this,arguments);else{S.banner='';refresh()}};
+function dismissed(t){try{return (localStorage.getItem(KEY)||'').trim()===String(t).trim()}catch(e){return false}}
+
 async function load(){
  if(!api())return;
  var changed=false;

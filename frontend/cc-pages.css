@@ -1,42 +1,47 @@
 /* cc-pages.css v1: Reset password is a full page (not a small card), and the sign-in cards are tidy compact squares.
    Same night / aqua look as the rest of the site, light and dark. */
 
-/* ---------- Reset password: full page ---------- */
-#ccfgt{position:fixed;inset:0;z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg,#101422);color:var(--fg,#fff);font-family:Poppins,system-ui,sans-serif}
-#ccfgt::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 52% at 50% -8%,rgba(168,220,231,.2),transparent 62%)}
-:root[data-theme="light"] #ccfgt::before{background:linear-gradient(180deg,#A8DCE7 0,rgba(168,220,231,.35) 220px,rgba(255,255,255,0) 420px)}
-#ccfgt .fp-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px}
-#ccfgt .fp-ic{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:0;background:none;box-shadow:none;color:var(--fg,#fff);padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#ccfgt .fp-ic:active{opacity:.5}
-#ccfgt .fp-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-#ccfgt .fp-brand{display:flex;align-items:center;gap:8px;font:600 14px Poppins,system-ui,sans-serif;letter-spacing:-.01em}
-#ccfgt .fp-brand img{width:26px;height:26px;border-radius:8px;display:block}
-#ccfgt .fp-body{position:relative;z-index:1;width:100%;max-width:440px;margin:0 auto;padding:22px 22px calc(40px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
-#ccfgt .fp-step{margin:0 0 8px;font:600 12px Poppins,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mut,rgba(255,255,255,.62))}
-#ccfgt h1{margin:0 0 10px;font:600 28px/1.15 var(--disp,Poppins,system-ui,sans-serif);letter-spacing:-.02em;color:var(--fg,#fff)}
-#ccfgt .fp-sub{margin:0 0 22px;font-size:14px;line-height:1.6;color:var(--mut,rgba(255,255,255,.62))}
+/* ---------- Reset password: full page. Same look as the login: white page, navy button, aqua fields. Fixed colours so the old theme can never leak in. ---------- */
+#ccfgt{position:fixed;inset:0;z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;color:#101422;font-family:Poppins,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+#ccfgt::before{content:"";position:fixed;left:0;right:0;top:0;height:340px;pointer-events:none;background:radial-gradient(120% 100% at 50% -20%,rgba(168,220,231,.7),rgba(168,220,231,0) 70%)}
+#ccfgt .fp-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0))}
+#ccfgt .fp-ic{width:42px;height:42px;display:grid;place-items:center;border:1.5px solid rgba(16,20,34,.14);border-radius:50%;background:rgba(255,255,255,.75);box-shadow:none;color:#101422;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#ccfgt .fp-ic:active{transform:scale(.94)}
+#ccfgt .fp-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#ccfgt .fp-brand{display:flex;align-items:center;gap:9px;font:500 12.5px Poppins,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#101422;white-space:nowrap}
+#ccfgt .fp-brand img{display:block;height:24px;width:auto;max-width:none;border-radius:0;object-fit:contain;filter:brightness(0)}
+#ccfgt .fp-body{position:relative;z-index:1;width:100%;max-width:440px;margin:0 auto;padding:18px 22px calc(40px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
+#ccfgt .fp-bar{display:flex;gap:6px;margin:0 0 20px}
+#ccfgt .fp-bar i{flex:1;height:4px;border-radius:4px;background:rgba(16,20,34,.1);transition:background .3s}
+#ccfgt .fp-bar i.on{background:#101422}
+#ccfgt .fp-step{display:inline-block;margin:0 0 14px;padding:6px 12px;border-radius:999px;background:rgba(168,220,231,.5);font:600 11px Poppins,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#101422}
+#ccfgt h1{margin:0 0 10px;font:800 27px/1.12 Unbounded,Poppins,system-ui,sans-serif;letter-spacing:-.02em;color:#101422}
+#ccfgt .fp-sub{margin:0 0 22px;font-size:14px;line-height:1.65;color:rgba(16,20,34,.64)}
+#ccfgt .fp-sub b{color:#101422;font-weight:600}
 #ccfgt .fp-f{margin:0 0 16px}
-#ccfgt .fp-f>label{display:block;margin:0 0 7px 4px;font:600 13px Poppins,system-ui,sans-serif;color:var(--fg,#fff)}
+#ccfgt .fp-f>label{display:block;margin:0 0 7px 2px;font:500 12.5px Poppins,system-ui,sans-serif;color:#101422}
 #ccfgt .fp-pw{position:relative}
-#ccfgt input{display:block;width:100%;box-sizing:border-box;min-height:52px;margin:0;padding:12px 16px;border-radius:16px;border:1px solid var(--line,rgba(255,255,255,.14));background:var(--g,#272B3B);color:var(--fg,#fff);font:400 16px Poppins,system-ui,sans-serif;outline:0;-webkit-appearance:none;appearance:none}
-#ccfgt input::placeholder{color:var(--mut,rgba(255,255,255,.5));font-size:14px}
-#ccfgt input:focus{border-color:var(--aq,#A8DCE7);box-shadow:0 0 0 3px rgba(168,220,231,.22)}
-#ccfgt .fp-pw input{padding-right:52px!important}
-#ccfgt #ccfg-c{letter-spacing:.35em;font-weight:600;text-align:center}
-#ccfgt #ccfg-c::placeholder{letter-spacing:0;font-weight:400}
-#ccfgt .fp-eye{position:absolute;right:4px;top:4px;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:12px;background:none;color:var(--mut,rgba(255,255,255,.62));padding:0;cursor:pointer}
-#ccfgt .fp-eye svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#ccfgt .fp-msg{margin:0 0 14px;min-height:0;font-size:13px;line-height:1.55;color:var(--mut,rgba(255,255,255,.62))}
+#ccfgt input{display:block;width:100%;box-sizing:border-box;min-height:54px;margin:0;padding:12px 16px;border-radius:14px;border:1.5px solid transparent;background:#EAF6F9;color:#101422;font:400 16px Poppins,system-ui,sans-serif;outline:0;-webkit-appearance:none;appearance:none;box-shadow:none;transition:border-color .2s,background .2s}
+#ccfgt input::placeholder{color:rgba(16,20,34,.42);font-size:14px}
+#ccfgt input:focus{border-color:#101422;background:#EAF6F9;box-shadow:none}
+#ccfgt .fp-pw input{padding-right:54px!important}
+#ccfgt #ccfg-c{letter-spacing:.5em;font:600 22px Poppins,system-ui,sans-serif;text-align:center;padding-left:calc(16px + .5em)}
+#ccfgt #ccfg-c::placeholder{letter-spacing:.5em;font-weight:400;font-size:22px;color:rgba(16,20,34,.25)}
+#ccfgt .fp-eye{position:absolute;right:5px;top:5px;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:12px;background:none;box-shadow:none;color:rgba(16,20,34,.55);padding:0;cursor:pointer}
+#ccfgt .fp-eye svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#ccfgt .fp-msg{margin:0 0 14px;min-height:0;font-size:13px;line-height:1.55;color:rgba(16,20,34,.7)}
 #ccfgt .fp-msg:empty{display:none}
-#ccfgt .fp-msg.bad{padding:10px 14px;border-radius:14px;border:1px solid var(--line,rgba(255,255,255,.14));background:var(--soft,rgba(255,255,255,.06));color:var(--fg,#fff);font-weight:600}
-#ccfgt .fp-go{display:block;width:100%;min-height:54px;margin:4px 0 14px;border:0;border-radius:999px;background:var(--ink,#A8DCE7);color:var(--inkfg,#101422);font:600 15px Poppins,system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#ccfgt .fp-msg.bad{padding:11px 14px;border-radius:14px;border:1.5px solid rgba(16,20,34,.14);background:rgba(16,20,34,.05);color:#101422;font-weight:500}
+#ccfgt .fp-go{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;margin:6px 0 14px;border:0;border-radius:999px;background:#101422;color:#fff;font:500 15.5px Poppins,system-ui,sans-serif;box-shadow:0 12px 24px -12px rgba(16,20,34,.55);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}
 #ccfgt .fp-go:active{transform:scale(.98)}
-#ccfgt .fp-go:disabled{opacity:.55}
-#ccfgt .fp-link{display:block;width:100%;margin:0;padding:12px 8px;border:0;background:none;color:var(--fg,#fff);font:600 13.5px Poppins,system-ui,sans-serif;text-align:center;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-#ccfgt .fp-link:disabled{opacity:.55;text-decoration:none}
+#ccfgt .fp-go:disabled{opacity:.55;box-shadow:none}
+#ccfgt #ccfg-f1 .fp-go{background:#EAF6F9;color:#101422;box-shadow:none;border:1.5px solid rgba(16,20,34,.12);font-weight:600}
+#ccfgt .fp-link{display:block;width:100%;margin:0;padding:12px 8px;border:0;background:none;box-shadow:none;color:#101422;font:600 13.5px Poppins,system-ui,sans-serif;text-align:center;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+#ccfgt .fp-link:disabled{opacity:.5;text-decoration:none}
+#ccfgt .fp-sub .fp-link{display:inline-block;width:auto;padding:4px 2px}
 #ccfgt .ccpw-m{margin:8px 4px 0}
 #ccfgt [hidden]{display:none!important}
-@media(min-width:701px){#ccfgt .fp-body{padding-top:40px}}
+@media(min-width:701px){#ccfgt .fp-body{padding-top:36px}}
 
 /* ---------- Sign-in and account cards: one compact, squarish card at every screen size ---------- */
 .ccp-sheet.ccp-ov{padding:20px!important;align-items:center!important;justify-content:center!important;place-items:center!important;background:rgba(16,20,34,.8)!important;-webkit-backdrop-filter:blur(10px)!important;backdrop-filter:blur(10px)!important}

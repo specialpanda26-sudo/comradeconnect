@@ -278,7 +278,7 @@ function promptForgot(prefill, back) {
   pg.innerHTML = '<div class="fp-top"><button type="button" class="fp-ic" id="ccfg-bk" aria-label="Back">' + ARROW + '</button>'
     + '<div class="fp-brand"><img src="cc-mark.png" alt=""><span>Comrade Connect</span></div>'
     + '<button type="button" class="fp-ic" id="ccfg-x" aria-label="Close">' + XICON + '</button></div>'
-    + '<div class="fp-body"><p class="fp-step" id="ccfg-st">Step 1 of 2</p><h1 id="ccfg-h">Reset your password</h1>'
+    + '<div class="fp-body"><div class="fp-bar" id="ccfg-bar"><i class="on"></i><i></i><i></i></div><p class="fp-step" id="ccfg-st">Step 1 of 3</p><h1 id="ccfg-h">Reset your password</h1>'
     + '<p class="fp-sub" id="ccfg-in">Type the email saved on your account. We send a 6-digit code to it, then you choose a new password.</p>'
     + '<div class="fp-f" id="ccfg-f1"><label for="ccfg-m">Email on your account</label><input id="ccfg-m" type="email" inputmode="email" placeholder="name@gmail.com" autocomplete="email" autocapitalize="off" aria-label="Email on your account"></div>'
     + '<div id="ccfg-2" hidden><form id="ccfg-fm" style="display:contents" autocomplete="on" novalidate>'
@@ -313,6 +313,7 @@ function promptForgot(prefill, back) {
   const toStep = (n) => {
     step = n; const two = n >= 2, three = n === 3;
     $('ccfg-st').textContent = 'Step ' + n + ' of 3';
+    [].forEach.call(pg.querySelectorAll('#ccfg-bar i'), (x, k) => x.classList.toggle('on', k < n));
     $('ccfg-h').textContent = three ? 'Choose a new password' : two ? 'Check your email' : 'Reset your password';
     $('ccfg-in').textContent = three ? 'Code verified. ' + (forgotHandle ? 'Your username is @' + forgotHandle + '. ' : '') + 'Now choose a new password. You will be signed in right after.' : two ? 'We are sending a verification code to ' + maskE($('ccfg-m').value) + '. Open your email, copy the 6-digit code and type it here. It will help you sign in. It can take a minute, so check your spam folder too.' : 'Type the email saved on your account. We send a verification code to it. Forgot your username too? Just type your email: once you verify the code, we show it to you.';
     $('ccfg-2').hidden = !two; $('ccfg-f1').hidden = two; $('ccfg-no').hidden = two; $('ccfg-un').value = three && forgotHandle ? forgotHandle : $('ccfg-m').value.trim(); $('ccfg-cb').hidden = three; $('ccfg-pb').hidden = !three; $('ccfg-have').hidden = three;

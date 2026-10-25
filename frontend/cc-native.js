@@ -214,12 +214,12 @@
 
   var G = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.9 2.3-8.5 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>';
   var st = document.createElement('style');
-  st.textContent = '.cc-gbtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:300px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid rgba(16,20,34,.14);background:#fff;color:#101422;font:600 14px Poppins,system-ui,sans-serif}.cc-gbtn:disabled{opacity:.6}.cc-gbtn:active{transform:scale(.98)}';
+  st.textContent = '.cc-gbtn{display:inline-flex;align-items:center;justify-content:center;gap:0;width:48px;height:48px;min-height:48px;padding:0;border-radius:50%;border:1px solid rgba(16,20,34,.14);background:#fff;color:#101422;font:600 14px Poppins,system-ui,sans-serif}.cc-gbtn:disabled{opacity:.6}.cc-gbtn:active{transform:scale(.98)}';
   document.head.appendChild(st);
 
   window.ccApp.mountGoogle = function (box, onDone, onErr, opts, sign) {
     box.innerHTML = '';
-    var b = document.createElement('button'); b.type = 'button'; b.className = 'cc-gbtn'; b.innerHTML = G + '<span>Continue with Google</span>';
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'cc-gbtn'; b.innerHTML = G; b.setAttribute('aria-label', 'Continue with Google'); b.title = 'Continue with Google';
     b.onclick = function () {
       b.disabled = true;
       window.ccApp.googleLogin().then(function (tok) { return sign(tok, !!(opts && opts.link)); }).then(onDone, function (e) { if (!(e && e.cancelled)) onErr(oops(e)); }).then(function () { b.disabled = false; });

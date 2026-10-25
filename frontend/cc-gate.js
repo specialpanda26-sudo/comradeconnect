@@ -6,18 +6,18 @@
 'use strict';
 if (window.ccGate) return;
 var CSS = `
-:host{display:block;position:fixed;inset:0;z-index:9600;background:#000;color:#fff;font:400 15px/1.5 Poppins,system-ui,sans-serif;-webkit-tap-highlight-color:transparent;--acc:#A8DCE7;--sheet:#FFFFFF;--ink:#101422;--mut:rgba(16,20,34,.62);--nt:#101422;--aqt:color-mix(in srgb,#A8DCE7 16%,#fff);box-sizing:border-box}
+:host{display:block;position:fixed;inset:0;z-index:9600;background:#101422;color:#fff;font:400 15px/1.5 Poppins,system-ui,sans-serif;-webkit-tap-highlight-color:transparent;--acc:#A8DCE7;--sheet:#FFFFFF;--ink:#101422;--mut:rgba(16,20,34,.62);--nt:#101422;--aqt:color-mix(in srgb,#A8DCE7 16%,#fff);box-sizing:border-box}
 *{box-sizing:border-box}body{color:#fff;font:400 15px/1.5 Poppins,system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
 .app{position:absolute;inset:0;overflow:hidden;background:radial-gradient(120% 52% at 50% -8%,rgba(168,220,231,.2),transparent 62%),#101422;--b:.9s;--ch:270px}
 @media(min-width:600px){:host{display:grid;place-items:center}.app{position:relative;inset:auto;width:390px;height:780px;max-height:96vh;border-radius:36px;border:1px solid #222}}
 /* splash group */
 .sp{position:absolute;left:0;right:0;top:46%;transform:translateY(-50%);text-align:center;pointer-events:none}
-.sp img{width:64px;height:auto;display:block;margin:0 auto 18px;opacity:0}
-.wm{font:300 15px/1 Poppins,sans-serif;letter-spacing:.34em;text-transform:uppercase;padding-left:.34em;opacity:0;white-space:nowrap}.wm b,.wm i{font-weight:300;font-style:normal;color:#fff}
-.tl{font-size:10.5px;line-height:1;color:rgba(255,255,255,.55);margin-top:18px;opacity:0}
-.s .sp img{animation:cgwio 3s .1s cubic-bezier(.4,0,.2,1) both}
-.s .wm{animation:cgwio 3s .1s cubic-bezier(.4,0,.2,1) both}
-.s .tl{animation:cgwio 3s .1s cubic-bezier(.4,0,.2,1) both}
+.sp img{width:64px;height:auto;display:block;margin:0 auto 18px;opacity:0;filter:brightness(0)}
+.wm{font:300 15px/1 Poppins,sans-serif;letter-spacing:.34em;text-transform:uppercase;padding-left:.34em;opacity:0;white-space:nowrap}.wm,.wm b,.wm i{font-weight:300;font-style:normal;color:#000}
+.tl{font-size:10.5px;line-height:1;color:#000;margin-top:18px;opacity:0}
+.s .sp img{animation:cgwio 5s .1s cubic-bezier(.4,0,.2,1) both}
+.s .wm{animation:cgwio 5s .1s cubic-bezier(.4,0,.2,1) both}
+.s .tl{animation:cgwio 5s .1s cubic-bezier(.4,0,.2,1) both}
 .w .sp,.a .sp{display:none}
 @keyframes cgwio{0%{opacity:0;transform:translateX(-26px)}22%{opacity:1;transform:translateX(0)}65%{opacity:1;transform:translateX(14px)}100%{opacity:0;transform:translateX(190px)}}
 @keyframes cgio{0%{opacity:0}22%{opacity:1}65%{opacity:1;transform:translateX(14px)}100%{opacity:0;transform:translateX(190px)}}
@@ -31,7 +31,7 @@ var CSS = `
 .brand{position:absolute;z-index:3;left:22px;top:calc(env(safe-area-inset-top,0px) + 30px);opacity:0;transition:opacity .7s 1.2s,top .5s cubic-bezier(.65,0,.2,1);pointer-events:none}
 .a .brand{opacity:1;transition-delay:.3s}
 .brand .row{display:flex;align-items:center;gap:12px}.brand img{width:46px;height:auto}
-.brand b{font:300 23px Poppins,sans-serif;letter-spacing:.3em;text-transform:uppercase}
+.brand b{font:300 17px Poppins,sans-serif;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap}
 .brand p{margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.65)}
 .s .pane.on>*{animation:none;opacity:0}
 /* welcome: big logo and loud headline in the black area */
@@ -110,7 +110,7 @@ var HTML = `<div class="app s" id="app" role="main">
 <img class="bm" src="cc-mark.png" alt="Comrade Connect">
 <h1 class="hl" aria-label="Your campus. Your voice."><span class="l1">Your campus.</span><br><span class="l2">Your</span> <span class="l3 v">voice.</span></h1>
 <button class="bk" data-go="w" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-<div class="brand"><div class="row"><img src="cc-mark.png" alt=""><b>Comrade</b></div><p id="bs">Welcome back! Log in to continue.</p></div>
+<div class="brand"><div class="row"><img src="cc-mark.png" alt=""><b>Comrade Connect</b></div><p id="bs">Welcome back! Log in to continue.</p></div>
 
 <div class="sheet">
  <svg class="cv" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H100V0C92 20 72 40 46 40C22 40 6 30 0 21Z"/></svg>
@@ -186,7 +186,7 @@ function build(state, mode) {
     tm = setTimeout(function () {
       var next = function () { if (!host || !spl) return; spl = false; if (wantW) toWelcome(); else finish(); };
       if (document.readyState === 'complete') next(); else { window.addEventListener('load', next, { once: true }); setTimeout(next, 6000); }
-    }, 3300);
+    }, 5300);
   } else if (state === 'w') { go('w'); app.className = 'app w'; app.style.setProperty('--b', '0s'); }
   else { go('w'); app.className = 'app w'; app.style.setProperty('--b', '0s'); requestAnimationFrame(function () { requestAnimationFrame(function () { go(mode || 'l'); }); }); }
 }

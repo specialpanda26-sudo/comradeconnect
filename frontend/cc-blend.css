@@ -1,0 +1,17 @@
+/* cc-blend.css v1: a marketplace card takes on the colour of its product photo.
+   cc-blend.js adds the class "cb" and sets --pc (r,g,b), --pad (tint strength, dark theme) and --pal (light theme).
+   The photo fades into the tint at its bottom edge, like the progressive-blur cards in the reference. */
+html .mc.cb{
+  --pa:var(--pad,.34);
+  background-image:linear-gradient(180deg,rgba(var(--pc),var(--pa)) 0%,rgba(var(--pc),calc(var(--pa)*.92)) 58%,rgba(var(--pc),calc(var(--pa)*.85)) 100%)!important;
+  border-color:rgba(var(--pc),.4);
+  box-shadow:0 14px 30px -18px rgba(var(--pc),.8);
+}
+html[data-theme="light"] .mc.cb{--pa:var(--pal,.3)}
+html .mc.cb img.mm{
+  -webkit-mask-image:linear-gradient(180deg,#000 0,#000 64%,rgba(0,0,0,.5) 82%,transparent 100%);
+  mask-image:linear-gradient(180deg,#000 0,#000 64%,rgba(0,0,0,.5) 82%,transparent 100%);
+}
+/* the text sits on the tint, so pull it up under the faded edge */
+html .mc.cb .mb{margin-top:-26px}
+@media (prefers-reduced-motion:no-preference){html .mc{transition:transform .25s,border-color .35s,box-shadow .35s}}

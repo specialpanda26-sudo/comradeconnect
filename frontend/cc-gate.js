@@ -122,7 +122,31 @@ h2{font:600 24px/1.1 Unbounded,Poppins,sans-serif;margin:0 0 2px;letter-spacing:
 @keyframes cgfade{from{opacity:0}}
 .pane{gap:11px}.in input{height:48px}.pane .sw{padding-top:4px}
 .pane .fine.tm{margin:0;padding:0 6px;line-height:1.55;font-size:11px}
-.fine.tm u{color:#101422;text-decoration:underline;cursor:pointer}`;
+.fine.tm u{color:#101422;text-decoration:underline;cursor:pointer}
+/* section 3: the site's own palette (cream page, warm dark, orange accent) */
+:host{--acc:#ff8a3d;--sheet:#fbf1ed;--ink:#16130f;--mut:rgba(22,19,15,.62);--nt:#16130f;--aqt:rgba(255,255,255,.86);font-family:Manrope,Poppins,system-ui,sans-serif}
+*{font-family:inherit}
+.app{background:#fbf1ed}
+.app.s{background:radial-gradient(85% 42% at 88% -6%,rgba(255,138,61,.26),transparent 68%),radial-gradient(70% 38% at 0% 104%,rgba(196,114,122,.18),transparent 70%),#fbf1ed}
+.wm,.wm b,.wm i,.tl{color:#16130f}
+.sp img{filter:brightness(0)}
+.cv path,.cover path{fill:#16130f}
+.brand b{font-weight:600}.brand .bt{font-family:Manrope,Poppins,sans-serif;font-weight:800;font-size:27px;letter-spacing:-.03em}
+h2{font-family:Manrope,Poppins,sans-serif;font-weight:800;letter-spacing:-.02em}
+.in input{background:var(--aqt);border:1.5px solid rgba(22,19,15,.09);color:#16130f}
+.in input:focus{border-color:#16130f}.in input::placeholder{color:rgba(22,19,15,.42)}
+.btn{background:#16130f;color:#fff}.btn.o{background:#fff;color:#16130f;border:1.5px solid rgba(22,19,15,.18)}
+.err,.lnk,.sw button,.fine u,.fine.tm u,.gb .lg button{color:#16130f}
+.or:before,.or:after{background:rgba(22,19,15,.12)}
+.gbx .gb-vis,.gbx .cc-gbtn{color:#16130f;border-color:rgba(22,19,15,.14)}
+.gbx.ld .gb-vis,.gbx .cc-gbtn:disabled{background:#ECE3DE;color:rgba(22,19,15,.5)}
+.gb-sp{border-color:rgba(22,19,15,.16);border-top-color:rgba(22,19,15,.7)}
+.app.gl::after{background:rgba(22,19,15,.4)}
+.gs{background:radial-gradient(85% 34% at 88% -4%,rgba(255,138,61,.24),transparent 68%),radial-gradient(70% 30% at 0% 100%,rgba(196,114,122,.16),transparent 70%),#fbf1ed}
+.gt b,.gsl h2{font-family:Manrope,Poppins,sans-serif;font-weight:800}
+.cd{border-color:#16130f;background:#fff}.st{border-color:#16130f}.st.b{background:#16130f}.gd b{border-color:#16130f}.gd b.on{background:#16130f}
+.gb #gn{background:#fff;color:#16130f;border-color:#16130f;box-shadow:0 4px 0 #16130f}.gb #gn:active{box-shadow:0 1px 0 #16130f}
+.invb{background:var(--aqt)!important;border:1.5px solid rgba(22,19,15,.09)}`;
 var HTML = `<div class="app s" id="app" role="main">
 
 <div class="sp" aria-label="Comrade Connect"><img src="cc-mark.png" alt=""><div class="wm"><b>Comrade</b> <i>Connect</i></div><div class="tl">Your campus. Your voice.</div></div>

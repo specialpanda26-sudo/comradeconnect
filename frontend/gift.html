@@ -57,7 +57,7 @@ hr{border:0;border-top:1px solid var(--br);margin:20px 0}
 <hr><p class="pay" id="py">You pay KES 0</p>
 <p class="fine">Gifts are voluntary support and do not purchase goods, services, or access. They are final except where Comrade Connect's refund policy provides otherwise.</p>
 <p class="err" id="er" role="alert"></p>
-<button class="btn" id="go" type="button" disabled>Send gift with M-Pesa</button><button class="btn alt" id="cd" type="button" hidden>Pay with card</button></div>
+<button class="btn" id="go" type="button" disabled>Send gift with M-Pesa</button></div>
 <div class="card" id="wait" hidden><div class="eye">Sending your gift</div><h1 id="wt">Check your phone</h1>
 <ul class="steps" id="st"><li data-s="p"><i></i>M-Pesa prompt sent to your phone</li><li data-s="n"><i></i>Enter your M-Pesa PIN</li><li data-s="v"><i></i>Verifying payment</li></ul>
 <div id="man" hidden><p class="hint" id="mi"></p><input id="mc" type="text" maxlength="12" placeholder="M-Pesa code, e.g. SJK7ABC123" style="margin-top:10px"><button class="btn" id="mg" type="button">Confirm payment</button></div>
@@ -79,7 +79,7 @@ custom:IC('<path d="M12 3l2.1 5.6L20 11l-5.9 2.4L12 19l-2.1-5.6L4 11l5.9-2.4z"/>
 var D=null,sel=null,busy=false,payId=null;
 function show(id){['load','off','form','wait','done'].forEach(function(x){$(x).hidden=x!==id})}
 function amount(){if(!sel)return 0;if(sel==='custom'){var v=Math.floor(+$('am').value);return v>0?v:0}var p=D.presets.filter(function(x){return x.id===sel})[0];return p?p.amount:0}
-function refresh(){var a=amount();$('py').textContent='You pay KES '+(a?a.toLocaleString('en-KE'):0);$('go').disabled=!a||busy;$('cd').disabled=!a||busy}
+function refresh(){var a=amount();$('py').textContent='You pay KES '+(a?a.toLocaleString('en-KE'):0);$('go').disabled=!a||busy}
 function draw(){var g=$('gr');g.textContent='';D.presets.concat([{id:'custom',label:'Custom gift'}]).forEach(function(p){
  var b=document.createElement('button');b.type='button';b.className='g';b.setAttribute('aria-pressed','false');
  b.innerHTML=ICONS[p.id]+'<b></b><small></small>';b.querySelector('b').textContent=p.label;b.querySelector('small').textContent=p.id==='custom'?'Choose your amount':'KES '+p.amount.toLocaleString('en-KE');
@@ -119,10 +119,10 @@ async function send(card){
   else{busy=false;$('wb').hidden=false}
  }catch(e){if($('wait').hidden){busy=false;refresh();er.textContent=e.message}else fail(e.message)}
 }
-$('go').onclick=function(){send(false)};$('cd').onclick=function(){send(true)};
+$('go').onclick=function(){send(false)};
 $('am').oninput=refresh;
 $('cm').onchange=function(){$('cmb').classList.toggle('show',this.checked)};$('rc').onchange=function(){$('rcb').classList.toggle('show',this.checked)};
 $('wb').onclick=function(){busy=false;show('form');refresh()};$('again').onclick=function(){busy=false;sel=null;$('am').value='';$('ms').value='';draw();$('cu').classList.remove('show');show('form');refresh()};
-if(!slug){show('off')}else api('/api/gift/public?c='+encodeURIComponent(slug)).then(function(d){D=d;document.title='Send a gift to '+d.title+' | Comrade Connect';$('t').textContent='Show '+d.title+' some love';if(d.blurb){$('bl').textContent=d.blurb;$('bl').hidden=false}$('rcw').hidden=!d.receipts;$('cd').hidden=!d.card;draw();show('form');refresh()}).catch(function(){show('off')});
+if(!slug){show('off')}else api('/api/gift/public?c='+encodeURIComponent(slug)).then(function(d){D=d;document.title='Send a gift to '+d.title+' | Comrade Connect';$('t').textContent='Show '+d.title+' some love';if(d.blurb){$('bl').textContent=d.blurb;$('bl').hidden=false}$('rcw').hidden=!d.receipts;draw();show('form');refresh()}).catch(function(){show('off')});
 })();
 </script></body></html>

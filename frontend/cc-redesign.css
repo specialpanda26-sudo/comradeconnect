@@ -1,0 +1,73 @@
+/* cc-redesign.css v1 (section 1 of 2): the Comrade Connect redesign look on every page after login.
+   Loaded last. Manrope, cream page, white cards, peach/rose/sage blobs, dark pill buttons, pill nav. */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap');
+:root,:root[data-theme="light"]{--bg:#fbf1ed;--fg:#16130f;--mut:#6a625a;--g:rgba(255,255,255,.86);--gb:rgba(22,19,15,.06);--gh:rgba(255,255,255,.95);--sh:0 10px 28px rgba(140,80,50,.11);--line:rgba(22,19,15,.09);--ink:#16130f;--inkfg:#fff;--cco:#ff8a3d;--cco2:#e8744f;--ccr:#c4727a;--ccs:#a9b8a2;--ccp:#ffd9b8}
+:root[data-theme="dark"]{--bg:#17130f;--fg:#f6efe9;--mut:#b6aca2;--g:rgba(44,37,32,.86);--gb:rgba(255,255,255,.08);--gh:rgba(255,255,255,.2);--sh:0 10px 28px rgba(0,0,0,.35);--line:rgba(255,255,255,.1);--ink:#f6efe9;--inkfg:#17130f}
+html body,html body button,html body input,html body select,html body textarea,html body .btn,html body .tab{font-family:Manrope,system-ui,-apple-system,'Segoe UI',sans-serif}
+html body{background:linear-gradient(180deg,var(--bg),#f3efe9) fixed;color:var(--fg);-webkit-font-smoothing:antialiased}
+:root[data-theme="dark"] body{background:linear-gradient(180deg,#17130f,#100d0a) fixed}
+html body #bg,html body .orb,html body .orbs{display:none!important}
+/* cards */
+html body .g{background:var(--g);border:0;box-shadow:var(--sh);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+html body .box.g,html body .pcard.g,html body .mecard{border-radius:28px;padding:18px}
+html body .ph{font-size:34px;font-weight:800;letter-spacing:-.035em;line-height:1.05}
+html body .sub{color:var(--mut);font-size:13px}
+html body h3{font-weight:800;letter-spacing:-.01em}
+/* buttons */
+html body .btn{height:54px;border-radius:999px;font-weight:800;font-size:15px;padding:0 22px;border:0;box-shadow:none}
+html body .btn.p{background:var(--ink);color:var(--inkfg)}
+html body .btn.g{background:var(--g);color:var(--fg);box-shadow:var(--sh)}
+html body .btn.o,html body #fab{background:linear-gradient(135deg,#ffa05a,#ee7a4f);color:#1d0f06;box-shadow:0 10px 24px rgba(238,122,79,.35)}
+html body #fab{height:48px;border-radius:999px;border:0;font-weight:800;bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+html body .ib{width:44px;height:44px;border-radius:50%;background:var(--g);box-shadow:var(--sh);border:0;display:grid;place-items:center;color:var(--fg)}
+html body .tab,html body .vt button{border-radius:999px;background:var(--g);box-shadow:var(--sh);border:0;color:var(--fg);font-weight:700;padding:10px 18px}
+html body .tab.on,html body .vt button.on{background:var(--ink);color:var(--inkfg)}
+html body .fld{background:var(--g);border-radius:18px;box-shadow:var(--sh);padding:0 16px;border:0}
+html body .fld input,html body .fld textarea,html body .fld select,html body input.ccs-in{border:0;background:none;color:var(--fg)}
+html body .mstats>div{background:rgba(255,255,255,.7);border-radius:20px;box-shadow:var(--sh)}
+html body .badge,html body .mpill{background:rgba(255,138,61,.13);color:var(--fg);border:0;border-radius:999px;font-weight:800}
+/* hero and blobs */
+html body .hero,html body .mecard,html body .box.g:first-of-type.ccblob{position:relative;overflow:hidden;isolation:isolate;background:#fff8f4;border-radius:36px;padding:22px;color:#16130f;box-shadow:var(--sh)}
+html body .hero::before,html body .mecard::before,.ccblob::before{content:"";position:absolute;inset:-25%;z-index:-1;filter:blur(30px);opacity:.95;background:radial-gradient(42% 52% at 24% 38%,#ff8a3d 0,transparent 72%),radial-gradient(44% 52% at 80% 60%,#c4727a 0,transparent 72%),radial-gradient(40% 40% at 45% 95%,#ffd9b8 0,transparent 72%)}
+html body .hero h1{font-size:44px;letter-spacing:-.045em;line-height:1;font-weight:800;color:#16130f}
+html body .hero p,html body .hero .gr{color:#16130f;font-weight:700}
+html body .hero .btn.p{width:100%}
+html body .mq{background:var(--ink);color:var(--inkfg);font-weight:800;letter-spacing:.12em}
+/* category tiles: gradient blobs instead of photos */
+html body .cct-i img{display:none!important}
+html body button.cct.cct.cct{position:relative;width:150px!important;height:120px!important;border-radius:28px!important;box-shadow:var(--sh)!important;background:#fff8f4!important}
+html body .cct.cct .cct-i{background:radial-gradient(45% 55% at 25% 30%,#ff8a3d,transparent 72%),radial-gradient(50% 50% at 80% 70%,#c4727a,transparent 72%),radial-gradient(40% 40% at 50% 95%,#ffd9b8,transparent 72%),#fff8f4}
+html body .cct-row .cct:nth-child(3n+2) .cct-i{background:radial-gradient(45% 50% at 20% 30%,#a9b8a2,transparent 72%),radial-gradient(45% 50% at 80% 75%,#c4727a,transparent 72%),radial-gradient(40% 40% at 70% 15%,#ffd9b8,transparent 72%),#fff8f4}
+html body .cct-row .cct:nth-child(3n) .cct-i{background:radial-gradient(48% 50% at 75% 25%,#ffd9b8,transparent 72%),radial-gradient(48% 50% at 30% 80%,#ff8a3d,transparent 72%),radial-gradient(40% 40% at 90% 90%,#a9b8a2,transparent 72%),#fff8f4}
+html body .cct.cct .cct-i::after{display:none}
+html body .cct.cct .cct-l{color:#16130f;font:800 15px/1.15 Manrope,sans-serif;left:14px;bottom:14px;white-space:normal}
+html body #v-explore .cct-row{display:grid!important;grid-template-columns:1fr 1fr;gap:14px!important;overflow:visible}
+html body #v-explore button.cct.cct.cct{width:100%!important;height:160px!important}
+html body #v-market button.cct.cct.cct{width:auto!important;height:44px!important;border-radius:999px!important;padding:0 16px!important;background:var(--g)!important}
+html body #v-market .cct .cct-i{display:none}
+html body #v-market .cct-l{position:static;display:block;line-height:44px;color:var(--fg)}
+/* bottom nav: round icon buttons, active one opens into an orange pill */
+html:not([data-lay="desktop"]) body #tb{display:flex;grid-template-columns:none;width:auto;max-width:96vw;height:auto;padding:0;gap:8px;background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+html:not([data-lay="desktop"]) body #tb button{width:50px;height:50px;border-radius:999px;background:var(--g);box-shadow:var(--sh);color:var(--fg);font-size:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:0;flex:none;transition:all .25s}
+html:not([data-lay="desktop"]) body #tb button.on,html:not([data-lay="desktop"]) body #tb button.on2{width:auto;padding:0 18px 0 14px;background:linear-gradient(135deg,#ffa05a,#ee7a4f);color:#1d0f06;font:800 13px Manrope,sans-serif}
+html:not([data-lay="desktop"]) body #tb button.on2{display:flex}
+html body #tb button[data-v="live"],html body #tb button[data-v="rewards"],html body #tb #ccsettab{display:none!important}
+html body #tb button[data-v="live"].on,html body #tb button[data-v="rewards"].on{display:none!important}
+/* top bar: search pill plus round buttons */
+html body nav.g:not(#tb){background:linear-gradient(180deg,var(--bg) 70%,transparent);border:0;box-shadow:none;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none;gap:10px;padding:8px 14px;width:min(430px,100vw)}
+html body nav.g:not(#tb) .nb{display:none}
+html body .ccs-search{flex:1;height:48px;border-radius:999px;background:var(--g);box-shadow:var(--sh);display:flex;align-items:center;gap:10px;padding:0 18px;color:var(--mut);font-weight:600;font-size:14px;text-align:left;border:0}
+html body .ccs-seg{display:flex;background:var(--g);border-radius:999px;padding:5px;box-shadow:var(--sh);margin:6px 0 16px}
+html body .ccs-seg button{flex:1;height:40px;border-radius:999px;font-weight:800;font-size:13px;border:0;background:none;color:var(--fg)}
+html body .ccs-seg button.on{background:var(--ink);color:var(--inkfg)}
+html body .ccs-row{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 16px;background:var(--g);border-radius:22px;box-shadow:var(--sh);margin:0 0 14px;border:0;color:var(--fg)}
+html body .ccs-row b{display:block;font-weight:800;font-size:15px}html body .ccs-row small{color:var(--mut);font-size:12px}
+html body .ccs-back{background:none;border:0;font-weight:800;font-size:13px;color:var(--fg);padding:6px 0;margin-bottom:6px}
+/* fixes: beat earlier !important nav and tile rules, redesign tab order */
+html body #tb button{background:var(--g)!important;color:var(--fg)!important;box-shadow:var(--sh)!important}
+html body #tb button.on,html body #tb button.on2{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f06!important;box-shadow:0 8px 20px rgba(238,122,79,.35)!important}
+html body #tb button.on svg,html body #tb button.on2 svg{color:#1d0f06}
+html body #tb button[data-v="feed"]{order:1}html body #tb button[data-v="explore"]{order:2}html body #tb button[data-v="market"]{order:3}html body #tb button[data-v="videos"]{order:4}html body #tb button[data-v="me"]{order:5}
+html body .cct .cct-l{text-shadow:none!important}html body .cct .cct-l::before,html body .cct .cct-l::after{display:none!important}
+html body .hero .btn.g{background:rgba(255,255,255,.85);color:#16130f}
+html body #fab,html body #fab.btn.p{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f06!important;box-shadow:0 10px 24px rgba(238,122,79,.35)!important}

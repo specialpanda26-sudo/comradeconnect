@@ -8,6 +8,15 @@
   var el = function (t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
   var ICON = function (p) { return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; };
   var GEAR = ICON('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>');
+  var SHARE = ICON('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>');
+  /* Share the app link: phone share sheet (WhatsApp, DMs, anything installed), WhatsApp link as the fallback */
+  window.ccShareApp = function () {
+    var link = '';
+    try { var c = window.ccRef && window.ccRef.code; link = c ? window.ccOrigin() + '/?ref=' + c : (window.ccOrigin ? window.ccOrigin() : location.origin) + '/'; } catch (e) { link = location.origin + '/'; }
+    var text = 'Join me on Comrade Connect: the campus app for Kenyan comrades. Feed, marketplace, hostels and more.';
+    if (navigator.share) { navigator.share({ title: 'Comrade Connect', text: text, url: link }).catch(function () {}); return; }
+    window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + link), '_blank', 'noopener');
+  };
   var CHEV = ICON('<path d="M9 6l6 6-6 6"/>');
   var PIN = ICON('<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>');
   var SUN = ICON('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>');
@@ -68,6 +77,9 @@
     h.appendChild(x); box.appendChild(h);
     box.appendChild(el('p', 'sub', 'Everything you set once and rarely change lives here.'));
     var body = el('div', 'ccset-body'); box.appendChild(body);
+
+    body.appendChild(el('div', 'ccset-sec', 'Invite comrades'));
+    body.appendChild(row(SHARE, 'Share Comrade Connect', 'Send the app link to a WhatsApp group or a friend. If you are signed in, your invite link is used.', 'Share', window.ccShareApp));
 
     body.appendChild(el('div', 'ccset-sec', 'Your campus'));
     body.appendChild(row(PIN, isAll() ? 'All universities' : campusName(), isAll() ? 'You see the feed from every university. Your posts go under your own one.' : 'Your feed, events and hostels follow this university.', 'Change', function () { close(); if (window.ccChangeCampus) ccChangeCampus(); }));

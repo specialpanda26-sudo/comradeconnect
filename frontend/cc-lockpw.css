@@ -1,0 +1,62 @@
+/* cc-lockpw.css v1: the "Sign in with Password" view of the lock screen (#lk.rec), recreated in the site's warm glass look.
+   Only touches the password view. The fingerprint view is left exactly as it is. Palette: orange FE813C, rose BC656A, sage 727E6E, ink 0E0F0B. */
+#lk.lkg.lkg{--pw-o:#fe813c;--pw-r:#bc656a;--pw-s:#727e6e;--pw-ink:#0e0f0b;--pw-txt:#0e0f0b;--pw-mut:rgba(14,15,11,.62);
+  --pw-card:linear-gradient(165deg,rgba(255,255,255,.88),rgba(255,243,234,.64) 58%,rgba(255,225,214,.52));--pw-edge:rgba(255,255,255,.95);
+  --pw-fld:rgba(255,255,255,.92);--pw-line:rgba(14,15,11,.12);--pw-ico:rgba(14,15,11,.5);--pw-warn:#bc4b52;
+  --pw-sh:0 40px 70px -28px rgba(188,101,106,.55),0 12px 26px -16px rgba(254,129,60,.45)}
+:root[data-theme="dark"] #lk.lkg.lkg{--pw-txt:#f7f0ea;--pw-mut:rgba(247,240,234,.66);
+  --pw-card:linear-gradient(165deg,rgba(52,40,33,.84),rgba(30,23,19,.74));--pw-edge:rgba(255,217,184,.2);
+  --pw-fld:rgba(255,255,255,.07);--pw-line:rgba(255,255,255,.14);--pw-ico:rgba(247,240,234,.55);--pw-warn:#ff8f95;
+  --pw-sh:0 40px 70px -28px rgba(0,0,0,.8),0 10px 24px -16px rgba(254,129,60,.35)}
+
+/* card */
+html body #lk.lkg.lkg.rec .bx.lkcard{padding:30px 22px 22px!important;border-radius:32px!important;background:var(--pw-card)!important;background-image:var(--pw-card)!important;
+  border:1px solid var(--pw-edge)!important;box-shadow:var(--pw-sh),inset 0 1.5px 0 var(--pw-edge)!important;font-family:Poppins,system-ui,sans-serif!important}
+html body #lk.lkg.lkg.rec .lkcard h2{font:700 clamp(24px,7vw,28px)/1.15 Poppins,sans-serif!important;letter-spacing:-.03em!important;margin:0}
+html body #lk.lkg.lkg.rec .lkwel{margin:6px 0 20px;font:400 14.5px/1.4 Poppins,sans-serif!important;color:var(--pw-mut)!important}
+
+/* avatar chip (added by cc-lockpw.js) */
+html body #lk.lkg.lkg .lkav{display:none}
+html body #lk.lkg.lkg.rec .lkav{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 14px;border-radius:50%;color:#fff;font:700 26px Poppins,sans-serif;
+  background:linear-gradient(145deg,#ffb27a,#fe813c 55%,#bc656a);box-shadow:0 14px 26px -10px rgba(254,129,60,.7),inset 0 2px 0 rgba(255,255,255,.55),0 0 0 5px rgba(255,255,255,.35)}
+:root[data-theme="dark"] html body #lk.lkg.lkg.rec .lkav,:root[data-theme="dark"] #lk.lkg.lkg.rec .lkav{box-shadow:0 14px 26px -10px rgba(254,129,60,.55),inset 0 2px 0 rgba(255,255,255,.35),0 0 0 5px rgba(255,255,255,.07)}
+
+/* field: ONE clean pill (the old input drew a second pill inside the first) */
+html body #lk.lkg.lkg.rec .lklab{margin:0 6px 8px;font:600 13px Poppins,sans-serif;color:var(--pw-txt);letter-spacing:.01em}
+html body #lk.lkg.lkg.rec .lkrec .fld{position:relative;display:block;margin:0;padding:0!important;height:58px;border-radius:999px!important;background:var(--pw-fld)!important;border:1.5px solid var(--pw-line)!important;
+  box-shadow:0 10px 22px -16px rgba(14,15,11,.5),inset 0 2px 5px rgba(14,15,11,.04)!important;transition:border-color .2s,box-shadow .2s}
+html body #lk.lkg.lkg.rec .lkrec .fld:focus-within{border-color:var(--pw-o)!important;box-shadow:0 0 0 4px rgba(254,129,60,.22),0 10px 22px -16px rgba(254,129,60,.6)!important}
+html body #lk.lkg.lkg.rec .lkrec .fld input,html body #lk.lkg.lkg.rec .lkrec .fld input:focus{width:100%;height:100%;box-sizing:border-box;margin:0;padding:0 52px 0 50px!important;
+  border:0!important;outline:0!important;border-radius:999px!important;background:transparent!important;background-image:none!important;box-shadow:none!important;-webkit-appearance:none;appearance:none;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;filter:none!important;
+  color:var(--pw-txt)!important;-webkit-text-fill-color:var(--pw-txt)!important;font:500 15px Poppins,system-ui,sans-serif!important;letter-spacing:.01em}
+html body #lk.lkg.lkg.rec .lkrec .fld input::placeholder{color:var(--pw-mut)!important;-webkit-text-fill-color:var(--pw-mut)!important;font-weight:400;opacity:1}
+html body #lk.lkg.lkg.rec .lkico{position:absolute;left:18px;top:50%;transform:translateY(-50%);width:22px;height:22px;color:var(--pw-ico);pointer-events:none;display:grid;place-items:center}
+html body #lk.lkg.lkg.rec .lkico{background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body #lk.lkg.lkg.rec .lkico svg{width:20px;height:20px}
+html body #lk.lkg.lkg.rec .lkeye{right:7px;width:44px;height:44px;color:var(--pw-ico);transition:color .2s,background .2s}
+html body #lk.lkg.lkg.rec .lkeye:active{background:rgba(254,129,60,.14);color:var(--pw-o)}
+html body #lk.lkg.lkg.rec .lkeye svg{width:22px;height:22px}
+
+/* wrong password: field shakes and turns rose for a moment */
+html body #lk.lkg.lkg.rec .lkrec .fld.lkbad{border-color:var(--pw-warn)!important;box-shadow:0 0 0 4px rgba(188,75,82,.18)!important;animation:lkshk .45s}
+@keyframes lkshk{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+html body #lk.lkg.lkg.rec .lkcaps{margin:8px 8px 0;font:500 12.5px Poppins,sans-serif;color:var(--pw-warn)}
+html body #lk.lkg.lkg.rec .lkcaps[hidden]{display:none}
+
+/* forgot + actions */
+html body #lk.lkg.lkg.rec .lkforgot{margin:12px 8px 18px;font:600 13px Poppins,sans-serif;color:var(--pw-txt)!important;text-decoration:none;
+  background:linear-gradient(95deg,var(--pw-o),var(--pw-r));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-underline-offset:3px}
+html body #lk.lkg.lkg.rec .lkact{gap:12px}
+html body #lk.lkg.lkg.rec #lkr{position:relative;height:58px;font:700 16px Poppins,sans-serif!important;letter-spacing:.01em;color:var(--pw-ink)!important;
+  background:linear-gradient(135deg,#ffb783,#fe813c 58%,#e8725a)!important;box-shadow:0 16px 28px -14px rgba(254,129,60,.9),inset 0 1.5px 0 rgba(255,255,255,.55)!important;transition:transform .15s,filter .2s}
+html body #lk.lkg.lkg.rec #lkr:active:not(:disabled){transform:scale(.97)}
+html body #lk.lkg.lkg.rec #lkr:disabled{color:var(--pw-mut)!important;background:var(--pw-fld)!important;border:1.5px solid var(--pw-line)!important;box-shadow:none!important}
+/* exactly one spinner while the password is being checked */
+html body #lk.lkg.lkg.rec #lkr.busy{color:transparent!important;opacity:1;pointer-events:none;background:linear-gradient(135deg,#ffb783,#fe813c 58%,#e8725a)!important;border:0!important}
+html body #lk.lkg.lkg.rec #lkr.busy:after{content:"";position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;border:2.5px solid rgba(14,15,11,.25);border-top-color:var(--pw-ink);animation:lkspn .7s linear infinite}
+@keyframes lkspn{to{transform:rotate(360deg)}}
+html body #lk.lkg.lkg.rec .lkfp2{width:58px;height:58px;border:1.5px solid var(--pw-edge);background:linear-gradient(150deg,#fff,#fdf1e8);color:var(--pw-ink);box-shadow:0 14px 24px -12px rgba(14,15,11,.5)}
+:root[data-theme="dark"] #lk.lkg.lkg.rec .lkfp2{background:linear-gradient(150deg,#4a392f,#2c211b);color:#ffd9b8}
+html body #lk.lkg.lkg.rec .lklinks{margin:20px 0 0;font:500 13.5px Poppins,sans-serif}
+html body #lk.lkg.lkg.rec .lklinks a{color:var(--pw-txt)!important;font-weight:600;text-decoration:none;border-bottom:1.5px solid rgba(254,129,60,.6);padding-bottom:1px}
+@media (prefers-reduced-motion:reduce){html body #lk.lkg.lkg.rec .lkfld,#lk .lkbad,#lkr.busy:after{animation-duration:0s!important}}

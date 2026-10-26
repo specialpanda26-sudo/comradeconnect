@@ -143,6 +143,11 @@
     if (typeof CC_NATIVE_GOOGLE === 'undefined' || CC_NATIVE_GOOGLE !== true) return browserGoogle();
     return nativeGoogle().catch(function (e) {
       if (e && (e.code === 'CANCELLED' || e.cancelled || /^cancel/i.test(String(e.message || '')))) throw Object.assign(new Error('cancelled'), { cancelled: true });
+      /* cc-native-why */ var why = String((e && (e.message || e.code)) || 'unknown');
+      window.ccApp.lastGoogleError = why;
+      try { localStorage.setItem('cc_g_why', why + ' @ ' + new Date().toISOString()); } catch (x) {}
+      try { console.warn('Google sheet unavailable:', why); } catch (x) {}
+      try { if (window.ccTools && ccTools.toast) ccTools.toast('Google sheet unavailable: ' + why.slice(0, 120)); else if (typeof toast === 'function') toast('Google sheet unavailable: ' + why.slice(0, 120)); } catch (x) {}
       return browserGoogle();
     });
   };

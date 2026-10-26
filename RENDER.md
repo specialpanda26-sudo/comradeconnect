@@ -31,7 +31,7 @@ Render > New > Web Service > connect the GitHub repo.
 **Required for the site to work**
 | Name | Value |
 |---|---|
-| ALLOWED_ORIGINS | `https://comradeconnect.co.ke,https://www.comradeconnect.co.ke` (comma separated) |
+| ALLOWED_ORIGINS | `https://comradeconnect.co.ke,https://www.comradeconnect.co.ke,https://localhost` (comma separated; `https://localhost` is the Android app) |
 | PAYMENT_MODE | `manual` |
 | MPESA_PAY_TYPE | `send`, `till` or `paybill` |
 | MPESA_PAY_TO | your phone, till or paybill number |

@@ -3,7 +3,7 @@
  - turns off Android cloud backup of app data
  - sets the version (VERSION_CODE and VERSION_NAME from the environment)
  - makes the launcher icons and the start-up screen from the website's logo (mark only: the words under it are too small to read)"""
-import os, re, sys
+import os, re, shutil, sys
 from pathlib import Path
 from PIL import Image, ImageDraw
 
@@ -118,6 +118,52 @@ def patch_deeplink():
     print('sign-in return link ready')
 
 
+PKG = 'ke.co.comradeconnect.app'
+KOTLIN_VERSION = '1.9.25'          # works with the Android Gradle Plugin that Capacitor 6 generates (8.2.x)
+CREDENTIALS_VERSION = '1.3.0'      # androidx.credentials + credentials-play-services-auth (needs compileSdk 34, which Capacitor 6 uses)
+GOOGLEID_VERSION = '1.1.1'         # com.google.android.libraries.identity.googleid
+
+
+def patch_google_signin():
+    """Native "Choose an account" bottom sheet (Android Credential Manager).
+    Adds Kotlin + the credentials libraries, copies the plugin from android-wrapper/native/ and registers it in MainActivity."""
+    # 1) Kotlin plugin for the whole project (android/build.gradle)
+    root = HERE / 'android' / 'build.gradle'
+    s = root.read_text(encoding='utf-8')
+    if 'kotlin-gradle-plugin' not in s:
+        s, n = re.subn(r"(classpath\s+['\"]com\.android\.tools\.build:gradle:[^'\"]+['\"])",
+                       r"\1\n        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:" + KOTLIN_VERSION + "'", s, count=1)
+        if not n: sys.exit('STOP: could not find the Android Gradle Plugin line in android/build.gradle')
+        root.write_text(s, encoding='utf-8')
+
+    # 2) The app module: apply Kotlin, set its JVM target, add the libraries
+    g = APP / 'build.gradle'
+    s = g.read_text(encoding='utf-8')
+    if 'androidx.credentials:credentials:' not in s:
+        if "apply plugin: 'kotlin-android'" not in s:
+            s, n = re.subn(r"(apply plugin: 'com\.android\.application')", r"\1\napply plugin: 'kotlin-android'", s, count=1)
+            if not n: sys.exit("STOP: no \"apply plugin: 'com.android.application'\" line in app/build.gradle")
+        s += ("\n// Native Google account picker (Credential Manager)\n"
+              "android { kotlinOptions { jvmTarget = '17' } }\n"
+              "dependencies {\n"
+              "    implementation \"androidx.credentials:credentials:" + CREDENTIALS_VERSION + "\"\n"
+              "    implementation \"androidx.credentials:credentials-play-services-auth:" + CREDENTIALS_VERSION + "\"\n"
+              "    implementation \"com.google.android.libraries.identity.googleid:googleid:" + GOOGLEID_VERSION + "\"\n"
+              "    implementation \"org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1\"\n"
+              "}\n")
+        g.write_text(s, encoding='utf-8')
+
+    # 3) Copy the plugin and MainActivity into the generated project (the generated MainActivity.java is replaced)
+    src = HERE / 'native'
+    pkgdir = MAIN / 'java' / Path(*PKG.split('.'))
+    pkgdir.mkdir(parents=True, exist_ok=True)
+    for old in pkgdir.glob('MainActivity.*'):
+        old.unlink()
+    shutil.copy(src / 'MainActivity.java', pkgdir / 'MainActivity.java')
+    shutil.copy(src / 'GoogleSignInPlugin.kt', pkgdir / 'GoogleSignInPlugin.kt')
+    print('native Google sign-in ready')
+
+
 if not (MAIN / 'AndroidManifest.xml').exists():
     sys.exit('STOP: run `npx cap add android` first (no android/ folder found)')
-patch_manifest(); patch_deeplink(); patch_version(); icons()
+patch_manifest(); patch_deeplink(); patch_version(); patch_google_signin(); icons()

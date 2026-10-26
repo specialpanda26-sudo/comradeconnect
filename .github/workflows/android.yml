@@ -93,7 +93,7 @@ jobs:
         run: |
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           "$BT/aapt" dump badging comrade-connect.apk | grep -E "^package:|sdkVersion|targetSdkVersion" | tee -a "$GITHUB_STEP_SUMMARY"
-          "$BT/apksigner" verify --print-certs comrade-connect.apk | grep -E "SHA-256|Verified" | tee -a "$GITHUB_STEP_SUMMARY"
+          "$BT/apksigner" verify --print-certs comrade-connect.apk | grep -E "SHA-256|SHA-1|Verified" | tee -a "$GITHUB_STEP_SUMMARY"
           test "$(stat -c%s comrade-connect.apk)" -gt 1000000 || { echo "APK is too small, something went wrong"; exit 1; }
 
       - uses: actions/upload-artifact@v4

@@ -12,7 +12,7 @@
   var SCHEME = 'ke.co.comradeconnect.app';
   var CALLBACK = 'https://comradeconnect.co.ke/google-callback.html';   // must be listed as an Authorized redirect URI in Google Cloud
   var P = cap.Plugins || {};
-  ['Browser', 'App'].forEach(function (n) { try { if (!P[n] && cap.registerPlugin) P[n] = cap.registerPlugin(n); } catch (e) {} });   // plugins that are not listed on Capacitor.Plugins yet
+  ['Browser', 'App', 'GoogleSignIn'].forEach(function (n) { try { if (!P[n] && cap.registerPlugin) P[n] = cap.registerPlugin(n); } catch (e) {} });   // plugins that are not listed on Capacitor.Plugins yet
   var pending = null;
   var KEEP = 'cc_g_pending';
   var keep = function (o) { try { if (o) localStorage.setItem(KEEP, JSON.stringify({ n: o.nonce, s: o.state, at: Date.now() })); else localStorage.removeItem(KEEP); } catch (e) {} };
@@ -127,7 +127,25 @@
 
   // Google sign-in uses the phone's secure browser tab (Chrome Custom Tab). The old in-app picker plugin was removed: it closed the whole app
   // ("Unfortunately, Comrade Connect has stopped") on phones where Google Play services or the SHA-1 key did not match, and a native crash cannot be caught.
-  window.ccApp.googleLogin = function () { return browserGoogle(); };
+  // Preferred: the native "Choose an account" bottom sheet (Android Credential Manager) that slides up over the app.
+  // If it is missing, there is no Google account on the phone, or this build's SHA-1 is not registered in Google Cloud, we fall back to the browser tab.
+  // A user who swipes the sheet away is a cancel: nothing else opens.
+  var nativeGoogle = function () {
+    return new Promise(function (res, rej) {
+      var N = P.GoogleSignIn;
+      if (!N || !N.signIn) return rej(Object.assign(new Error('unavailable'), { code: 'UNIMPLEMENTED' }));
+      N.signIn({ serverClientId: CC_GOOGLE_ID, nonce: rand() }).then(function (r) {
+        if (r && r.idToken) res(r.idToken); else rej(Object.assign(new Error('no token'), { code: 'FAILED' }));
+      }, rej);
+    });
+  };
+  window.ccApp.googleLogin = function () {
+    if (typeof CC_NATIVE_GOOGLE === 'undefined' || CC_NATIVE_GOOGLE !== true) return browserGoogle();
+    return nativeGoogle().catch(function (e) {
+      if (e && (e.code === 'CANCELLED' || e.cancelled || /^cancel/i.test(String(e.message || '')))) throw Object.assign(new Error('cancelled'), { cancelled: true });
+      return browserGoogle();
+    });
+  };
 
   // Open any link in the secure tab (card page, update download, etc). Resolves true if the tab opened.
   window.ccApp.open = function (url) {

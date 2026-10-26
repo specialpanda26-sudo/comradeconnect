@@ -10,7 +10,7 @@
   var reduce = false; try { reduce = false; } catch (e) {}
   var current = null;
 
-  var FP = '<svg viewBox="0 0 24 24" class="fpx-ic fpx-fpi" aria-hidden="true"><path fill="currentColor" d="M17.81 4.47c-.08 0-.16-.02-.23-.06C15.66 3.42 14 3 12.01 3c-1.98 0-3.86.47-5.57 1.41-.24.13-.54.04-.68-.2-.13-.24-.04-.55.2-.68C7.82 2.52 9.86 2 12.01 2c2.13 0 3.99.47 6.03 1.52.25.13.34.43.21.67-.09.18-.26.28-.44.28zM3.5 9.72c-.1 0-.2-.03-.29-.09-.23-.16-.28-.47-.12-.7.99-1.4 2.25-2.5 3.75-3.27C9.98 4.04 14 4.03 17.15 5.65c1.5.77 2.76 1.86 3.75 3.25.16.22.11.54-.12.7-.23.16-.54.11-.7-.12-.9-1.26-2.04-2.25-3.39-2.94-2.87-1.47-6.54-1.47-9.4.01-1.36.7-2.5 1.7-3.4 2.96-.08.14-.23.21-.39.21zm6.25 12.07c-.13 0-.26-.05-.35-.15-.87-.87-1.34-1.43-2.01-2.64-.69-1.23-1.05-2.73-1.05-4.34 0-2.97 2.54-5.39 5.66-5.39s5.66 2.42 5.66 5.39c0 .28-.22.5-.5.5s-.5-.22-.5-.5c0-2.42-2.09-4.39-4.66-4.39-2.57 0-4.66 1.97-4.66 4.39 0 1.44.32 2.77.93 3.85.64 1.15 1.08 1.64 1.85 2.42.19.2.19.51 0 .71-.11.1-.24.15-.37.15zm7.17-1.85c-1.19 0-2.24-.3-3.1-.89-1.49-1.01-2.38-2.65-2.38-4.39 0-.28.22-.5.5-.5s.5.22.5.5c0 1.41.72 2.74 1.94 3.56.71.48 1.54.71 2.54.71.24 0 .64-.03 1.04-.1.27-.05.53.13.58.41.05.27-.13.53-.41.58-.57.11-1.07.12-1.21.12zM14.91 22c-.04 0-.09-.01-.13-.02-1.59-.44-2.63-1.03-3.72-2.1-1.4-1.39-2.17-3.24-2.17-5.22 0-1.62 1.38-2.94 3.08-2.94 1.7 0 3.08 1.32 3.08 2.94 0 1.07.93 1.94 2.08 1.94s2.08-.87 2.08-1.94c0-3.77-3.25-6.83-7.25-6.83-2.84 0-5.44 1.58-6.61 4.03-.39.81-.59 1.76-.59 2.8 0 .78.07 2.01.67 3.61.1.26-.03.55-.29.64-.26.1-.55-.04-.64-.29-.49-1.31-.73-2.61-.73-3.96 0-1.2.23-2.29.68-3.24 1.33-2.79 4.28-4.6 7.51-4.6 4.55 0 8.25 3.51 8.25 7.83 0 1.62-1.38 2.94-3.08 2.94s-3.08-1.32-3.08-2.94c0-1.07-.93-1.94-2.08-1.94s-2.08.87-2.08 1.94c0 1.71.66 3.31 1.87 4.51.95.94 1.86 1.46 3.27 1.85.27.07.42.35.35.61-.05.23-.26.38-.47.38z"/></svg>';
+  var FP = '<svg viewBox="0 0 24 24" class="fpx-ic fpx-fpi" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>';
   // Face ID drawing: four corner brackets, eyes, nose, smile. Each line draws itself, then the scan line sweeps over it.
   var FACE = '<svg viewBox="0 0 48 48" class="fpx-ic fpx-fci" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'
     + '<path class="fb" d="M6 15V10a4 4 0 0 1 4-4h5"/><path class="fb" d="M33 6h5a4 4 0 0 1 4 4v5"/><path class="fb" d="M42 33v5a4 4 0 0 1-4 4h-5"/><path class="fb" d="M15 42h-5a4 4 0 0 1-4-4v-5"/>'
@@ -23,7 +23,7 @@
     if (document.getElementById('fpx-css')) return;
     var s = document.createElement('style'); s.id = 'fpx-css';
     s.textContent = [
-      '#ccfp{--fpa:#A8DCE7;position:fixed;inset:0;z-index:10100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--bg,#101422);color:var(--fg,#fff);font-family:Poppins,system-ui,sans-serif;text-align:center;opacity:0;transition:opacity .25s;overflow-y:auto}',
+      '#ccfp{--fpa:#ff8a3d;position:fixed;inset:0;z-index:10100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--bg,#f6efe9);color:var(--fg,#fff);font-family:Poppins,system-ui,sans-serif;text-align:center;opacity:0;transition:opacity .25s;overflow-y:auto}',
       '#ccfp.on{opacity:1}',
       '#ccfp .fpx-x{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top,0px));width:40px;height:40px;border-radius:50%;border:1px solid var(--gb,rgba(255,255,255,.25));background:var(--g,rgba(255,255,255,.07));color:inherit;display:grid;place-items:center;cursor:pointer;padding:0}',
       '#ccfp .fpx-hi{margin:0;font-size:clamp(26px,7.5vw,34px);font-weight:700;letter-spacing:-.02em;line-height:1.15}',
@@ -34,7 +34,7 @@
       '#ccfp .fpx-tabs{display:flex;gap:4px;margin:26px 0 0;padding:4px;border-radius:999px;border:1px solid var(--gb,rgba(255,255,255,.25));background:var(--g,rgba(255,255,255,.07))}',
       '#ccfp .fpx-tab{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--mut,var(--mut));border-radius:999px;padding:10px 18px;font:600 14px Poppins,system-ui,sans-serif;cursor:pointer;transition:background .25s,color .25s}',
       '#ccfp .fpx-tab svg{width:20px;height:20px}',
-      '#ccfp .fpx-tab[aria-selected=true]{background:var(--fpa);color:#101422}',
+      '#ccfp .fpx-tab[aria-selected=true]{background:var(--fpa);color:#16130f}',
       '#ccfp .fpx-ct{margin:26px 0 0;font-size:16px;font-weight:700}',
       '#ccfp .fpx-st{min-height:22px;margin:4px 0 0;font-size:15px;font-weight:400;color:var(--mut,var(--mut))}',
       /* the stage: moving fingerprint or face scan */
@@ -66,10 +66,19 @@
       '@keyframes fpx-shake{20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}',
       '#ccfp .fpx-bar{display:flex;flex-direction:column;gap:6px;width:100%;max-width:320px;margin-top:18px}',
       '#ccfp .fpx-b{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1px solid var(--gb,rgba(255,255,255,.3));background:transparent;color:inherit;border-radius:999px;padding:14px 20px;font:600 15px Poppins,system-ui,sans-serif;cursor:pointer}',
-      '#ccfp .fpx-b.p{background:var(--fpa);border-color:var(--fpa);color:#101422;min-height:50px}',
+      '#ccfp .fpx-b.p{background:var(--fpa);border-color:var(--fpa);color:#16130f;min-height:50px}',
       '#ccfp .fpx-b.t{border:0;color:var(--mut,var(--mut));font-weight:500}',
       '#ccfp .fpx-ln2{margin:16px 0 0;font-size:15px;font-weight:600}#ccfp .fpx-ln2 a{color:var(--fpa);text-decoration:underline}',
       '#ccfp[data-rm] *{animation:none!important;transition-duration:.01s!important}',
+      '#ccfp{background:var(--bg,#f6efe9)!important;overflow:hidden}',
+      '#ccfp::before{content:"";position:absolute;inset:-10% -20% auto -20%;height:60%;z-index:0;pointer-events:none;filter:blur(40px);background:radial-gradient(50% 60% at 80% 20%,rgba(255,138,61,.55),transparent 70%),radial-gradient(55% 60% at 10% 40%,rgba(196,114,122,.4),transparent 70%),radial-gradient(40% 50% at 50% 0,rgba(255,217,184,.9),transparent 70%)}',
+      '#ccfp>*{position:relative;z-index:1}',
+      '#ccfp .fpx-hi{font-weight:800;letter-spacing:-.04em}#ccfp .fpx-hi b{background:linear-gradient(95deg,#ff8a3d,#c4727a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}',
+      '#ccfp .fpx-disc{width:136px;height:136px;background:radial-gradient(120% 120% at 28% 20%,#ffd9b8 0,#ff8a3d 58%,#c4727a 130%);border:0;color:#16130f;box-shadow:0 20px 40px -14px rgba(255,138,61,.7),inset 0 2px 0 rgba(255,255,255,.55)}',
+      '#ccfp .fpx-ic{color:#16130f;stroke-width:1.5}',
+      '#ccfp .fpx-tab[aria-selected=true]{background:#16130f;color:#fff}',
+      '#ccfp .fpx-b.p{background:#16130f;border-color:#16130f;color:#fff;border-radius:999px}',
+      '#ccfp .fpx-b{border-radius:999px;font-weight:800}',
       '#ccfp[data-rm] .fpx-fci path{stroke-dashoffset:0!important}'
     ].join('');
     document.head.appendChild(s);

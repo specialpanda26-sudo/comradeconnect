@@ -82,7 +82,7 @@ function list(title, src, total, bar) {
 
 function openSheet() {
   if ($('#ccwsheet')) return;
-  var ov = el('div'); ov.id = 'ccwsheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'My wallet');
+  var ov = el('div'); ov.id = 'ccwsheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'My wallet'); ov.classList.add('ccx-owned');
   ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(16,20,34,.85);display:flex;justify-content:center;overflow:auto;padding:16px';
   var box = el('div', 'box g'); box.style.cssText = 'max-width:460px;width:100%;margin:auto 0;align-self:flex-start';
   ov.appendChild(box); document.body.appendChild(ov);
@@ -93,7 +93,7 @@ function openSheet() {
   function paint() {
     box.textContent = '';
     var hd = el('div'); hd.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:10px';
-    hd.appendChild(el('b', '', 'My wallet')); var x = el('button', 'btn g', 'Close'); x.type = 'button'; x.onclick = close; hd.appendChild(x); box.appendChild(hd);
+    hd.appendChild(el('b', '', 'My wallet')); var x = el('button', 'btn g ccx-own', 'Close'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.onclick = close; hd.appendChild(x); box.appendChild(hd);
     var big = el('div', 'big', kes(DATA ? DATA.balance : BAL)); big.style.marginTop = '8px'; box.appendChild(big);
     box.appendChild(el('div', 'sub', 'Available balance'));
     if (!DATA) { var l = el('p', 'sub', 'Loading your activity...'); l.style.marginTop = '16px'; box.appendChild(l); return; }

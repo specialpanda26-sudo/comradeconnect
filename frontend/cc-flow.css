@@ -85,3 +85,6 @@
 :root:root:root:root #ccea .cco:before{display:none}
 :root:root:root:root #ccea .cco .cco-ic,:root:root:root:root #ccea .cco .cco-t,:root:root:root:root #ccea .cco .cco-s{display:none}
 :root:root:root:root #ccea .cco-stage{height:60px}
+
+/* one loader per button: when the button has its own spinner/dots, the shared one stays off */
+.cf-wait:has(.ccspin,.cm-dots,.sn)::before,.cf-wait:has(.ccspin,.cm-dots,.sn)::after,.cm-busy:has(.ccspin)::before{display:none!important}

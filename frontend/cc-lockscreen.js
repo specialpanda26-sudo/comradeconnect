@@ -26,8 +26,8 @@
   (function () {
     var st = document.createElement('style');
     st.textContent = [
-      '#lk .lkhero{position:relative}#lk .lkhero:after{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(to bottom,transparent,var(--bg,#101422))}',
-      '#lk .bx.lkcard{background:color-mix(in srgb,var(--bg,#101422) 82%,transparent)!important;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);color:var(--fg,#fff)}',
+      '#lk .lkhero{position:relative}#lk .lkhero:after{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(to bottom,transparent,var(--bg,#f6efe9))}',
+      '#lk .bx.lkcard{background:color-mix(in srgb,var(--bg,#f6efe9) 82%,transparent)!important;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);color:var(--fg,#fff)}',
       '#lk .lkfp{position:relative;overflow:visible;width:92px;height:92px;box-shadow:0 0 0 1px var(--gb,rgba(255,255,255,.3)) inset}',
       '#lk .lkfp svg{position:relative;z-index:1}#lk .lkfp svg path{stroke-dasharray:90;stroke-dashoffset:90;animation:lkd 1.1s ease forwards,lkp 2.8s ease-in-out 1.3s infinite}',
       '#lk .lkfp svg path:nth-child(2){animation-delay:.12s,1.4s}#lk .lkfp svg path:nth-child(3){animation-delay:.24s,1.5s}#lk .lkfp svg path:nth-child(4){animation-delay:.36s,1.6s}#lk .lkfp svg path:nth-child(5){animation-delay:.48s,1.7s}#lk .lkfp svg path:nth-child(6){animation-delay:.6s,1.8s}',

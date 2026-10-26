@@ -41,7 +41,7 @@ st.textContent = [
   '.ccpb.ccpb-x button{margin:calc(8px + env(safe-area-inset-top,0px)) 8px 0 0;background:var(--bg,#101422)}',
   '.ccp-box>h2:first-of-type,.ccp-box>h3:first-of-type{padding-right:48px}',
   '.ccp-ov .ccx-b{display:none!important}',
-  '.ccx-off{display:none!important}',
+  '.ccx-off{display:none!important}','.ccx-owned .ccpb-x,.ccx-owned .ccpf,.ccx-owned .ccx-b,.ccx-owned .ccx-plain{display:none!important}',
   'button,a,[role=button],input,select,textarea,label{touch-action:manipulation}'
 ].join('');
 document.head.appendChild(st);
@@ -99,6 +99,7 @@ function dress(ov) {
   if (!box.classList.contains('ccp-box')) box.classList.add('ccp-box');          // and would make this scan re-trigger itself forever
   Array.prototype.forEach.call(ov.querySelectorAll('.ccx-b'), function (n) { n.remove(); });
   var bar = box.querySelector(':scope > .ccpb');
+  if (ov.classList.contains('ccx-owned') || box.querySelector('.ccx-own')) { ov.classList.add('ccx-owned'); return; }
   if (syncX(ov)) return;                                                      // has a Cancel button: no X (any X it had is hidden)
   // The panel already has its own X (plain icon in its heading row): keep THAT one and draw no bar, so there is only one X.
   var own = Array.prototype.filter.call(box.querySelectorAll('button[aria-label="Close"],button.xb,.fid-x,[data-close]'), function (n) { return !n.closest('.ccpb,.ccpf') && shown(n); })[0];

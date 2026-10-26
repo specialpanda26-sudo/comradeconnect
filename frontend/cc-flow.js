@@ -68,6 +68,7 @@
   }
   function arm(btn) {
     if (btn.classList.contains('cf-wait')) return;
+    if (btn.getAttribute('aria-busy') === 'true' || btn.querySelector('.ccspin,.cm-dots,.sn')) return;   /* the button already shows its own loader: never stack a second one */
     btn.__cfT = Date.now(); btn.classList.add('cf-wait'); btn.setAttribute('aria-busy', 'true');
     setTimeout(function () { finish(btn, true); }, 20000);   /* never stuck */
   }

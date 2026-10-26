@@ -15,7 +15,7 @@
   var st = document.createElement('style');
   st.textContent = '.ccx-plain{position:absolute;top:calc(8px + var(--ccx-top,0px));right:8px;z-index:2147483000;width:44px;height:44px;display:grid;place-items:center;'
     + 'padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--fg,#fff);cursor:pointer;-webkit-tap-highlight-color:transparent;opacity:.9}'
-    + '.ccx-plain:active{opacity:.5}';
+    + '.ccx-plain:active{opacity:.5}.ccx-owned .ccx-plain{display:none!important}';
   document.head.appendChild(st);
 
   function vis(el) {
@@ -25,6 +25,7 @@
   }
   function area(el) { var r = el.getBoundingClientRect(); return r.width * r.height; }
   function hasClose(el) {
+    if (el.classList.contains('ccx-owned') || el.querySelector('.ccx-own')) return true;
     var n; try { n = el.querySelectorAll(HAS); } catch (e) { n = []; }
     for (var i = 0; i < n.length; i++) if (vis(n[i])) return true;
     var b = el.querySelectorAll('button,a,[role=button]');

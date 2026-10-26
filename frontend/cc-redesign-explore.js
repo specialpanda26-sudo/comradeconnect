@@ -128,12 +128,13 @@ var P={
  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
  gift:'<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M12 9v11M3 13h18M12 9C9 9 8 4 11 4s1 5 1 5zm0 0c3 0 4-5 1-5s-1 5-1 5z"/>',
  cart:'<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2l2.4 11h11l2-8H6.5"/>',
- video:'<rect x="3" y="5" width="18" height="14" rx="4"/><path d="M10 9l5 3-5 3z"/>'};
+ video:'<rect x="3" y="5" width="18" height="14" rx="4"/><path d="M10 9l5 3-5 3z"/>',
+ mbogi:'<path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-4 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><rect x="6" y="7.5" width="6.5" height="6" rx="1.5"/><path d="M12.5 10.5L16.5 8v5l-4-2.5"/>'};
 var svg=function(k){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(P[k]||P.pin)+'</svg>'};
 var META={hs:['building','Reviews and rents'],rm:['users','Find a match'],sg:['book','Join or start one'],wf:['wifi','Near you'],sv:['tag','Hire a comrade'],pl:['chat','Vote today'],ev:['ticket','Tickets and hosting'],nt:['mega','Verified updates'],lf:['lost','IDs, phones, keys'],pp:['doc','Past papers and notes'],ls:['pin','Food, study, safe walks'],ht:['heart','18+ only'],top:['flame','Best of the week'],sn:['cap','Tips by unit'],sr:['search','Stories, notices, events']};
 var ORDER=['hs','rm','sg','wf','sv','pl','ev','nt','lf','pp','ls','ht','top','sn','sr'];
 var go=function(v){var b=$('#tb button[data-v="'+v+'"]');if(b)b.click()};
-var ROWS=[['gift','Rewards','Points, streaks and perks',function(){go('rewards')}],['cart','Club','Wholesale prices on student items',function(){go('rewards');setTimeout(function(){var b=$('#cgo');if(b)b.click()},60)}],['video','Videos and Live','Clips from campus, live streams',function(){go('videos')}]];
+var ROWS=[['gift','Rewards','Points, streaks and perks',function(){go('rewards')}],['cart','Club','Wholesale prices on student items',function(){go('rewards');setTimeout(function(){var b=$('#cgo');if(b)b.click()},60)}],['video','Videos and Live','Clips from campus, live streams',function(){go('videos')}],['mbogi','Mbogi Talk','Video meetings with a code',function(){go('mbogi')}]];
 function tiles(){
  var xt=$('#xt');if(!xt)return;
  [].forEach.call(xt.querySelectorAll('.tab[data-x]'),function(b){

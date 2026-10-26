@@ -122,14 +122,14 @@
       await st.cl.join(AGORA, s.channel, tk, null); if (st.dead) { try { st.cl.leave(); } catch (e) {} return; }
       if (host) {
         var t;
-        try { t = await AgoraRTC.createMicrophoneAndCameraTracks({ AEC: true, ANS: true, AGC: true }, { encoderConfig: '720p_2' }); }
+        try { t = await AgoraRTC.createMicrophoneAndCameraTracks({ AEC: true, ANS: true, AGC: true }, { encoderConfig: '720p_2', facingMode: window.__ccFacing || 'user' }); }
         catch (me) {
           // microphone blocked or missing: still go live with the camera, and say so
-          var cam = await AgoraRTC.createCameraVideoTrack({ encoderConfig: '720p_2' }); t = [null, cam];
+          var cam = await AgoraRTC.createCameraVideoTrack({ encoderConfig: '720p_2', facingMode: window.__ccFacing || 'user' }); t = [null, cam];
           say('Your microphone is blocked, so people will see you but not hear you. Allow the microphone for this site.');
         }
         st.tracks = t.filter(Boolean); st.mic = t[0]; st.cam = t[1]; if (st.dead) { detach(box); return; }
-        v.textContent = ''; t[1].play(v); await st.cl.publish(st.tracks); st.ready = true;
+        st.facing = window.__ccFacing || 'user'; v.textContent = ''; t[1].play(v, { mirror: st.facing !== 'environment' }); await st.cl.publish(st.tracks); st.ready = true;
       }
       return true;
     } catch (e) {
@@ -175,6 +175,9 @@
     $('#ccl-go').onclick = async function (e) {
       var t = $('#ltitle').value.trim(); if (!t) return say('Add a title so people know what is happening');
       if (!AGORA) return say('Live video is not set up yet. The admin must add the video key.');
+      var face = window.ccCam ? await window.ccCam.ask({ title: 'Go live with which camera?', sub: 'You can flip between front and back while you are live.' }) : 'user';
+      if (!face) return;                                        // cancelled
+      window.__ccFacing = face;
       var b = e.currentTarget; b.disabled = true;
       try {
         var d = await call('/api/live/start', { body: { title: t, native: true } });
@@ -198,6 +201,7 @@
     fsOff: SV('<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>'),
     min: SV('<rect x="3" y="4" width="18" height="16" rx="2"/><rect x="12" y="12" width="7" height="6" rx="1"/>'),
     big: SV('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
+    flip: SV('<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>'),
     x: SV('<path d="M6 6l12 12M18 6L6 18"/>')
   };
   var ME = null, HB = null, keep = false, force = false;
@@ -224,7 +228,7 @@
   }
   function replay(box) {                                    // a video stops when its element is moved: start it again
     var s = box && box.__cc, v = box && box.querySelector('.ccl-v'); if (!s || !v) return;
-    try { if (s.cam) s.cam.play(v); else s.cl && s.cl.remoteUsers.forEach(function (u) { if (u.videoTrack) u.videoTrack.play(v); }); } catch (e) {}
+    try { if (s.cam) s.cam.play(v, { mirror: s.facing !== 'environment' }); else s.cl && s.cl.remoteUsers.forEach(function (u) { if (u.videoTrack) u.videoTrack.play(v); }); } catch (e) {}
   }
 
   function drawCtl() {
@@ -235,6 +239,7 @@
     var off = ME.mine ? !!(s && s.micOff) : !!(s && s.muted);
     var h = '';
     if (ME.native) h += '<button type="button" data-k="snd" aria-label="' + (ME.mine ? (off ? 'Turn microphone on' : 'Turn microphone off') : (off ? 'Turn sound on' : 'Turn sound off')) + '">' + (ME.mine ? (off ? ICON.micOff : ICON.mic) : (off ? ICON.spkOff : ICON.spk)) + '</button>';
+    if (ME.native && ME.mine) h += '<button type="button" data-k="flip" aria-label="Flip camera (front or back)">' + ICON.flip + '</button>';
     h += '<button type="button" data-k="hrt" aria-label="Send a heart">' + I.heart + '</button>';
     h += '<button type="button" data-k="fs" aria-label="' + (fsOn ? 'Exit full screen' : 'Full screen') + '">' + (fsOn ? ICON.fsOff : ICON.fs) + '</button>';
     h += '<button type="button" data-k="min" aria-label="Small screen">' + ICON.min + '</button>';
@@ -318,6 +323,15 @@
     else if (k === 'min') minimize();
     else if (k === 'x') { if (ME && ME.mine) askHost(null); else { setFull(false); leaveRoom(); } }
     else if (k === 'hrt') { var h = $('#lheart'); if (h) h.click(); }
+    else if (k === 'flip') {
+      if (!s || !s.cam || !window.ccCam) return say('The camera is not on yet');
+      b.disabled = true;
+      window.ccCam.flip(s.cam).then(function (face) {
+        s.facing = face; window.__ccFacing = face;              // a reconnect keeps the camera you picked
+        try { var v = $('#rframe .ccl-v'); if (v) s.cam.play(v, { mirror: face !== 'environment' }); } catch (x) {}
+        say(face === 'environment' ? 'Back camera' : 'Front camera');
+      }).catch(function (er) { say((er && er.message) || 'Could not switch the camera'); }).then(function () { b.disabled = false; });
+    }
     else if (k === 'snd' && s) {
       if (ME.mine) { s.micOff = !s.micOff; try { s.mic && s.mic.setEnabled(!s.micOff); } catch (x) {} if (!s.mic) say('No microphone is on'); }
       else { s.muted = !s.muted; try { s.cl.remoteUsers.forEach(function (u) { if (u.audioTrack) { u.audioTrack.setVolume(s.muted ? 0 : 100); if (!s.muted) u.audioTrack.play(); } }); } catch (x) {} }

@@ -13,6 +13,7 @@ function relabel(){
  if(w&&!w.dataset.cr){w.dataset.cr=1;w.innerHTML=svg('watch')+'Watch'}
  var h=$('#v-videos .ph');if(h)h.textContent='Watch';
  var l=$('#v-live .ph');if(l)l.textContent='Watch';
+ var mb=$('#v-mbogi .ph');if(mb)mb.textContent='Watch';
 }
 function topbar(){
  var n=document.querySelector('body>nav.g:not(#tb)');if(!n||$('.crd-search',n))return;
@@ -24,10 +25,10 @@ function topbar(){
   var box=n.querySelector('.flex')||n;box.appendChild(g)}
 }
 function seg(){
- [['videos','Videos'],['live','Live']].forEach(function(p){
+ [['videos','Videos'],['live','Live'],['mbogi','Mbogi Talk']].forEach(function(p){
   var v=$('#v-'+p[0]);if(!v||$('.crd-seg',v))return;
   var d=document.createElement('div');d.className='crd-seg';
-  d.innerHTML='<button type="button" data-sg="videos">Videos</button><button type="button" data-sg="live">Live</button>';
+  d.innerHTML='<button type="button" data-sg="videos">Videos</button><button type="button" data-sg="live">Live</button><button type="button" data-sg="mbogi">Mbogi Talk</button>';
   d.onclick=function(e){var b=e.target.closest('button');if(b)go(b.dataset.sg)};
   var h=$('.ph',v);if(h&&h.nextSibling)h.parentNode.insertBefore(d,h.nextSibling);else v.insertBefore(d,v.firstChild);
  });
@@ -46,7 +47,7 @@ function rewards(){
 function sync(){
  var v=document.body.dataset.view,t=document.getElementById('tb');if(!t)return;
  var w=$('button[data-v="videos"]',t),m=$('button[data-v="me"]',t);
- if(w)w.classList.toggle('on2',v==='live');
+ if(w)w.classList.toggle('on2',v==='live'||v==='mbogi');
  if(m)m.classList.toggle('on2',v==='rewards');
  document.querySelectorAll('.crd-seg').forEach(function(d){d.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.sg===v)})});
 }

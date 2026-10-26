@@ -141,6 +141,7 @@ queue();
 
 function goBack() {
   if (locked()) return false;
+  try { if (window.ccMbogiBack && window.ccMbogiBack()) return true; } catch (e) {}   // inside a Mbogi Talk meeting: back closes the panel, or asks to leave
   try { if (window.ccLiveBack && window.ccLiveBack()) return true; } catch (e) {}   // live full screen: back leaves full screen first
   var fr = document.getElementById('ccfrst'); if (fr) { var fx = fr.querySelector('.ccfrst-x'); if (fx) { fx.click(); return true; } }
   var o = openList();

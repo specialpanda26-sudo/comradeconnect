@@ -6,7 +6,7 @@
   if (window.__ccNav) return; window.__ccNav = 1;
   var T0 = Date.now();
   var CLOSE_SEL = '[aria-label*="lose" i],[aria-label*="ismiss" i],[data-close],[data-dismiss],.x,.close,.cls,.clx,.xbtn,.cc-x';
-  var SKIP = 'nav,header,#tb,#loader,#ccgate,#lk,#ccfp,.toast,#toast,.bg,#rmedia,#ccl-mini';   // the live video is never a stuck popup
+  var SKIP = 'nav,header,#tb,#loader,#ccgate,#lk,#ccfp,.toast,#toast,.bg,#rmedia,#ccl-mini,#mbg-room';   // the live video is never a stuck popup
   var STATIC = new WeakSet(); try { [].forEach.call(document.querySelectorAll('body *'), function (e) { STATIC.add(e); }); } catch (e) {}
 
   function vis(el) {

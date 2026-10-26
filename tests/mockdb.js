@@ -30,6 +30,7 @@ export const SCHEMA = {
   club_orders: T(['id'], { defaults: { status: 'pending', stock_held: true } }), tickets: T(['id'], { defaults: { status: 'valid' }, uniques: [nn('payment_id')] }),
   settings: T(['key']), site_content: T(['key']), sponsors: T(['id'], { defaults: { active: true } }), notices: T(['id'], { defaults: { pinned: false, expires_at: null } }), events: T(['id'], { defaults: { hidden: false } }),
   admin_audit_log: T(['id']), live_streams: T(['id'], { defaults: { status: 'live', hearts: 0 } }),
+  mbogi_meetings: T(['code'], { defaults: { status: 'open' } }), mbogi_people: T(['code', 'viewer'], { defaults: { hand: false } }), mbogi_events: T(['id']),
   live_comments: T(['id'], { defaults: { hidden: false } }), live_viewers: T(['stream_id', 'viewer']),
 };
 

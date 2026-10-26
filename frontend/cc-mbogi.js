@@ -166,11 +166,12 @@
       m.hidden = false;
       m.innerHTML = '<h3>Your meeting is ready</h3><div class="mbg-big" id="mbg-mc"></div><p class="sub" style="margin:0;text-align:center;overflow-wrap:anywhere" id="mbg-ml"></p>'
         + '<div class="mbg-row"><button type="button" class="btn g mbg-btn" data-k="cc">' + ico('copy') + 'Copy code</button><button type="button" class="btn g mbg-btn" data-k="sh">' + ico('share') + 'Share invite</button></div>'
-        + '<button type="button" class="btn p mbg-btn" data-k="go">' + ico('cam') + 'Start now</button>';
+        + '<button type="button" class="btn p mbg-btn" data-k="go">' + ico('cam') + 'Start now</button>'
+        + '<button type="button" class="btn g mbg-btn" data-k="rm" style="margin-top:8px;color:#d9334a">Remove meeting link</button>';
       $('#mbg-mc').textContent = made.code; $('#mbg-ml').textContent = linkOf(made.code);
       m.onclick = function (e) {
         var b = e.target.closest('button'); if (!b || !made) return;
-        if (b.dataset.k === 'cc') copy(made.code, 'Code copied'); else if (b.dataset.k === 'sh') invite(made.code, made.title); else if (b.dataset.k === 'go') openJoin(made.code);
+        if (b.dataset.k === 'cc') copy(made.code, 'Code copied'); else if (b.dataset.k === 'sh') invite(made.code, made.title); else if (b.dataset.k === 'go') openJoin(made.code); else if (b.dataset.k === 'rm') removeMeeting(made.code);
       };
     } else m.hidden = true;
     var rc = $('#mbg-rec'), l = recents();
@@ -181,9 +182,20 @@
         var d = document.createElement('div'); d.className = 'mbg-rc';
         var t = document.createElement('span'), b = document.createElement('b'), s = document.createElement('small'); b.textContent = r.title; s.textContent = r.code; t.append(b, s);
         var j = document.createElement('button'); j.type = 'button'; j.className = 'btn g'; j.textContent = 'Join'; j.onclick = function () { openJoin(r.code); };
-        d.append(t, j); rc.appendChild(d);
+        var x = document.createElement('button'); x.type = 'button'; x.className = 'btn g'; x.textContent = 'Remove'; x.style.cssText = 'color:#d9334a;margin-left:6px'; x.onclick = function () { removeMeeting(r.code); };
+        d.append(t, j, x); rc.appendChild(d);
       });
     }
+  }
+
+  /* the host removes a meeting link: it stops working for everyone and leaves the lists */
+  async function removeMeeting(code) {
+    if (!window.confirm('Remove this meeting link? Nobody will be able to join with it.')) return;
+    var ended = true;
+    try { await call('/api/mbogi/' + code + '/end', { body: {} }); } catch (er) { ended = false; }   // only the host can end it; for others this just clears their list
+    try { localStorage.setItem(RECENT, JSON.stringify(recents().filter(function (r) { return r.code !== code; }))); } catch (er) {}
+    if (made && made.code === code) made = null;
+    drawLobby(); say(ended ? 'Meeting link removed' : 'Removed from your list');
   }
 
   async function createMeeting(e) {

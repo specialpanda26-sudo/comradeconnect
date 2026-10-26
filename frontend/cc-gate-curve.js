@@ -1,18 +1,18 @@
-/* cc-gate-curve.js v3: Get started, Login and Sign up headers.
-   Same brand row, title and subtitle spacing on every page; a gentler swoosh curve that never touches the words.
+/* cc-gate-curve.js v4: Get started, Login and Sign up headers.
+   Same brand row, title and subtitle spacing on every page; a deeper, symmetric bowl curve (white corners at the sides) that never touches the words.
    The black starts as a full-screen curtain and retracts upward while the form fades in step by step. Colors are untouched. */
 (function () {
 'use strict';
 var E = 'cubic-bezier(.7,0,.2,1)';
-var D = 'M0 0H100V22C86 34 68 40 48 40C26 40 8 38 0 32Z';
+var D = 'M0 0H100V14C100 29 77 40 50 40C23 40 0 29 0 14Z';
 var CSS =
 '.sheet::before{display:none!important}' +
 '.app .sheet,.app.w .sheet,.app.a .sheet{transform:none!important}' +
 '.app.w .sheet,.app.s .sheet{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s .7s,visibility 0s 1s,padding-top 1.2s ' + E + '!important}' +
 '.app.a .sheet{opacity:1;visibility:visible;transition:opacity .25s,padding-top 1.2s ' + E + '!important}' +
 '.app .sheet{padding-top:calc(var(--ch) + 4px)!important}' +
-'.app.a{--ch:200px!important}.app.a.su{--ch:184px!important}' +
-'@media(max-height:720px){.app.a{--ch:188px!important}.app.a.su{--ch:172px!important}}' +
+'.app.a{--ch:252px!important}.app.a.su{--ch:246px!important}' +
+'@media(max-height:720px){.app.a{--ch:232px!important}.app.a.su{--ch:226px!important}}' +
 '.app .cv{z-index:2;height:var(--ch)!important;transform-origin:50% 0;will-change:transform}' +
 '.app.w .cv,.app.s .cv{transform:scaleY(9);transition:transform .7s cubic-bezier(.5,0,.8,.3),height 1.2s ' + E + '!important}' +
 '.app.a .cv{transform:none;transition:transform 1.4s .12s ' + E + ',height 1.2s ' + E + '!important}' +

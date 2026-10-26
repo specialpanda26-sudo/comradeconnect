@@ -1804,13 +1804,13 @@ const D=[
  ['Messages','Your anonymous chats','messages chats dm inbox','me','Messages'],['Notifications','Alerts and preferences','notifications alerts','me','Notifications'],
  ['Safety','Blocked posters, emergency contacts','safety emergency blocked report help police','me','Safety'],['Documentation','How Comrade Connect works','documentation guide help pdf docs','me','Documentation']
 ];
-document.body.insertAdjacentHTML('beforeend','<div id="ccfind" role="dialog" aria-modal="true" aria-label="Find anything"><div class="fw"><div class="fh"><div class="fld"><input id="ccfq" type="search" placeholder="Find a page or setting" autocomplete="off" aria-label="Find a page or setting"></div><button type="button" class="btn g" id="ccfx">Close</button></div><div class="box g fr" id="ccfr"></div></div></div>');
+document.body.insertAdjacentHTML('beforeend','<div id="ccfind" role="dialog" aria-modal="true" aria-label="Find anything"><div class="fw"><div class="fh"><div class="fld"><input id="ccfq" type="search" placeholder="Find a page or setting" autocomplete="off" aria-label="Find a page or setting"></div><button type="button" class="btn g" id="ccfclose" aria-label="Close" style="flex:none;width:42px;height:42px;padding:0;border-radius:50%;font-size:22px;line-height:1">&times;</button></div><div class="box g fr" id="ccfr"></div></div></div>');
 const F=$('#ccfind'),fq=$('#ccfq'),fr=$('#ccfr');
 function drawFind(){const q=fq.value.trim().toLowerCase();const hit=D.filter(d=>!q||(d[0]+' '+d[1]+' '+d[2]).toLowerCase().includes(q)).slice(0,12);
  fr.innerHTML=hit.length?hit.map((d,i)=>'<button type="button" class="mit'+(d[3]==='out'?' out':'')+'" data-i="'+D.indexOf(d)+'"><span class="ic">'+svg(d[3]==='out'?'out':(IC[d[0]]?d[0]:d[3]==='me'?d[4]:'d'))+'</span><span><b>'+esc(d[0])+'</b><small>'+esc(d[1])+'</small></span><span class="ch" aria-hidden="true">›</span></button>').join(''):'<p class="sub fe">Nothing matches that. Try a shorter word like "market" or "safety".</p>'}
 function openFind(){F.classList.add('on');fq.value='';drawFind();setTimeout(()=>fq.focus(),50)}
 const closeFind=()=>F.classList.remove('on');
-$('#fnd').onclick=openFind;$('#ccfx').onclick=closeFind;fq.oninput=drawFind;
+$('#fnd').onclick=openFind;$('#ccfclose').onclick=closeFind;fq.oninput=drawFind;
 addEventListener('keydown',e=>{if(e.key==='Escape')closeFind()});
 fr.addEventListener('click',e=>{const b=e.target.closest('.mit');if(!b)return;const d=D[+b.dataset.i];closeFind();
  if(d[3]==='go')go(d[4]);else if(d[3]==='me')window.ccOpenMe(d[4]);else if(d[3]==='out'){window.ccSignOut&&window.ccSignOut()}else if(d[3]==='srch'){go('explore');setTimeout(()=>{const t=document.querySelector('#xt [data-x="sr"]');if(t)t.click();const i=$('#sq');if(i)i.focus()},60)}});

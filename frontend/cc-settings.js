@@ -102,13 +102,18 @@
       document.head.appendChild(apc);
     }
     var ap = card('Appearance'), apRows = [];
-    [['light', 'Light', 'Bright and clean', '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'],
-     ['dark', 'Dark', 'Easier on the eyes at night', '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'],
-     ['system', 'Match my phone', 'Follows your phone setting', '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>']].forEach(function (o) {
-      var r = row(ic(o[3]), o[1], o[2], '', function () { if (window.ccSetTheme) ccSetTheme(o[0]); apPaint(); });
-      r.appendChild(el('span', 'ccset-ck')); r.setAttribute('data-th', o[0]); ap.appendChild(r); apRows.push(r);
-    });
-    function apPaint() { var cur = window.ccGetTheme ? ccGetTheme() : 'light'; apRows.forEach(function (r) { r.classList.toggle('on', r.getAttribute('data-th') === cur); }); }
+    function isDark() { var c = window.ccGetTheme ? ccGetTheme() : 'light'; if (c === 'system') { try { return window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { return false; } } return c === 'dark'; }
+    function swRow(icon, title, sub, key, get, set) {
+      var r = el('div', 'ccset-row'); r.setAttribute('role', 'switch'); r.tabIndex = 0; r.setAttribute('data-th', key);
+      r.innerHTML = '<span class="ic">' + icon + '</span><span class="tx"></span><span class="ccset-sw"></span>';
+      r.querySelector('.tx').appendChild(el('b', '', title)); r.querySelector('.tx').appendChild(el('small', '', sub));
+      function flip() { set(!get()); apPaint(); }
+      r.onclick = flip; r.onkeydown = function (e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); } };
+      ap.appendChild(r); apRows.push({ el: r, get: get });
+    }
+    swRow(ic('<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'), 'Dark mode', 'Switch between light and dark.', 'dark', isDark, function (on) { if (window.ccSetTheme) ccSetTheme(on ? 'dark' : 'light'); });
+    swRow(ic('<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>'), 'Match my phone', 'Follows your phone setting.', 'system', function () { return window.ccGetTheme ? ccGetTheme() === 'system' : false; }, function (on) { if (window.ccSetTheme) ccSetTheme(on ? 'system' : (isDark() ? 'dark' : 'light')); });
+    function apPaint() { apRows.forEach(function (x) { x.el.setAttribute('aria-checked', x.get() ? 'true' : 'false'); }); }
     apPaint();
 
     /* Security: the lock is a switch (Face ID or fingerprint), the rest of the security entries sit under it */
@@ -173,3 +178,4 @@
     open();
   }, true);
 })();
+

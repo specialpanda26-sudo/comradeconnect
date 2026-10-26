@@ -1,0 +1,11 @@
+/* cc-fix7.css: loaded after cc-fix1.css so it wins. */
+/* 1. extra tabs hidden */
+html body #tb button[data-v="live"][data-v],
+html body #tb button[data-v="mbogi"][data-v],
+html body #tb button[data-v="rewards"][data-v],
+html body #tb #ccsettab[aria-label]{display:none!important}
+/* 2. no dot on the open tab */
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on::after,
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2::after,
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on:not(.dot)::after,
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2:not(.dot)::after{content:none!important;display:none!important;width:0!important;height:0!important;margin:0!important}

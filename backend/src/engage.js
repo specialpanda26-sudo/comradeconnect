@@ -2,6 +2,7 @@
 import { json, err, sb, rows, enc, inList, user, ago, DAY } from './lib.js';
 import { getSettings } from './settings.js';
 import { alias } from './stories.js';
+import { badgeKind } from './lib.js';
 
 const kenyaDay = (t = Date.now()) => new Date(t + 3 * 3600e3).toISOString().slice(0, 10);
 const dayList = (n) => Array.from({ length: n }, (_, i) => kenyaDay(Date.now() - (n - 1 - i) * DAY));   // oldest first, ending today
@@ -27,7 +28,7 @@ export async function engageRoutes(req, env, url, ip) {
     const sold = await rows(await sb(env, `orders?select=id,listing_id,seller_aid,amount,created_at&status=eq.released&created_at=gte.${enc(ago(30 * DAY))}&order=created_at.desc&limit=2000`));
     if (!sold.length) return json(env, { sellers: [], categories: [], recent: [], total_sales: 0, days: 30 });
     const aids = [...new Set(sold.map((o) => o.seller_aid))];
-    const profs = await rows(await sb(env, `profiles?select=aid,banned,verified,badge&aid=${inList(aids)}`));
+    const profs = await rows(await sb(env, `profiles?select=aid,banned,verified,badge,role,student_verified&aid=${inList(aids)}`));
     const bad = new Set(profs.filter((p) => p.banned).map((p) => p.aid));
     const ok = sold.filter((o) => !bad.has(o.seller_aid));
     const by = new Map();
@@ -38,7 +39,7 @@ export async function engageRoutes(req, env, url, ip) {
     const sellers = [];
     for (const s of top) {
       const p = profs.find((x) => x.aid === s.aid) || {}, rs = stars.filter((x) => x.seller_aid === s.aid);
-      sellers.push({ alias: me && !(me instanceof Response) && me.aid === s.aid ? 'You' : await alias(env, s.aid), mine: !!me && !(me instanceof Response) && me.aid === s.aid, sales: s.sales, verified: !!p.verified, badge: p.badge || null, rating: rs.length ? +(rs.reduce((a, x) => a + x.stars, 0) / rs.length).toFixed(1) : null, ratings: rs.length });
+      sellers.push({ alias: me && !(me instanceof Response) && me.aid === s.aid ? 'You' : await alias(env, s.aid), mine: !!me && !(me instanceof Response) && me.aid === s.aid, sales: s.sales, verified: !!p.verified, badge: p.badge || null, kind: badgeKind(p), rating: rs.length ? +(rs.reduce((a, x) => a + x.stars, 0) / rs.length).toFixed(1) : null, ratings: rs.length });
     }
     const ls = await rows(await sb(env, `listings?select=id,title,category,price&id=${inList(ok.slice(0, 200).map((o) => o.listing_id))}`));
     const cats = new Map(); for (const o of ok.slice(0, 200)) { const c = (ls.find((l) => l.id === o.listing_id) || {}).category; if (c) cats.set(c, (cats.get(c) || 0) + 1); }

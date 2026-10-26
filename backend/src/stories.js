@@ -5,6 +5,7 @@ import * as store from './storage.js';
 import { mediaUrl, MEDIA_BUCKET } from './storage.js';
 import { json, err, sb, rows, one, post, patch, enc, inList, str, UUID, H, user, authProfile, throttle, tooMany, contactBlock, ago, DAY } from './lib.js';
 import { notify, notifySnippet } from './notifications.js';
+import { badgeKind } from './lib.js';
 
 export const STORY_HOURS = 24;
 const ADJ = ['Quiet', 'Swift', 'Bold', 'Calm', 'Sunny', 'Brave', 'Sharp', 'Gentle', 'Lucky', 'Witty', 'Kind', 'Wild', 'Clever', 'Chill', 'Bright', 'Steady'];
@@ -27,7 +28,7 @@ export async function storyRoutes(req, env, url, ip) {
     const r = await rows(await sb(env, `media?kind=in.(${STORY_KINDS})&status=eq.ready&created_at=gte.${enc(since())}&order=created_at.asc&limit=300`));
     if (!r.length) return json(env, { groups: [] });
     const aids = [...new Set(r.map((x) => x.aid))];
-    const profs = await rows(await sb(env, `profiles?select=aid,banned,verified,badge&aid=${inList(aids)}`));
+    const profs = await rows(await sb(env, `profiles?select=aid,banned,verified,badge,role,student_verified&aid=${inList(aids)}`));
     const bad = new Set(profs.filter((p) => p.banned).map((p) => p.aid));
     const ok = r.filter((x) => !bad.has(x.aid));
     const ids = ok.map((x) => x.id);
@@ -46,7 +47,7 @@ export async function storyRoutes(req, env, url, ip) {
     const out = [];
     for (const g of groups.values()) {
       const p = profs.find((q) => q.aid === g.aid) || {}, mine = !!me && me.aid === g.aid;
-      out.push({ alias: mine ? 'Your story' : await alias(env, g.aid), mine, verified: !!p.verified, badge: p.badge || null, items: g.items, seen: g.items.every((i) => i.seen), latest: g.items[g.items.length - 1].at });
+      out.push({ alias: mine ? 'Your story' : await alias(env, g.aid), mine, verified: !!p.verified, badge: p.badge || null, kind: badgeKind(p), items: g.items, seen: g.items.every((i) => i.seen), latest: g.items[g.items.length - 1].at });
     }
     out.sort((a, b) => (b.mine - a.mine) || ((a.seen ? 1 : 0) - (b.seen ? 1 : 0)) || (b.latest - a.latest));
     return json(env, { groups: out, hours: STORY_HOURS });

@@ -2,11 +2,12 @@
 // Sits in front of adminRoutes. Ban, unban, mute, unmute and role stay in admin.js: this file passes those through untouched.
 import { json, err, sb, rows, one, post, patch, enc, str, int, randHex, H, isAdmin, audit, contactBlock, hashPassword, goodPassword, DAY } from './lib.js';
 import { balance } from './account.js';
+import { badgeKind } from './lib.js';
 
 const SAFE = 'aid,handle,points,verified,student_verified,role,banned,muted_until,google_sub,badge,created_at,recovery_hash';
 const kind = (p) => (p.google_sub ? 'google' : String(p.recovery_hash || '').startsWith('pw1:') ? 'password' : 'guest');   // how this person signs in
 const pub = (p) => ({ aid: p.aid, handle: p.handle || null, points: p.points || 0, verified: !!p.verified, student_verified: !!p.student_verified, role: p.role || 'user', banned: !!p.banned,
-  muted_until: p.muted_until || null, badge: p.badge || null, created_at: p.created_at, type: kind(p) });
+  muted_until: p.muted_until || null, badge: p.badge || null, badge_kind: badgeKind(p), created_at: p.created_at, type: kind(p) });
 const day = (t) => new Date(Date.parse(t) + 3 * 3600e3).toISOString().slice(0, 10);          // Kenya days (UTC+3)
 const tally = (list, f) => list.reduce((o, x) => { const k = f(x); o[k] = (o[k] || 0) + 1; return o; }, {});
 
@@ -78,7 +79,7 @@ export async function adminUserRoutes(req, env, url, ip) {
   }
   if (m !== 'POST') return null;
   const b = await req.clone().json().catch(() => ({})), act = b.action;
-  if (!['password', 'signout', 'delete'].includes(act)) return null;                        // ban, unban, mute, unmute and role are handled in admin.js
+  if (!['password', 'signout', 'delete', 'badge'].includes(act)) return null;                        // ban, unban, mute, unmute and role are handled in admin.js
   const p = await one(await sb(env, `${q}&select=aid,handle`)); if (!p) return err(env, 'No such account', 404);
   const lock = async () => H(env, 'tok:' + randHex(24));                                     // a token nobody knows: every phone using the account is signed out
 
@@ -89,6 +90,16 @@ export async function adminUserRoutes(req, env, url, ip) {
     return json(env, { ok: true });
   }
   if (act === 'signout') { await patch(env, q, { token_hash: await lock() }); await A('user.signout', 'user', aid, null); return json(env, { ok: true }); }
+
+  // badge: blue (official), pink (business), the Comrade Connect account badge, or none. Students get their black badge by themselves.
+  if (act === 'badge') {
+    const MAP = { none: null, official: 'Official', business: 'Business', cc: 'Comrade Connect' };
+    if (!(String(b.kind) in MAP)) return err(env, 'Unknown badge');
+    const badge = MAP[b.kind];
+    await patch(env, q, badge ? { badge, verified: true } : { badge: null });
+    await A('user.badge', 'user', aid, { badge });
+    return json(env, { ok: true });
+  }
 
   // delete: the person can never sign in again, the username is freed and their listings come down. Orders and money history stay for your records.
   const bal = await balance(env, aid);

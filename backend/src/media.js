@@ -6,7 +6,7 @@ import { isWholesaler } from './wholesale.js';
 import { getSettings } from './settings.js';
 import { HOSTEL_PHOTOS } from './hostels.js';
 import { SERVICE_PHOTOS, SERVICE_VIDEOS, SERVICE_VIDEO_MB } from './serviceworks.js';
-import { audit } from './lib.js';
+import { audit, badgeKind } from './lib.js';
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, randHex, throttle, tooMany, user, authProfile, isAdmin, ahead, DAY } from './lib.js';
 
 const VERIFY_ROLES = ['Student', 'Class rep', 'Student leader', 'Club official', 'Hostel rep', 'Lecturer or staff', 'Local seller'];
@@ -159,7 +159,7 @@ export async function mediaRoutes(req, env, url, ip) {
   if (path === '/api/verify/status' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;
     const v = await one(await sb(env, `verifications?select=status,decision_note,claimed_role,barcode_check,created_at&aid=eq.${enc(u.aid)}&order=created_at.desc&limit=1`));
-    return json(env, { verified: !!u.verified, badge: u.badge || null, request: v || null });
+    return json(env, { verified: !!u.verified, student: !!u.student_verified, badge: u.badge || null, kind: badgeKind(u), request: v || null });
   }
 
   // ---- Live: the host streams on YouTube / Facebook / TikTok / Twitch (free) and pastes the live link here. Hosts: admin key, or a profile with role club_admin/admin ----

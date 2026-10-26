@@ -9,6 +9,7 @@ import { creditFor, creditForMany, spendPoints, giveBack, giveBackShare, awardPo
 
 const CATS = ['General', 'Electronics', 'Books', 'Clothes', 'Furniture', 'Food', 'Services', 'Other'];
 import { mediaUrl } from './storage.js';
+import { badgeKind } from './lib.js';
 import { ratingMap, myRatings } from './ratings.js';
 
 async function decorate(env, list, me) {          // photos + seller handle, never the seller's aid
@@ -23,7 +24,7 @@ async function decorate(env, list, me) {          // photos + seller handle, nev
       id: l.id, title: l.title, description: l.description, category: l.category, price: l.price, zone: l.zone, condition: l.condition,
       status: l.status, reject_reason: me && me.aid === l.seller_aid ? l.reject_reason : undefined,
       photos: photos.filter((x) => x.listing_id === l.id).map((x) => mediaUrl(env, x.r2_key)),
-      seller: { handle: p?.handle || 'Seller', verified: !!p?.verified, student: !!p?.student_verified, rating: rt[l.seller_aid] || null },
+      seller: { handle: p?.handle || 'Seller', verified: !!p?.verified, student: !!p?.student_verified, kind: badgeKind(p), rating: rt[l.seller_aid] || null },
       contact_phone: me && me.aid === l.seller_aid ? l.contact_phone || undefined : undefined,
       mine: !!me && me.aid === l.seller_aid, createdAt: Date.parse(l.created_at),
     };

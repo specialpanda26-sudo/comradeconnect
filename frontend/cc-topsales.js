@@ -30,7 +30,7 @@ function body() {
   b.appendChild(t);
   var list = el('div');
   if (tab === 's') D.sellers.forEach(function (s, i) {
-    var r = el('div', 'tp-r' + (s.mine ? ' me' : '')), x = el('div', 'tp-x'), n = el('b', '', s.alias); if (s.verified && window.ccVerified) n.insertAdjacentHTML('beforeend', window.ccVerified(15)); x.appendChild(n); x.appendChild(el('small', '', stars(s)));
+    var r = el('div', 'tp-r' + (s.mine ? ' me' : '')), x = el('div', 'tp-x'), n = el('b', '', s.alias); if (s.verified && window.ccVerified) n.insertAdjacentHTML('beforeend', window.ccVerified(15, s.kind)); x.appendChild(n); x.appendChild(el('small', '', stars(s)));
     r.appendChild(el('span', 'tp-k', String(i + 1))); r.appendChild(x); r.appendChild(el('span', 'tp-v', s.sales + (s.sales === 1 ? ' sale' : ' sales'))); list.appendChild(r);
   });
   if (tab === 'c') { var max = D.categories.reduce(function (m, c) { return Math.max(m, c.sales); }, 1); D.categories.forEach(function (c) {

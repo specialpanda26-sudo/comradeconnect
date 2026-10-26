@@ -110,6 +110,26 @@ export async function authProfile(req, env) {
   if (!p || !p.token_hash) return null;
   return tsEqual(p.token_hash, await H(env, 'tok:' + tok)) ? p : null;
 }
+// Which badge a profile shows: 'cc' (the Comrade Connect account, blue, one of a kind), 'official' (blue), 'business' (pink), 'student' (black) or null.
+// cc / official / business are given by the admin (admin > Users > Badge) or by an approved ID request; students get theirs from ID or email checks.
+export function badgeKind(p) {
+  if (!p) return null;
+  const b = String(p.badge || '');
+  if (b === 'Comrade Connect') return 'cc';
+  if (['admin', 'club_admin', 'staff', 'official'].includes(p.role)) return 'official';
+  if (b && /^(business|local seller)$/i.test(b)) return 'business';
+  if (b && (p.verified || p.badge)) return 'official';
+  if (p.verified || p.student_verified) return 'student';
+  return null;
+}
+// Names nobody may take (they could be mistaken for the website itself). The Comrade Connect account itself is exempt.
+const RESERVED = ['comradeconnect', 'comrade', 'official', 'admin', 'administrator', 'support', 'staff', 'moderator', 'mod', 'help', 'team', 'ceo'];
+export const reservedHandle = (env, handle, u) => {
+  if (u && u.badge === 'Comrade Connect') return false;
+  const h = String(handle || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const extra = String(env.RESERVED_HANDLES || '').split(',').map((x) => x.trim().toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean);
+  return RESERVED.includes(h) || extra.includes(h) || /^comrade?connect/.test(h);
+};
 export const isMuted = (p) => !!(p?.muted_until && new Date(p.muted_until) > new Date());
 // Use: const u = await user(req, env, true); if (u instanceof Response) return u;
 export async function user(req, env, write = false) {

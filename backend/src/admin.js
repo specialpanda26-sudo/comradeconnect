@@ -132,7 +132,7 @@ export async function adminRoutes(req, env, url, ip) {
     }));
     if (!v) return err(env, 'Request is not waiting for review', 409);
     if (act === 'approve') {
-      const badge = b.badge !== false && v.claimed_role && v.claimed_role !== 'Student' && v.claimed_role !== 'Local seller' ? v.claimed_role : null;   // admin can approve the ID but refuse the role badge
+      const badge = b.badge !== false && v.claimed_role && v.claimed_role !== 'Student' ? (v.claimed_role === 'Local seller' ? 'Business' : v.claimed_role) : null;   // admin can approve the ID but refuse the role badge
       await patch(env, `profiles?aid=eq.${enc(v.aid)}`, badge ? { verified: true, badge } : { verified: true });
     }
     await A('verification.' + act, 'verification', v.id, { note: b.note || null, badge: act === 'approve' ? b.badge !== false : null });

@@ -1,6 +1,7 @@
 // Accounts, wallet, withdrawals and referrals.
 import { json, err, sb, rows, one, post, patch, enc, str, int, UUID, H, tsEqual, randHex, throttle, bump, tooMany, user, authProfile, contactBlock, ahead, ago, DAY, hashPassword, checkPassword, goodPassword } from './lib.js';
 import { credit } from './pay.js';
+import { badgeKind, reservedHandle } from './lib.js';
 import { getSettings, withdrawFee, publicConfig } from './settings.js';
 import { trySendNow, reconcilePayouts } from './payouts.js';
 import { notify } from './notifications.js';
@@ -80,6 +81,7 @@ export async function accountRoutes(req, env, url, ip) {
     if (b.password !== undefined && b.password !== null && b.password !== '') {       // the person chose a username and a password: no random code
       const handle = str(b.handle, 20), pw = String(b.password);
       if (!/^[A-Za-z0-9_]{3,20}$/.test(handle)) return err(env, 'Username: 3 to 20 letters, numbers or _');
+      if (reservedHandle(env, handle)) return err(env, 'That username is reserved. Please choose another.', 403);
       const blk = contactBlock(env, handle); if (blk) return blk;
       const weak1 = await passwordProblem(env, pw, handle); if (weak1) return err(env, weak1);
       const res = await post(env, 'profiles', { aid, handle, token_hash: await H(env, 'tok:' + token), recovery_hash: await hashPassword(pw), referral_code: refcode });
@@ -178,12 +180,13 @@ export async function accountRoutes(req, env, url, ip) {
   if (path === '/api/me' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;
     const pw = await one(await sb(env, `profiles?select=recovery_hash&aid=eq.${enc(u.aid)}`));
-    return json(env, { has_password: !!(pw && String(pw.recovery_hash || '').startsWith('pw1:')), aid: u.aid, handle: u.handle, points: u.points, verified: u.verified, student_verified: !!u.student_verified, badge: u.badge || null, role: u.role, adult_confirmed: u.adult_confirmed, referral_code: u.referral_code, balance: await balance(env, u.aid) });
+    return json(env, { has_password: !!(pw && String(pw.recovery_hash || '').startsWith('pw1:')), aid: u.aid, handle: u.handle, points: u.points, verified: u.verified, student_verified: !!u.student_verified, badge: u.badge || null, badge_kind: badgeKind(u), role: u.role, adult_confirmed: u.adult_confirmed, referral_code: u.referral_code, balance: await balance(env, u.aid) });
   }
   if (path === '/api/me/handle' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const handle = str((await body()).handle, 20);
     if (!/^[A-Za-z0-9_]{3,20}$/.test(handle)) return err(env, 'Handle: 3 to 20 letters, numbers or _');
+    if (reservedHandle(env, handle, u)) return err(env, 'That name is reserved. Please choose another.', 403);
     const blk = contactBlock(env, handle); if (blk) return blk;
     const res = await patch(env, `profiles?aid=eq.${enc(u.aid)}`, { handle });
     if (res.status === 409) return err(env, 'That handle is taken', 409);
@@ -195,6 +198,7 @@ export async function accountRoutes(req, env, url, ip) {
     if (!(await throttle(env, ip, 'cred', u.aid, 10, 30))) return tooMany(env);
     const b = await body(), handle = str(b.handle, 20), pw = String(b.password || '');
     if (!/^[A-Za-z0-9_]{3,20}$/.test(handle)) return err(env, 'Username: 3 to 20 letters, numbers or _');
+    if (reservedHandle(env, handle, u)) return err(env, 'That username is reserved. Please choose another.', 403);
     const blk = contactBlock(env, handle); if (blk) return blk;
     const weak2 = await passwordProblem(env, pw, handle); if (weak2) return err(env, weak2);
     const cur = await one(await sb(env, `profiles?select=recovery_hash&aid=eq.${enc(u.aid)}`));

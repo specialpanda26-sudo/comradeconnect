@@ -495,7 +495,7 @@ const SHLD = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12
 function sellerBits(l) {
   const s = l.seller || {}, a = [];
   if (s.rating && s.rating.count) a.push('\u2605 ' + Number(s.rating.avg) + ' (' + Number(s.rating.count) + ')');
-  if (s.verified) a.push((window.ccVerified ? window.ccVerified(14) + ' ' : '') + 'Verified seller'); else if (s.student) a.push('Student');
+  if (s.verified) a.push((window.ccVerified ? window.ccVerified(14, s.kind || 'student') + ' ' : '') + (s.kind === 'business' ? 'Verified business' : 'Verified seller')); else if (s.student) a.push('Student');
   return a;
 }
 function draw() {
@@ -904,6 +904,7 @@ async function syncVer() {
     else if (r && r.status === 'pending') ME.ver = { st: 'pending', role: r.claimed_role || 'Student', bc: { st: r.barcode_check || 'none' } };
     else if (r && r.status === 'rejected') ME.ver = { st: 'rejected', role: r.claimed_role || 'Student', note: r.decision_note || '' };
     else ME.ver = null;
+    ME.stu = !!d.student; ME.kind = d.kind || null;
     saveMe(); if (typeof drawVer === 'function') drawVer();
   } catch (e) { /* offline: keep what the phone last knew */ }
 }

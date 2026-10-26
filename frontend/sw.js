@@ -79,3 +79,14 @@ async function ccShare(req) {
   } catch (x) {}
   return Response.redirect(SHARE_HOME + '?shared=1', 303);
 }
+
+/* cc-fix4: tapping a notification brings the app forward and opens the right place */
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const v = (e.notification.data && e.notification.data.view) || '';
+  e.waitUntil((async () => {
+    const cs = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of cs) { if ('focus' in c) { await c.focus(); c.postMessage({ ccOpen: v }); return; } }
+    if (self.clients.openWindow) await self.clients.openWindow('/');
+  })());
+});

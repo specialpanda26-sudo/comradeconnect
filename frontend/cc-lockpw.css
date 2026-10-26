@@ -60,3 +60,9 @@ html body #lk.lkg.lkg.rec .lkfp2{width:58px;height:58px;border:1.5px solid var(-
 html body #lk.lkg.lkg.rec .lklinks{margin:20px 0 0;font:500 13.5px Poppins,sans-serif}
 html body #lk.lkg.lkg.rec .lklinks a{color:var(--pw-txt)!important;font-weight:600;text-decoration:none;border-bottom:1.5px solid rgba(254,129,60,.6);padding-bottom:1px}
 @media (prefers-reduced-motion:reduce){html body #lk.lkg.lkg.rec .lkfld,#lk .lkbad,#lkr.busy:after{animation-duration:0s!important}}
+
+/* no-waves v1 */
+html body #lk.lkg.lkg .lkfp:before,html body #lk.lkg.lkg .lkfp:after{content:none!important;display:none!important;animation:none!important}
+html body #lk.lkg.lkg .lkfp svg path{animation:lkd 1s ease forwards!important}
+html body #lk.lkg.lkg .lkface svg path{animation:none!important;stroke-dasharray:none!important;stroke-dashoffset:0!important}
+html body #lk.lkg.lkg .lkface svg .fb{animation:none!important}

@@ -1,4 +1,4 @@
-/* cc-gate-curve.js v2: Get started, Login and Sign up headers.
+/* cc-gate-curve.js v3: Get started, Login and Sign up headers.
    Same brand row, title and subtitle spacing on every page; a gentler swoosh curve that never touches the words.
    The black starts as a full-screen curtain and retracts upward while the form fades in step by step. Colors are untouched. */
 (function () {
@@ -40,5 +40,9 @@ function apply(r) {
     });
   }).observe(app, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
 }
-setInterval(function () { var h = document.getElementById('ccgate'); if (h && h.shadowRoot) apply(h.shadowRoot); }, 300);
+/* The curtain rules must be in place BEFORE the first paint. Waiting for a 300 ms timer (and a deferred script) let the white sheet with its black
+   U-shaped curve show for a moment at launch, ahead of the Comrade Connect splash. A MutationObserver runs before the browser draws. */
+function check() { var h = document.getElementById('ccgate'); if (h && h.shadowRoot) { apply(h.shadowRoot); return true; } return false; }
+if (!check()) { var mo = new MutationObserver(function () { if (check()) mo.disconnect(); }); mo.observe(document.documentElement, { childList: true, subtree: true }); }
+setInterval(check, 300);   // safety net: also covers the gate being rebuilt later
 })();

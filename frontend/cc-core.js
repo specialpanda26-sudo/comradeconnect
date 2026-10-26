@@ -761,7 +761,14 @@ async function addPhoto(f) {
   if (S.photos.length >= (window.ccPhotoCap || 5)) return toast((window.ccPhotoCap || 5) > 5 ? 'Up to ' + window.ccPhotoCap + ' photos per listing' : 'Up to 5 photos per listing. Join the wholesalers community (Me page) to add more.');
   try { const blob = await toJpeg(f); S.photos.push({ blob, url: URL.createObjectURL(blob) }); drawPrev(); } catch (e) { toast(e.message || 'Could not use that photo'); }
 }
-['mphi', 'mgi'].forEach((i) => { $('#' + i).onchange = (e) => { addPhoto(e.target.files[0]); e.target.value = ''; }; });
+// The gallery picker takes several photos at once (up to the listing cap); the camera button still takes one at a time.
+{ const mg = $('#mgi'); if (mg) mg.multiple = true; }
+['mphi', 'mgi'].forEach((i) => { $('#' + i).onchange = async (e) => {
+  const fs = Array.from(e.target.files || []); e.target.value = '';
+  const cap = window.ccPhotoCap || 5, room = Math.max(0, cap - S.photos.length);
+  if (fs.length > room && room > 0) toast('Added the first ' + room + '. Up to ' + cap + ' photos per listing.');
+  for (const f of (room ? fs.slice(0, room) : fs.slice(0, 1))) await addPhoto(f);   // with no room left, addPhoto shows the usual limit message
+}; });
 $('#mph').onclick = () => $('#mphi').click(); $('#mgal').onclick = () => $('#mgi').click();
 // Sends a file to Supabase Storage with the one-time upload URL the Worker gave us (same call the official Supabase client makes).
 function putFile(url, blob, type) {

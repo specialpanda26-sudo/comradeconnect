@@ -33,13 +33,16 @@ async function fcmAccess(acc) {
   fcmTok = { v: d.access_token, exp: Date.now() + (d.expires_in || 3600) * 1000 };
   return fcmTok.v;
 }
-async function sendFcm(env, s, payload) {
+export async function sendFcm(env, s, payload) {
   const acc = fcmAccount(env); if (!acc) return;
   const r = await fetch(`https://fcm.googleapis.com/v1/projects/${acc.project_id}/messages:send`, {
     method: 'POST', headers: { Authorization: 'Bearer ' + (await fcmAccess(acc)), 'Content-Type': 'application/json' },
     body: JSON.stringify({ message: { token: s.endpoint.slice(4), notification: { title: String(payload.title || 'Comrade Connect'), body: String(payload.body || '') }, data: { view: String(payload.view || '') }, android: { priority: 'HIGH', notification: { tag: String(payload.tag || 'cc') } } } })
   });
+  const detail = r.ok ? '' : (await r.text().catch(() => '')).slice(0, 300);
+  if (!r.ok) console.error('FCM send failed', r.status, detail);
   if (r.status === 404) await sb(env, `push_subs?endpoint=eq.${enc(s.endpoint)}`, { method: 'DELETE' });   // the app was removed from that phone
+  return { ok: r.ok, status: r.status, detail };
 }
 
 async function hkdf(salt, ikm, info, len) {
@@ -86,7 +89,7 @@ export async function sendPush(env, aid, payload) {
         if (!hasKeys(env)) return;
         const r = await fetch(s.endpoint, { method: 'POST', headers: { Authorization: await vapidAuth(env, s.endpoint), 'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream', TTL: '86400', Urgency: 'high' }, body: await encryptPayload(s, text) });
         if (r.status === 404 || r.status === 410) await sb(env, `push_subs?endpoint=eq.${enc(s.endpoint)}`, { method: 'DELETE' });
-      } catch (e) { /* one bad phone must not stop the others */ }
+      } catch (e) { console.error('push to one phone failed', e && e.message); }
     }));
   } catch (e) { console.error('push failed', e && e.message); }
 }

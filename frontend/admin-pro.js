@@ -28,13 +28,13 @@ const GROUPS = [
   { n: 'Overview', icon: 'grid', h: 'Dashboard', lead: 'Track your users, money and what needs a decision, live.', tabs: ['dashboard'] },
   { n: 'Users', icon: 'users', h: 'Users', lead: 'Find anyone and control their account.', tabs: ['users', 'phones', 'grant'] },
   { n: 'Review', icon: 'inbox', h: 'Waiting for you', lead: 'Everything that needs a decision from you.', tabs: ['listings', 'confirm', 'withdrawals', 'verifications', 'disputes', 'reports', 'payments', 'support'] },
-  { n: 'Market', icon: 'bag', h: 'Market and campus', lead: 'Items, events, notices, sponsors and the club shop.', tabs: ['live', 'events', 'notices', 'sponsors', 'club', 'services'] },
+  { n: 'Market', icon: 'bag', h: 'Market and campus', lead: 'Items, events, notices, sponsors and the club shop.', tabs: ['live', 'events', 'notices', 'sponsors', 'club', 'services', 'push'] },
   { n: 'Kura', icon: 'star', h: 'Kura', lead: 'Contestants, votes and the season.', tabs: ['kura'] },
   { n: 'Joins', icon: 'link', h: 'Joins', lead: 'See who joined what, and remove a join when you need to.', tabs: ['joins'] },
   { n: 'Money', icon: 'wallet', h: 'Money', lead: 'Earnings, fees and payouts.', tabs: ['txns', 'settings', 'payouts'] },
   { n: 'Site', icon: 'sliders', h: 'Site', lead: 'Change the words and switches on the public site, and read the log.', tabs: ['site', 'landing', 'zones', 'postrules', 'audit', 'sql'] },
 ];
-const EXTRA = { joins: 'Joins', services: 'Services', landing: 'Landing and backgrounds', sql: 'SQL' };
+const EXTRA = { joins: 'Joins', services: 'Services', push: 'Phone alerts', landing: 'Landing and backgrounds', sql: 'SQL' };
 Object.keys(EXTRA).forEach((k) => { if (!LABEL[k]) LABEL[k] = EXTRA[k]; });
 const has = (k) => typeof SECTIONS[k] === 'function';
 const groupOf = (t) => Math.max(0, GROUPS.findIndex((g) => g.tabs.indexOf(t) > -1));

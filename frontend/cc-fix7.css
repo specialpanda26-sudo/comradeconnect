@@ -1,13 +1,13 @@
 /* cc-fix7.css: loaded after cc-fix1.css so it wins. */
-/* 1. extra tabs hidden */
+/* 1. only Home, Explore, Market, Watch and Me in the bottom bar */
 html body #tb button[data-v="live"][data-v],
 html body #tb button[data-v="mbogi"][data-v],
 html body #tb button[data-v="rewards"][data-v],
 html body #tb #ccsettab[aria-label]{display:none!important}
-/* 2. no dot on the open tab */
+/* 2. the open tab is expanded with a small dot at the right of its name */
 html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on::after,
 html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2::after,
 html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on:not(.dot)::after,
-html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2:not(.dot)::after{content:none!important;display:none!important;width:0!important;height:0!important;margin:0!important}
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2:not(.dot)::after{content:""!important;display:block!important;position:static!important;width:6px!important;height:6px!important;margin:0 0 0 2px!important;border-radius:50%!important;background:#16130f!important;flex:none!important}
 /* 3. one search only */
 html body nav.g:not(#tb) #fnd[aria-label]{display:none!important}

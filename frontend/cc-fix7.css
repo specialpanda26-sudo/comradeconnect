@@ -9,3 +9,5 @@ html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on::after,
 html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2::after,
 html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on:not(.dot)::after,
 html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2:not(.dot)::after{content:none!important;display:none!important;width:0!important;height:0!important;margin:0!important}
+/* 3. one search only */
+html body nav.g:not(#tb) #fnd[aria-label]{display:none!important}

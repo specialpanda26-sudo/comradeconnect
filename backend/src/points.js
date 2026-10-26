@@ -27,6 +27,17 @@ export async function creditFor(env, aid, price) {
   const usable = Math.min(feeOf(price, S.platform_fee_percent), Math.floor((await pointsBalance(env, aid)) / S.points_per_ksh));
   return { ksh: Math.max(0, usable), pts: Math.max(0, usable) * S.points_per_ksh, rate: S.points_per_ksh };
 }
+// Cart version of creditFor: one balance shared by several items. Each item can only use up to its own platform fee,
+// so the seller of every item still gets their full share. Returns the total plus the KSh credit given to each item, in order.
+export async function creditForMany(env, aid, prices) {
+  const S = await getSettings(env);
+  const fees = prices.map((pr) => feeOf(pr, S.platform_fee_percent));
+  let left = Math.min(fees.reduce((a, b) => a + b, 0), Math.floor((await pointsBalance(env, aid)) / S.points_per_ksh));
+  left = Math.max(0, left);
+  const parts = fees.map((f) => { const c = Math.min(f, left); left -= c; return c; });
+  const ksh = parts.reduce((a, b) => a + b, 0);
+  return { ksh, pts: ksh * S.points_per_ksh, rate: S.points_per_ksh, parts };
+}
 // Take the points for a payment. Returns false (and takes nothing) if the balance is not there.
 export async function spendPoints(env, aid, pts, payId) {
   if (pts <= 0) return true;
@@ -41,6 +52,16 @@ export async function giveBack(env, aid, ref) {
   const [spent] = await rows(await sb(env, `points_ledger?select=delta&kind=eq.spend&ref=eq.${enc(ref)}&limit=1`));
   if (!spent) return false;
   return (await rows(await post(env, 'points_ledger', { aid, delta: -spent.delta, kind: 'spend_back', ref, day: kenyaDay() }, 'resolution=ignore-duplicates,return=representation'))).length > 0;
+}
+
+// Return only one item's share of the points spent on a cart payment (failed item, refunded order). Once per item.
+export async function giveBackShare(env, aid, payId, itemKey, shareKsh, totalKsh) {
+  if (!(shareKsh > 0) || !(totalKsh > 0)) return false;
+  const [spent] = await rows(await sb(env, `points_ledger?select=delta&kind=eq.spend&ref=eq.${enc('pay:' + payId)}&limit=1`));
+  if (!spent) return false;
+  const pts = Math.round((-spent.delta * shareKsh) / totalKsh);
+  if (pts <= 0) return false;
+  return (await rows(await post(env, 'points_ledger', { aid, delta: pts, kind: 'spend_back', ref: 'pay:' + payId + ':' + itemKey, day: kenyaDay() }, 'resolution=ignore-duplicates,return=representation'))).length > 0;
 }
 
 export async function pointsRoutes(req, env, url, ip) {

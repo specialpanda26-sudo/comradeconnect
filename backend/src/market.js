@@ -5,7 +5,7 @@ import { getSettings, feeOf } from './settings.js';
 import { disputeHours } from './trust.js';
 import { isWholesaler, activeListings } from './wholesale.js';
 import { balance } from './account.js';
-import { creditFor, spendPoints, giveBack, awardPoints } from './points.js';
+import { creditFor, creditForMany, spendPoints, giveBack, giveBackShare, awardPoints } from './points.js';
 
 const CATS = ['General', 'Electronics', 'Books', 'Clothes', 'Furniture', 'Food', 'Services', 'Other'];
 import { mediaUrl } from './storage.js';
@@ -42,6 +42,13 @@ export async function releaseOrder(env, id, by, from = ['handed']) {
   await awardPoints(env, o.buyer_aid, 'purchase', o.id, 5).catch(() => {});
   return o;
 }
+// Points come back to the buyer. A plain order gets everything back; an order from a cart payment gets only its own share.
+async function returnPoints(env, o) {
+  const [pay] = await rows(await sb(env, `payments?select=credit_ksh&id=eq.${o.payment_id}`));
+  const total = pay?.credit_ksh || 0;
+  if (!total || total === o.credit_ksh) return giveBack(env, o.buyer_aid, 'pay:' + o.payment_id);
+  return giveBackShare(env, o.buyer_aid, o.payment_id, o.id, o.credit_ksh, total);
+}
 export async function refundOrder(env, id, by) {
   const [o] = await rows(await patch(env, `orders?id=eq.${id}&status=${inList(['held', 'handed', 'disputed'])}`, {
     status: 'refunded', refunded_at: new Date().toISOString(), decided_by: by, dispute_status: 'resolved_refund',
@@ -49,15 +56,18 @@ export async function refundOrder(env, id, by) {
   if (!o) return null;
   const used = o.credit_ksh || 0;   // the buyer paid cash for the price minus the points credit
   if (o.amount - used > 0) await credit(env, o.buyer_aid, o.amount - used, 'refund', o.id, 'Order refunded');
-  if (used > 0) await giveBack(env, o.buyer_aid, 'pay:' + o.payment_id);   // goes to the buyer's wallet; withdraw to M-Pesa is a manual step
+  if (used > 0) await returnPoints(env, o);   // points go back to the buyer; one cart payment can hold several orders, so only this order's share
   await patch(env, `listings?id=eq.${o.listing_id}&status=eq.sold`, { status: 'approved' });
   await patch(env, `referrals?order_id=eq.${o.id}&status=eq.pending`, { status: 'void' });
   return o;
 }
 
 // Called when an 'order' payment is confirmed by the M-Pesa callback.
+// A normal payment has one listing id in ref_id. A cart payment has "id~credit,id~credit": one order per item, one payment for all.
 import { notify } from './notifications.js';
+const cartParts = (p) => String(p.ref_id || '').split(',').filter(Boolean).map((t) => { const [id, c] = t.split('~'); return { id, credit: Math.max(0, parseInt(c, 10) || 0) }; });
 export async function createOrderFromPayment(env, p) {
+  if (/[,~]/.test(String(p.ref_id || ''))) return (await createCartOrders(env, p))[0] || null;
   const [l] = await rows(await patch(env, `listings?id=eq.${p.ref_id}&status=eq.approved`, { status: 'sold' }));   // claim the listing atomically
   if (!l) { await credit(env, p.aid, p.amount, 'refund', 'pay:' + p.id, 'Item no longer available'); if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id); return null; }
   const credit_ksh = p.credit_ksh || 0, price = p.amount + credit_ksh;   // price = cash paid + points credit
@@ -68,11 +78,38 @@ export async function createOrderFromPayment(env, p) {
     status: 'held', code_hash: await codeHash(env, 'order', id, await deriveCode(env, 'order', id, 6)),
   }));
   if (!o) { await patch(env, `listings?id=eq.${l.id}`, { status: 'approved' }); if (credit_ksh) await giveBack(env, p.aid, 'pay:' + p.id); return null; }
-  await patch(env, `referrals?referred_aid=eq.${enc(p.aid)}&status=eq.pending&order_id=is.null`, {
-    order_id: id, unlock_at: ahead(Number(env.REFERRAL_UNLOCK_DAYS || 7) * DAY),
-  });
-  await notify(env, l.seller_aid, 'order', 'You have a new order', 'Someone paid for "' + String(l.title || 'your item').slice(0, 60) + '". Hand it over and enter the buyer\'s code to get paid.', 'order', id);
+  await afterOrderMade(env, p, l, o);
   return o;
+}
+async function afterOrderMade(env, p, l, o) {
+  await patch(env, `referrals?referred_aid=eq.${enc(p.aid)}&status=eq.pending&order_id=is.null`, {
+    order_id: o.id, unlock_at: ahead(Number(env.REFERRAL_UNLOCK_DAYS || 7) * DAY),
+  });
+  await notify(env, l.seller_aid, 'order', 'You have a new order', 'Someone paid for "' + String(l.title || 'your item').slice(0, 60) + '". Hand it over and enter the buyer\'s code to get paid.', 'order', o.id);
+}
+// One payment, several items. Items that were sold meanwhile are refunded to the buyer's wallet (cash and points share), the rest become normal escrow orders.
+export async function createCartOrders(env, p) {
+  const parts = cartParts(p), fee_pct = (await getSettings(env)).platform_fee_percent, made = [];
+  for (const part of parts) {
+    if ((await rows(await sb(env, `orders?select=id&payment_id=eq.${p.id}&listing_id=eq.${enc(part.id)}`))).length) continue;   // already made (a repeated callback must not refund it)
+    const [l0] = await rows(await sb(env, `listings?select=price&id=eq.${enc(part.id)}`));
+    const back = async (why) => {   // give this item's money and points share back
+      const cash = Math.max(0, (l0?.price || 0) - part.credit);
+      if (cash > 0) await credit(env, p.aid, cash, 'refund', 'pay:' + p.id + ':' + part.id, why);
+      if (part.credit > 0) await giveBackShare(env, p.aid, p.id, part.id, part.credit, p.credit_ksh);
+    };
+    const [l] = await rows(await patch(env, `listings?id=eq.${enc(part.id)}&status=eq.approved`, { status: 'sold' }));
+    if (!l) { await back('Item no longer available'); continue; }
+    const price = l.price, fee = feeOf(price, fee_pct), id = crypto.randomUUID();
+    const o = await one(await post(env, 'orders', {
+      id, payment_id: p.id, listing_id: l.id, buyer_aid: p.aid, seller_aid: l.seller_aid, amount: price, fee, seller_amount: price - fee, ...(part.credit ? { credit_ksh: part.credit } : {}),
+      status: 'held', code_hash: await codeHash(env, 'order', id, await deriveCode(env, 'order', id, 6)),
+    }));
+    if (!o) { await patch(env, `listings?id=eq.${l.id}`, { status: 'approved' }); await back('Could not make the order'); continue; }
+    await afterOrderMade(env, p, l, o);
+    made.push(o);
+  }
+  return made;
 }
 
 export async function marketRoutes(req, env, url, ip) {
@@ -132,6 +169,44 @@ export async function marketRoutes(req, env, url, ip) {
   if (path === '/api/market/buy' && m === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const b = await body();
+    if (Array.isArray(b.listing_ids) && b.listing_ids.length > 1) {   // ---- cart: several items, one payment ----
+      const ids = [...new Set(b.listing_ids.map(String))];
+      if (ids.length < 2 || ids.length > 10 || !ids.every((x) => UUID.test(x))) return err(env, 'Your cart can hold 2 to 10 different items');
+      const found = await rows(await sb(env, `listings?id=${inList(ids)}&status=eq.approved`));
+      const ls = ids.map((id) => found.find((x) => x.id === id));
+      if (ls.some((x) => !x)) return err(env, 'An item in your cart was just sold or removed. Open your cart and try again.', 409);
+      if (ls.some((x) => x.seller_aid === u.aid)) return err(env, 'You cannot buy your own item', 400);
+      const price = ls.reduce((a, x) => a + x.price, 0);
+      const c = b.use_points ? await creditForMany(env, u.aid, ls.map((x) => x.price)) : { ksh: 0, pts: 0, parts: ls.map(() => 0) };
+      const cash = price - c.ksh, refId = ids.map((id, i) => id + '~' + c.parts[i]).join(',');
+      if (b.pay_with === 'wallet') {
+        const pid = crypto.randomUUID();
+        if ((await balance(env, u.aid)) < cash) return err(env, 'Not enough wallet balance. Deposit first.', 402);
+        if (c.ksh > 0 && !(await spendPoints(env, u.aid, c.pts, pid))) return err(env, 'Not enough points. Try again without points.', 409);
+        const pr = await one(await post(env, 'payments', { id: pid, aid: u.aid, purpose: 'order', ref_id: refId, amount: cash, phone: 'wallet', ip, status: 'paid', receipt: 'WAL' + pid.replace(/-/g, '').slice(0, 12).toUpperCase(), paid_at: new Date().toISOString(), ...(c.ksh > 0 ? { credit_ksh: c.ksh } : {}) }));
+        if (!pr) { if (c.ksh > 0) await giveBack(env, u.aid, 'pay:' + pid); return err(env, 'Could not start the order', 500); }
+        if (!(await credit(env, u.aid, -cash, 'purchase', 'pay:' + pid, 'Bought ' + ids.length + ' items'))) {
+          await patch(env, `payments?id=eq.${pid}`, { status: 'failed' });
+          if (c.ksh > 0) await giveBack(env, u.aid, 'pay:' + pid);
+          return err(env, 'Wallet payment is not ready yet. Nothing was charged.', 503);
+        }
+        if ((await balance(env, u.aid)) < 0) {
+          await patch(env, `wallet_ledger?kind=eq.purchase&ref=eq.${enc('pay:' + pid)}`, { status: 'void' });
+          await patch(env, `payments?id=eq.${pid}`, { status: 'failed' });
+          if (c.ksh > 0) await giveBack(env, u.aid, 'pay:' + pid);
+          return err(env, 'Not enough wallet balance', 402);
+        }
+        const os = await createCartOrders(env, pr);
+        return os.length ? json(env, { paid: 'wallet', order_ids: os.map((x) => x.id), count: os.length, amount: cash, credit: c.ksh, price }) : err(env, 'These items were just sold. Your money is back in your wallet.', 409);
+      }
+      const r = await initPayment(env, ip, { aid: u.aid, purpose: 'order', ref_id: refId, amount: cash, phone: b.phone, credit_ksh: c.ksh, method: b.method, email: b.email });
+      if (r.res) return r.res;
+      if (c.ksh > 0 && !(await spendPoints(env, u.aid, c.pts, r.id))) {
+        await patch(env, `payments?id=eq.${r.id}&status=eq.pending`, { status: 'failed' });
+        return err(env, 'Not enough points. Try again without points.', 409);
+      }
+      return json(env, { id: r.id, url: r.url, amount: cash, credit: c.ksh, price, count: ids.length });
+    }
     if (!UUID.test(String(b.listing_id || ''))) return err(env, 'Pick an item');
     const l = await one(await sb(env, `listings?id=eq.${b.listing_id}&status=eq.approved`));
     if (!l) return err(env, 'This item is no longer available', 404);

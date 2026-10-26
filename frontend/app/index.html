@@ -320,6 +320,9 @@ select.in{appearance:none;-webkit-appearance:none;background-image:linear-gradie
 .ft h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;color:var(--mut)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* market v2 */
+.addb.in{background:var(--ink);color:var(--inv)}.nc .nt{justify-content:flex-start;margin:0 0 4px}.nc .nt .mchip{padding:6px 11px;font-size:11.5px}.nc .nt .mchip .i{width:14px;height:14px}
+.crm{justify-self:start;font-size:12px;font-weight:700;color:var(--mut);padding:4px 0}.cartot{margin:12px 0}.cartot .tr{display:flex;justify-content:space-between;gap:10px;padding:4px 0}.cartot .tr.pt{color:#5c6d56;font-weight:700}
+.pc .bd small.km{display:block;color:var(--mut)}.empty .btn{margin-top:12px}.chips .chip.pill{scroll-snap-align:start}
 .cbd{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:9px;background:#5c6d56;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;padding:0 4px}
 .mks{display:flex;align-items:center;gap:10px;height:52px;border-radius:26px;background:var(--card);box-shadow:var(--sh);padding:0 8px 0 18px;margin-bottom:12px}
 .mks input{flex:1;min-width:0;border:0;background:none;outline:0;font:inherit;font-size:14px;color:var(--ink)}
@@ -831,20 +834,20 @@ A.ticket=a=>{const e=SEC.events.items[+a];
 };
 /* ===== PAYMENTS (shared) ===== */
 A.payflow=(amount,label,done,opt={})=>{
- let via='M-Pesa',usePts=false;
- const body=()=>`<div class="card" style="margin-bottom:12px"><div class="eyebrow">${esc(label)}</div><div style="font-size:34px;font-weight:800;letter-spacing:-.04em">${kes(usePts?Math.max(0,amount-CCDISC(amount)):amount)}</div>${opt.escrow?'<p class="note">Held in escrow. The seller is paid after you confirm.</p>':''}</div>
+ let via='M-Pesa',usePts=false;const disc=()=>opt.prices?CCDISCMANY(opt.prices):CCDISC(amount);
+ const body=()=>`<div class="card" style="margin-bottom:12px"><div class="eyebrow">${esc(label)}</div><div style="font-size:34px;font-weight:800;letter-spacing:-.04em">${kes(usePts?Math.max(0,amount-disc()):amount)}</div>${opt.escrow?'<p class="note">Held in escrow. The seller is paid after you confirm.</p>':''}</div>
  <div class="seg"><button class="${via==='M-Pesa'?'on':''}" data-v="M-Pesa">M-Pesa</button><button class="${via==='Card'?'on':''}" data-v="Card">Card</button>${S.wholesaler||S.wallet>=amount?`<button class="${via==='Wallet'?'on':''}" data-v="Wallet">Wallet</button>`:''}</div>
  ${via==='M-Pesa'?field('M-Pesa number','<input class="in" id="pn" inputmode="tel" placeholder="07__ ___ ___">'):via==='Card'?'<p class="sub1" style="margin-bottom:12px">Card payments (Visa and Mastercard) run on IntaSend\'s own secure page. Card numbers never reach Comrade Connect.</p>':`<p class="sub1" style="margin-bottom:12px">Pay from your wallet balance: ${kes(S.wallet)}.</p>`}
- ${opt.escrow?`<div class="row" style="margin-bottom:12px"><span class="ri">${ic('gift')}</span><span class="rx"><b>Use points</b><small>${CCDISC(amount)>0?(CCDISC(amount)*CCPERKSH())+' points save KES '+CCDISC(amount)+' on our fee.':'Points can pay part of our fee.'} You have ${S.points}.</small></span>${sw('up',usePts)}</div>`:''}
- <button class="btn o" id="pgo">${via==='Card'?'Continue to secure card page':'Pay '+kes(usePts?Math.max(0,amount-CCDISC(amount)):amount)}</button><p class="note">Never share your M-Pesa PIN with anyone.</p>`;
- const m=sh=>{$$('.seg button',sh).forEach(b=>b.onclick=()=>{via=b.dataset.v;paint()});const u=$('#up',sh);if(u)u.onchange=()=>{usePts=u.checked&&CCDISC(amount)>0;if(u.checked&&!usePts)toast('You have no points to use on this');paint()};
+ ${opt.escrow?`<div class="row" style="margin-bottom:12px"><span class="ri">${ic('gift')}</span><span class="rx"><b>Use points</b><small>${disc()>0?(disc()*CCPERKSH())+' points save KES '+disc()+' on our fee.':'Points can pay part of our fee.'} You have ${S.points}.</small></span>${sw('up',usePts)}</div>`:''}
+ <button class="btn o" id="pgo">${via==='Card'?'Continue to secure card page':'Pay '+kes(usePts?Math.max(0,amount-disc()):amount)}</button><p class="note">Never share your M-Pesa PIN with anyone.</p>`;
+ const m=sh=>{$$('.seg button',sh).forEach(b=>b.onclick=()=>{via=b.dataset.v;paint()});const u=$('#up',sh);if(u)u.onchange=()=>{usePts=u.checked&&disc()>0;if(u.checked&&!usePts)toast('You have no points to use on this');paint()};
   $('#pgo',sh).onclick=()=>{
    /* Real pay hook: CC.pay({amount,label,via,phone,usePoints,escrow}) must return a Promise that resolves on confirmed payment. */
    if(!(window.CC&&typeof CC.pay==='function')){toast('Payments are not connected yet');return}
-   const btn=$('#pgo',sh);btn.disabled=true;const pay=usePts?Math.max(0,amount-CCDISC(amount)):amount;
+   const btn=$('#pgo',sh);btn.disabled=true;const pay=usePts?Math.max(0,amount-disc()):amount;
    Promise.resolve().then(()=>CC.pay({amount:pay,label,via,phone:(($('#pn',sh)||{}).value||'').trim(),usePoints:usePts,escrow:!!opt.escrow}))
     .then(()=>{if(usePts)CCMETA().then(refresh);receipt(label,pay,via);done&&done()},e=>{btn.disabled=false;toast((e&&e.message)||'Payment failed')})}};
- const paint=()=>{const sh=$('#sheet');const h=sh.querySelector('.sh-h').outerHTML;sh.innerHTML='<div class="grab"></div>'+h+body();m(sh)};
+ const paint=()=>{const sh=$('#sheet');const pn=(($('#pn',sh)||{}).value||'');const h=sh.querySelector('.sh-h').outerHTML;sh.innerHTML='<div class="grab"></div>'+h+body();m(sh);const q=$('#pn',sh);if(q&&pn)q.value=pn};
  openSheet('Pay',body(),m);
 };
 function receipt(item,amount,via){
@@ -882,7 +885,7 @@ A.prod=a=>{const p=PRODS.find(x=>x.id==a);
  <div class="stk"><button class="btn o" data-act="buy" data-arg="${p.id}">Buy with escrow · ${kes(p.p)}</button><div class="two"><button class="btn w sm" style="width:100%" data-act="dm" data-arg="x">Message seller</button><button class="btn w sm" style="width:100%" data-act="psave" data-arg="${p.id}">Save</button></div><button class="btn w sm" style="width:100%" data-act="report" data-arg="scam">${ic('flag','s')} Report a scam</button></div>`)};
 A.buy=a=>{const p=PRODS.find(x=>x.id==a);A.payflow(p.p,p.t,()=>{ORDERS.unshift({id:'O-'+(1043+ORDERS.length),t:p.t,p:p.p,step:0,code:String(Math.floor(1e5+Math.random()*9e5)),role:'buyer'});S.mkTab='orders';refresh();pts(5,'first purchase')},{escrow:1})};
 A.sell=()=>{
- openSheet('Sell an item',`${field('Item','<input class="in" id="sn" maxlength="60" placeholder="e.g. Desk lamp">')}${field('Price (KES)','<input class="in" id="sp" type="number" inputmode="numeric">')}<div class="two">${field('Category',sel('sc2',['Books','Electronics','Furniture','Clothes','Food']))}${field('Zone',sel('sz2',ZONES))}</div>${field('Photos',`<button class="btn w" data-act="upl">${ic('plus','s')} Add photos ${S.wholesaler?'(unlimited)':'(up to 5 · more with Wholesaler)'}</button>`)}${field('Contact phone (shown to the buyer only after they pay)','<input class="in" inputmode="tel" placeholder="07__ ___ ___">')}<button class="btn o" id="sg">Send for review</button><p class="note">Every listing is reviewed by an admin before it goes live.</p>`,sh=>{$('#sg',sh).onclick=()=>{const t=$('#sn',sh).value.trim(),p=+$('#sp',sh).value;if(!t||!p)return toast('Add an item name and price');MYL.unshift({t,p,status:'Pending review'});closeSheet();refresh();toast('Sent for admin review')}})};
+ openSheet('Sell an item',`${field('Item','<input class="in" id="sn" maxlength="60" placeholder="e.g. Desk lamp">')}${field('Price (KES)','<input class="in" id="sp" type="number" inputmode="numeric">')}<div class="two">${field('Category',sel('sc2',['Books','Electronics','Furniture','Clothes','Food','Services','Other']))}${field('Zone',sel('sz2',ZONES))}</div>${field('Photos',`<button class="btn w" data-act="upl">${ic('plus','s')} Add photos ${S.wholesaler?'(unlimited)':'(up to 5 · more with Wholesaler)'}</button>`)}${field('Contact phone (shown to the buyer only after they pay)','<input class="in" inputmode="tel" placeholder="07__ ___ ___">')}<button class="btn o" id="sg">Send for review</button><p class="note">Every listing is reviewed by an admin before it goes live.</p>`,sh=>{$('#sg',sh).onclick=()=>{const t=$('#sn',sh).value.trim(),p=+$('#sp',sh).value;if(!t||!p)return toast('Add an item name and price');MYL.unshift({t,p,status:'Pending review'});closeSheet();refresh();toast('Sent for admin review')}})};
 A.cartopen=()=>push('club');
 
 /* ===== WATCH: videos + live ===== */
@@ -1153,48 +1156,64 @@ A.secprompt=()=>A.mesheet('secure');
 /* ===== MARKET v2: near-you cards, recommended list, grid, map, cart ===== */
 (()=>{
 const mkOld=R.market;S.mc={};S.mkView='near';
-const CI={All:'star',Books:'book',Electronics:'zap',Furniture:'building',Clothes:'tag',Food:'coffee'};
-const cnt=()=>Object.values(S.mc).reduce((a,b)=>a+b,0);
+const CI={All:'star',Books:'book',Electronics:'zap',Furniture:'building',Clothes:'tag',Food:'coffee',Services:'users',Other:'more'};
+const MAINC=['Books','Electronics','Furniture','Clothes','Food','Services'];
+const inCat=(p,c)=>c==='All'||(c==='Other'?!MAINC.includes(p.c):p.c===c);
+/* distance: worked out from the seller's zone (we do not track exact locations), so it is a close estimate */
+const ZKM={'On campus':.5,'Kerugoya':1.1,'Kutus':1.8,'Kagio':3.4},ZPOS={'On campus':[30,62],'Kerugoya':[46,38],'Kutus':[66,54],'Kagio':[74,22]};
+const km=p=>{const b=ZKM[p.z]!=null?ZKM[p.z]:2.6;return Math.round((b+(p.id%4)*.1)*10)/10};
+const kmt=p=>km(p).toFixed(1)+' km';
+const bg=p=>p.photos&&p.photos[0]?`background-image:url('${esc(p.photos[0])}');background-size:cover;background-position:center`:'';
+const cnt=()=>Object.keys(S.mc).filter(k=>S.mc[k]>0&&PRODS.some(p=>String(p.id)===k)).length;
+const cartItems=()=>Object.keys(S.mc).map(i=>PRODS.find(x=>String(x.id)===i)).filter(Boolean);
+const saveCart=()=>{try{localStorage.setItem('cc_cart_v1',JSON.stringify(cartItems().map(p=>p.uid).filter(Boolean)))}catch(e){}};
+window.ccCartSave=saveCart;window.ccCartItems=cartItems;
+window.ccCartRestore=()=>{try{JSON.parse(localStorage.getItem('cc_cart_v1')||'[]').forEach(u=>{const p=PRODS.find(x=>x.uid===u);if(p&&!S.mc[p.id])S.mc[p.id]=1})}catch(e){}saveCart()};
 const cartBtn=()=>`<button class="rb" data-act="cartopen" aria-label="Cart">${ic('cart')}${cnt()?`<span class="cbd">${cnt()}</span>`:''}</button>`;
 const heart=p=>`<button class="hb ${S.saved[p.id]?'on':''}" data-act="psave" data-arg="${p.id}" aria-label="Save">${ic('heart','s')}</button>`;
-const nearCard=p=>`<div class="nc gb ${grads[p.id%5]}" data-act="prod" data-arg="${p.id}"><div class="nn">${esc(p.t)}</div><div class="big"><small>KES</small>${p.p>=1000?(p.p/1000).toFixed(1).replace('.0','')+'k':p.p}</div><div class="nf"><span>${esc(p.s)}'s stall</span><button class="addb" data-act="addcart" data-arg="${p.id}" aria-label="Add to cart">${ic('plus','s')}</button></div></div>`;
-const recCard=p=>`<div class="rc" data-act="prod" data-arg="${p.id}"><div class="th gb ${grads[p.id%5]}"></div><div class="rx2"><b>${esc(p.t)}</b><span class="by">by ${esc(p.s)}</span><span class="mt2"><span class="stx">${ic('star','s')}</span>${p.st?p.st.toFixed(1):'New'}</span></div><div class="rp"><b>${kes(p.p)}</b><button class="addb" data-act="addcart" data-arg="${p.id}" aria-label="Add to cart">${ic('plus','s')}</button></div></div>`;
+const addBtn=(p,cls,i)=>{const on=!!S.mc[p.id];return `<button class="addb ${cls||''} ${on?'in':''}" data-act="addcart" data-arg="${p.id}" aria-label="${on?'In your cart':'Add to cart'}">${ic(on?'check':(i||'plus'),'s')}</button>`};
+const nearCard=p=>`<div class="nc gb ${grads[p.id%5]}" data-act="prod" data-arg="${p.id}"><div class="nt"><span class="mchip dk">${ic('pin','s')}${kmt(p)}</span>${km(p)<=1?`<span class="mchip gr">${ic('zap','s')}Fast pickup</span>`:''}</div><div class="nn">${esc(p.t)}</div><div class="big"><small>KES</small>${p.p>=1000?(p.p/1000).toFixed(1).replace('.0','')+'k':p.p}</div><div class="nf"><span>${esc(p.s)}'s stall</span>${addBtn(p)}</div></div>`;
+const recCard=p=>`<div class="rc" data-act="prod" data-arg="${p.id}"><div class="th gb ${grads[p.id%5]}" style="${bg(p)}"></div><div class="rx2"><b>${esc(p.t)}</b><span class="by">${esc(p.c||'Item')} · by ${esc(p.s)}</span><span class="mt2"><span class="stx">${ic('star','s')}</span>${p.st?p.st.toFixed(1):'New'} · ${kmt(p)} away</span></div><div class="rp"><b>${kes(p.p)}</b>${addBtn(p)}</div></div>`;
+const noMatch=()=>`<div class="empty">${S.mkQ?'Nothing matches "'+esc(S.mkQ)+'".':(S.mkCat==='All'?'No items yet.':'No '+esc(S.mkCat.toLowerCase())+' listed yet.')}</div>${S.mkQ||S.mkCat!=='All'?`<button class="btn w" data-act="mkclear">Show everything</button>`:''}<button class="btn k" data-act="sell" style="margin-top:10px">Sell an item</button>`;
+A.mkclear=()=>{S.mkCat='All';S.mkQ='';refresh()};
 R.market=()=>{
  if(S.mkTab!=='browse')return mkOld();
- const cats=['All','Books','Electronics','Furniture','Clothes','Food'];
- let L=PRODS.filter(p=>(S.mkCat==='All'||p.c===S.mkCat)&&(!S.mkQ||p.t.toLowerCase().includes(S.mkQ)));
+ const cats=['All','Books','Electronics','Furniture','Clothes','Food','Services','Other'];
+ let L=PRODS.filter(p=>inCat(p,S.mkCat)&&(!S.mkQ||(p.t+' '+(p.d||'')+' '+(p.c||'')+' '+(p.s||'')+' '+(p.z||'')).toLowerCase().includes(S.mkQ)));
  if(S.mkSort==='lo')L=[...L].sort((a,b)=>a.p-b.p);if(S.mkSort==='hi')L=[...L].sort((a,b)=>b.p-a.p);
  const V=(S.mkView==='grid'||S.mkView==='map')?S.mkView:'near',sel=L.find(x=>x.id==S.mkSel)||L[0];
+ const pos=p=>{const z=ZPOS[p.z]||[52,46];return `left:${Math.max(8,Math.min(86,z[0]+((p.id*29)%17)-8))}%;top:${Math.max(8,Math.min(80,z[1]+((p.id*43)%15)-7))}%`};
  return `${head('Market','Buy and sell with other comrades',cartBtn())}
  <div class="seg">${[['browse','Browse'],['mine','My listings'],['orders','Orders']].map(([k,l])=>`<button class="${S.mkTab===k?'on':''}" data-act="mktab" data-arg="${k}">${l}</button>`).join('')}</div>
  <div class="mks">${ic('search','s')}<input id="mkq" value="${esc(S.mkQ||'')}" placeholder="Search beds, tables, fridges..." aria-label="Search the market"><button data-act="mksortn" aria-label="Sort">${ic('sliders','s')}</button></div>
  <div class="chips">${cats.map(c=>`<button class="chip pill ${S.mkCat===c?'on':''}" data-act="mkcat" data-arg="${c}"><i>${ic(CI[c],'s')}</i>${c}</button>`).join('')}</div>
  <div class="promo gb b2" data-act="escrowinfo" role="button" tabindex="0" aria-label="How escrow protects you"><div><b>Pay safe, get 5 points</b><span>On your first purchase held in escrow</span><button data-act="shopnow">Shop now</button></div><i>${ic('shield')}</i></div>
  <div class="vt">${[['near','Near you'],['grid','Grid'],['map','Map']].map(([k,l])=>`<button class="${V===k?'on':''}" data-act="mkview" data-arg="${k}">${l}</button>`).join('')}</div>
- ${V==='map'?(sel?`<div class="mmap"><div class="road r1"></div><div class="road r2"></div><div class="road r3"></div><div class="park"></div><span class="mme"></span>${L.map(p=>`<button class="pin gb ${grads[p.id%5]} ${sel.id===p.id?'on':''}" style="left:${12+((p.id*29)%72)}%;top:${10+((p.id*43)%64)}%" data-act="mkpin" data-arg="${p.id}" aria-label="${esc(p.t)}"></button>`).join('')}</div><div class="mcard"><div class="mt3"><div><b>${esc(sel.t)}</b><span>${esc(sel.z||'')} · by ${esc(sel.s)}</span></div>${heart(sel)}</div><div class="th2 gb ${grads[sel.id%5]}" data-act="prod" data-arg="${sel.id}"></div><div class="mb3"><b>${kes(sel.p)}</b><button class="addb lg" data-act="addcart" data-arg="${sel.id}" aria-label="Add to cart">${ic('cart','s')}</button></div></div>`:'<div class="empty">No items match.</div>')
- :V==='grid'?`<div class="pgrid">${L.map(p=>`<div class="pc"><div class="im gb ${grads[p.id%5]}">${heart(p)}<button class="addb ab" data-act="addcart" data-arg="${p.id}" aria-label="Add to cart">${ic('plus','s')}</button></div><button class="bd" data-act="prod" data-arg="${p.id}" style="text-align:left;width:100%;display:block"><b>${esc(p.t)}</b><div class="pr">${kes(p.p)}</div><small>${p.st?p.st.toFixed(1)+' ★':'New'}</small></button></div>`).join('')||'<div class="empty">No items match.</div>'}</div>`
- :`<div class="sx"><b>Items near you</b><button data-act="mkview" data-arg="grid">View all</button></div><div class="hs">${[...L].slice(0,5).map(nearCard).join('')||'<div class="empty">No items match.</div>'}</div>
- <div class="sx"><b>Recommended for you</b><button data-act="mkview" data-arg="grid">View all</button></div>${L.map(recCard).join('')}`}`};
+ ${V==='map'?(sel?`<div class="mmap"><div class="road r1"></div><div class="road r2"></div><div class="road r3"></div><div class="park"></div><span class="mme"></span>${L.map(p=>`<button class="pin gb ${grads[p.id%5]} ${sel.id===p.id?'on':''}" style="${pos(p)}" data-act="mkpin" data-arg="${p.id}" aria-label="${esc(p.t)}"></button>`).join('')}</div><div class="mcard"><div class="mt3"><div><b>${esc(sel.t)}</b><span>${esc(sel.z||'')} · by ${esc(sel.s)}</span></div>${heart(sel)}</div><div class="th2 gb ${grads[sel.id%5]}" style="${bg(sel)}" data-act="prod" data-arg="${sel.id}"></div><div class="mb3"><b>${kes(sel.p)}</b><span class="mchip dk">${ic('pin','s')}${kmt(sel)}</span>${addBtn(sel,'lg','cart')}</div></div>`:noMatch())
+ :V==='grid'?(L.length?`<div class="pgrid">${L.map(p=>`<div class="pc"><div class="im gb ${grads[p.id%5]}" style="${bg(p)}">${heart(p)}${addBtn(p,'ab')}</div><button class="bd" data-act="prod" data-arg="${p.id}" style="text-align:left;width:100%;display:block"><b>${esc(p.t)}</b><div class="pr">${kes(p.p)}</div><small>${p.st?p.st.toFixed(1)+' ★':'New'} · ${esc(p.c||'Item')}</small><small class="km">${kmt(p)} away</small></button></div>`).join('')}</div>`:noMatch())
+ :(L.length?`<div class="sx"><b>Items near you</b><button data-act="mkview" data-arg="grid">View all</button></div><div class="hs">${[...L].sort((a,b)=>km(a)-km(b)).slice(0,6).map(nearCard).join('')}</div>
+ <div class="sx"><b>Recommended for you</b><button data-act="mkview" data-arg="grid">View all</button></div>${L.map(recCard).join('')}`:noMatch())}`};
 A.mkview=a=>{S.mkView=a;refresh()};A.mkpin=a=>{S.mkSel=+a;refresh()};
 A.mksortn=()=>{S.mkSort=S.mkSort==='new'?'lo':S.mkSort==='lo'?'hi':'new';toast('Sorted: '+({new:'Newest',lo:'Price low to high',hi:'Price high to low'})[S.mkSort]);refresh()};
 A.shopnow=()=>{if(S.tab!=='market'||S.stack.length){S.stack=[];S.tab='market'}S.mkTab='browse';S.mkView='grid';render();const el=$('#v-market');if(el)el.scrollTop=0;setTimeout(()=>{const v=$('#v-market .vt');if(v&&el)el.scrollTo({top:Math.max(0,v.offsetTop-12),behavior:'smooth'})},80);toast('Tap + on anything to add it to your cart')};
 A.escrowinfo=()=>openSheet('How escrow protects you',`<p class="sub1" style="margin-bottom:12px">Your money is held safely. The seller only gets paid after you have the item.</p><ol class="prog" style="gap:10px;margin-bottom:12px">${['You pay. The money is held in escrow, not sent to the seller.','You meet the seller on campus and check the item.','Give the seller your 6-digit code only when you are happy.','The seller is paid. Problem? Open a dispute and an admin reviews it.'].map(t=>`<li class="done" style="color:var(--ink)"><i style="width:26px;height:26px">${ic('check','s')}</i>${t}</li>`).join('')}</ol><p class="note" style="margin-bottom:14px">Your first escrow purchase earns you 5 points. Admins watch the Market and remove anything unsafe.</p><button class="btn o" data-act="escrowgo">Shop now</button><button class="btn w" style="margin-top:10px" data-act="legal" data-arg="Refunds &amp; disputes">Refunds and disputes</button>`);
 A.escrowgo=()=>{closeSheet();A.shopnow()};
-A.addcart=a=>{S.mc[a]=(S.mc[a]||0)+1;const p=PRODS.find(x=>x.id==a);toast(esc(p.t)+' added to cart');if($('#sheet').classList.contains('on')&&$('#cartsum'))cartSheet();else refresh()};
-A.cartqty=a=>{const[i,d]=a.split(':');S.mc[i]=(S.mc[i]||0)+ +d;if(S.mc[i]<=0)delete S.mc[i];cartSheet();refresh()};
+/* cart: every listing is one-of-a-kind, so each item goes in once. One payment covers the whole cart. */
+A.addcart=a=>{const p=PRODS.find(x=>x.id==a);if(!p)return;
+ if(S.mc[a]){cartSheet();return}
+ S.mc[a]=1;saveCart();toast(p.t+' added to cart');if($('#sheet').classList.contains('on')&&$('#cartsum'))cartSheet();else refresh()};
+A.cartqty=a=>{const i=String(a).split(':')[0];delete S.mc[i];saveCart();cartSheet();refresh()};
 function cartSheet(){
- const it=Object.keys(S.mc).map(i=>PRODS.find(x=>x.id==i)),tot=it.reduce((a,p)=>a+p.p*S.mc[p.id],0);
- openSheet('Your cart',it.length?`<div id="cartsum">${it.map(p=>`<div class="rc ci"><div class="th gb ${grads[p.id%5]}"></div><div class="rx2"><b>${esc(p.t)}</b><span class="by">by ${esc(p.s)}</span><div class="qty"><button data-act="cartqty" data-arg="${p.id}:-1" aria-label="Less">−</button><b>${S.mc[p.id]}</b><button data-act="cartqty" data-arg="${p.id}:1" aria-label="More">+</button></div></div><div class="rp"><b>${kes(p.p*S.mc[p.id])}</b></div></div>`).join('')}</div><div class="card" style="margin:12px 0"><div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${kes(tot)}</b></div><p class="note">Held in escrow. The platform fee (${CCFEE()}%) is taken from the seller's share, not added to yours.</p></div><div class="stk"><button class="btn k" data-act="cartpay">Pay with escrow · ${kes(tot)}</button><button class="btn w" data-act="closesheet">Keep shopping</button></div>`:`<div class="empty">Your cart is empty.</div><button class="btn k" data-act="closesheet">Browse the market</button>`)}
+ const it=cartItems(),tot=it.reduce((a,p)=>a+p.p,0),d=it.length?CCDISCMANY(it.map(p=>p.p)):0,ppk=CCPERKSH();
+ openSheet('Your cart',it.length?`<div id="cartsum">${it.map(p=>`<div class="rc ci"><div class="th gb ${grads[p.id%5]}" style="${bg(p)}"></div><div class="rx2"><b>${esc(p.t)}</b><span class="by">${esc(p.c||'Item')} · by ${esc(p.s)}</span><button class="crm" data-act="cartqty" data-arg="${p.id}:-1">Remove</button></div><div class="rp"><b>${kes(p.p)}</b></div></div>`).join('')}</div><div class="card cartot"><div class="tr"><span>${it.length} item${it.length>1?'s':''}</span><b>${kes(tot)}</b></div>${d>0?`<div class="tr pt"><span>${d*ppk} points can cover</span><b>- ${kes(d)}</b></div>`:''}<p class="note">Held in escrow. One payment covers everything. Turn on "Use points" at checkout to take points off our fee.${d>0?'':' You can use points once you earn some.'}</p></div><div class="stk"><button class="btn k" data-act="cartpay">Checkout · ${kes(tot)}</button><button class="btn w" data-act="closesheet">Keep shopping</button></div>`:`<div class="empty">Your cart is empty.</div><button class="btn k" data-act="closesheet">Browse the market</button>`)}
 A.cartopen=()=>cartSheet();
-A.cartpay=()=>{const it=Object.keys(S.mc).map(i=>PRODS.find(x=>x.id==i)),tot=it.reduce((a,p)=>a+p.p*S.mc[p.id],0);
- A.payflow(tot,'Cart · '+cnt()+' item'+(cnt()>1?'s':''),()=>{it.forEach(p=>ORDERS.unshift({id:'O-'+(1043+ORDERS.length),t:p.t,p:p.p*S.mc[p.id],step:0,code:String(Math.floor(1e5+Math.random()*9e5)),role:'buyer'}));S.mc={};S.mkTab='orders';refresh();pts(5,'first purchase')},{escrow:1})};
-A.prod=a=>{const p=PRODS.find(x=>x.id==a);if(!p)return;const sp=[['Category',p.c],['Zone',p.z],['Rating',p.st?p.st.toFixed(1)+' ★':'No ratings yet']];
- openSheet(null,`<div class="pim gb ${grads[p.id%5]}"><span class="pico">${ic(CI[p.c])}</span><button class="rb sm" data-act="closesheet" aria-label="Close" style="position:absolute;top:12px;left:12px">${ic('x','s')}</button>${heart(p)}</div>
+A.prod=a=>{const p=PRODS.find(x=>x.id==a);if(!p)return;const sp=[['Category',p.c||'Item'],['Zone',p.z],['Distance',kmt(p)],['Rating',p.st?p.st.toFixed(1)+' ★':'No ratings yet']];
+ openSheet(null,`<div class="pim gb ${grads[p.id%5]}"><span class="pico">${ic(CI[p.c]||'tag')}</span><button class="rb sm" data-act="closesheet" aria-label="Close" style="position:absolute;top:12px;left:12px">${ic('x','s')}</button>${heart(p)}</div>
  <div class="ph"><h2>${esc(p.t)}</h2><div class="pp">Per <b>${kes(p.p)}</b></div></div><div class="pl">${ic('pin','s')} ${esc(p.z)} · by <b>${esc(p.s)}</b></div>
  <div class="specs">${sp.map(([k,v])=>`<div class="sp1"><small>${k}</small><b>${esc(v)}</b></div>`).join('')}</div>
  <h3 class="dh">Description</h3><p class="sub1">${p.d?esc(p.d)+' ':''}Meet at the gate or the Market pickup point. Your money stays in escrow until you confirm with your 6-digit code.</p>
  <div class="card" style="margin-top:12px;padding:14px"><b>How escrow works</b><ol class="prog" style="margin-top:10px;gap:8px">${STEPS.map(s=>`<li class="done" style="color:var(--ink)"><i style="width:26px;height:26px">${ic('check','s')}</i>${s}</li>`).join('')}</ol><p class="note">Platform fee ${CCFEE()}%, taken from the seller's share.</p></div>
- <div class="pbar"><div class="two"><button class="btn w" data-act="addcart" data-arg="${p.id}">${ic('cart','s')} Add to cart${S.mc[p.id]?' ('+S.mc[p.id]+')':''}</button><button class="btn k" data-act="buy" data-arg="${p.id}">Reserve now</button></div></div><div class="two" style="margin-top:10px"><button class="btn w sm" style="width:100%" data-act="dm" data-arg="x">Message seller</button><button class="btn w sm" style="width:100%" data-act="report" data-arg="scam">${ic('flag','s')} Report a scam</button></div>`,sh=>{const s=sh.querySelector(".specs");if(s)s.scrollLeft=0})};
+ <div class="pbar"><div class="two"><button class="btn w" data-act="addcart" data-arg="${p.id}">${ic(S.mc[p.id]?'check':'cart','s')} ${S.mc[p.id]?'In your cart':'Add to cart'}</button><button class="btn k" data-act="buy" data-arg="${p.id}">Reserve now</button></div></div><div class="two" style="margin-top:10px"><button class="btn w sm" style="width:100%" data-act="dm" data-arg="x">Message seller</button><button class="btn w sm" style="width:100%" data-act="report" data-arg="scam">${ic('flag','s')} Report a scam</button></div>`,sh=>{const s=sh.querySelector(".specs");if(s)s.scrollLeft=0})};
 })();
 
 /* ===== TECH BOT: same features as the live app (menu, tour, docs + PDF, ask support), blinking eyes ===== */
@@ -1832,6 +1851,7 @@ window.CCFEE=function(){return CFG&&typeof CFG.fee_percent==='number'?CFG.fee_pe
 window.CCPERKSH=function(){return(CFG&&CFG.points_per_ksh)||10};
 window.CCWS=function(){return{fee:(CFG&&CFG.wholesale_fee)||100,days:(CFG&&CFG.wholesale_days)||30}};
 /* KES of our fee that points can cover on this price (same rule as the server: min(fee, floor(points / rate))) */
+window.CCDISCMANY=function(prices){var t=0;prices.forEach(function(p){t+=Math.floor(p*CCFEE()/100+1e-9)});return Math.max(0,Math.min(t,Math.floor((S.points||0)/CCPERKSH())))};
 window.CCDISC=function(amount){var fee=Math.floor(amount*CCFEE()/100+1e-9);return Math.max(0,Math.min(fee,Math.floor((S.points||0)/CCPERKSH())))};
 /* wallet balance, wholesaler status, points balance */
 window.CCMETA=async function(){
@@ -1852,6 +1872,7 @@ async function loadProds(){
   while(more&&page<=5){var d=await jget('/api/market/listings?page='+page+'&limit=30');(d.listings||[]).forEach(function(l){all.push(l)});more=!!d.hasMore;page++}
   PRODS.length=0;all.map(toProd).filter(function(p){return!p.mine}).forEach(function(p){PRODS.push(p)});
   Object.keys(S.mc||{}).forEach(function(k){if(!PRODS.some(function(p){return String(p.id)===String(k)}))delete S.mc[k]});
+  if(window.ccCartRestore)ccCartRestore();
   PAT=Date.now();refresh();
  }catch(e){}}
 var STX={pending:'Pending review',approved:'Live',rejected:'Rejected',sold:'Sold'};
@@ -1911,17 +1932,16 @@ A.buy=function(a){
  var p=PRODS.find(function(x){return x.id==a});if(!p)return;
  if(!signedIn())return need();
  A.payflow(p.p,p.t,function(){S.mkTab='orders';Promise.all([loadOrders(),loadProds(),CCMETA()]).then(refresh)},{escrow:1,ctx:{purpose:'order',listing_id:p.uid}})};
-/* every item is its own escrow order: the cart pays its items one after another (each is a separate payment) */
+/* the cart is ONE payment (one M-Pesa prompt). The server still makes one escrow order per item, so every seller gets their own code. */
 A.cartpay=function(){
- var ids=Object.keys(S.mc||{}).filter(function(k){return PRODS.some(function(p){return String(p.id)===k})});if(!ids.length)return;
+ var it=(window.ccCartItems?ccCartItems():[]);if(!it.length)return;
  if(!signedIn())return need();
- var n=ids.length;
- (function step(i){
-  var p=PRODS.find(function(x){return String(x.id)===ids[i]});
-  if(!p){if(i+1<n)step(i+1);return}
-  A.payflow(p.p,n>1?'Item '+(i+1)+' of '+n+' · '+p.t:p.t,function(){
-   delete S.mc[ids[i]];S.mkTab='orders';Promise.all([loadOrders(),loadProds(),CCMETA()]).then(refresh);
-   if(i+1<n)setTimeout(function(){toast('Next item');step(i+1)},1400)},{escrow:1,ctx:{purpose:'order',listing_id:p.uid}})})(0)};
+ var n=it.length,tot=it.reduce(function(a,p){return a+p.p},0);
+ var ctx=n>1?{purpose:'order',listing_ids:it.map(function(p){return p.uid})}:{purpose:'order',listing_id:it[0].uid};
+ A.payflow(tot,'Cart \u00B7 '+n+' item'+(n>1?'s':''),function(){
+  it.forEach(function(p){delete S.mc[p.id]});if(window.ccCartSave)ccCartSave();
+  S.mkTab='orders';Promise.all([loadOrders(),loadProds(),CCMETA()]).then(refresh)},
+  {escrow:1,prices:it.map(function(p){return p.p}),ctx:ctx})};
 var _prod=A.prod;
 A.prod=function(a){
  _prod.apply(this,arguments);
@@ -2018,7 +2038,7 @@ CC.pay=async function(o){
  var method=card?'card':undefined,d;
  try{
   if(c.purpose==='order'){
-   d=await jpost('/api/market/buy',{listing_id:c.listing_id,phone:phone,use_points:!!o.usePoints,method:method,pay_with:wallet?'wallet':undefined})}
+   d=await jpost('/api/market/buy',{listing_id:c.listing_id,listing_ids:c.listing_ids,phone:phone,use_points:!!o.usePoints,method:method,pay_with:wallet?'wallet':undefined})}
   else if(c.purpose==='wholesale'){
    d=await jpost('/api/wholesale/join',{phone:phone,method:wallet?'wallet':method})}
   else{

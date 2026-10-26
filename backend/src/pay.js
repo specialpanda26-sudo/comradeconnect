@@ -134,7 +134,7 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   if (mode === 'tinypesa' && !tinyOk) { console.error('payments: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY or TINYPESA_USERNAME is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (mode === 'intasend' && !intaReady(env) && !tinyOk) { console.error('payments: PAYMENT_MODE=intasend but neither INTASEND_PUBLISHABLE_KEY nor INTASEND_SECRET_KEY is set on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (!phone || !(amount >= 1) || amount > 250000 || !aid) return { res: err(env, 'Check the phone number and amount') };
-  const pr = await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, 100) : null, amount, phone, ip, boost_hours: boost_hours || null, ...(credit_ksh > 0 ? { credit_ksh } : {}) });
+  const pr = await post(env, 'payments', { aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, purpose === 'order' ? 600 : 100) : null, amount, phone, ip, boost_hours: boost_hours || null, ...(credit_ksh > 0 ? { credit_ksh } : {}) });
   const pj = await pr.json().catch(() => null);
   const row = Array.isArray(pj) ? pj[0] : null;
   if (!row) { console.error('payments: could not save the payment row (is supabase/schema.sql fully run?)', pr.status, JSON.stringify(pj).slice(0, 300)); return { res: err(env, 'Server could not save the payment', 500) }; }
@@ -317,7 +317,7 @@ export async function payRoutes(req, env, url, ip) {
     const out = { status: p.status, receipt: p.receipt, amount: p.amount };
     if (p.fail_reason) out.reason = p.fail_reason;
     if (manualMode(env) && p.status === 'pending') out.manual = manualInfo(env, p);
-    if (p.purpose === 'order' && p.status === 'paid') { const [o] = await rows(await sb(env, `orders?select=id&payment_id=eq.${id}`)); out.order_id = o?.id || null; }
+    if (p.purpose === 'order' && p.status === 'paid') { const os = await rows(await sb(env, `orders?select=id&payment_id=eq.${id}`)); out.order_id = os[0]?.id || null; out.order_ids = os.map((x) => x.id); }
     return json(env, out);
   }
   return null;

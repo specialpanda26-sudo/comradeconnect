@@ -138,13 +138,14 @@
     var sec = document.createElement('section'); sec.className = 'view pg'; sec.id = 'v-mbogi';
     sec.innerHTML = '<h2 class="ph">Mbogi Talk</h2>'
       + '<div class="box g"><div class="mbg-hero"><span class="mbg-logo">' + ico('logo', 2) + '</span><div><h3>Mbogi Talk</h3><p class="sub">Video meetings for your mbogi: study groups, clubs, hostel hangouts. Free, up to 12 people.</p></div></div></div>'
-      + '<div class="box g" id="mbg-start"><h3>Start a meeting</h3><div class="fld"><input id="mbg-title" maxlength="60" placeholder="Meeting name (optional)" aria-label="Meeting name"></div><button type="button" class="btn p mbg-btn" id="mbg-new">' + ico('cam') + 'New meeting</button></div>'
+      + '<div class="box g" id="mbg-start"><h3>Start a meeting</h3><div class="fld"><input id="mbg-title" maxlength="60" placeholder="Meeting name (optional)" aria-label="Meeting name"></div><button type="button" class="btn p mbg-btn" id="mbg-new">' + ico('cam') + 'New meeting</button><button type="button" class="btn g mbg-btn" id="mbg-link" style="margin-top:8px">' + ico('share') + 'Create meeting link</button></div>'
       + '<div class="box g" id="mbg-made" hidden></div>'
       + '<div class="box g"><h3>Join with a code</h3><div class="fld"><input id="mbg-code" maxlength="60" placeholder="abc-defg-hij" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Meeting code"></div><button type="button" class="btn p" id="mbg-join">Join</button></div>'
       + '<div class="box g" id="mbg-rec" hidden></div>'
       + '<p class="sub" style="font-size:12px">Be kind and keep it clean. Never share phone numbers, passwords or M-Pesa codes in a meeting. The host can end the meeting any time.</p>';
     live.parentNode.insertBefore(sec, live.nextSibling);
     $('#mbg-new').onclick = createMeeting;
+    $('#mbg-link').onclick = createLink;
     $('#mbg-join').onclick = function () { var c = parseCode($('#mbg-code').value); if (!c) return say('Type the code, like abc-defg-hij'); openJoin(c); };
     $('#mbg-code').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); $('#mbg-join').click(); } };
     $('#mbg-code').oninput = function () {                       // typed "abcdefghij" becomes abc-defg-hij
@@ -194,6 +195,41 @@
       made = { code: d.code, title: d.title }; remember(d.code, d.title); $('#mbg-title').value = ''; drawLobby();
     } catch (er) { say(er.message); }
     b.disabled = false;
+  }
+
+  /* ---------- Create meeting link: makes the meeting, then a sheet with the link ---------- */
+  async function createLink(e) {
+    var b = e.currentTarget, t = (($('#mbg-title') || {}).value || '').trim();
+    if (!AGORA) return say('Video is not set up yet. The admin must add the video key.');
+    b.disabled = true;
+    try {
+      var d = await call('/api/mbogi/create', { body: { title: t } });
+      made = { code: d.code, title: d.title }; remember(d.code, d.title); if ($('#mbg-title')) $('#mbg-title').value = ''; drawLobby(); linkSheet(made);
+    } catch (er) { say(er.message); }
+    b.disabled = false;
+  }
+  function linkSheet(mt) {
+    var link = linkOf(mt.code), text = 'Join my Mbogi Talk' + (mt.title ? ' "' + mt.title + '"' : '') + ' on Comrade Connect: ' + link;
+    var m = document.createElement('div'); m.className = 'ccm-sh'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Meeting link');
+    m.innerHTML = '<div class="box g"><div class="flex items-center justify-between"><h3>Your meeting link</h3><button type="button" data-k="x" aria-label="Close" style="background:none;border:0;color:inherit;padding:4px;cursor:pointer;line-height:0">' + ico('x') + '</button></div>'
+      + '<p class="sub" id="mbg-ls-t" style="margin:6px 0 10px"></p><div class="mbg-big" id="mbg-ls-l" style="font-size:15px;overflow-wrap:anywhere;word-break:break-all"></div>'
+      + '<div class="mbg-row"><button type="button" class="btn g mbg-btn" data-k="cl">' + ico('copy') + 'Copy link</button><button type="button" class="btn g mbg-btn" data-k="sh">' + ico('share') + 'Share</button></div>'
+      + '<button type="button" class="btn g mbg-btn" data-k="wa">WhatsApp</button>'
+      + '<button type="button" class="btn p mbg-btn" data-k="go">' + ico('cam') + 'Start now</button>'
+      + '<button type="button" class="btn g" data-k="x">Close</button></div>';
+    $('#mbg-ls-t', m).textContent = mt.title || 'Mbogi Talk'; $('#mbg-ls-l', m).textContent = link;
+    var xs = m.querySelector('button[data-k="x"] svg'); if (xs) xs.style.cssText = 'width:20px;height:20px;display:block';
+    m.onclick = function (e) {
+      if (e.target === m) return m.remove();
+      var b = e.target.closest('button'); if (!b) return;
+      var k = b.dataset.k;
+      if (k === 'x') m.remove();
+      else if (k === 'cl') copy(link, 'Link copied');
+      else if (k === 'sh') invite(mt.code, mt.title);
+      else if (k === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+      else if (k === 'go') { m.remove(); openJoin(mt.code); }
+    };
+    document.body.appendChild(m);
   }
 
   /* ---------- pre-join sheet: camera choice + mic ---------- */

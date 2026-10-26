@@ -449,7 +449,7 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
 <link rel="stylesheet" href="cc-edge.css?v=1"><link rel="stylesheet" href="cc-blend.css?v=1"><link rel="stylesheet" href="cc-guide.css?v=2"><script src="cc-tiles.js?v=4" defer></script><link rel="stylesheet" href="cc-otp.css?v=3"><script src="cc-verified.js?v=2"></script><link rel="stylesheet" href="cc-redesign.css?v=2"><link rel="stylesheet" href="cc-watch2.css?v=1"><link rel="stylesheet" href="cc-motion.css?v=1"><link rel="stylesheet" href="cc-flow.css?v=1"><link rel="stylesheet" href="cc-polish.css?v=1"><link rel="stylesheet" href="cc-verify.css?v=1"></head>
 <body data-view="feed"><noscript><main style="padding:24px;font-family:sans-serif;color:#fff;background:#000"><h1>Comrade Connect: Kenyan university comrades</h1><p>The anonymous campus feed, safe marketplace with escrow, Hearts, roommates and study groups for Kenyan university comrades. Turn on JavaScript to use the app.</p></main></noscript>
 <div class="bg"><i></i><i></i><svg class="mt" viewBox="0 0 1200 320" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path class="f2" d="M0 320V230L90 215 200 190 300 150 380 110 440 80 500 40 540 12 565 30 600 6 640 45 690 85 760 125 850 150 960 190 1080 215 1200 225V320Z"/><path class="f" d="M0 320V262L150 244 300 226 450 206 600 214 760 226 920 232 1080 246 1200 252V320Z"/><path class="l" d="M0 282Q300 268 600 282T1200 282M0 296Q300 283 600 296T1200 296M0 309Q300 298 600 309T1200 309"/></svg><div class="bw a">SPILL</div><div class="bw b">THE TEA</div></div>
-<script src="cc-gate.js?v=wide1"></script><script src="cc-gate-curve.js?v=8"></script>
+<script src="cc-gate.js?v=wide1"></script><script src="cc-gate-curve.js?v=9"></script>
 
 <nav class="g">
   <b class="nb"><span class="lgo" style="margin:0;font-size:0"></span><span class="wm" style="margin:0;color:var(--fg);font-weight:800;font-size:14px">Comrade Connect</span></b>
@@ -1467,15 +1467,42 @@ function drawVer(){const v=ME.ver,bcT={match:'The barcode matched your number.',
 $('#vgo').onclick=()=>openDm('bdg');{const w=$('#vwdl');if(w)w.onclick=e=>{e.preventDefault();openDm('bdg')}}$('#bdr').onchange=()=>{$('#bdlw').hidden=!RR.includes($('#bdr').value)};
 let BC={st:'none',val:''},armBd=false;
 const norm=x=>String(x).toUpperCase().replace(/[^A-Z0-9]/g,''),loadZX=()=>window.ZXing?Promise.resolve():new Promise((ok,no)=>{const e=document.createElement('script');e.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';e.onload=ok;e.onerror=no;document.head.appendChild(e)});
-async function scanBarcode(file){try{
- if('BarcodeDetector' in window){const fm=await BarcodeDetector.getSupportedFormats(),want=['code_128','code_39','code_93','codabar','ean_13','ean_8','itf','upc_a','qr_code','pdf417','data_matrix'].filter(x=>fm.includes(x)),r=await new BarcodeDetector({formats:want}).detect(await createImageBitmap(file));return r.length?{st:'read',val:r[0].rawValue}:{st:'unread',val:''}}
- await loadZX();const u=URL.createObjectURL(file);try{return{st:'read',val:(await new ZXing.BrowserMultiFormatReader().decodeFromImageUrl(u)).getText()}}catch(e){return{st:'unread',val:''}}finally{URL.revokeObjectURL(u)}
-}catch(e){return{st:'unsupported',val:''}}}
-function bcState(){if(BC.st==='none')return'none';if(BC.st!=='read')return BC.st;const n=norm($('#bdn').value),v=norm(BC.val);return n&&(v.includes(n)||n.includes(v))?'match':'mismatch'}
-function drawBc(){const m={none:'',match:'Barcode read and it matches your number.',mismatch:'The barcode does not match the number you typed. Check the number or retake the photo.',unread:'We could not read the barcode. Retake it in good light, or an admin will check it.',unsupported:'Automatic barcode check is not available on this phone. An admin will check it.'};$('#bdb').textContent=m[bcState()]}
+let bcTok=0,bcRun=null;
+const bcSleep=()=>new Promise(r=>setTimeout(r,0));
+/* Tries every photo at several sizes and rotations: BarcodeDetector first, then ZXing with TRY_HARDER. Never throws. */
+async function scanBarcode(files){
+ const list=(Array.isArray(files)?files:[files]).filter(Boolean),t0=Date.now(),got=[];
+ let fm=[];try{if('BarcodeDetector' in window)fm=await BarcodeDetector.getSupportedFormats()}catch(e){fm=[]}
+ let det=null;if(fm.length){try{det=new BarcodeDetector({formats:['code_128','code_39','code_93','codabar','ean_13','ean_8','itf','upc_a','qr_code','pdf417','data_matrix'].filter(x=>fm.includes(x))})}catch(e){det=null}}
+ let zx=false;try{await loadZX();zx=!!window.ZXing}catch(e){zx=false}
+ if(!det&&!zx)return{st:'unsupported',val:'',vals:[]};
+ let hints=null,rd=null;
+ if(zx){try{const F=ZXing.BarcodeFormat;hints=new Map();hints.set(ZXing.DecodeHintType.TRY_HARDER,true);hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[F.CODE_128,F.CODE_39,F.CODE_93,F.CODABAR,F.EAN_13,F.EAN_8,F.ITF,F.UPC_A,F.QR_CODE,F.PDF_417,F.DATA_MATRIX]);rd=new ZXing.MultiFormatReader()}catch(e){hints=null;rd=null}}
+ for(const f of list){
+  let bm;try{bm=await createImageBitmap(f)}catch(e){continue}
+  for(const w of [1600,1000,640]){
+   const sc=Math.min(1,w/Math.max(bm.width,bm.height)),sw=Math.max(1,Math.round(bm.width*sc)),sh=Math.max(1,Math.round(bm.height*sc));
+   for(const rot of [0,90,180,270]){
+    if(Date.now()-t0>15000)return{st:'unread',val:'',vals:[]};
+    try{
+     const c=document.createElement('canvas'),q=rot%180;c.width=q?sh:sw;c.height=q?sw:sh;
+     const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.translate(c.width/2,c.height/2);x.rotate(rot*Math.PI/180);x.drawImage(bm,-sw/2,-sh/2,sw,sh);
+     if(det){try{(await det.detect(c)).forEach(r=>{if(r.rawValue)got.push(r.rawValue)})}catch(e){}}
+     if(!got.length&&rd){try{got.push(rd.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(c))),hints).getText())}catch(e){}}
+    }catch(e){}
+    if(got.length)return{st:'read',val:got[0],vals:got};
+    await bcSleep();
+   }
+  }
+ }
+ return{st:'unread',val:'',vals:[]};
+}
+function bcState(){if(BC.st==='none'||BC.st==='scan')return'none';if(BC.st!=='read')return BC.st;const n=norm($('#bdn').value),vs=(BC.vals&&BC.vals.length?BC.vals:[BC.val]).map(norm).filter(Boolean);return n?(vs.some(v=>v.includes(n)||n.includes(v))?'match':'mismatch'):'none'}
+function drawBc(){const m={none:'',match:'Barcode read and it matches your number.',mismatch:'Barcode read, but it does not match the number you typed. You can still send it, an admin will check it by eye.',unread:'Barcode not read, an admin will check it by eye.',unsupported:'Automatic barcode check is not available on this phone, an admin will check it by eye.'};$('#bdb').textContent=BC.st==='scan'?'Spill Bot is reading the barcode...':m[bcState()]||''}
+function bcRescan(){const fs=[$('#bdf2').files[0],$('#bdf').files[0]].filter(Boolean),tok=++bcTok;if(!fs.length){BC={st:'none',val:'',vals:[]};bcRun=null;return drawBc()}BC={st:'scan',val:'',vals:[]};drawBc();bcRun=scanBarcode(fs).catch(()=>({st:'unread',val:'',vals:[]})).then(r=>{if(tok===bcTok){BC=r;armBd=false;drawBc()}})}
 $('#bdp').onclick=()=>$('#bdf').click();$('#bdp2').onclick=()=>$('#bdf2').click();
-$('#bdf').onchange=()=>{const f=$('#bdf').files[0];$('#bdfn').textContent=f?'Front added: '+f.name:''};
-$('#bdf2').onchange=async()=>{const f=$('#bdf2').files[0];if(!f)return;$('#bdb').textContent='Spill Bot is reading the barcode...';BC=await scanBarcode(f);armBd=false;drawBc()};
+$('#bdf').onchange=()=>{const f=$('#bdf').files[0];$('#bdfn').textContent=f?'Front added: '+f.name:'';bcRescan()};
+$('#bdf2').onchange=()=>bcRescan();
 $('#bdn').addEventListener('input',()=>{armBd=false;drawBc()});
 /* Both ID photos are joined into ONE picture (front on top, back below) and sent to the private store. */
 async function idJpeg(f1,f2){const bm=await Promise.all([f1,f2].map(f=>createImageBitmap(f)));
@@ -1487,7 +1514,7 @@ let verBusy=false;
 $('#bds').onclick=async()=>{if(verBusy)return;const role=$('#bdr').value,name=$('#bdnm').value.trim(),num=$('#bdn').value.trim(),link=$('#bdl').value.trim(),f1=$('#bdf').files[0],f2=$('#bdf2').files[0];
  if(name.length<3)return toast('Add your full name as it is on your ID');if(num.length<4)return toast('Add your admission or staff number');if(!f1)return toast('Add a photo of the front of your ID');if(!f2)return toast('Add a photo of the back of your ID');
  if(RR.includes(role)&&!/^https?:\/\/\S+\.\S+$/.test(link))return toast('Paste your group link');
- const st=bcState();if(st==='mismatch'&&!armBd){armBd=true;return toast('Barcode does not match. Tap again to send it for admin review anyway')}
+ if(BC.st==='scan'&&bcRun)await Promise.race([bcRun,new Promise(r=>setTimeout(r,3000))]);const st=bcState();
  if(!window.CC)return toast('Not ready yet. Reload the page and try again.');
  const btn=$('#bds');verBusy=true;btn.disabled=true;btn.textContent='Preparing photos...';
  try{const blob=await idJpeg(f1,f2);btn.textContent='Uploading...';
@@ -1626,7 +1653,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
 <script src="cc-emailask.js?v=4" defer></script>
 <script src="cc-remember.js?v=1" defer></script>
 <script src="cc-update.js?v=5"></script>
-<script src="cc-panels.js?v=11"></script><script src="cc-cam.js?v=1"></script><script src="cc-live.js?v=host4"></script><script src="cc-livecam.js?v=1"></script><script src="cc-mbogi.js?v=1"></script><script src="cc-staff.js?v=2" defer></script><script src="cc-site.js?v=5" defer></script><script src="cc-suggest.js?v=2" defer></script><script src="cc-help.js?v=7" defer></script><script src="cc-alerts.js?v=3" defer></script><script src="cc-fingerprint.js?v=8" defer></script><script src="cc-faceid.js?v=7" defer></script><script src="cc-passkey.js?v=5" defer></script><script src="cc-fixes.js?v=2" defer></script><script src="cc-market-plus.js?v=4" defer></script><script src="cc-cards.js?v=2" defer></script><script src="cc-wholesale.js?v=3ec" defer></script><script src="cc-qr.js?v=1" defer></script><script src="cc-events.js?v=5" defer></script><script src="cc-explore.js?v=2" defer></script><script src="cc-kura.js?v=origin1" defer></script><script src="cc-pick.js?v=3" defer></script><script src="cc-market-ui.js?v=3" defer></script><script>
+<script src="cc-panels.js?v=11"></script><script src="cc-cam.js?v=1"></script><script src="cc-live.js?v=host4"></script><script src="cc-livecam.js?v=1"></script><script src="cc-mbogi.js?v=2"></script><script src="cc-staff.js?v=2" defer></script><script src="cc-site.js?v=5" defer></script><script src="cc-suggest.js?v=2" defer></script><script src="cc-help.js?v=7" defer></script><script src="cc-alerts.js?v=3" defer></script><script src="cc-fingerprint.js?v=8" defer></script><script src="cc-faceid.js?v=7" defer></script><script src="cc-passkey.js?v=5" defer></script><script src="cc-fixes.js?v=2" defer></script><script src="cc-market-plus.js?v=4" defer></script><script src="cc-cards.js?v=2" defer></script><script src="cc-wholesale.js?v=3ec" defer></script><script src="cc-qr.js?v=1" defer></script><script src="cc-events.js?v=5" defer></script><script src="cc-explore.js?v=2" defer></script><script src="cc-kura.js?v=origin1" defer></script><script src="cc-pick.js?v=3" defer></script><script src="cc-market-ui.js?v=3" defer></script><script>
 /* Partners, sponsors and community links. Free, no paid services. Data lives in this browser for now; swap ST for your database later. */
 (function(){
 const PL={wa:'WhatsApp Channel',wg:'WhatsApp Group',ig:'Instagram',tt:'TikTok',x:'X (Twitter)',yt:'YouTube',tg:'Telegram',fb:'Facebook',web:'Website'};

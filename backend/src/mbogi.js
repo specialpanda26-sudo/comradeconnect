@@ -32,9 +32,23 @@ async function load(env, code) {
 }
 const active = async (env, code) => rows(await sb(env, `mbogi_people?select=viewer,aid,name,uid,hand&code=eq.${enc(code)}&seen_at=gte.${enc(ago(MBOGI_ONLINE_MS))}&order=seen_at.asc&limit=50`));
 
+const NOT_ON = 'Mbogi Talk is not switched on yet. Run mbogi.sql';
+let tablesOk = false;                                        // once the tables answer, we stop asking
+async function tablesReady(env) {
+  if (tablesOk) return true;
+  for (const t of ['mbogi_meetings', 'mbogi_people', 'mbogi_events']) {
+    const r = await sb(env, t + '?select=*&limit=1');
+    if (r.ok) continue;
+    const d = await r.json().catch(() => null);
+    if (r.status === 404 || ['42P01', 'PGRST205', 'PGRST204', '42703'].includes(String((d && d.code) || ''))) return false;
+  }
+  tablesOk = true; return true;
+}
+
 export async function mbogiRoutes(req, env, url, ip) {
   const path = url.pathname, m = req.method;
   if (!path.startsWith('/api/mbogi')) return null;
+  if (!(await tablesReady(env))) return err(env, NOT_ON, 503);
   const body = async () => (await req.json().catch(() => ({})));
 
   // Start a meeting. Returns the code people type or the link they tap.

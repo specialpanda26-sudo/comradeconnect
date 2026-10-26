@@ -15,7 +15,8 @@ var CSS =
 '@media(max-height:720px){.app.a{--ch:232px!important}.app.a.su{--ch:226px!important}}' +
 '.app .cv{z-index:2;height:var(--ch)!important;transform:translate3d(0,-101%,0);will-change:transform}' +
 '.app.w .cv,.app.s .cv{display:none!important}' +
-'.app.a .cv{transform:translate3d(0,0,0);transition:transform .8s .05s cubic-bezier(.22,1,.36,1)!important}' +
+'@keyframes ccgDrop{0%{transform:translate3d(0,-100%,0)}62%{transform:translate3d(0,3%,0)}82%{transform:translate3d(0,-.8%,0)}100%{transform:translate3d(0,0,0)}}' +
+'.app.a .cv{transform:translate3d(0,0,0);transition:none!important;animation:ccgDrop .9s .05s cubic-bezier(.25,.8,.35,1) both}' +
 '.app .brand{left:26px!important;top:calc(env(safe-area-inset-top,0px) + 30px)!important}' +
 '.app.a .brand{transition:opacity .6s .5s,top .5s ' + E + '!important}' +
 '.app .brand .row{gap:12px}' +
@@ -24,7 +25,7 @@ var CSS =
 '.app .brand p{margin:10px 0 0;font-size:15px}' +
 '.gt{justify-content:flex-start!important;gap:12px!important;padding:calc(env(safe-area-inset-top,0px) + 30px) 26px 0!important}' +
 '@media(min-width:600px){.app .brand{left:max(26px,calc((100% - 440px)/2))!important}.gt{padding-left:max(26px,calc((100% - 440px)/2))!important}}' +
-'@media(prefers-reduced-motion:reduce){.app .cv{transition-duration:.01s!important;transition-delay:0s!important}}';
+'@media(prefers-reduced-motion:reduce){.app .cv{transition-duration:.01s!important;transition-delay:0s!important}.app.a .cv{animation-duration:.01s!important;animation-delay:0s!important}}';
 function apply(r) {
   if (r.getElementById('ccgcv')) return;
   var app = r.querySelector('.app'), p = r.querySelector('.cv path');

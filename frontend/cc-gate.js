@@ -342,7 +342,10 @@ function wire() {
   $('#gn').onclick = function () { gi < 2 ? gset(gi + 1) : go('u'); };
   $('#gs .gl').src = $('.brand img').src;
   var gs = $('#gs'); gs.addEventListener('pointerdown', function (e) { gk = e.clientX; });
-  gs.addEventListener('pointerup', function (e) { if (gk === null) return; var dx = e.clientX - gk; gk = null; if (Math.abs(dx) > 40) gset(gi + (dx < 0 ? 1 : -1)); });
+  gs.addEventListener('pointerup', function (e) { if (gk === null) return; var dx = e.clientX - gk; gk = null; if (Math.abs(dx) > 40) { swAt = Date.now(); gset(gi + (dx < 0 ? 1 : -1)); } });
+  // tap the cards: next group of three (3 groups = 9 pictures), wrapping back to the first
+  var swAt = 0;
+  all('.gsl .art').forEach(function (a) { a.style.cursor = 'pointer'; a.addEventListener('click', function () { if (Date.now() - swAt < 400) return; gset(gi < 2 ? gi + 1 : 0); }); });
   gset(0);
 }
 /* typing hint inside the empty fields */

@@ -66,11 +66,15 @@
       + '<div class="fld"><input id="ccm-u" maxlength="20" autocapitalize="off" autocomplete="off" aria-label="Username" placeholder="3 to 20 letters, numbers or _"></div>'
       + '<label class="sub" style="display:block;margin-top:6px">Bio</label>'
       + '<div class="fld"><textarea id="ccm-b" maxlength="100" style="height:72px;resize:none" placeholder="Write a short bio (no numbers or links)" aria-label="Bio"></textarea></div>'
+      + '<label class="sub" style="display:block;margin-top:6px">M-Pesa number (required)</label>'
+      + '<div class="fld"><input id="ccm-ph" inputmode="numeric" maxlength="13" autocomplete="tel" aria-label="M-Pesa number" placeholder="0712345678"></div>'
       + '<p class="sub" id="ccm-e" style="color:var(--bad,#FFFFFF);min-height:18px;margin:0"></p>'
       + '<div class="two" style="margin-top:8px"><button class="btn g" id="ccm-x">Cancel</button><button class="btn p" id="ccm-s">Save</button></div></div>';
     document.body.appendChild(m);
     var u = $('#ccm-u', m), b = $('#ccm-b', m), p = $('#ccm-p', m);
     u.value = handle; b.value = bio;
+    var ph = $('#ccm-ph', m);
+    call('/api/me/phone', { method: 'GET' }).then(function (d) { if (d && d.phone && !ph.value) ph.value = d.phone; }).catch(function () {});
     function drawPic() { var s = newPic || (removePic ? '' : pic); p.innerHTML = s ? '<img alt="" src="' + s + '">' : USER; }
     drawPic();
     $('#ccm-ch', m).onclick = function () { $('#ccm-f', m).click(); };
@@ -85,8 +89,11 @@
       var h = u.value.trim().replace(/^@/, ''), v = b.value.trim().slice(0, 100);
       if (!/^[A-Za-z0-9_]{3,20}$/.test(h)) { err.textContent = 'Username: 3 to 20 letters, numbers or _'; return; }
       try { if (v && typeof contactHit === 'function' && contactHit(v)) { err.textContent = 'No phone numbers, handles or links in your bio'; return; } } catch (e) {}
+      var phv = ph.value.replace(/[\s+-]/g, '').replace(/^254(?=[17]\d{8}$)/, '0');
+      if (!/^(07|01)\d{8}$/.test(phv)) { err.textContent = 'Add your M-Pesa number, like 0712345678'; return; }
       btn.disabled = true;
       try {
+        await call('/api/me/phone', { body: { phone: phv } });
         if (h !== handle) { var r = await call('/api/me/handle', { body: { handle: h } }); ME.handle = (r && r.handle) || h; saveMe(); }
         if (newPic || removePic) { await call('/api/me/avatar', { body: { data: newPic || '' } }); setAv(newPic || ''); }
         ST.set('cc_bio', v);

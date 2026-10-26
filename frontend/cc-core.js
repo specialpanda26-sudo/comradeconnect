@@ -527,6 +527,7 @@ function draw() {
     let w = document.getElementById('wlg'); if (!w) { $('#mord .box').insertAdjacentHTML('afterend', '<div id="wlg"></div>'); w = document.getElementById('wlg'); }
     const wds = (S.wallet ? S.wallet.withdrawals || [] : []).filter((x) => x.status !== 'rejected');   // rejected ones are announced once, never listed
     w.innerHTML = wds.length ? '<div class="box g" style="margin-top:14px"><h3>Withdrawals</h3>' + wds.slice(0, 5).map((x) => '<div class="rw"><span>' + kes(x.amount) + '<small>' + (x.fee ? 'Fee ' + kes(x.fee) + ', you get ' + kes(x.net) + '. ' : '') + ago(Date.parse(x.created_at)) + '</small></span><b>' + ({ requested: 'Waiting for admin', sending: 'Sending to M-Pesa', paid: 'Paid', rejected: 'Rejected, money returned' }[x.status] || esc(x.status)) + '</b>' + (x.status === 'requested' ? '<button class="act" data-wdc="' + esc(x.id) + '">Cancel</button>' : '') + '</div>' + wdTrack(x)).join('') + '</div>' : '';
+    w.insertAdjacentHTML('beforeend', '<p style="text-align:center;margin:12px 0 0"><button type="button" class="btn g" data-wsup="1">Withdrawal problem? Request support</button></p>');
     let h = S.orders.map((o) => {
       const buy = o.role === 'buyer', r = buy ? 0 : 1, live = o.status === 'held' || o.status === 'handed';
       let main = '', info = '';
@@ -865,6 +866,40 @@ document.addEventListener('click', async (e) => {
   catch (err) { toast(err.message); b.disabled = false; }
 });
 
+/* ---------- withdrawal problem: ask an admin to look ---------- */
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-wsup]'); if (!b) return;
+  const wds = (S.wallet ? S.wallet.withdrawals || [] : []).slice(0, 6);
+  const LB = { requested: 'Waiting for admin', sending: 'Sending to M-Pesa', paid: 'Paid', rejected: 'Rejected, money returned' };
+  let pick = wds.length ? wds[0].id : '';
+  const m = sheet('<div class="flex items-center justify-between"><h3>Withdrawal problem</h3><button type="button" id="ccws-c" aria-label="Close" style="background:none;border:0;color:inherit;padding:4px;cursor:pointer;line-height:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:20px;height:20px;display:block"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
+    + '<p class="sub" style="margin-top:6px">Pick the withdrawal that has a problem. An admin will look at it.</p><div id="ccws-l" style="display:grid;gap:8px;margin-top:10px"></div>'
+    + '<div class="fld" style="margin-top:10px"><input id="ccws-p" inputmode="numeric" maxlength="13" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'
+    + '<div class="fld"><textarea id="ccws-n" maxlength="500" style="height:72px;resize:none" placeholder="What went wrong? (optional)" aria-label="Note"></textarea></div>'
+    + '<p class="sub" id="ccws-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p><div class="two"><button type="button" class="btn g" id="ccws-x">Cancel</button><button type="button" class="btn p" id="ccws-go">Send</button></div>');
+  const list = m.querySelector('#ccws-l'), er = m.querySelector('#ccws-e'), ph = m.querySelector('#ccws-p');
+  const paint = () => { [].forEach.call(list.children, (c) => { c.className = 'btn ' + (c.dataset.id === pick ? 'p' : 'g'); }); };
+  wds.concat([{ id: '', other: 1 }]).forEach((x) => {
+    const c = document.createElement('button'); c.type = 'button'; c.dataset.id = x.id; c.style.cssText = 'justify-content:space-between;width:100%;text-align:left';
+    const a = document.createElement('span'), z = document.createElement('small');
+    if (x.other) { a.textContent = 'Not in this list'; } else { a.textContent = kes(x.amount) + ' - ' + (LB[x.status] || x.status); z.textContent = ago(Date.parse(x.created_at)); }
+    c.append(a, z); c.onclick = () => { pick = x.id; paint(); }; list.appendChild(c);
+  });
+  paint();
+  call('/api/me/phone').then((d) => { if (d && d.phone && !ph.value) ph.value = d.phone; }).catch(() => {});
+  const shut = () => m.close();
+  m.querySelector('#ccws-c').onclick = shut; m.querySelector('#ccws-x').onclick = shut;
+  m.querySelector('#ccws-go').onclick = async () => {
+    const g = m.querySelector('#ccws-go'), phone = ph.value.replace(/[\s+-]/g, '').replace(/^254(?=[17]\d{8}$)/, '0'), w = wds.find((x) => x.id === pick);
+    if (!/^(07|01)\d{8}$/.test(phone)) return (er.textContent = 'Enter the M-Pesa number like 0712345678.');
+    er.textContent = ''; g.disabled = true;
+    try {
+      await call('/api/support/report', { body: { kind: 'withdrawal', page: 'wallet', message: 'Withdrawal problem', detail: w ? kes(w.amount) + ' ' + w.status : '', note: m.querySelector('#ccws-n').value.trim(), phone, amount: w ? w.amount : undefined, ref: w ? w.id : '' } });
+      m.close(); toast('Sent. An admin will look at it');
+    } catch (err) { er.textContent = err.message; g.disabled = false; }
+  };
+});
+
 /* ---------- wallet withdrawal ---------- */
 $('#wd').onclick = async () => {
   const bal = S.wallet ? S.wallet.balance : 0; if (!bal) return;
@@ -876,6 +911,7 @@ $('#wd').onclick = async () => {
     + '<p class="sub" id="ccw-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
   m.querySelector('#ccw-x').onclick = () => m.close();
   m.querySelector('#ccwp').value = '';
+  call('/api/me/phone').then((d) => { const i = m.querySelector('#ccwp'); if (d && d.phone && i && !i.value) i.value = d.phone; }).catch(() => {});
   m.querySelector('#ccw-go').onclick = async () => {
     const amount = Math.floor(+m.querySelector('#ccwa').value), phone = m.querySelector('#ccwp').value.replace(/\s/g, ''), er = m.querySelector('#ccw-e');
     if (!(amount >= CFG.min && amount <= Math.min(bal, CFG.max))) return (er.textContent = 'Enter an amount from ' + kes(CFG.min) + ' up to ' + kes(Math.min(bal, CFG.max)));

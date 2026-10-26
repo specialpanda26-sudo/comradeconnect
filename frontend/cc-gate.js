@@ -306,7 +306,7 @@ function wire() {
   all('[data-go]').forEach(function (b) { b.addEventListener('click', function () { go(b.dataset.go); }); });
   all('[data-eye]').forEach(function (b) { b.onclick = function () { var i = root.getElementById(b.dataset.eye), h = i.type === 'password'; i.type = h ? 'text' : 'password'; b.classList.toggle('on', h); b.setAttribute('aria-label', h ? 'Hide password' : 'Show password'); }; });
   all('[data-skip]').forEach(function (b) { b.onclick = finish; });
-  all('[data-t]').forEach(function (u) { u.onclick = function () { var p = u.dataset.t; if (window.ccApp && ccApp.open) ccApp.open(location.origin + p); else window.open(p, '_blank'); }; });
+  all('[data-t]').forEach(function (u) { u.onclick = function () { var p = u.dataset.t, site = window.ccOrigin ? window.ccOrigin() : (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'https://comradeconnect.co.ke' : location.origin), url = site + p; var fb = function () { try { window.open(url, '_blank', 'noopener'); } catch (e) { location.href = url; } }; if (window.ccApp && ccApp.open) ccApp.open(url).then(function (ok) { if (!ok) fb(); }, fb); else fb(); }; });
   all('[data-fg]').forEach(function (b) { b.onclick = function () { if (window.CC && CC.forgot) CC.forgot($('#le').value.trim()); }; });
   var wait = function (m) { m.textContent = 'The app is still starting. Try again in a second.'; };
   $('#pl').onsubmit = function (e) {

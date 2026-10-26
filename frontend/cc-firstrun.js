@@ -110,9 +110,11 @@
       + '<p class="ccfrst-n" id="ccfrst-e" role="alert" hidden></p>'
       + '<div id="ccfrst-gw" hidden><p class="ccfrst-or">or</p><div class="ccfrst-g" id="ccfrst-gb"></div></div>'
       + '<div class="ccfrst-ft"><button type="button" class="ccfrst-sk" id="ccfrst-skip">Skip for now</button>'
-      + '<p class="ccfrst-n">By continuing you agree to our <a href="/terms.html" style="color:inherit;text-decoration:underline">Terms</a> and <a href="/privacy.html" style="color:inherit;text-decoration:underline">Privacy Policy</a>.</p></div></div>';
+      + '<p class="ccfrst-n">By continuing you agree to our <a href="https://comradeconnect.co.ke/terms.html" data-site="/terms.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Terms</a> and <a href="https://comradeconnect.co.ke/privacy.html" data-site="/privacy.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Privacy Policy</a>.</p></div></div>';
     document.body.appendChild(m);
     var $ = function (s) { return m.querySelector(s); }, $$ = function (s) { return [].slice.call(m.querySelectorAll(s)); };
+    // Terms and Privacy open the real website page (in the app: the secure browser tab), never https://localhost
+    $$('a[data-site]').forEach(function (a) { a.onclick = function (e) { e.preventDefault(); var u = a.href; var fb = function () { try { window.open(u, '_blank', 'noopener'); } catch (x) { location.href = u; } }; if (window.ccApp && ccApp.open) ccApp.open(u).then(function (ok) { if (!ok) fb(); }, fb); else fb(); }; });
     var err = function (t) { var e = $('#ccfrst-e'); e.textContent = t || ''; e.hidden = !t; };
     var ready = function () { if (window.CC) return true; err('The app is still starting. Try again in a second.'); return false; };
 

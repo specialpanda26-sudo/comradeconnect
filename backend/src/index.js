@@ -24,6 +24,7 @@ import { adminRoutes } from './admin.js';
 import { kuraRoutes, kuraPaid, kuraFailed } from './kura.js';
 import { adminUserRoutes } from './admin-users.js';
 import { adminJoinRoutes } from './admin-joins.js';
+import { adminCleanRoutes } from './admin-clean.js';
 import { adminServiceRoutes } from './admin-services.js';
 import { settingsRoutes } from './settings.js';
 import { siteContentRoutes } from './sitecontent.js';
@@ -73,7 +74,7 @@ hooks.onFailed = async (env, p) => {
   if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
 };
 
-const ROUTES = [pulseRoutes, campusRoutes, lostFoundRoutes, paperRoutes, serviceWorkRoutes, engageRoutes, storyRoutes, notificationRoutes, settingsRoutes, trustRoutes, resetRoutes, recoveryRoutes, giftRoutes, siteContentRoutes, siteMediaRoutes, feedRoutes, payRoutes, passkeyRoutes, deviceAdminRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, voiceRoutes, mediaRoutes, clubRoutes, myEventRoutes, kuraRoutes, adminUserRoutes, adminJoinRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
+const ROUTES = [pulseRoutes, campusRoutes, lostFoundRoutes, paperRoutes, serviceWorkRoutes, engageRoutes, storyRoutes, notificationRoutes, settingsRoutes, trustRoutes, resetRoutes, recoveryRoutes, giftRoutes, siteContentRoutes, siteMediaRoutes, feedRoutes, payRoutes, passkeyRoutes, deviceAdminRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, liveRoutes, voiceRoutes, mediaRoutes, clubRoutes, myEventRoutes, kuraRoutes, adminUserRoutes, adminJoinRoutes, adminCleanRoutes, adminServiceRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

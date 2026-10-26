@@ -3,6 +3,32 @@
 (function () {
 'use strict';
 if (window.__ccStreak) return; window.__ccStreak = 1;
+/* AUTOMATIC: the moment POST /api/points/checkin succeeds, the streak animation pops up. The answer already carries the streak,
+   so there is no waiting and no second request (the old version asked again after 900 ms and could miss). A second check-in the same day is a 409, so it plays once a day. */
+(function () {
+  var of = window.fetch;
+  window.fetch = function (u, o) {
+    var p = of.apply(this, arguments);
+    try {
+      var url = typeof u === 'string' ? u : (u && u.url) || '';
+      if (url.indexOf('/api/points/checkin') > -1 && String((o && o.method) || 'GET').toUpperCase() === 'POST') {
+        p.then(function (r) {
+          if (!r || !r.ok) return;
+          r.clone().json().then(function (d) { if (d && d.streak) auto(d.streak); }, function () {});
+        }, function () {});
+      }
+    } catch (e) {}
+    return p;
+  };
+  function auto(n) {
+    n = Math.max(1, n | 0);
+    try { localStorage.setItem('cc_streak_fx', new Date().toDateString()); } catch (e) {}
+    var days = []; for (var k = 0; k < 7; k++) days.push({ done: (6 - k) < n });          // the week row: today and the days just before it
+    setTimeout(function () { if (window.ccStreakPlay) window.ccStreakPlay({ from: n - 1, to: n, days: days }); }, 450);   // right after the check-in toast
+    try { window.dispatchEvent(new Event('cc-streak-checkin')); } catch (e) {}
+  }
+})();
+
 var view = document.getElementById('v-rewards'); if (!view) return;
 var D = null, card = null, at = 0, busy = false, want = 0;
 function play(auto) {
@@ -56,7 +82,7 @@ function load() {
 }
 function onView() { if (document.body.dataset.view === 'rewards' && Date.now() - at > 20000) load(); }
 new MutationObserver(onView).observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
-var ci = document.getElementById('ci'); if (ci) ci.addEventListener('click', function () { want = 1; setTimeout(function () { at = 0; load(); }, 900); });
+window.addEventListener('cc-streak-checkin', function () { at = 0; setTimeout(load, 600); });   // refresh the Rewards card after a check-in
 onView();
 // when the app opens, if you already checked in today, play the animation once for the day
 /* no automatic replay on app open: the animation plays only when you check in */

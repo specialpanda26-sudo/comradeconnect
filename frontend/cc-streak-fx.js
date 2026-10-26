@@ -38,7 +38,7 @@ var css = el('style'); css.textContent =
 '@media(prefers-reduced-motion:reduce){#ccfx *,#ccfx{animation:none!important;transition:none!important}}';
 document.head.appendChild(css);
 
-/* fire look by streak day: day 1 small and orange, bigger every day, orange -> violet -> blue over ~30 days */
+/* fire look by streak day: day 1 small and orange, bigger every day; the colour moves orange -> red -> pink -> violet -> blue -> ice blue as the streak grows */
 function hx(c) { return [1, 3, 5].map(function (i) { return parseInt(c.substr(i, 2), 16); }); }
 function ramp(stops, t) {
   var i = 0; while (i < stops.length - 2 && t > stops[i + 1][0]) i++;
@@ -46,9 +46,9 @@ function ramp(stops, t) {
   return '#' + x.map(function (v, j) { var n = Math.round(v + (y[j] - v) * k); return (n < 16 ? '0' : '') + n.toString(16); }).join('');
 }
 function fire(n) {
-  var t = Math.min(1, Math.max(0, (n - 1) / 29));
-  var bot = ramp([[0, '#FF8A1F'], [.35, '#FF6B3D'], [.6, '#9B5DE5'], [1, '#2F7BFF']], t);
-  return { bot: bot, top: ramp([[0, '#FFF3C4'], [.35, '#FFE3D0'], [.6, '#EBDDFF'], [1, '#DDF3FF']], t), dk: ramp([[0, bot], [1, '#101422']], .3), size: .6 + .75 * (1 - Math.exp(-(n - 1) / 10)) };
+  var t = Math.max(1, n);   // streak days: 1 orange, 3 red, 7 pink, 14 violet, 30 blue, 60+ ice blue
+  var bot = ramp([[1, '#FF9A1F'], [3, '#FF5A1F'], [7, '#F0306E'], [14, '#A855F7'], [30, '#2F7BFF'], [60, '#13C8FF']], t);
+  return { bot: bot, top: ramp([[1, '#FFF3C4'], [3, '#FFE0CC'], [7, '#FFD6E4'], [14, '#EBDDFF'], [30, '#DDF3FF'], [60, '#E6FBFF']], t), dk: ramp([[0, bot], [1, '#101422']], .3), size: .6 + .75 * (1 - Math.exp(-(n - 1) / 10)) };
 }
 
 function flame(col, F) {

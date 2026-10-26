@@ -76,3 +76,65 @@ html body #lk.lkg.lkg.rec .lkforgot{background:none!important;-webkit-background
 html body #lk.lkg.lkg.rec .lkav{overflow:hidden}
 html body #lk.lkg.lkg.rec .lkav.lkpic{background:none}
 html body #lk.lkg.lkg.rec .lkav img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+
+/* plain-fingerprint v1: the fingerprint view as a simple page (no card, no disc, no waves) */
+#lk.lkg.lkg{--pw-flat:#faf1ed}
+:root[data-theme="dark"] #lk.lkg.lkg{--pw-flat:#16130f}
+html body #lk.lkg.lkg:not(.rec){background:var(--pw-flat)!important}
+html body #lk.lkg.lkg:not(.rec)::before{display:none!important}
+html body #lk.lkg.lkg:not(.rec) .bx.lkcard{background:none!important;background-image:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:8px 24px!important}
+html body #lk.lkg.lkg:not(.rec) .lkcard h2{font:600 clamp(26px,7.4vw,32px)/1.15 Poppins,sans-serif!important;letter-spacing:-.03em!important;color:var(--pw-txt)!important}
+html body #lk.lkg.lkg:not(.rec) .lkcard h2 b,html body #lk.lkg.lkg:not(.rec) #lkhi b{background:none!important;-webkit-text-fill-color:var(--pw-txt)!important;color:var(--pw-txt)!important;font-weight:600}
+html body #lk.lkg.lkg:not(.rec) .lkwel{font:400 17px Poppins,sans-serif!important;color:var(--pw-txt)!important;margin:6px 0 34px}
+html body #lk.lkg.lkg:not(.rec) .lkh{font:600 17px Poppins,sans-serif!important}
+html body #lk.lkg.lkg:not(.rec) .note{font:400 16px Poppins,sans-serif!important;color:var(--pw-mut)!important}
+html body #lk.lkg.lkg:not(.rec) .lkcard #lku.lkfp,html body #lk.lkg.lkg:not(.rec) .lkcard .lkfp,html body #lk.lkg.lkg:not(.rec) .lkcard #lkf{width:150px;height:150px;margin:56px auto 52px;background:none!important;background-image:none!important;box-shadow:none!important;border:0!important;color:var(--pw-txt)!important}
+html body #lk.lkg.lkg:not(.rec) .lkcard .lkfp svg{width:128px;height:128px;stroke-width:.95}
+html body #lk.lkg.lkg:not(.rec) .lkpw{height:58px;border:1px solid rgba(255,255,255,.18)!important;color:#fff!important;font:600 16px Poppins,sans-serif!important;
+  background:linear-gradient(135deg,#1f1b17,#463f39)!important;box-shadow:0 14px 26px -14px rgba(14,15,11,.7)!important}
+:root[data-theme="dark"] html body #lk.lkg.lkg:not(.rec) .lkpw,:root[data-theme="dark"] #lk.lkg.lkg:not(.rec) .lkpw{background:linear-gradient(135deg,#f7f0ea,#e4d8cf)!important;color:#16130f!important}
+html body #lk.lkg.lkg:not(.rec) .lklinks a{color:var(--pw-txt)!important;font-weight:600}
+html body #lk.lkg.lkg .lkcard .lkfp::before,html body #lk.lkg.lkg .lkcard .lkfp::after,html body #lk.lkg.lkg .lkcard #lku.lkfp::before,html body #lk.lkg.lkg .lkcard #lku.lkfp::after{content:none!important;display:none!important;animation:none!important}
+html body #lk.lkg.lkg .lkcard .lkfp svg path,html body #lk.lkg.lkg .lkcard #lku.lkfp svg path{animation:none!important;stroke-dasharray:none!important;stroke-dashoffset:0!important;opacity:1!important}
+
+/* plain-scan v1: the scanning screen (#ccfp) as a simple page: no disc, no rings, no sweep bar; the ridges light up one after another, then a tick */
+#ccfp{--pw-txt:#0e0f0b;--pw-mut:rgba(14,15,11,.62);--pw-flat:#faf1ed;--pw-okc:#2f9e5a}
+:root[data-theme="dark"] #ccfp{--pw-txt:#f7f0ea;--pw-mut:rgba(247,240,234,.66);--pw-flat:#16130f;--pw-okc:#4cc27f}
+html body #ccfp{background:var(--pw-flat)!important;color:var(--pw-txt)!important;font-family:Poppins,system-ui,sans-serif!important}
+html body #ccfp::before{display:none!important}
+html body #ccfp .fpx-hi{font:600 clamp(26px,7.4vw,32px)/1.15 Poppins,sans-serif!important;letter-spacing:-.03em!important;color:var(--pw-txt)!important}
+html body #ccfp .fpx-hi b{background:none!important;-webkit-text-fill-color:var(--pw-txt)!important;color:var(--pw-txt)!important;font-weight:600!important}
+html body #ccfp .fpx-wb{font:400 17px Poppins,sans-serif!important;color:var(--pw-txt)!important;margin-top:6px}
+html body #ccfp .fpx-ct{font:600 17px Poppins,sans-serif!important;color:var(--pw-txt)!important}
+html body #ccfp .fpx-st{font:400 16px Poppins,sans-serif!important;color:var(--pw-mut)!important}
+html body #ccfp .fpx-sub{color:var(--pw-mut)!important;font-family:Poppins,sans-serif!important}
+html body #ccfp .fpx-r,html body #ccfp .fpx-ln{display:none!important;animation:none!important}
+html body #ccfp button.fpx-stage{width:170px;height:170px;margin:34px 0 26px}
+html body #ccfp .fpx-disc,html body #ccfp[data-k] .fpx-disc{width:150px;height:150px;background:none!important;border:0!important;box-shadow:none!important;overflow:visible;transition:background .3s}
+html body #ccfp .fpx-ic{color:var(--pw-txt)!important;stroke-width:.95!important;width:128px;height:128px;animation:none!important}
+html body #ccfp .fpx-fci{width:112px;height:112px;stroke-width:1.9!important}
+/* scanning: the ridges light up one after another, again and again */
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path{animation:fpx-feel 1.8s ease-in-out infinite both!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(2){animation-delay:.14s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(3){animation-delay:.28s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(4){animation-delay:.42s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(5){animation-delay:.56s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(6){animation-delay:.70s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(7){animation-delay:.84s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(8){animation-delay:.98s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(9){animation-delay:1.12s!important}
+@keyframes fpx-feel{0%,100%{opacity:.16}30%,55%{opacity:1}}
+/* done: a soft green circle and a tick that draws itself */
+html body #ccfp.ok .fpx-disc{background:rgba(76,194,127,.16)!important;border-radius:50%!important}
+html body #ccfp .fpx-ck{width:72px;height:72px}
+html body #ccfp .fpx-ck path{stroke-dasharray:26;stroke-dashoffset:26}
+html body #ccfp.ok .fpx-ck{color:var(--pw-okc)!important}
+html body #ccfp.ok .fpx-ck path{animation:fpx-tick .45s ease .12s forwards}
+@keyframes fpx-tick{to{stroke-dashoffset:0}}
+html body #ccfp.bad .fpx-ic{color:#bc4b52!important}
+html body #ccfp .fpx-tab[aria-selected=true]{background:var(--pw-txt)!important;color:var(--pw-flat)!important}
+html body #ccfp .fpx-b.p{height:58px;background:linear-gradient(135deg,#1f1b17,#463f39)!important;border:1px solid rgba(255,255,255,.18)!important;color:#fff!important;font:600 16px Poppins,sans-serif!important;box-shadow:0 14px 26px -14px rgba(14,15,11,.7)}
+:root[data-theme="dark"] html body #ccfp .fpx-b.p,:root[data-theme="dark"] #ccfp .fpx-b.p{background:linear-gradient(135deg,#f7f0ea,#e4d8cf)!important;color:#16130f!important}
+html body #ccfp .fpx-b.t{color:var(--pw-mut)!important}
+html body #ccfp .fpx-ln2 a{color:var(--pw-txt)!important;font-weight:600}
+html body #ccfp #fpx-h{min-height:52px}

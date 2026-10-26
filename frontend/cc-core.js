@@ -69,6 +69,7 @@ const copyText = async (t) => { try { await navigator.clipboard.writeText(t); to
 
 /* ---------- account: token from the server ---------- */
 const saveAuth = (a) => {
+  window.__ccRstOkAt = Date.now();
   try { const o = window.ccAuth && window.ccAuth(); if (o && o.aid !== a.aid) { S.mine = []; S.orders = []; S.wallet = null; } } catch (e) {}   // another account: forget the old lists
   try { localStorage.setItem('cc_auth', JSON.stringify(a)); } catch (e) {}
 };
@@ -252,8 +253,9 @@ async function restoreAccount(aid, code) {
   setTimeout(() => { syncVer(); refreshReferral(true); }, 0);
   return d;
 }
-function promptRestore(msg, title) {
+function promptRestore(msg, title, force) {
   if (document.getElementById('ccrst')) return;
+  if (!msg && !force && Date.now() < (window.__ccRstQuiet || 0)) return;   // closed a moment ago: background refreshes must not pop it open again
   const m = sheet('<h3>' + esc(title || 'Sign in again') + '</h3><p class="sub" style="margin-top:6px">' + esc(msg || 'This phone is not signed in to your account.') + '</p>'
     + (googleOn() ? '<div id="ccrg" style="display:flex;justify-content:center;margin-top:12px;min-height:44px"></div><p class="sub" style="text-align:center;margin-top:8px">or use the recovery code you saved</p>' : '<p class="sub">Enter the account ID and recovery code you saved.</p>')
     + '<div class="fld" style="margin-top:10px"><input id="ccrst-a" placeholder="Account ID or username" autocomplete="off" autocapitalize="off" aria-label="Account ID or username"></div>'
@@ -262,11 +264,12 @@ function promptRestore(msg, title) {
     + '<div class="two"><button class="btn g" id="ccrst-x">Cancel</button><button class="btn p" id="ccrst-go">Restore</button></div>'
     + '<p class="sub" style="text-align:center;margin-top:12px"><a href="#" id="ccrst-fg">Forgot password?</a></p>');
   m.id = 'ccrst';
+  { const gone = new MutationObserver(() => { if (!document.body.contains(m)) { gone.disconnect(); if (Date.now() - (window.__ccRstOkAt || 0) > 4000) window.__ccRstQuiet = Date.now() + 600000; } }); gone.observe(document.body, { childList: true }); }
   ccCancelTap();
   const _close = m.close; m.close = () => { ccCancelTap(); _close(); };
   m.querySelector('#ccrst-x').onclick = (ev) => { if (ev && ev.preventDefault) ev.preventDefault(); m.close(); };
   const _esc = (ev) => { if (ev.key === 'Escape') { document.removeEventListener('keydown', _esc); m.close(); } }; document.addEventListener('keydown', _esc);
-  m.querySelector('#ccrst-fg').onclick = (ev) => { ev.preventDefault(); const w = m.querySelector('#ccrst-a').value; m.close(); promptForgot(w, () => promptRestore(msg, title)); };
+  m.querySelector('#ccrst-fg').onclick = (ev) => { ev.preventDefault(); const w = m.querySelector('#ccrst-a').value; m.close(); promptForgot(w, () => promptRestore(msg, title, true)); };
   if (googleOn()) mountGoogle(m.querySelector('#ccrg'), () => { m.close(); toast('Signed in'); refreshAll(); try { drawMe(); drawMe2(); } catch (e) {} }, (e) => { m.querySelector('#ccrst-e').textContent = e; });
   m.querySelector('#ccrst-go').onclick = async () => {
     const b = m.querySelector('#ccrst-go'); ccBusy(b, true, 'Signing in...'); m.querySelector('#ccrst-e').textContent = '';

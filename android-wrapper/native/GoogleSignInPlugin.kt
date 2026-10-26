@@ -1,6 +1,8 @@
 package ke.co.comradeconnect.app
 
+import android.util.Log
 import androidx.credentials.CredentialManager
+import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
@@ -12,6 +14,7 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import kotlinx.coroutines.CoroutineScope
@@ -59,12 +62,21 @@ class GoogleSignInPlugin : Plugin() {
                     .apply { if (!nonce.isNullOrEmpty()) setNonce(nonce) }
                     .build()
 
-                val request = GetCredentialRequest.Builder()
-                    .addCredentialOption(googleIdOption)
-                    .build()
+                fun req(o: CredentialOption) = GetCredentialRequest.Builder().addCredentialOption(o).build()
+                val cm = CredentialManager.create(act)
 
                 // 2) Shows the bottom sheet and suspends until the user picks an account or dismisses it.
-                val result = CredentialManager.create(act).getCredential(act, request)
+                //    If Google says "no credential" (no account the sheet can list), try once more with the
+                //    "Sign in with Google" sheet, which also lets the person add or pick another account.
+                val result = try {
+                    cm.getCredential(act, req(googleIdOption))
+                } catch (e: NoCredentialException) {
+                    Log.w(TAG, "GetGoogleIdOption found nothing, retrying with GetSignInWithGoogleOption: " + e.message)
+                    val siwg = GetSignInWithGoogleOption.Builder(serverClientId)
+                        .apply { if (!nonce.isNullOrEmpty()) setNonce(nonce) }
+                        .build()
+                    cm.getCredential(act, req(siwg))
+                }
 
                 // 3) Pull the Google ID token out of the result.
                 val credential = result.credential
@@ -86,17 +98,26 @@ class GoogleSignInPlugin : Plugin() {
             } catch (e: GetCredentialCancellationException) {
                 call.reject("cancelled", "CANCELLED")
             } catch (e: NoCredentialException) {
-                call.reject("No Google account available on this phone.", "NO_ACCOUNT")
+                Log.e(TAG, "NO_ACCOUNT", e)
+                call.reject(why("NO_ACCOUNT", e), "NO_ACCOUNT")
             } catch (e: GetCredentialException) {
-                call.reject(e.message ?: "Google sign-in failed.", "FAILED")
+                Log.e(TAG, "GetCredentialException", e)
+                call.reject(why("FAILED", e), "FAILED")
             } catch (e: GoogleIdTokenParsingException) {
-                call.reject("Could not read the Google sign-in.", "FAILED")
+                Log.e(TAG, "parse", e)
+                call.reject(why("FAILED", e), "FAILED")
             } catch (e: Throwable) {
                 // Never let a native problem close the app. The web layer falls back to the browser flow.
-                call.reject(e.message ?: "Google sign-in failed.", "FAILED")
+                Log.e(TAG, "unexpected", e)
+                call.reject(why("FAILED", e), "FAILED")
             }
         }
     }
+
+    // Short, readable reason shown by the web layer, e.g. "NoCredentialException: No credentials available".
+    // Typical causes: no Android OAuth client with this APK's SHA-1 in Google Cloud, or no Google account on the phone.
+    private fun why(code: String, e: Throwable): String =
+        code + " | " + e.javaClass.simpleName + ": " + (e.message ?: "no details")
 
     override fun handleOnDestroy() {
         scope.cancel()
@@ -104,6 +125,7 @@ class GoogleSignInPlugin : Plugin() {
     }
 
     companion object {
+        private const val TAG = "CCGoogleSignIn"
         // Web client ID (type "Web application"). Must be the SAME ID your server checks in GOOGLE_CLIENT_ID.
         const val WEB_CLIENT_ID =
             "628050649968-umh0eflaigqqet517sj7te2oa9h0bsmq.apps.googleusercontent.com"

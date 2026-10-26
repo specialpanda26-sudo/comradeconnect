@@ -29,7 +29,7 @@ try { saved = JSON.parse(ls('cc_mu_saved') || '{}') || {}; } catch (e) { saved =
 var top = el('div', 'mu-top'), pin = el('span', 'mu-pin'), loc = el('div', 'mu-loc'), bell = el('button', 'mu-bell');
 pin.innerHTML = ICON.pin; bell.innerHTML = ICON.bell; bell.type = 'button'; bell.setAttribute('aria-label', 'Notifications');
 loc.appendChild(el('small', '', 'Location')); loc.appendChild(el('b', '', 'Kirinyaga University'));
-top.appendChild(pin); top.appendChild(loc); top.appendChild(bell);
+top.appendChild(pin); top.appendChild(loc);
 V.insertBefore(top, V.firstChild);
 bell.onclick = function () { var b = document.querySelector('#nb, #bellbtn, [data-v="notifs"], .nbell, #cc-bell'); if (b) b.click(); };
 

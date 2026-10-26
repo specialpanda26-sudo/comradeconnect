@@ -173,12 +173,13 @@
     var g = $('#golive'); if (g) g.style.display = 'none';
     set.insertAdjacentHTML('beforeend', '<button class="btn p" id="ccl-go" style="display:flex;align-items:center;justify-content:center;gap:8px">' + I.cam + 'Go live from this phone</button>');
     $('#ccl-go').onclick = async function (e) {
+      var b = e.currentTarget;                                  // read it now: it is empty after the camera question is answered
       var t = $('#ltitle').value.trim(); if (!t) return say('Add a title so people know what is happening');
       if (!AGORA) return say('Live video is not set up yet. The admin must add the video key.');
       var face = window.ccCam ? await window.ccCam.ask({ title: 'Go live with which camera?', sub: 'You can flip between front and back while you are live.' }) : 'user';
       if (!face) return;                                        // cancelled
       window.__ccFacing = face;
-      var b = e.currentTarget; b.disabled = true;
+      b.disabled = true;
       try {
         var d = await call('/api/live/start', { body: { title: t, native: true } });
         $('#ltitle').value = '';

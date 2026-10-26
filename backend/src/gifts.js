@@ -1,5 +1,5 @@
 import { json, err, sb, rows, one, post, patch, enc, user, str, int, UUID, hasContact, normPhone, throttle, tooMany } from './lib.js';
-import { initPayment, credit, cardReady, manualMode } from './pay.js';
+import { initPayment, credit, cardReady, gatewayFor } from './pay.js';
 import { getSettings, feeOf } from './settings.js';
 import { mailReady, sendMail } from './mail.js';
 import { notify } from './notifications.js';
@@ -73,7 +73,7 @@ export async function giftRoutes(req, env, url, ip) {
     const l = await bySlug(env, url.searchParams.get('c') || '');
     if (!l || !l.active) return err(env, 'This gift link is not active', 404);
     const S = await getSettings(env);
-    return json(env, { ...publicLink(env, l), presets: PRESETS, min: S.gift_min, max: S.gift_max, card: cardReady(env), receipts: mailReady(env), manual: manualMode(env) });
+    return json(env, { ...publicLink(env, l), presets: PRESETS, min: S.gift_min, max: S.gift_max, card: cardReady(env), receipts: mailReady(env), manual: (await gatewayFor(env, 'gift')) === 'manual' });
   }
 
   if (path === '/api/gift/send' && m === 'POST') {
@@ -94,7 +94,7 @@ export async function giftRoutes(req, env, url, ip) {
   }
 
   if (path === '/api/gift/confirm' && m === 'POST') {
-    if (!manualMode(env)) return err(env, 'Payments are confirmed automatically', 400);
+    if ((await gatewayFor(env, 'gift')) !== 'manual') return err(env, 'Payments are confirmed automatically', 400);
     const b = await body(), code = String(b.code || '').toUpperCase().replace(/[\s-]/g, '');
     if (!UUID.test(String(b.id || ''))) return err(env, 'bad id');
     if (!/^[A-Z0-9]{10}$/.test(code)) return err(env, 'The M-Pesa code has 10 letters and numbers, like SJK7ABC123');

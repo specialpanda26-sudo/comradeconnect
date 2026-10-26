@@ -2,7 +2,7 @@
 // Three modes (env PAYMENT_MODE): "manual" (default, free: the buyer sends money to YOUR number/till/paybill and enters the M-Pesa code,
 // you confirm it in the admin panel), "tinypesa" (automatic STK push; TinyPesa has its own fees) and "intasend" (automatic STK push through
 // IntaSend; falls back to TinyPesa if IntaSend refuses and TinyPesa keys exist). Anything a gateway cannot prove lands in the admin "Confirm M-Pesa" queue.
-import { getSettings } from './settings.js';
+import { getSettings, getGateways, areaOf } from './settings.js';
 import { json, err, sb, rows, one, post, patch, enc, normPhone, ago, tsEqual, user, UUID, throttle, tooMany, bump } from './lib.js';
 // TinyPesa's current API: api. host, trailing slash, the link username in the query string, JSON body.
 const TINYPESA_URL = 'https://api.tinypesa.com/api/v1/express/initialize/';
@@ -23,6 +23,18 @@ export const tinyKeys = (env) => {
 };
 export const payMode = (env) => { const m = String(env.PAYMENT_MODE || 'manual').trim().toLowerCase(); return m === 'tinypesa' || m === 'intasend' ? m : 'manual'; };
 export const manualMode = (env) => payMode(env) === 'manual';
+// Which gateways have their keys on this service.
+export const gatewayReady = (env) => ({ manual: !!env.MPESA_PAY_TO, tinypesa: tinyKeys(env).length > 0 && !!env.TINYPESA_USERNAME, intasend: !!(String(env.INTASEND_SECRET_KEY || '').trim() || String(env.INTASEND_PUBLISHABLE_KEY || '').trim()) });
+// The gateway for one kind of payment: the admin's choice for that part of the site, else the site default (PAYMENT_MODE).
+// A gateway whose keys are missing is skipped, so a wrong choice never stops payments.
+export async function gatewayFor(env, purpose) {
+  const base = payMode(env), area = areaOf(purpose);
+  if (!area) return base;
+  let want = (await getGateways(env))[area];
+  if (!want || want === 'default') return base;
+  if (!gatewayReady(env)[want]) { console.error('payments: ' + area + ' is set to ' + want + ' but its keys are missing on this service, using ' + base); return base; }
+  return want;
+}
 
 // ---------- IntaSend ----------
 // Docs: https://developers.intasend.com  (STK push: POST /api/v1/payment/mpesa-stk-push/, status: POST /api/v1/payment/status/, webhook "collection_event").
@@ -85,7 +97,7 @@ export async function settleIntasend(env, p, inv) {
 }
 // Safety net for missed webhooks (run by the 15-minute cron): ask IntaSend about every recent IntaSend payment we have not closed.
 export async function reconcileIntasend(env) {
-  if (payMode(env) !== 'intasend' || !intaReady(env)) return 0;
+  if (!intaReady(env)) return 0;
   const list = (await rows(await sb(env, `payments?select=*&status=in.(pending,expired,failed)&request_id=not.is.null&created_at=gte.${ago(24 * 3600e3)}&order=created_at.desc&limit=100`)))
     .filter((p) => String(p.request_id).startsWith(IS_PREFIX)).slice(0, 25);
   let changed = 0;
@@ -129,7 +141,7 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   if (card && !cardReady(env)) return { res: err(env, 'Card payments are not switched on yet. Pay with M-Pesa.', 400) };
   const phone = normPhone(rawPhone) || (card ? 'card' : null);
   amount = Math.floor(Number(amount));
-  const mode = payMode(env), tinyOk = tinyKeys(env).length > 0 && !!env.TINYPESA_USERNAME;
+  const mode = await gatewayFor(env, purpose), tinyOk = tinyKeys(env).length > 0 && !!env.TINYPESA_USERNAME;
   if (mode === 'manual' && !env.MPESA_PAY_TO) return { res: err(env, 'Payments are not set up yet', 503) };
   if (mode === 'tinypesa' && !tinyOk) { console.error('payments: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY or TINYPESA_USERNAME is empty on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (mode === 'intasend' && !intaReady(env) && !tinyOk) { console.error('payments: PAYMENT_MODE=intasend but neither INTASEND_PUBLISHABLE_KEY nor INTASEND_SECRET_KEY is set on this service'); return { res: err(env, 'Payments are not set up yet', 503) }; }
@@ -283,8 +295,8 @@ export async function payRoutes(req, env, url, ip) {
   // The code can be corrected until the admin decides. A code can only ever be used once.
   if (path === '/api/pay/confirm' && req.method === 'POST') {
     const u = await user(req, env, true); if (u instanceof Response) return u;
-    if (!manualMode(env)) return err(env, 'Payments are confirmed automatically', 400);
     const b = await req.json().catch(() => ({}));
+    { const [pp] = UUID.test(String(b.id || '')) ? await rows(await sb(env, `payments?select=purpose&id=eq.${b.id}`)) : []; if (pp && (await gatewayFor(env, pp.purpose)) !== 'manual') return err(env, 'Payments are confirmed automatically', 400); }
     const code = String(b.code || '').toUpperCase().replace(/[\s-]/g, '');
     if (!UUID.test(String(b.id || ''))) return err(env, 'bad id');
     if (!/^[A-Z0-9]{10}$/.test(code)) return err(env, 'The M-Pesa code has 10 letters and numbers, like SJK7ABC123');
@@ -306,7 +318,7 @@ export async function payRoutes(req, env, url, ip) {
     };
     let p = await readP();
     // IntaSend: if the webhook is late, ask IntaSend directly (from 8 s after the prompt, at most 40 times per payment).
-    if (p && p.status === 'pending' && payMode(env) === 'intasend' && intaReady(env)) {
+    if (p && p.status === 'pending' && intaReady(env)) {
       const [full] = await rows(await sb(env, `payments?id=eq.${id}&select=*`));
       if (full && String(full.request_id || '').startsWith(IS_PREFIX) && Date.now() - Date.parse(full.created_at) > 8e3 && (await bump(env, 'isck:' + id, 40))) {
         const inv = await intaStatus(env, full.request_id.slice(IS_PREFIX.length));
@@ -316,7 +328,7 @@ export async function payRoutes(req, env, url, ip) {
     if (!p) return json(env, { status: 'unknown' });
     const out = { status: p.status, receipt: p.receipt, amount: p.amount };
     if (p.fail_reason) out.reason = p.fail_reason;
-    if (manualMode(env) && p.status === 'pending') out.manual = manualInfo(env, p);
+    if (p.status === 'pending' && (await gatewayFor(env, p.purpose)) === 'manual') out.manual = manualInfo(env, p);
     if (p.purpose === 'order' && p.status === 'paid') { const os = await rows(await sb(env, `orders?select=id&payment_id=eq.${id}`)); out.order_id = os[0]?.id || null; out.order_ids = os.map((x) => x.id); }
     return json(env, out);
   }

@@ -1,0 +1,71 @@
+{
+  "project": "Comrade Connect - Kirinyaga Edition",
+  "aspect_ratio": "16:9",
+  "theme": {
+    "primary_color": "#0d1117",
+    "accent_color": "#00ffcc",
+    "font_style": "Modern Urban Tech"
+  },
+  "scenes": [
+    {
+      "scene_number": 1,
+      "title": "The Hook - Spill the Tea",
+      "target_file": "frontend/index.html",
+      "visual_elements": [
+        "Dark UI dashboard frame wrapper",
+        "Glowing headline: 'Spill it. Nobody will know it was you.'",
+        "Action button pulsing: 'Drop Tea / Spill Secret'"
+      ],
+      "motion": "Dynamic macro zoom into the anonymous posting box",
+      "duration_seconds": 2.5
+    },
+    {
+      "scene_number": 2,
+      "title": "The Market & Escrow Protection",
+      "target_file": "frontend/index.html",
+      "visual_elements": [
+        "Grid display showcasing student items: electronics, textbooks, clothing",
+        "Bold badge overlay: 'Protected by Escrow'",
+        "Interactive animation showing money held safely until handover confirmation"
+      ],
+      "motion": "Horizontal smooth pan across market cards",
+      "duration_seconds": 3.0
+    },
+    {
+      "scene_number": 3,
+      "title": "M-Pesa Checkout Flow",
+      "target_file": "frontend/index.html",
+      "visual_elements": [
+        "Input interface showing: 'Enter the M-Pesa number to pay with'",
+        "Simulated STK push confirmation screen with security reminders",
+        "Wallet withdrawal screen flashing 'Withdraw to M-Pesa'"
+      ],
+      "motion": "Whip-pan down to showcase safe transaction workflow",
+      "duration_seconds": 2.5
+    },
+    {
+      "scene_number": 4,
+      "title": "The Admin Dashboard Control",
+      "target_file": "frontend/admin.html",
+      "visual_elements": [
+        "Exclusive dashboard preview showing backend statistics",
+        "Active modules list: Spill Bot, Needs Attention, Stock Management",
+        "CSV export animation mapping 'Copy orders as CSV'"
+      ],
+      "motion": "Isometric tilt tracking the active operations center",
+      "duration_seconds": 2.0
+    },
+    {
+      "scene_number": 5,
+      "title": "Outro & Call To Action",
+      "target_file": "comradeconnect.co.ke",
+      "visual_elements": [
+        "Minimalist background featuring a sleek smartphone layout wrapper",
+        "Centered logo slamming down: 'Comrade Connect (Kirinyaga Edition)'",
+        "Flashing link anchor: 'comradeconnect.co.ke'"
+      ],
+      "motion": "Heavy zoom out with a dramatic snap focus lock",
+      "duration_seconds": 2.0
+    }
+  ]
+}

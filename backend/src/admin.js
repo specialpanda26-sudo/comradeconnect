@@ -4,7 +4,8 @@ import { releaseOrder, refundOrder } from './market.js';
 import { credit, hooks } from './pay.js';
 import { HIDE } from './content.js';
 import { validateTicket } from './club.js';
-import { getSettings, saveSettings, DEFS, envDefault, getZones, DEFAULT_ZONES } from './settings.js';
+import { getSettings, saveSettings, DEFS, envDefault, getZones, DEFAULT_ZONES, getGateways, saveGateways, GW_AREAS, GW_NAMES } from './settings.js';
+import { payMode, gatewayReady } from './pay.js';
 import { contactBlock } from './lib.js';
 
 import * as store from './storage.js';
@@ -282,6 +283,21 @@ export async function adminRoutes(req, env, url, ip) {
     const r = await saveSettings(env, (await body()).values);
     if (r.error) return err(env, r.error);
     await A('settings.update', 'settings', null, r.changed);
+    return json(env, { ok: true, changed: Object.keys(r.changed).length });
+  }
+  // ---- which payment gateway each part of the site uses ----
+  if (path === '/api/admin/gateways' && m === 'GET') {
+    const cur = await getGateways(env), ready = gatewayReady(env), site = payMode(env);
+    return json(env, {
+      site_default: site,
+      gateways: [{ id: 'default', name: 'Site default (' + GW_NAMES[site] + ')', ready: true }].concat(['manual', 'tinypesa', 'intasend'].map((id) => ({ id, name: GW_NAMES[id], ready: ready[id] }))),
+      areas: Object.entries(GW_AREAS).map(([key, d]) => ({ key, label: d.label, value: cur[key] })),
+    });
+  }
+  if (path === '/api/admin/gateways' && m === 'POST') {
+    const r = await saveGateways(env, (await body()).values);
+    if (r.error) return err(env, r.error);
+    await A('gateways.update', 'settings', null, r.changed);
     return json(env, { ok: true, changed: Object.keys(r.changed).length });
   }
   // ---- what the company has earned ----

@@ -16,3 +16,6 @@ site-info.json
 *.keystore
 *.p12
 keystore.properties
+
+google-services.json
+*service-account*.json

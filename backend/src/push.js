@@ -9,6 +9,39 @@ const unb64u = (s) => { s = String(s).replace(/-/g, '+').replace(/_/g, '/'); whi
 const cat = (...a) => { const o = new Uint8Array(a.reduce((n, x) => n + x.length, 0)); let p = 0; a.forEach((x) => { o.set(x, p); p += x.length; }); return o; };
 const hasKeys = (env) => !!(env.VAPID_PUBLIC && env.VAPID_PRIVATE);
 
+// ---- Android app (Firebase Cloud Messaging) ----
+// Needs FCM_SERVICE_ACCOUNT: the Firebase service account JSON (pasted as is, or as base64).
+function fcmAccount(env) {
+  try {
+    const raw = String(env.FCM_SERVICE_ACCOUNT || '').trim(); if (!raw) return null;
+    const j = JSON.parse(raw[0] === '{' ? raw : atob(raw));
+    return j.client_email && j.private_key && j.project_id ? j : null;
+  } catch (e) { return null; }
+}
+let fcmTok = { v: '', exp: 0 };
+async function fcmAccess(acc) {
+  if (fcmTok.v && Date.now() < fcmTok.exp - 60000) return fcmTok.v;
+  const der = unb64u(acc.private_key.replace(/-----[^-]+-----/g, '').replace(/\s+/g, ''));
+  const key = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const now = Math.floor(Date.now() / 1000);
+  const head = b64u(te.encode(JSON.stringify({ alg: 'RS256', typ: 'JWT' })));
+  const claims = b64u(te.encode(JSON.stringify({ iss: acc.client_email, scope: 'https://www.googleapis.com/auth/firebase.messaging', aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 })));
+  const sig = b64u(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, te.encode(head + '.' + claims)));
+  const r = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=' + encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer') + '&assertion=' + head + '.' + claims + '.' + sig });
+  const d = await r.json();
+  if (!d.access_token) throw new Error('FCM sign-in failed');
+  fcmTok = { v: d.access_token, exp: Date.now() + (d.expires_in || 3600) * 1000 };
+  return fcmTok.v;
+}
+async function sendFcm(env, s, payload) {
+  const acc = fcmAccount(env); if (!acc) return;
+  const r = await fetch(`https://fcm.googleapis.com/v1/projects/${acc.project_id}/messages:send`, {
+    method: 'POST', headers: { Authorization: 'Bearer ' + (await fcmAccess(acc)), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: { token: s.endpoint.slice(4), notification: { title: String(payload.title || 'Comrade Connect'), body: String(payload.body || '') }, data: { view: String(payload.view || '') }, android: { priority: 'HIGH', notification: { tag: String(payload.tag || 'cc') } } } })
+  });
+  if (r.status === 404) await sb(env, `push_subs?endpoint=eq.${enc(s.endpoint)}`, { method: 'DELETE' });   // the app was removed from that phone
+}
+
 async function hkdf(salt, ikm, info, len) {
   const k = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveBits']);
   return new Uint8Array(await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info }, k, len * 8));
@@ -43,12 +76,14 @@ async function vapidAuth(env, endpoint) {
 // Sends one notification to every phone this person allowed. Dead phones are removed.
 export async function sendPush(env, aid, payload) {
   try {
-    if (!aid || !hasKeys(env)) return;
+    if (!aid) return;
     const subs = await rows(await sb(env, `push_subs?select=endpoint,p256dh,auth&aid=eq.${enc(aid)}&limit=10`));
     if (!subs.length) return;
     const text = JSON.stringify(payload);
     await Promise.all(subs.map(async (s) => {
       try {
+        if (s.endpoint.startsWith('fcm:')) { await sendFcm(env, s, payload); return; }
+        if (!hasKeys(env)) return;
         const r = await fetch(s.endpoint, { method: 'POST', headers: { Authorization: await vapidAuth(env, s.endpoint), 'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream', TTL: '86400', Urgency: 'high' }, body: await encryptPayload(s, text) });
         if (r.status === 404 || r.status === 410) await sb(env, `push_subs?endpoint=eq.${enc(s.endpoint)}`, { method: 'DELETE' });
       } catch (e) { /* one bad phone must not stop the others */ }
@@ -59,11 +94,18 @@ export async function sendPush(env, aid, payload) {
 export async function pushRoutes(req, env, url, ip) {
   const path = url.pathname, m = req.method;
   if (!path.startsWith('/api/push')) return null;
-  if (path === '/api/push/key' && m === 'GET') return json(env, { key: hasKeys(env) ? env.VAPID_PUBLIC : '' });
+  if (path === '/api/push/key' && m === 'GET') return json(env, { key: hasKeys(env) ? env.VAPID_PUBLIC : '', fcm: !!fcmAccount(env) });
   if (m !== 'POST') return null;
   const u = await user(req, env, true); if (u instanceof Response) return u;
   if (!(await throttle(env, ip, 'pushsub', u.aid, 30, 600))) return tooMany(env);
   const b = await req.json().catch(() => ({}));
+  if (path === '/api/push/fcm' || path === '/api/push/fcm-remove') {
+    const tk = String(b.token || '');
+    if (!/^[\w:.\-]{20,400}$/.test(tk)) return err(env, 'Bad request');
+    if (path === '/api/push/fcm') await post(env, 'push_subs', { endpoint: 'fcm:' + tk, aid: u.aid, p256dh: 'fcm', auth: 'fcm' }, 'resolution=merge-duplicates');
+    else await sb(env, `push_subs?endpoint=eq.${enc('fcm:' + tk)}&aid=eq.${enc(u.aid)}`, { method: 'DELETE' });
+    return json(env, { ok: true });
+  }
   const ep = String(b.endpoint || '');
   if (!/^https:\/\/[^\s]{10,900}$/.test(ep)) return err(env, 'Bad request');
   if (path === '/api/push/subscribe') {

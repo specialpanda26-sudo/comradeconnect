@@ -164,6 +164,22 @@ def patch_google_signin():
     print('native Google sign-in ready')
 
 
+def patch_firebase():
+    """Phone notifications (Firebase Cloud Messaging). Only switched on when google-services.json was added to the build."""
+    gs = APP / 'google-services.json'
+    if not gs.exists():
+        print('no google-services.json: building without phone notifications'); return
+    root = HERE / 'android' / 'build.gradle'; s = root.read_text(encoding='utf-8')
+    if 'com.google.gms:google-services' not in s:
+        s, n = re.subn(r"(classpath\s+['\"]com\.android\.tools\.build:gradle:[^'\"]+['\"])", r"\1\n        classpath 'com.google.gms:google-services:4.4.2'", s, count=1)
+        if not n: sys.exit('STOP: could not add the Google services plugin to android/build.gradle')
+        root.write_text(s, encoding='utf-8')
+    g = APP / 'build.gradle'; s = g.read_text(encoding='utf-8')
+    if 'com.google.gms.google-services' not in s:
+        g.write_text(s + "\napply plugin: 'com.google.gms.google-services'\n", encoding='utf-8')
+    print('Firebase ready')
+
+
 if not (MAIN / 'AndroidManifest.xml').exists():
     sys.exit('STOP: run `npx cap add android` first (no android/ folder found)')
-patch_manifest(); patch_deeplink(); patch_version(); patch_google_signin(); icons()
+patch_manifest(); patch_deeplink(); patch_version(); patch_google_signin(); patch_firebase(); icons()

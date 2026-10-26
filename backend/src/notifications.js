@@ -1,6 +1,7 @@
 // In-app notifications: comments on your stories, clips and reels, milestones, new orders, referral news, and new events.
 // Notifications never say who did something: the app is anonymous, so they only say what happened.
 import { json, err, sb, rows, one, post, patch, enc, inList, UUID, user, throttle, tooMany } from './lib.js';
+import { sendPush } from './push.js';
 
 const snip = (t, n = 90) => { const s = String(t || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
 
@@ -9,6 +10,7 @@ export async function notify(env, aid, kind, title, body, refType, refId) {
   try {
     if (!aid) return false;
     const res = await post(env, 'notifications', { aid, kind, title: snip(title, 80), body: snip(body, 160), ref_type: refType || null, ref_id: refId ? String(refId) : null });
+    if (res.ok) await sendPush(env, aid, { title: snip(title, 80), body: snip(body, 160), view: 'bell', tag: 'n-' + kind });
     return res.ok;
   } catch (e) { console.error('notify failed', e && e.message); return false; }
 }

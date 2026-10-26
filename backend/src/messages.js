@@ -1,3 +1,4 @@
+import { notify } from './notifications.js';
 // Anonymous messaging: threads, inbox, block, report, 24-hour mute. Clients never see the other person's aid.
 import { json, err, sb, rows, one, post, patch, enc, inList, str, UUID, throttle, tooMany, user, contactBlock, ahead, DAY } from './lib.js';
 
@@ -67,6 +68,7 @@ export async function messageRoutes(req, env, url, ip) {
     const msg = await one(await post(env, 'messages', { thread_id: t.id, sender_aid: u.aid, body: text }));
     if (!msg) return err(env, 'Could not send', 500);
     await patch(env, `threads?id=eq.${t.id}`, { last_at: msg.created_at });
+    await notify(env, other(t, u.aid), 'message', 'New anonymous message', text, 'thread', t.id);
     return json(env, { thread_id: t.id, message: { id: msg.id, body: msg.body, mine: true, createdAt: Date.parse(msg.created_at) } }, 201);
   }
 

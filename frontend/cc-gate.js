@@ -24,6 +24,7 @@ var CSS = `
 /* the white sheet with the bowl-shaped black top */
 .sheet{position:absolute;inset:0;background:var(--sheet);color:var(--ink);transform:translateY(100%);display:flex;flex-direction:column;padding:calc(var(--ch) - 4px) 22px calc(16px + env(safe-area-inset-bottom,0px));transition:transform 1.3s cubic-bezier(.65,0,.2,1),padding-top 1.2s cubic-bezier(.65,0,.2,1)}
 .w .sheet,.a .sheet{transform:none}
+.s .sheet,.w .sheet{visibility:hidden;pointer-events:none}.a .sheet{visibility:visible}
 .cv{position:absolute;left:0;top:-1px;width:100%;height:calc(var(--ch) + 150px);display:block;transition:height 1.5s cubic-bezier(.65,0,.2,1)}
 .w .cv,.a .cv{height:var(--ch)}
 .cv path{fill:#101422}

@@ -66,3 +66,13 @@ html body #lk.lkg.lkg .lkfp:before,html body #lk.lkg.lkg .lkfp:after{content:non
 html body #lk.lkg.lkg .lkfp svg path{animation:lkd 1s ease forwards!important}
 html body #lk.lkg.lkg .lkface svg path{animation:none!important;stroke-dasharray:none!important;stroke-dashoffset:0!important}
 html body #lk.lkg.lkg .lkface svg .fb{animation:none!important}
+
+/* pw-tweaks v1: black name, no orange field border, black Forgot link, profile picture in the circle */
+html body #lk.lkg.lkg.rec .lkcard h2 b,html body #lk.lkg.lkg.rec #lkhi b{background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;-webkit-text-fill-color:var(--pw-txt)!important;color:var(--pw-txt)!important;font-weight:700}
+html body #lk.lkg.lkg.rec .lkrec .fld:focus-within{border-color:rgba(14,15,11,.3)!important;box-shadow:0 10px 22px -16px rgba(14,15,11,.5)!important}
+:root[data-theme="dark"] html body #lk.lkg.lkg.rec .lkrec .fld:focus-within,:root[data-theme="dark"] #lk.lkg.lkg.rec .lkrec .fld:focus-within{border-color:rgba(255,255,255,.34)!important}
+html body #lk.lkg.lkg.rec .lkeye:active{background:rgba(14,15,11,.08);color:var(--pw-txt)}
+html body #lk.lkg.lkg.rec .lkforgot{background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;-webkit-text-fill-color:var(--pw-txt)!important;color:var(--pw-txt)!important;text-decoration:underline;text-underline-offset:3px}
+html body #lk.lkg.lkg.rec .lkav{overflow:hidden}
+html body #lk.lkg.lkg.rec .lkav.lkpic{background:none}
+html body #lk.lkg.lkg.rec .lkav img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}

@@ -17,16 +17,28 @@
   inp.setAttribute('autocomplete', 'current-password');
 
   function initial() { var t = ((hi && hi.textContent) || '').replace(/^Hi,\s*/i, '').trim(); return (t.charAt(0) || 'C').toUpperCase(); }
+  function pic() {
+    try {
+      var a = window.ccAuth && ccAuth(), v = a && a.aid ? localStorage.getItem('cc_avatar:' + a.aid) : '';
+      if (!v) for (var i = 0; i < localStorage.length; i++) { var n = localStorage.key(i); if (n && n.indexOf('cc_avatar:') === 0) { v = localStorage.getItem(n); if (v) break; } }
+      return /^(data:image\/|https:\/\/)/.test(v || '') ? v : '';
+    } catch (e) { return ''; }
+  }
+  function paintAv() {
+    var s = pic();
+    if (s) { if (!av.firstChild || av.firstChild.tagName !== 'IMG' || av.firstChild.getAttribute('src') !== s) { av.textContent = ''; var im = new Image(); im.alt = ''; im.src = s; av.appendChild(im); } av.classList.add('lkpic'); }
+    else { av.classList.remove('lkpic'); av.textContent = initial(); }
+  }
   var SUB = 'Enter your password to continue', orig = null;
   function view() {
-    av.textContent = initial();
+    paintAv();
     if (!wel) return;
     if (lk.classList.contains('rec')) { if (orig === null && wel.textContent !== SUB) orig = wel.textContent; wel.textContent = SUB; }
     else if (orig !== null) { wel.textContent = orig; orig = null; caps.hidden = true; fld.classList.remove('lkbad'); }
   }
   view();
   new MutationObserver(view).observe(lk, { attributes: true, attributeFilter: ['class'] });
-  if (hi) new MutationObserver(function () { av.textContent = initial(); }).observe(hi, { childList: true, characterData: true, subtree: true });
+  if (hi) new MutationObserver(function () { paintAv(); }).observe(hi, { childList: true, characterData: true, subtree: true });
 
   // one spinner: the old script writes "Checking..." on the button; show a single ring instead of the word
   function busy() { go.classList.toggle('busy', /checking/i.test(go.textContent || '')); }

@@ -9,13 +9,13 @@ var CSS =
 '.sheet::before{display:none!important}' +
 '.app .sheet,.app.w .sheet,.app.a .sheet{transform:none!important}' +
 '.app.w .sheet,.app.s .sheet{opacity:0;visibility:hidden;pointer-events:none;transition:none!important}' +
-'.app.a .sheet{opacity:1;visibility:visible;transition:opacity .25s,padding-top 1.2s ' + E + '!important}' +
+'.app.a .sheet{opacity:1;visibility:visible;transition:opacity .2s!important}' +
 '.app .sheet{padding-top:calc(var(--ch) + 4px)!important}' +
 '.app.a{--ch:252px!important}.app.a.su{--ch:246px!important}' +
 '@media(max-height:720px){.app.a{--ch:232px!important}.app.a.su{--ch:226px!important}}' +
-'.app .cv{z-index:2;height:var(--ch)!important;transform-origin:50% 0;will-change:transform}' +
+'.app .cv{z-index:2;height:var(--ch)!important;transform:translate3d(0,-101%,0);will-change:transform}' +
 '.app.w .cv,.app.s .cv{display:none!important}' +
-'.app.a .cv{transform:none;transition:transform 1.4s .12s ' + E + ',height 1.2s ' + E + '!important}' +
+'.app.a .cv{transform:translate3d(0,0,0);transition:transform .8s .05s cubic-bezier(.22,1,.36,1)!important}' +
 '.app .brand{left:26px!important;top:calc(env(safe-area-inset-top,0px) + 30px)!important}' +
 '.app.a .brand{transition:opacity .6s .5s,top .5s ' + E + '!important}' +
 '.app .brand .row{gap:12px}' +
@@ -34,8 +34,8 @@ function apply(r) {
   new MutationObserver(function (ms) {
     ms.forEach(function (m) {
       if (/\bw\b/.test(m.oldValue || '') && /\ba\b/.test(app.className)) {
-        app.style.setProperty('--b', '.85s');
-        clearTimeout(t); t = setTimeout(function () { app.style.setProperty('--b', '0s'); }, 2600);
+        app.style.setProperty('--b', '.3s');
+        clearTimeout(t); t = setTimeout(function () { app.style.setProperty('--b', '0s'); }, 1400);
       }
     });
   }).observe(app, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });

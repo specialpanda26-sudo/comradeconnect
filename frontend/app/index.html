@@ -3553,7 +3553,7 @@ h2{font:600 24px/1.1 Unbounded,Poppins,sans-serif;margin:0 0 2px;letter-spacing:
 .socs{display:flex;justify-content:center;gap:16px}
 .soc{all:unset;cursor:pointer;width:52px;height:52px;border-radius:50%;background:var(--aqt);display:grid;place-items:center;box-shadow:none;transition:transform .15s}.soc:active{transform:scale(.94)}
 .sw{text-align:center;color:var(--mut);font-size:13px;margin:auto 0 0;padding-top:12px}.sw button{all:unset;cursor:pointer;color:#101422;font-weight:600}
-.cover{position:absolute;inset:0;z-index:8;pointer-events:none;display:none}
+.cover{position:absolute;left:0;top:0;width:100%;height:135%;z-index:8;pointer-events:none;display:none;will-change:transform;transform:translate3d(0,-100%,0)}
 .cover svg{width:100%;height:100%;display:block}.cover path{fill:#101422}
 .home{position:absolute;inset:0;z-index:7;background:var(--sheet);color:var(--ink);opacity:0;visibility:hidden}
 .home.on{opacity:1;visibility:visible}
@@ -3636,7 +3636,7 @@ var HTML = `<div class="app s" id="app" role="main">
 </div></div>
 <div class="gd" id="gd"><b class="on"></b><b></b><b></b></div>
 <div class="gb"><button class="btn" id="gn">Show me around</button><p class="lg">Already a comrade? <button type="button" data-go="l">Log in</button></p><p class="fine">By continuing you agree to our <u data-t="/terms.html">Terms</u> and <u data-t="/privacy.html">Privacy Policy</u>.</p><button type="button" class="skp" data-skip>Just looking around</button></div></div>
-<div class="cover" id="cover" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path id="cp" d=""/></svg></div>
+<div class="cover" id="cover" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path id="cp" d="M0 0H100V80C75 100 25 100 0 80Z"/></svg></div>
 </div>`;
 var host = null, root = null, app = null, tm = null, wantW = false, spl = false, gDone = false;
 function ss(k, v) { try { if (v === undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k, v); } catch (e) {} return null; }
@@ -3693,11 +3693,16 @@ function gset(i) {
   $('#gn').textContent = GL[gi];
 }
 function sweep(cb) {
-  var cv = $('#cover'), p = $('#cp'), d = 24, dur = matchMedia('(prefers-reduced-motion:reduce)').matches ? 10 : 1500, st = null;
-  function draw(e) { var y = -.75 * d + e * (100 + .75 * d); p.setAttribute('d', 'M0 0H100V' + y + 'C75 ' + (y + d) + ' 25 ' + (y + d) + ' 0 ' + y + 'Z'); }
-  cv.style.transition = 'none'; cv.style.opacity = '1'; cv.style.display = 'block'; draw(0);
-  function f(ts) { if (!st) st = ts; var k = Math.min(1, (ts - st) / dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; draw(e); if (k < 1) requestAnimationFrame(f); else setTimeout(function () { cb && cb(); }, 120); }
-  requestAnimationFrame(f);
+  var cv = $('#cover'), fast = matchMedia('(prefers-reduced-motion:reduce)').matches, dur = fast ? 10 : 800, done = false, ez = 'cubic-bezier(.55,0,.2,1)';
+  function end() { if (done) return; done = true; setTimeout(function () { cb && cb(); }, 60); }
+  cv.style.display = 'block';
+  if (cv.animate) {
+    var a = cv.animate([{ transform: 'translate3d(0,-100%,0)' }, { transform: 'translate3d(0,0,0)' }], { duration: dur, easing: ez, fill: 'forwards' });
+    a.onfinish = end; setTimeout(end, dur + 400);
+  } else {
+    cv.style.transition = 'transform ' + dur + 'ms ' + ez; cv.style.transform = 'translate3d(0,-100%,0)'; void cv.offsetWidth;
+    cv.style.transform = 'translate3d(0,0,0)'; setTimeout(end, dur + 60);
+  }
 }
 function mountG() {
   if (gDone) return; var n = 0;

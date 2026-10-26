@@ -11,8 +11,8 @@ var CSS =
 '.app.w .sheet,.app.s .sheet{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s .7s,visibility 0s 1s,padding-top 1.2s ' + E + '!important}' +
 '.app.a .sheet{opacity:1;visibility:visible;transition:opacity .25s,padding-top 1.2s ' + E + '!important}' +
 '.app .sheet{padding-top:calc(var(--ch) + 4px)!important}' +
-'.app.a{--ch:272px!important}.app.a.su{--ch:250px!important}' +
-'@media(max-height:720px){.app.a{--ch:252px!important}.app.a.su{--ch:232px!important}}' +
+'.app.a{--ch:200px!important}.app.a.su{--ch:184px!important}' +
+'@media(max-height:720px){.app.a{--ch:188px!important}.app.a.su{--ch:172px!important}}' +
 '.app .cv{z-index:2;height:var(--ch)!important;transform-origin:50% 0;will-change:transform}' +
 '.app.w .cv,.app.s .cv{transform:scaleY(9);transition:transform .7s cubic-bezier(.5,0,.8,.3),height 1.2s ' + E + '!important}' +
 '.app.a .cv{transform:none;transition:transform 1.4s .12s ' + E + ',height 1.2s ' + E + '!important}' +

@@ -23,6 +23,7 @@ var CSS =
 '.app .brand .bt{margin:36px 0 0;font-size:clamp(28px,8.6vw,35px);line-height:1.04;letter-spacing:-.035em}' +
 '.app .brand p{margin:10px 0 0;font-size:15px}' +
 '.gt{justify-content:flex-start!important;gap:12px!important;padding:calc(env(safe-area-inset-top,0px) + 30px) 26px 0!important}' +
+'@media(min-width:600px){.app .brand{left:max(26px,calc((100% - 440px)/2))!important}.gt{padding-left:max(26px,calc((100% - 440px)/2))!important}}' +
 '@media(prefers-reduced-motion:reduce){.app .cv{transition-duration:.01s!important;transition-delay:0s!important}}';
 function apply(r) {
   if (r.getElementById('ccgcv')) return;
@@ -44,5 +45,5 @@ function apply(r) {
    U-shaped curve show for a moment at launch, ahead of the Comrade Connect splash. A MutationObserver runs before the browser draws. */
 function check() { var h = document.getElementById('ccgate'); if (h && h.shadowRoot) { apply(h.shadowRoot); return true; } return false; }
 if (!check()) { var mo = new MutationObserver(function () { if (check()) mo.disconnect(); }); mo.observe(document.documentElement, { childList: true, subtree: true }); }
-setInterval(check, 300);   // safety net: also covers the gate being rebuilt later
+setInterval(check, 1500);   // safety net: also covers the gate being rebuilt later
 })();

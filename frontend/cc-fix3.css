@@ -1,0 +1,31 @@
+/* cc-fix3.css: Live video buttons spread out, university picker in the new look */
+/* 1. Live: top-right keeps only sound / flip / close; minimize goes top-left; full screen and heart go bottom-right */
+html body #ccl-ctl{position:absolute!important;inset:0!important;display:block!important;pointer-events:none!important;gap:0!important}
+html body #ccl-mini #ccl-ctl{display:none!important}
+html body #ccl-ctl button{position:absolute!important;pointer-events:auto!important;width:40px!important;height:40px!important;margin:0!important;background:rgba(22,19,15,.5)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:none!important}
+html body #ccl-ctl button.ccl-plain{background:rgba(22,19,15,.5)!important;filter:none!important}
+html body #ccl-ctl button[data-k="x"]{top:10px!important;right:10px!important}
+html body #ccl-ctl button[data-k="snd"]{top:10px!important;right:58px!important}
+html body #ccl-ctl button[data-k="flip"]{top:10px!important;right:106px!important}
+html body #ccl-ctl button[data-k="min"]{top:10px!important;left:10px!important;right:auto!important}
+html body #ccl-ctl button[data-k="fs"]{bottom:10px!important;right:10px!important;top:auto!important}
+html body #ccl-ctl button[data-k="hrt"]{bottom:10px!important;right:58px!important;top:auto!important}
+html body #rmedia.ccl-fs #ccl-ctl button[data-k="x"],html body #rmedia.ccl-fs #ccl-ctl button[data-k="snd"],html body #rmedia.ccl-fs #ccl-ctl button[data-k="flip"],html body #rmedia.ccl-fs #ccl-ctl button[data-k="min"]{top:calc(10px + env(safe-area-inset-top,0px))!important}
+html body #rmedia.ccl-fs #ccl-ctl button[data-k="fs"],html body #rmedia.ccl-fs #ccl-ctl button[data-k="hrt"]{bottom:calc(14px + env(safe-area-inset-bottom,0px))!important}
+/* 2. University picker: same look as the rest of the app (soft cream card, round pills, orange selection) */
+html body #ccuniv{background:rgba(22,19,15,.38)!important;-webkit-backdrop-filter:blur(8px)!important;backdrop-filter:blur(8px)!important;align-items:flex-end!important;padding:0!important}
+html body #ccuniv .cd{max-width:480px!important;max-height:90vh!important;border-radius:32px 32px 0 0!important;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px))!important;background:radial-gradient(60% 40% at 15% 0,rgba(255,138,61,.28) 0,transparent 70%),radial-gradient(50% 40% at 95% 8%,rgba(196,114,122,.22) 0,transparent 70%),var(--bg,#fbf1ec)!important;border:0!important;box-shadow:0 -20px 60px rgba(22,19,15,.25)!important;color:var(--fg,#16130f)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;font-family:Manrope,Poppins,sans-serif!important}
+html body #ccuniv h2{font:800 22px/1.15 Manrope,sans-serif!important;letter-spacing:-.02em;color:var(--fg,#16130f)!important}
+html body #ccuniv p{color:var(--mut,#6b6259)!important;opacity:1!important}
+html body #ccuniv .x{width:40px!important;height:40px!important;top:14px!important;right:14px!important;border:0!important;background:var(--g,#fff)!important;color:var(--fg,#16130f)!important;box-shadow:var(--sh,0 6px 18px rgba(22,19,15,.12))!important}
+html body #ccuniv .loc{height:50px;border:0!important;border-radius:999px!important;background:var(--ink,#16130f)!important;color:var(--inkfg,#fff)!important;font:800 14px Manrope,sans-serif!important;box-shadow:var(--sh)!important}
+html body #ccuniv input{height:50px;padding:0 20px!important;border:0!important;border-radius:999px!important;background:var(--g,#fff)!important;color:var(--fg,#16130f)!important;font:600 14px Manrope,sans-serif!important;box-shadow:var(--sh)!important}
+html body #ccuniv input::placeholder{color:var(--mut,#8a8079)}
+html body #ccuniv .it{padding:15px 18px!important;border:0!important;border-radius:22px!important;background:var(--g,#fff)!important;color:var(--fg,#16130f)!important;font:700 14px Manrope,sans-serif!important;box-shadow:var(--sh)!important}
+html body #ccuniv .it small{color:var(--mut,#6b6259)!important;opacity:1!important;font-weight:700}
+html body #ccuniv .it.on{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f06!important}
+html body #ccuniv .it.on small{color:#1d0f06!important}
+html body #ccuniv .it.all{background:linear-gradient(135deg,rgba(255,160,90,.3),rgba(196,114,122,.25)),var(--g,#fff)!important}
+html body #ccuniv .it.all em{color:var(--mut,#6b6259)!important;opacity:1!important}
+html body #ccuniv .hd,html body #ccuniv .msg{color:var(--mut,#6b6259)!important;opacity:1!important;font-weight:700}
+html body .ccc-chip{border:0!important;background:var(--g,#fff)!important;color:var(--fg,#16130f)!important;box-shadow:var(--sh)!important;font:700 13px Manrope,sans-serif!important}

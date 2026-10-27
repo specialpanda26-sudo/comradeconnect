@@ -4,6 +4,7 @@ import { releaseOrder, refundOrder } from './market.js';
 import { credit, hooks } from './pay.js';
 import { HIDE } from './content.js';
 import { validateTicket } from './club.js';
+import { CAMPUS_IDS, DEFAULT_CAMPUS } from './campus.js';
 import { getSettings, saveSettings, DEFS, envDefault, getZones, DEFAULT_ZONES, getGateways, saveGateways, GW_AREAS, GW_NAMES } from './settings.js';
 import { payMode, gatewayReady } from './pay.js';
 import { contactBlock } from './lib.js';
@@ -350,12 +351,14 @@ export async function adminRoutes(req, env, url, ip) {
     return json(env, { log: await rows(await sb(env, `admin_audit_log?order=created_at.desc&limit=${Math.min(200, parseInt(url.searchParams.get('limit')) || 50)}`)) });
   }
   // ---- zones: the places comrades pick from (Feed filter, Market, Wi-Fi, hostels...) ----
-  if (path === '/api/admin/zones' && m === 'GET') return json(env, { zones: await getZones(env) });
+  if (path === '/api/admin/zones' && m === 'GET') { const gc = String(url.searchParams.get('campus') || '').toLowerCase(); return json(env, { zones: await getZones(env, CAMPUS_IDS.includes(gc) ? gc : DEFAULT_CAMPUS) }); }
   if (path === '/api/admin/zones' && m === 'POST') {
     const b = await body(), act = b.action, name = str(b.name, 30);
-    const have = await rows(await sb(env, 'zones?select=name&limit=100'));
-    const seed = async () => { if (!have.length) { for (const [i, z] of DEFAULT_ZONES.entries()) await post(env, 'zones', { name: z, sort: i }, 'resolution=ignore-duplicates,return=representation'); } };
-    const cur = have.length ? have.map((x) => x.name) : DEFAULT_ZONES;
+    const camp = CAMPUS_IDS.includes(String(b.campus || '').toLowerCase()) ? String(b.campus).toLowerCase() : DEFAULT_CAMPUS;
+    const baseZones = camp === DEFAULT_CAMPUS ? DEFAULT_ZONES : ['On campus'];
+    const have = await rows(await sb(env, 'zones?select=name&campus=eq.' + enc(camp) + '&limit=100'));
+    const seed = async () => { if (!have.length) { for (const [i, z] of baseZones.entries()) await post(env, 'zones', { name: z, sort: i, campus: camp }, 'resolution=ignore-duplicates,return=representation'); } };
+    const cur = have.length ? have.map((x) => x.name) : baseZones;
     if (act === 'add') {
       if (name.length < 2) return err(env, 'Type the zone name (at least 2 letters)');
       if (/[<>"]/.test(name)) return err(env, 'Use letters and numbers only');
@@ -363,15 +366,15 @@ export async function adminRoutes(req, env, url, ip) {
       if (cur.some((z) => z.toLowerCase() === name.toLowerCase())) return err(env, 'That zone is already there', 409);
       if (cur.length >= 40) return err(env, 'You can have up to 40 zones');
       await seed();
-      await post(env, 'zones', { name, sort: cur.length }, 'return=representation');
+      await post(env, 'zones', { name, sort: cur.length, campus: camp }, 'return=representation');
     } else if (act === 'remove') {
       if (!cur.includes(name)) return err(env, 'No such zone', 404);
       if (cur.length <= 1) return err(env, 'Keep at least one zone');
       await seed();
-      await sb(env, `zones?name=eq.${enc(name)}`, { method: 'DELETE' });
+      await sb(env, `zones?campus=eq.${enc(camp)}&name=eq.${enc(name)}`, { method: 'DELETE' });
     } else return err(env, 'Unknown action');
     await A('zones.' + act, 'zone', name, null);
-    return json(env, { ok: true, zones: await getZones(env) });
+    return json(env, { ok: true, zones: await getZones(env, camp) });
   }
   return err(env, 'Unknown admin action', 404);
 }

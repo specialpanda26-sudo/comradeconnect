@@ -11,10 +11,11 @@ const connected = () => typeof CC_API === 'string' && CC_API.indexOf('YOUR-SUBDO
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function loadConfig() {                              // fee %, boost prices and payout rules, so the screens always match the server
   try {
-    const r = await fetch(CC_API + '/api/config'); if (!r.ok) return;
+    const cmp = (function () { try { return localStorage.getItem('cc_campus') || ''; } catch (e) { return ''; } })();
+    const r = await fetch(CC_API + '/api/config?c=' + encodeURIComponent(cmp)); if (!r.ok) return;
     const d = await r.json();
     if (Number.isFinite(d.fee_percent)) FEE = d.fee_percent;
-    if (Array.isArray(d.zones) && d.zones.length) { ZONES.splice(0, ZONES.length, ...d.zones.map(String)); try { if (window.ccDrawZones) window.ccDrawZones(); } catch (e) {} }
+    if (Array.isArray(d.zones) && d.zones.length) { try { localStorage.setItem('cc_zl:' + (cmp || 'kirinyaga'), JSON.stringify(d.zones.map(String))); } catch (e) {} ZONES.splice(0, ZONES.length, ...d.zones.map(String)); try { if (window.ccDrawZones) window.ccDrawZones(); } catch (e) {} }
     CFG.pmin = d.price_min || 1; CFG.pmax = d.price_max || 150000;
     { const mp = document.getElementById('mpr'); if (mp) mp.placeholder = 'Price in KSh (' + CFG.pmin.toLocaleString('en-US') + ' to ' + CFG.pmax.toLocaleString('en-US') + ')'; }
     CFG.min = d.withdraw_min || 1; CFG.ppk = d.points_per_ksh || 10; CFG.max = d.withdraw_max || 150000; CFG.wfp = d.withdraw_fee_percent || 0; CFG.wff = d.withdraw_fee_flat || 0;

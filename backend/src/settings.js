@@ -1,7 +1,8 @@
 // Admin-editable money settings (marketplace fee, advert prices, payout rules).
 // Values live in the `settings` table; if a value is missing there, the env value (or the default below) is used,
 // so the app keeps working even before the SQL is run. Changes apply to NEW orders, boosts and withdrawals only.
-import { json, sb, rows, post } from './lib.js';
+import { json, sb, rows, post, enc } from './lib.js';
+import { campusOf, isAllCampuses, DEFAULT_CAMPUS } from './campus.js';
 
 export const DEFS = {
   platform_fee_percent: { env: 'PLATFORM_FEE_PERCENT', def: 7, min: 0, max: 30, dec: true, unit: '%', label: 'Platform fee (every sale and ticket)', help: 'Share of every Market sale and every event ticket that the website keeps. The seller or host gets the rest. Example: 7 means a KSh 100 sale pays the seller KSh 93.' },
@@ -106,12 +107,15 @@ export async function saveGateways(env, input) {
 
 export const DEFAULT_ZONES = ['Kerugoya', 'Kutus', 'Kagio', 'On campus'];
 // The zones comrades pick from. The admin edits them (admin > Zones); an empty table means the built-in four.
-export async function getZones(env) {
+// Each campus has its own list. campus = an id, or 'all' / nothing for every campus together.
+export async function getZones(env, campus) {
+  const all = !campus || campus === 'all';
+  const fallback = () => (all || campus === DEFAULT_CAMPUS ? DEFAULT_ZONES.slice() : ['On campus']);
   try {
-    const r = await rows(await sb(env, 'zones?select=name,sort,created_at&order=sort.asc,created_at.asc&limit=100'));
-    const names = r.map((x) => x.name).filter(Boolean);
-    return names.length ? names : DEFAULT_ZONES.slice();
-  } catch (e) { return DEFAULT_ZONES.slice(); }
+    const r = await rows(await sb(env, 'zones?select=name,sort,created_at&order=sort.asc,created_at.asc&limit=400' + (all ? '' : '&campus=eq.' + enc(campus))));
+    const names = [...new Set(r.map((x) => x.name).filter(Boolean))];
+    return names.length ? names : fallback();
+  } catch (e) { return fallback(); }
 }
 // Whole shillings, rounded down in the platform's favour only when exact (same rule everywhere).
 export const feeOf = (amount, pct) => Math.floor((amount * pct) / 100 + 1e-9);
@@ -152,6 +156,6 @@ export async function saveSettings(env, input) {
 
 // Public: the app reads fees and prices from here so the screens never disagree with the server.
 export async function settingsRoutes(req, env, url) {
-  if (req.method === 'GET' && url.pathname === '/api/config') return json(env, { ...publicConfig(await getSettings(env)), zones: await getZones(env) });
+  if (req.method === 'GET' && url.pathname === '/api/config') return json(env, { ...publicConfig(await getSettings(env)), zones: await getZones(env, campusOf(req) || (isAllCampuses(req) ? 'all' : DEFAULT_CAMPUS)) });
   return null;
 }

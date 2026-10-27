@@ -758,3 +758,10 @@ alter table posts add column if not exists fee_pending integer not null default 
 insert into post_rules (label, words, fee)
 select 'Selling or pricing (data, bundles, airtime...)', 'data, bundle, bundles, airtime, reseller, resell, selling, package, packages, price, prices, bei, ksh, bob, {money}', 25
 where not exists (select 1 from post_rules);
+
+
+-- v19: zones per campus. Old zones stay with Kirinyaga. Safe to run again.
+alter table zones add column if not exists campus text not null default 'kirinyaga';
+do $$ begin alter table zones drop constraint zones_pkey; exception when others then null; end $$;
+do $$ begin alter table zones add primary key (campus, name); exception when others then null; end $$;
+create index if not exists zones_campus on zones(campus, sort);

@@ -1123,7 +1123,7 @@ const IC={heart:'<svg class="i" viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a
 const HID=new Set(ST.get('cs_hidden',[])),BLK=new Set(ST.get('cs_blocked',[]));
 const CATS=['All','Notices','HostelTea','Crush','StrikeUpdates'];let cat='All',page=1,zone='All';
 /* Starting list. The admin edits the real list in admin > Zones; the app swaps it in when it loads. */
-const ZONES=['Kerugoya','Kutus','Kagio','On campus'];
+const ZONES=(function(){try{var c=localStorage.getItem('cc_campus')||'kirinyaga',l=JSON.parse(localStorage.getItem('cc_zl:'+c)||'null');if(Array.isArray(l)&&l.length)return l;if(c!=='kirinyaga'&&c!=='all')return ['On campus']}catch(e){}return ['Kerugoya','Kutus','Kagio','On campus']})();
 function drawZones(){if(zone!=='All'&&!ZONES.includes(zone)){zone='All';try{load(true)}catch(e){}}
 $('#zones').innerHTML='<button class="tab g'+(zone==='All'?' on':'')+'" data-z="All">All zones</button>'+ZONES.map(z=>`<button class="tab g${z===zone?' on':''}" data-z="${esc(z)}">@${esc(z)}</button>`).join('');
 const sv=$('#sz').value;$('#sz').innerHTML='<option value="">Not saying</option>'+ZONES.map(z=>`<option>${esc(z)}</option>`).join('');if(ZONES.includes(sv))$('#sz').value=sv}

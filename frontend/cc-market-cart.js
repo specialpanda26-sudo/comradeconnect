@@ -50,13 +50,33 @@ function openCart(){if(stack.length)return;var o=sheet();draw(o);
   else if(t.hasAttribute('data-pay')){o.close('quiet');openPay()}})}
 function openPay(){
  if(!cart.length)return;var o=sheet(),n=cart.length,tot=total(),saved='';try{saved=localStorage.getItem('cc_mcart_ph')||''}catch(e){}
- o.body.innerHTML='<div class="mct-hd"><h3>Pay</h3>'+xbtn()+'</div><div id="mct-f"><div class="mct-box"><small class="mct-cap">CART &middot; '+n+(n>1?' ITEMS':' ITEM')+'</small><b class="mct-big">'+kes(tot)+'</b><p>Held in escrow. The seller is paid after you confirm.</p></div><label class="mct-lb" for="mct-ph">M-PESA NUMBER</label><input class="mct-in" id="mct-ph" type="tel" inputmode="numeric" maxlength="13" placeholder="0712 345 678" autocomplete="tel" value="'+esc(saved)+'"><div class="mct-pt" id="mct-pt" hidden><div><b>Use points</b><small id="mct-ps"></small></div><label class="mct-sw"><input type="checkbox" id="mct-up"><i></i></label></div><p class="mct-er" id="mct-er" role="alert"></p><button type="button" class="mct-b grad" id="mct-go">Pay '+kes(tot)+'</button><p class="mct-nt">Never share your M-Pesa PIN with anyone.</p></div><div id="mct-st" hidden></div>';
+ o.body.innerHTML='<div class="mct-hd"><h3>Pay</h3>'+xbtn()+'</div><div id="mct-f"><div class="mct-box"><small class="mct-cap">CART &middot; '+n+(n>1?' ITEMS':' ITEM')+'</small><b class="mct-big">'+kes(tot)+'</b><p>Held in escrow. The seller is paid after you confirm.</p></div><div id="mct-wc"></div><label class="mct-lb" for="mct-ph">M-PESA NUMBER</label><input class="mct-in" id="mct-ph" type="tel" inputmode="numeric" maxlength="13" placeholder="0712 345 678" autocomplete="tel" value="'+esc(saved)+'"><div class="mct-pt" id="mct-pt" hidden><div><b>Use points</b><small id="mct-ps"></small></div><label class="mct-sw"><input type="checkbox" id="mct-up"><i></i></label></div><p class="mct-er" id="mct-er" role="alert"></p><button type="button" class="mct-b grad" id="mct-go">Pay '+kes(tot)+'</button><p class="mct-nt">Never share your M-Pesa PIN with anyone.</p></div><div id="mct-st" hidden></div>';
  var go=$('#mct-go',o.el),ph=$('#mct-ph',o.el),er=$('#mct-er',o.el),up=$('#mct-up',o.el),fee=(window.ccMk&&ccMk.fee&&ccMk.fee())||7,cut=0,per=10;
- function label(){go.textContent='Pay '+kes(tot-(up.checked?cut:0))}
+ function due(){return tot-(up.checked?cut:0)}
+ var wc=window.ccPayChoice?ccPayChoice.mount($('#mct-wc',o.el),{need:due,onChange:function(m){var w=m==='wallet',lb=$('label[for="mct-ph"]',o.el);ph.hidden=w;if(lb)lb.hidden=w;label()}}):null;
+ function label(){go.textContent=(wc&&wc.mode()==='wallet'?'Pay from wallet ':'Pay ')+kes(due());if(wc)wc.repaint()}
+ async function payWallet(){
+  er.textContent='';busy=true;o.lock=true;go.disabled=true;go.textContent='Paying...';
+  var ids=cart.map(function(c){return c.id}),title=cart.map(function(c){return c.t}).join(', ');
+  try{
+   var body=ids.length>1?{listing_ids:ids,pay_with:'wallet',use_points:up.checked}:{listing_id:ids[0],pay_with:'wallet',use_points:up.checked};
+   var d=await ccCall('/api/market/buy',{body:body});
+   cart=[];save();ccMk.S.list=ccMk.S.list.filter(function(x){return ids.indexOf(x.id)<0});
+   var f=$('#mct-f',o.el),st=$('#mct-st',o.el);f.hidden=true;st.hidden=false;
+   st.innerHTML='<p class="mct-ok">Paid '+kes(d.amount)+' from your wallet'+(d.credit?' plus '+kes(d.credit)+' of points':'')+'. It is held safely in escrow. Find it under Orders.</p><button type="button" class="mct-b dark" id="mct-od">See my orders</button>';
+   try{ccTick($('.mct-ok',st))}catch(e){}
+   $('#mct-od',st).onclick=function(){o.close();toOrders()};
+   o.lock=false;if(window.ccPayChoice)ccPayChoice.paid();ccMk.loadOrders(true);
+   try{window.ccReceipt&&ccReceipt.show({item:title,amount:d.amount,credit:d.credit,ref:d.order_id||(d.order_ids||[])[0],via:'Wallet',onDone:function(){o.close();toOrders()}})}catch(e){}
+  }catch(e){
+   o.lock=false;go.disabled=false;
+   er.textContent=(e&&e.status===402&&wc)?wc.short():((e&&e.message)||'Payment failed.');
+   label()}
+  busy=false}
  try{ccCall('/api/points').then(function(p){per=p.per_ksh||10;cut=Math.min(Math.floor(tot*fee/100+1e-9),Math.floor((p.points||0)/per));if(cut<1)return;$('#mct-ps',o.el).textContent=(cut*per)+' points saves '+kes(cut)+' on our fee. You have '+p.points+'.';$('#mct-pt',o.el).hidden=false}).catch(function(){})}catch(e){}
  up.onchange=label;
  go.onclick=async function(){
-  if(busy)return;var v=ph.value.replace(/[\s+-]/g,'').replace(/^254(?=[17]\d{8}$)/,'0');
+  if(busy)return;if(wc&&wc.mode()==='wallet')return payWallet();var v=ph.value.replace(/[\s+-]/g,'').replace(/^254(?=[17]\d{8}$)/,'0');
   if(!/^(07|01)(?!(\d)\1{7}$)\d{8}$/.test(v)){er.textContent='Enter a Safaricom or Airtel number like 0712345678.';return}
   er.textContent='';busy=true;o.lock=true;try{localStorage.setItem('cc_mcart_ph',v)}catch(e){}
   var f=$('#mct-f',o.el),st=$('#mct-st',o.el);f.hidden=true;st.hidden=false;

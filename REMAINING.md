@@ -182,5 +182,5 @@ Findings (already diagnosed, not yet changed):
 - Card payments were removed: there is no card code, test or redirect page. Payments are M-Pesa only (manual, TinyPesa or IntaSend STK push).
 - Setup needs `schema.sql` plus the other `supabase/*.sql` files. admin > SQL shows what is still missing.
 - `wrangler.toml` has a comma-separated `ALLOWED_ORIGINS`; the Cloudflare Worker route accepts only one address, Render accepts a list.
-- Phone alerts work for the Android app only (`FCM_SERVICE_ACCOUNT`, RENDER.md section 12). Website push is switched off in `backend/src/push.js`; its VAPID code and the lines after the early `return` in `/api/push/subscribe` are dead code.
+- Phone alerts work for the Android app only (`FCM_SERVICE_ACCOUNT`, RENDER.md section 12). Website push is switched off in `backend/src/push.js`; the old VAPID signing, web-push encryption and the unreachable lines in `/api/push/subscribe` were removed (`gen_vapid.js` is no longer needed).
 - `npm test` runs 217 tests against a fake database. They do not prove anything about the real Supabase, Render or payment providers.

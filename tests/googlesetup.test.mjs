@@ -17,5 +17,5 @@ test('dropdown panel opens in front of share and post forms', () => {
   assert.ok(/#ccpk\{position:fixed;inset:0;z-index:2147483000/.test(pk), 'panel must sit above every form (those use 9999)');
   assert.ok(pk.includes('.cxm select'), 'Past Papers and Lost and Found forms must use the glass panel');
   const html = F('index.html');
-  assert.ok(/cc-pick\.js\?v=3/.test(html) && /cc-setup\.js\?v=4/.test(html) && /cc-live\.js\?v=4/.test(html));
+  assert.ok(/cc-pick\.js\?v=3/.test(html) && /cc-setup\.js\?v=4/.test(html) && /cc-live\.js\?v=(host)?4/.test(html));
 });

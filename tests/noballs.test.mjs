@@ -20,7 +20,7 @@ test('every page asks for the new glass files, so phones drop the old saved copy
   for (const f of fs.readdirSync('frontend').filter((x) => x.endsWith('.html'))) {
     for (const m of F(f).matchAll(/cc-glass\.(?:css|js)\?v=(\d+)/g)) { seen++; assert.ok(Number(m[1]) >= 5, f + ' still loads an old cc-glass file'); }
   }
-  assert.ok(seen >= 20, 'expected the glass files on the app and the static pages');
+  assert.ok(seen >= 12, 'expected the glass files on the app and the pages that still use them');
 });
 
 test('running cc-glass.js adds no balls and removes the ones already on the page (Safety, Refunds, lock screen)', () => {

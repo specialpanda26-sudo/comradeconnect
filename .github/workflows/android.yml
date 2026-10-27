@@ -136,4 +136,5 @@ jobs:
         if: ${{ env.NOTIFY_KEY != '' && env.NOTIFY_URL != '' }}
         continue-on-error: true
         working-directory: .
-        run: curl -fsS -X POST -H "X-Admin-Key: $NOTIFY_KEY" -H "Content-Type: application/json" -d '{}' "$NOTIFY_URL/api/admin/push/update"
+        run: |
+          curl -fsS -X POST -H "X-Admin-Key: $NOTIFY_KEY" -H "Content-Type: application/json" -d '{}' "$NOTIFY_URL/api/admin/push/update"

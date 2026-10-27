@@ -1,5 +1,5 @@
 import { json, err, sb, rows, one, post, patch, enc, user, str, int, UUID, hasContact, normPhone, throttle, tooMany } from './lib.js';
-import { initPayment, credit, cardReady, gatewayFor } from './pay.js';
+import { initPayment, credit, gatewayFor } from './pay.js';
 import { getSettings, feeOf } from './settings.js';
 import { mailReady, sendMail } from './mail.js';
 import { notify } from './notifications.js';
@@ -73,7 +73,7 @@ export async function giftRoutes(req, env, url, ip) {
     const l = await bySlug(env, url.searchParams.get('c') || '');
     if (!l || !l.active) return err(env, 'This gift link is not active', 404);
     const S = await getSettings(env);
-    return json(env, { ...publicLink(env, l), presets: PRESETS, min: S.gift_min, max: S.gift_max, card: cardReady(env), receipts: mailReady(env), manual: (await gatewayFor(env, 'gift')) === 'manual' });
+    return json(env, { ...publicLink(env, l), presets: PRESETS, min: S.gift_min, max: S.gift_max, receipts: mailReady(env), manual: (await gatewayFor(env, 'gift')) === 'manual' });
   }
 
   if (path === '/api/gift/send' && m === 'POST') {

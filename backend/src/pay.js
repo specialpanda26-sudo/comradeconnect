@@ -109,23 +109,6 @@ export async function reconcileIntasend(env) {
   }
   return changed;
 }
-// ---------- Card payments (IntaSend hosted checkout: the buyer types the card on IntaSend's own page, card numbers never touch our server) ----------
-// Needs INTASEND_PUBLISHABLE_KEY. Optional: INTASEND_CARD_TARIFF (BUSINESS-PAYS = we pay the card fee, CUSTOMER-PAYS = the buyer does), SITE_URL, CARD_PAYMENTS=0 to switch cards off.
-const CARD_PREFIX = 'ic:';
-export const cardReady = () => false;
-const siteUrl = (env) => String(env.SITE_URL || 'https://comradeconnect.co.ke').replace(/\/$/, '');
-async function intaCheckout(env, row, email) {
-  const tariff = String(env.INTASEND_CARD_TARIFF || 'BUSINESS-PAYS').toUpperCase() === 'CUSTOMER-PAYS' ? 'CUSTOMER-PAYS' : 'BUSINESS-PAYS';
-  const body = intaBody(env, { amount: row.amount, currency: 'KES', method: 'CARD-PAYMENT', api_ref: row.id, first_name: 'Comrade', last_name: 'Connect',
-    email, host: siteUrl(env), redirect_url: siteUrl(env) + '/pay-done.html', card_tarrif: tariff, comment: 'Comrade Connect payment' });
-  const r = await fetch(`${intaBase(env)}/api/v1/checkout/`, { method: 'POST', headers: intaHead(env), body: JSON.stringify(body) })
-    .catch((e) => { console.error('intasend: checkout request failed', e && e.message); return null; });
-  const t = r ? await r.json().catch(() => ({})) : {};
-  if (!r || !r.ok || !t || !t.url || !t.id) { console.error('intasend: card checkout refused', r ? r.status : 'no response', JSON.stringify(t).slice(0, 200)); return null; }
-  if (!/^https:\/\//.test(String(t.url))) return null;
-  return { id: String(t.id), url: String(t.url) };
-}
-
 // What the buyer must do in manual mode. Shown in the app, never contains anything secret.
 export function manualInfo(env, p) {
   const to = String(env.MPESA_PAY_TO || ''), type = ['till', 'paybill'].includes(env.MPESA_PAY_TYPE) ? env.MPESA_PAY_TYPE : 'send', ref = 'CC' + String(p.id).slice(0, 8).toUpperCase();
@@ -137,9 +120,7 @@ export const hooks = { onPaid: async () => {}, onFailed: async () => {} };   // 
 
 // Starts an STK push. Returns { id } or { res } (an error Response).
 export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone: rawPhone, boost_hours, credit_ksh, method, email: rawEmail }) {
-  const card = method === 'card';
-  if (card && !cardReady(env)) return { res: err(env, 'Card payments are not switched on yet. Pay with M-Pesa.', 400) };
-  const phone = normPhone(rawPhone) || (card ? 'card' : null);
+  const phone = normPhone(rawPhone);
   amount = Math.floor(Number(amount));
   const mode = await gatewayFor(env, purpose), tinyOk = tinyKeys(env).length > 0 && !!env.TINYPESA_USERNAME;
   if (mode === 'manual' && !env.MPESA_PAY_TO) return { res: err(env, 'Payments are not set up yet', 503) };
@@ -150,13 +131,6 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   const pj = await pr.json().catch(() => null);
   const row = Array.isArray(pj) ? pj[0] : null;
   if (!row) { console.error('payments: could not save the payment row (is supabase/schema.sql fully run?)', pr.status, JSON.stringify(pj).slice(0, 300)); return { res: err(env, 'Server could not save the payment', 500) }; }
-  if (card) {
-    const email = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/.test(String(rawEmail || '')) ? String(rawEmail).trim() : 'noreply+' + String(row.id).slice(0, 8) + '@comradeconnect.co.ke';
-    const c = await intaCheckout(env, row, email);
-    if (c) { await patch(env, `payments?id=eq.${row.id}`, { request_id: CARD_PREFIX + c.id }); return { id: row.id, url: c.url }; }
-    await markFailed(env, `payments?id=eq.${row.id}`, 'failed', 'not_sent', null);
-    return { res: err(env, 'Could not open the card page. Try again or pay with M-Pesa.', 502) };
-  }
   if (mode === 'manual') return { id: row.id };       // no prompt is sent: the app shows manualInfo() and asks for the M-Pesa code
   if (mode === 'intasend' && intaReady(env)) {
     const inv = await intaPush(env, row, phone, amount);
@@ -197,7 +171,7 @@ export async function payRoutes(req, env, url, ip) {
   const path = url.pathname;
 
   // Which ways to pay are switched on (the app shows the card option only when this says so).
-  if (path === '/api/pay/methods' && req.method === 'GET') return json(env, { mpesa: true, card: cardReady(env) });
+  if (path === '/api/pay/methods' && req.method === 'GET') return json(env, { mpesa: true });
 
   // Generic payment: only boosts and top-ups. Orders, club and tickets have their own endpoints that fix the amount server-side.
   if (path === '/api/pay' && req.method === 'POST') {
@@ -239,7 +213,7 @@ export async function payRoutes(req, env, url, ip) {
     if (UUID.test(ref)) [p] = await rows(await sb(env, `payments?id=eq.${ref}&limit=1`));
     if (!p) [p] = await rows(await sb(env, `payments?request_id=eq.${enc(IS_PREFIX + invoiceId)}&limit=1`));
     if (!p) { console.log('intasend webhook: no payment matches invoice', invoiceId); return json(env, { ok: true }); }
-    if (p.request_id && !String(p.request_id).startsWith(CARD_PREFIX) && p.request_id !== IS_PREFIX + invoiceId) { console.log('intasend webhook: invoice does not belong to this payment', invoiceId); return json(env, { ok: true }); }
+    if (p.request_id && p.request_id !== IS_PREFIX + invoiceId) { console.log('intasend webhook: invoice does not belong to this payment', invoiceId); return json(env, { ok: true }); }
     const inv = await intaStatus(env, invoiceId);
     if (!inv) { console.error('intasend webhook: could not confirm invoice with IntaSend', invoiceId); return json(env, { error: 'could not confirm' }, 502); }   // shows as failed in IntaSend, replay it later
     console.log('intasend webhook:', invoiceId, inv.state, await settleIntasend(env, p, inv));

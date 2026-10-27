@@ -717,7 +717,7 @@ $('#bpay').onclick = async () => {
     ps.go('done'); await sleep(1100);                        // let the last tick play before the receipt screen
     S.list = S.list.filter((x) => x.id !== l.id);
     $('#bok').textContent = 'Payment received. ' + kes(d.amount) + (d.credit ? ' plus ' + kes(d.credit) + ' of points' : '') + ' for ' + l.title + ' is held safely in escrow. Tap Done to see it under Orders.';
-    bs(4); ccTick($('#bok')); loadOrders(true);
+    bs(4); loadOrders(true);
     try { window.ccReceipt && ccReceipt.show({ item: l.title, amount: d.amount, credit: d.credit, ref: d.id, via: 'M-Pesa', onDone: () => { try { $('#bdone').click(); } catch (e) {} } }); } catch (e) {}
   } catch (e) {
     if (e.pending) { ps.stop(); toast(e.message); shut(); S.sub = 'orders'; draw(); loadOrders(); }
@@ -1452,24 +1452,66 @@ async function waitPaid(id, on) {
     throw new Error(WHY[st.reason] || 'Payment was cancelled or failed. If you did pay, keep your M-Pesa message and contact support.');
   }
 }
-// Animated "payment received" tick for every success screen. It plays once; with reduced motion it simply appears.
+// ccLoad.show('Loading...') / ccLoad.hide(): the centred loading card (the page behind it blurs, small rounded card, spinner, label). Safe to call twice; it hides itself after 40s.
+window.ccLoad = (function () {
+  let n = 0, root = null, timer = 0;
+  function css() {
+    if (document.getElementById('cc-load-css')) return;
+    const st = document.createElement('style'); st.id = 'cc-load-css';
+    st.textContent = '#ccld{position:fixed;inset:0;z-index:10060;display:grid;place-items:center;background:rgba(22,19,15,.18);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;transition:opacity .25s ease}#ccld.on{opacity:1}'
+      + '#ccld .ccld-c{min-width:150px;padding:24px 28px 20px;border-radius:22px;text-align:center;color:var(--fg,#f6efe9);background:var(--bg,#17130f);border:1px solid var(--line,rgba(255,255,255,.1));box-shadow:var(--sh,0 10px 28px rgba(0,0,0,.35));font:800 15px/1.3 Manrope,system-ui,sans-serif}'
+      + '#ccld .ccld-s{width:38px;height:38px;margin:0 auto 14px;border-radius:50%;border:3px solid var(--line,rgba(255,255,255,.2));border-top-color:var(--fg,#16130f);animation:ccld-spin .8s linear infinite}'
+      + '@keyframes ccld-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){#ccld .ccld-s{animation-duration:2.4s}}';
+    document.head.appendChild(st);
+  }
+  function hide(all) {
+    n = all ? 0 : Math.max(0, n - 1);
+    if (n || !root) return;
+    clearTimeout(timer); const r = root; root = null; r.classList.remove('on'); setTimeout(function () { r.remove(); }, 220);
+  }
+  function show(label) {
+    css(); n++;
+    if (!root) {
+      root = document.createElement('div'); root.id = 'ccld'; root.setAttribute('role', 'status'); root.setAttribute('aria-live', 'polite');
+      root.innerHTML = '<div class="ccld-c"><div class="ccld-s"></div><span></span></div>';
+      document.body.appendChild(root); requestAnimationFrame(function () { root && root.classList.add('on'); });
+    }
+    root.querySelector('span').textContent = label || 'Loading...';
+    clearTimeout(timer); timer = setTimeout(function () { hide(true); }, 40000);
+  }
+  return { show: show, hide: function () { hide(false); }, clear: function () { hide(true); } };
+})();
+// The same loading card on every payment page: any call that starts or sends a payment (buy, deposit, plan, club order, gift)
+// shows it while the server answers, so each flow needs no code of its own. Waiting for the M-Pesa PIN keeps its own steps list.
+(function () {
+  const START = /\/api\/(pay|market\/buy|club\/order|gift\/send|wholesale\/join|hostels\/caretaker\/register)(\?|#|$)/;
+  const f = window.fetch; if (!f || f.__ccLoad) return;
+  const w = function (input, init) {
+    const url = typeof input === 'string' ? input : String((input && (input.url || input.href)) || '');
+    const m = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+    if (m !== 'POST' || !START.test(url)) return f.apply(this, arguments);
+    ccLoad.show('Loading...');
+    return f.apply(this, arguments).finally(function () { ccLoad.hide(); });
+  };
+  w.__ccLoad = true; window.fetch = w;
+})();
+// "Payment received" tick for success screens: a green check pops in a circle and draws itself once. Nothing else moves; with reduced motion it simply appears.
 window.ccTick = function (before) {
   if (!before || !before.parentNode) return;
   if (!document.getElementById('cc-tick-css')) {
     const st = document.createElement('style'); st.id = 'cc-tick-css';
-    st.textContent = '.cc-tick{width:92px;height:92px;margin:10px auto 2px;display:block}'
-      + '.cc-tick .r{fill:none;stroke:var(--ok);stroke-width:4;opacity:0;transform-origin:50% 50%;animation:cct-ring .9s ease-out}'
-      + '.cc-tick .c{fill:rgba(168,187,163,.14);stroke:var(--ok);stroke-width:4;stroke-dasharray:264;stroke-dashoffset:0;transform-origin:50% 50%;animation:cct-circ .55s ease-out,cct-pop .5s .45s ease-out}'
-      + '.cc-tick .k{fill:none;stroke:var(--ok);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:0;animation:cct-draw .4s .45s ease-out backwards}'
-      + '@keyframes cct-circ{from{stroke-dashoffset:264}}@keyframes cct-draw{from{stroke-dashoffset:60}}'
-      + '@keyframes cct-pop{50%{transform:scale(1.08)}}@keyframes cct-ring{from{transform:scale(.7);opacity:.7}to{transform:scale(1.35);opacity:0}}';
+    st.textContent = '.cc-tick{width:88px;height:88px;margin:10px auto 2px;display:block;transform-origin:50% 50%;animation:cct-pop .5s cubic-bezier(.2,.9,.3,1.25) both}'
+      + '.cc-tick .h{fill:rgba(169,184,162,.38)}.cc-tick .c{fill:var(--ink,#16130f)}'
+      + '.cc-tick .k{fill:none;stroke:var(--inkfg,#fff);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:44;animation:cct-draw .35s ease-out .22s both}'
+      + '@keyframes cct-pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}@keyframes cct-draw{from{stroke-dashoffset:44}to{stroke-dashoffset:0}}'
+      + '@media(prefers-reduced-motion:reduce){.cc-tick,.cc-tick .k{animation:none}}';
     document.head.appendChild(st);
   }
   const old = before.parentNode.querySelector('.cc-tick'); if (old) old.remove();
   const d = document.createElement('div');
-  d.innerHTML = '<svg class="cc-tick" viewBox="0 0 100 100" role="img" aria-label="Payment received"><circle class="r" cx="50" cy="50" r="42"/><circle class="c" cx="50" cy="50" r="42"/><path class="k" d="M30 52l13 13 27-29"/></svg>';
+  d.innerHTML = '<svg class="cc-tick" viewBox="0 0 100 100" role="img" aria-label="Payment received"><circle class="h" cx="50" cy="50" r="49"/><circle class="c" cx="50" cy="50" r="39"/><path class="k" d="M33 52l12 12 23-25"/></svg>';
   before.parentNode.insertBefore(d.firstChild, before);
-  try { if (navigator.vibrate) navigator.vibrate([30, 40, 30]); } catch (e) { /* not supported */ }
+  try { if (navigator.vibrate) navigator.vibrate(20); } catch (e) { /* not supported */ }
 };
 function payNow(o) {
   const mx = o.qtyMax || 1;

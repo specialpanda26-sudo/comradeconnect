@@ -64,7 +64,6 @@ function openPay(){
    cart=[];save();ccMk.S.list=ccMk.S.list.filter(function(x){return ids.indexOf(x.id)<0});
    var f=$('#mct-f',o.el),st=$('#mct-st',o.el);f.hidden=true;st.hidden=false;
    st.innerHTML='<p class="mct-ok">Paid '+kes(d.amount)+' from your wallet'+(d.credit?' plus '+kes(d.credit)+' of points':'')+'. It is held safely in escrow. Find it under Orders.</p><button type="button" class="mct-b dark" id="mct-od">See my orders</button>';
-   try{ccTick($('.mct-ok',st))}catch(e){}
    $('#mct-od',st).onclick=function(){o.close();toOrders()};
    o.lock=false;if(window.ccPayChoice)ccPayChoice.paid();ccMk.loadOrders(true);
    try{window.ccReceipt&&ccReceipt.show({item:title,amount:d.amount,credit:d.credit,ref:d.order_id||(d.order_ids||[])[0],via:'Wallet',onDone:function(){o.close();toOrders()}})}catch(e){}
@@ -92,7 +91,6 @@ function openPay(){
    var title=cart.map(function(c){return c.t}).join(', ');
    cart=[];save();ccMk.S.list=ccMk.S.list.filter(function(x){return ids.indexOf(x.id)<0});
    st.innerHTML='<p class="mct-ok">Payment received. '+kes(d.amount)+' is held safely in escrow. Find it under Orders.</p><button type="button" class="mct-b dark" id="mct-od">See my orders</button>';
-   try{ccTick($('.mct-ok',st))}catch(e){}
    $('#mct-od',st).onclick=function(){o.close();toOrders()};
    o.lock=false;ccMk.loadOrders(true);
    try{window.ccReceipt&&ccReceipt.show({item:title,amount:d.amount,credit:d.credit,ref:d.id,via:'M-Pesa',onDone:function(){o.close();toOrders()}})}catch(e){}

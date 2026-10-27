@@ -194,6 +194,37 @@ def patch_notif_icon():
 
 
 
+# cc-fix7
+def patch_notif_native():
+    """WhatsApp-style phone notifications. Copies the native Java files, and (only when Firebase is on) registers
+    our messaging service in the manifest, ahead of the Capacitor one, and adds the Firebase messaging library."""
+    src = HERE / 'native'
+    pkgdir = MAIN / 'java' / Path(*PKG.split('.'))
+    pkgdir.mkdir(parents=True, exist_ok=True)
+    for f in ('CCNotifier.java', 'CCNotifPlugin.java'):
+        shutil.copy(src / f, pkgdir / f)
+    gs = APP / 'google-services.json'
+    if not gs.exists():
+        print('no google-services.json: notification service not added'); return
+    shutil.copy(src / 'CCMessagingService.java', pkgdir / 'CCMessagingService.java')
+    g = APP / 'build.gradle'; s = g.read_text(encoding='utf-8')
+    if 'cc-fix7-firebase' not in s:
+        g.write_text(s + "\n// cc-fix7-firebase: the notification service needs the Firebase messaging classes directly\n"
+                         "dependencies {\n    implementation platform('com.google.firebase:firebase-bom:33.1.2')\n    implementation 'com.google.firebase:firebase-messaging'\n}\n", encoding='utf-8')
+    p = MAIN / 'AndroidManifest.xml'; s = p.read_text(encoding='utf-8')
+    if 'CCMessagingService' not in s:
+        if 'xmlns:tools=' not in s:
+            if '<manifest' not in s: sys.exit('STOP: AndroidManifest.xml has no <manifest')
+            s = s.replace('<manifest', '<manifest xmlns:tools="http://schemas.android.com/tools"', 1)
+        svc = ('        <service android:name=".CCMessagingService" android:exported="false">\n'
+               '            <intent-filter android:priority="100">\n                <action android:name="com.google.firebase.MESSAGING_EVENT" />\n            </intent-filter>\n        </service>\n'
+               '        <service android:name="com.capacitorjs.plugins.pushnotifications.MessagingService" tools:node="remove" />\n')
+        if '</application>' not in s: sys.exit('STOP: AndroidManifest.xml has no </application>')
+        s = s.replace('</application>', svc + '    </application>', 1)
+        p.write_text(s, encoding='utf-8')
+    print('notification service ready')
+
+
 if not (MAIN / 'AndroidManifest.xml').exists():
     sys.exit('STOP: run `npx cap add android` first (no android/ folder found)')
-patch_manifest(); patch_deeplink(); patch_version(); patch_google_signin(); patch_firebase(); patch_notif_icon(); icons()
+patch_manifest(); patch_deeplink(); patch_version(); patch_google_signin(); patch_firebase(); patch_notif_icon(); patch_notif_native(); icons()

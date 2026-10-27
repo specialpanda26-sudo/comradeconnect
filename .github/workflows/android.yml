@@ -60,6 +60,8 @@ jobs:
           if [ "$n" -ne 0 ] && [ "$n" -ne 4 ]; then echo "Only $n of the 4 signing secrets are set. Set all 4 (see android-wrapper/README.md) or remove them."; exit 1; fi
 
       - name: Pack the website into the app
+        env:
+          APP_ENTRY: ${{ vars.APP_ENTRY }}
         run: VERSION_NAME=1.0.${{ env.BUILD_N }} python3 bundle.py
 
       - name: Install Capacitor
@@ -103,6 +105,12 @@ jobs:
           "$BT/aapt" dump badging comrade-connect.apk | grep -E "^package:|sdkVersion|targetSdkVersion" | tee -a "$GITHUB_STEP_SUMMARY"
           "$BT/apksigner" verify --print-certs comrade-connect.apk | grep -E "SHA-256|SHA-1|Verified" | tee -a "$GITHUB_STEP_SUMMARY"
           test "$(stat -c%s comrade-connect.apk)" -gt 1000000 || { echo "APK is too small, something went wrong"; exit 1; }
+          if unzip -p comrade-connect.apk 'classes*.dex' | grep -aq CCMessagingService; then
+            echo "Phone alerts: ON (the Firebase file was in this build)" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Phone alerts: OFF. Add the GOOGLE_SERVICES_JSON_BASE64 secret and run this workflow again." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Phone alerts are OFF in this build (no GOOGLE_SERVICES_JSON_BASE64 secret)"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:

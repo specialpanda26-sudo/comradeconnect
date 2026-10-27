@@ -1,7 +1,4 @@
 """Builds android-wrapper/www from ../frontend so the app carries the whole website inside it (works with no internet).
- - copies the site (leaves out the 17 MB 4K video; the app uses the 1080p one)
- - downloads the libraries and fonts the site normally loads from the internet and points the pages at the local copies
- - stamps the service worker with this build
 Runs in GitHub Actions (needs internet there). Safe to run again."""
 import os, re, shutil, sys, time, urllib.request
 from pathlib import Path
@@ -34,20 +31,41 @@ def main():
         shutil.rmtree(OUT)
     shutil.copytree(SRC, OUT, ignore=shutil.ignore_patterns('bg-4k.mp4'))
     VENDOR.mkdir(parents=True, exist_ok=True)
+    fontn = [0]
+    cssn = [0]
 
-    idx = OUT / 'index.html'
-    html = idx.read_text(encoding='utf-8')
+    def vendor(page, up):
+        """Keeps one html page working offline. up = '' for the root page, '../' for app/index.html."""
+        html = page.read_text(encoding='utf-8')
+        for url in sorted(set(re.findall(r'<script[^>]+src="(https://[^"]+)"', html))):
+            name = re.sub(r'[^A-Za-z0-9._-]', '_', urlparse(url).path.strip('/').replace('/', '_')) or 'lib'
+            if not name.endswith('.js'):
+                name += '.js'
+            if not (VENDOR / name).exists():
+                (VENDOR / name).write_bytes(get(url, binary=True))
+            html = html.replace(url, up + 'vendor/' + name)
+            print('library ', url, '->', up + 'vendor/' + name)
+        fonts = VENDOR / 'fonts'
+        fonts.mkdir(parents=True, exist_ok=True)
+        for m in re.finditer(r'<link[^>]+href="(https://fonts\.googleapis\.com/css2[^"]+)"[^>]*>', html):
+            link = m.group(1)
+            css_url = link.replace('&amp;', '&')
+            css = get(css_url)
+            for f in sorted(set(re.findall(r'url\((https://fonts\.gstatic\.com/[^)]+)\)', css))):
+                fontn[0] += 1
+                fn = 'f%02d.woff2' % fontn[0]
+                (fonts / fn).write_bytes(get(f, binary=True))
+                css = css.replace(f, 'fonts/' + fn)
+            cssn[0] += 1
+            cssname = 'fonts%d.css' % cssn[0]
+            (VENDOR / cssname).write_text(css, encoding='utf-8')
+            html = html.replace(link, up + 'vendor/' + cssname)
+            print('fonts   ', css_url[:60], '->', up + 'vendor/' + cssname)
+        html = re.sub(r'<link[^>]+rel="preconnect"[^>]*>', '', html)
+        page.write_text(html, encoding='utf-8')
+        return html
 
-    # 1) script libraries (Tailwind, jsPDF)
-    for url in sorted(set(re.findall(r'<script[^>]+src="(https://[^"]+)"', html))):
-        name = re.sub(r'[^A-Za-z0-9._-]', '_', urlparse(url).path.strip('/').replace('/', '_')) or 'lib'
-        if not name.endswith('.js'):
-            name += '.js'
-        (VENDOR / name).write_bytes(get(url, binary=True))
-        html = html.replace(url, 'vendor/' + name)
-        print('library ', url, '->', 'vendor/' + name)
-
-    # 1b) the Wi-Fi map library (Leaflet) is loaded when the map opens: keep it inside the app too
+    # the Wi-Fi map library (Leaflet): keep it inside the app too
     lf = VENDOR / 'leaflet'
     lf.mkdir(exist_ok=True)
     LB = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/'
@@ -59,41 +77,41 @@ def main():
         ww.write_text(t.replace("var LEAF = '" + LB + "'", "var LEAF = 'vendor/leaflet/'"), encoding='utf-8')
         print('leaflet  -> vendor/leaflet/')
 
-    # 2) Google Fonts: the stylesheet and the font files
-    fonts = VENDOR / 'fonts'
-    fonts.mkdir(exist_ok=True)
-    m = re.search(r'<link[^>]+href="(https://fonts\.googleapis\.com/css2[^"]+)"[^>]*>', html)
-    if m:
-        css_url = m.group(1).replace('&amp;', '&')
-        css = get(css_url)
-        n = 0
-        for f in sorted(set(re.findall(r'url\((https://fonts\.gstatic\.com/[^)]+)\)', css))):
-            n += 1
-            fn = 'f%02d.woff2' % n
-            (fonts / fn).write_bytes(get(f, binary=True))
-            css = css.replace(f, 'fonts/' + fn)
-        (VENDOR / 'fonts.css').write_text(css, encoding='utf-8')
-        html = html.replace(m.group(1), 'vendor/fonts.css')
-        print('fonts   ', n, 'files')
-    html = re.sub(r'<link[^>]+rel="preconnect"[^>]*>', '', html)
-    idx.write_text(html, encoding='utf-8')
+    html = vendor(OUT / 'index.html', '')
+    if (OUT / 'app' / 'index.html').exists():
+        vendor(OUT / 'app' / 'index.html', '../')
 
-    # 3) the scrolling background video: 1080p only
+    # APP_ENTRY: which app opens when the Android app starts. empty or new = the new app, classic = the old one.
+    entry = (os.environ.get('APP_ENTRY') or 'new').strip().lower()
+    if entry != 'classic' and (OUT / 'app' / 'index.html').exists():
+        (OUT / 'index.html').rename(OUT / 'classic.html')
+        (OUT / 'index.html').write_text(
+            '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
+            '<meta name="theme-color" content="#000000"><title>Comrade Connect</title>'
+            '<style>html,body{margin:0;height:100%;background:#000}</style>'
+            '<script>location.replace("app/index.html"+location.search+location.hash)</script></head>'
+            '<body><noscript><a href="app/index.html" style="color:#fff">Open Comrade Connect</a></noscript></body></html>', encoding='utf-8')
+        print('entry    -> new app (app/index.html); the old page is kept as classic.html')
+    else:
+        print('entry    -> classic app (index.html)')
+
+    # the scrolling background video: 1080p only
     sb = OUT / 'cc-scrollbg.js'
     if sb.exists():
         s = sb.read_text(encoding='utf-8')
         sb.write_text(s.replace("'media/bg-4k.mp4?v=1'", "'media/bg-1080.mp4?v=1'"), encoding='utf-8')
 
-    # 4) service worker: new build = old saved screens are replaced
+    # service worker: new build = old saved screens are replaced
     sw = OUT / 'sw.js'
     if sw.exists():
         build = os.environ.get('VERSION_NAME') or str(int(time.time()))
         s = sw.read_text(encoding='utf-8').replace("const BUILD = 'dev';", "const BUILD = '" + build + "';")
-        s = re.sub(r"const CDN = \[[^\]]*\];", "const CDN = [];", s)       # libraries are already inside the app
+        s = re.sub(r"const CDN = \[[^\]]*\];", "const CDN = [];", s)
         sw.write_text(s, encoding='utf-8')
 
     left = sorted(set(re.findall(r'(?:src|href)="(https://[^"]+)"', html)))
     print('www ready. Links still pointing online (fine, they are normal links):', len(left))
 
 
-main()
+if __name__ == '__main__':
+    main()

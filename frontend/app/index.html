@@ -453,7 +453,7 @@ select.in{appearance:none;-webkit-appearance:none;background-image:linear-gradie
     <div id="toast" role="status" aria-live="polite"></div>
   </div>
 </div>
-<script src="config.js"></script>
+<script src="config.js"></script><script src="../cc-native.js?v=16"></script>
 <script>
 'use strict';
 /* ===== icons ===== */
@@ -1617,6 +1617,7 @@ async function googleSignIn(credential,link){
  return d}
 async function mountGoogle(box,onDone,onErr,opts){
  if(!googleOn())return false;
+ if(window.ccApp&&window.ccApp.native&&window.ccApp.mountGoogle)return window.ccApp.mountGoogle(box,onDone,onErr,opts,googleSignIn);
  if(!(await loadGsi())){box.innerHTML='<p class="sub">Google sign-in could not load. Check your internet.</p>';return false}
  google.accounts.id.initialize({client_id:CC_GOOGLE_ID,callback:async function(resp){try{onDone(await googleSignIn(resp.credential,!!(opts&&opts.link)))}catch(e){onErr(e.message)}}});
  google.accounts.id.renderButton(box,Object.assign({theme:'outline',size:'large'},opts||{},{type:'icon',shape:'circle'}));

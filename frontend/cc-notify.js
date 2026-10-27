@@ -30,6 +30,7 @@ function siteNotices() {
   if (C.notice_on && C.notice_text) a.push({ t: C.notice_title || 'Notice', x: C.notice_text });
   if (C.maintenance_on) a.push({ t: 'Maintenance', x: C.maintenance_text || 'We are fixing something. Please check again in a little while.' });
   if (C.banner_on && C.banner_text) a.push({ t: 'Announcement', x: C.banner_text, l: C.banner_link });
+  if (a.length && ls('ccn_cleared') === noticeKey(a)) return [];   // cleared with Clear all
   return a;
 }
 function noticeKey(a) { return a.map(function (n) { return n.t + n.x; }).join('|'); }
@@ -208,11 +209,11 @@ function markRead(ids) {
   S.unread = S.items.filter(function (n) { return !n.read; }).length; paintBell();
   if (signedIn()) call('/api/notifications/read', { ids: ids }).catch(function () {});
 }
-function markAll() {
-  S.items.forEach(function (n) { n.read = true; }); S.unread = 0;
-  var a = siteNotices(); if (a.length) ls(SEEN_KEY, noticeKey(a));
+function markAll() {   // now "Clear all": the notifications are removed, not just greyed
+  S.items = []; S.unread = 0;
+  var a = siteNotices(); if (a.length) { ls(SEEN_KEY, noticeKey(a)); ls('ccn_cleared', noticeKey(a)); }
   if (S.guest) { var seen = guestEventsSeen(); S.events.forEach(function (e) { if (seen.indexOf(e.id) < 0) seen.push(e.id); }); ls(EV_KEY, JSON.stringify(seen.slice(-200))); }
-  else call('/api/notifications/read', { all: true, events: true }).catch(function () {});
+  else call('/api/notifications/clear', { all: true, events: true }).catch(function () {});
   S.events = []; paintBell(); draw();
 }
 function close() {
@@ -227,7 +228,7 @@ function open() {
   panel.onclick = function (e) { if (e.target === panel) close(); };
   var bx = el('div', 'bx'), hd = el('div', 'hd'); hd.appendChild(el('h2', '', 'Notifications'));
   var right = el('div'); right.style.cssText = 'display:flex;align-items:center;gap:4px';
-  var all = el('button', '', 'Mark all read'); all.type = 'button'; all.onclick = markAll; right.appendChild(all);
+  var all = el('button', '', 'Clear all'); all.type = 'button'; all.onclick = markAll; right.appendChild(all);
   var x = el('button', 'ib'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.innerHTML = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'; x.onclick = close; right.appendChild(x);
   hd.appendChild(right); bx.appendChild(hd);
   var tb = el('div', 'tb'); tb.setAttribute('role', 'tablist');

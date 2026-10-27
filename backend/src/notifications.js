@@ -55,6 +55,20 @@ export async function notificationRoutes(req, env, url, ip) {
     return json(env, { ok: true, prefs });
   }
 
+  // Clear: really removes them from the list (Mark-as-read only greys them).
+  if (path === '/api/notifications/clear' && m === 'POST') {
+    const u = await a(); if (u instanceof Response) return u;
+    if (!(await throttle(env, ip, 'notifclear', u.aid, 60, 300))) return tooMany(env);
+    const b = await req.json().catch(() => ({}));
+    if (b.all === true) await sb(env, `notifications?aid=eq.${enc(u.aid)}`, { method: 'DELETE' });
+    else if (Array.isArray(b.ids) && b.ids.length) {
+      const ids = b.ids.filter((x) => UUID.test(String(x))).slice(0, 50);
+      if (ids.length) await sb(env, `notifications?aid=eq.${enc(u.aid)}&id=${inList(ids)}`, { method: 'DELETE' });
+    }
+    if (b.events === true) await sb(env, 'notif_state', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify({ aid: u.aid, events_seen_at: new Date().toISOString() }) });
+    return json(env, { ok: true });
+  }
+
   if (path === '/api/notifications/read' && m === 'POST') {
     const u = await a(); if (u instanceof Response) return u;
     if (!(await throttle(env, ip, 'notifread', u.aid, 300, 600))) return tooMany(env);

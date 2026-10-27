@@ -39,6 +39,8 @@
         else if ((v === 'message' || rt === 'thread') && id && window.ccOpenThread) window.ccOpenThread({ tid: id, title: 'Anonymous message' });
         else if ((v === 'post' || v === 'clip' || rt === 'post' || rt === 'clip' || rt === 'story') && window.ccNotifOpen) window.ccNotifOpen({ ref_type: rt || v, ref_id: id });
         else if (v === 'rewards') window.go('rewards');
+        else if (v === 'me' || rt === 'verification') window.go('me');
+        else if (rt === 'payment' || rt === 'withdrawal') { window.go('market'); clickWhen('#mseg button[data-s="orders"]'); }
         else openBell();
       } catch (e) { openBell(); }
     });

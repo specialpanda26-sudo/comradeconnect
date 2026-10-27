@@ -18,6 +18,7 @@ SECTIONS.push = () => {
     + '<label class="fl" for="pu_t">Title<small>Short, up to 60 characters.</small></label><input id="pu_t" maxlength="60" placeholder="e.g. Maintenance tonight" autocomplete="off">'
     + '<label class="fl" for="pu_b">Message<small>Up to 160 characters.</small></label><textarea id="pu_b" rows="3" maxlength="160" placeholder="e.g. The app will be offline from 10pm to 11pm."></textarea>'
     + '<label class="fl" for="pu_h">Test handle<small>Type your own handle, like @comradeconnect, to test on one account only.</small></label><input id="pu_h" maxlength="40" placeholder="@yourhandle" autocomplete="off">'
+    + '<label class="fl" for="pu_a">Send to<small>Everyone with the app, or only club members.</small></label><select id="pu_a"><option value="all">Everyone</option><option value="club">Club members only</option></select>'
     + '<p class="err" id="pu_e"></p><div class="row"><button id="pu_test">Send test</button><button class="p" id="pu_all">Send to everyone</button><button id="pu_r">Refresh</button></div>'
     + '<p class="sub" id="pu_out" style="white-space:pre-line"></p></div>'];
 };
@@ -31,7 +32,7 @@ document.addEventListener('click', async (e) => {
   if (a && !confirm('Send this to every phone with the app (' + ((info && info.accounts) || 0) + ' accounts)?')) return;
   $('#pu_e').textContent = ''; btn.disabled = true;
   try {
-    const d = await api('/api/admin/push/send', t ? { title, body, handle } : { title, body });
+    const d = await api('/api/admin/push/send', t ? { title, body, handle } : { title, body, audience: val('pu_a') });
     if (t) $('#pu_out').textContent = (d.report || []).join('\n') || 'Done';
     else { toast('Sent to ' + d.accounts + ' accounts'); $('#pu_out').textContent = 'Sent to ' + d.accounts + ' accounts.'; }
   } catch (x) { $('#pu_e').textContent = x.message; }

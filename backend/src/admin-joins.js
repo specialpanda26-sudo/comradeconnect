@@ -1,6 +1,6 @@
 // Admin: see who joined what, and remove a join. Covers the club, study groups and Kura entries.
 // Removing is always logged in the audit log. A removed club member cannot rejoin by themselves (see club.js).
-import { json, err, sb, rows, one, patch, enc, inList, str, UUID, isAdmin, audit } from './lib.js';
+import { json, err, sb, rows, one, post, patch, enc, inList, str, UUID, isAdmin, audit } from './lib.js';
 import { notify } from './notifications.js';
 
 const handles = async (env, aids) => {
@@ -29,6 +29,32 @@ export async function adminJoinRoutes(req, env, url, ip) {
       groups: gm.map((x) => ({ group_id: x.group_id, group: gname[x.group_id] || 'Study group', aid: x.aid, handle: H[x.aid] || '', at: x.joined_at })),
       kura,
     });
+  }
+
+  // Add anyone (by handle) to the club or a study group. They get a phone alert.
+  if (path === '/api/admin/joins/add' && m === 'POST') {
+    const b = await body(), kind = str(b.kind, 10), handle = str(b.handle, 40).replace(/^@/, '');
+    if (!handle) return err(env, 'Type the handle to add');
+    let p = await rows(await sb(env, `profiles?select=aid,handle&handle=eq.${enc(handle)}&limit=1`));
+    if (!p.length) p = (await rows(await sb(env, `profiles?select=aid,handle&handle=ilike.${enc(handle.replace(/[%*]/g, ''))}&limit=5`))).filter((x) => String(x.handle || '').toLowerCase() === handle.toLowerCase()).slice(0, 1);
+    if (!p.length) return err(env, 'No account with that handle');
+    const aid = p[0].aid;
+    if (kind === 'club') {
+      const r = await post(env, 'club_members', { club: 'default', aid, status: 'active' }, 'resolution=merge-duplicates,return=representation');
+      if (!r.ok) return err(env, 'Could not add that member', 500);
+      await audit(env, 'join.add', 'club', aid, '', ip);
+      await notify(env, aid, 'club', 'Welcome to the club', 'An admin added you to the club.', 'club', null).catch(() => {});
+      return json(env, { ok: true });
+    }
+    if (kind === 'group') {
+      const gid = str(b.group_id, 40); if (!UUID.test(gid)) return err(env, 'Pick a study group');
+      const r = await post(env, 'group_members', { group_id: gid, aid }, 'resolution=merge-duplicates,return=representation');
+      if (!r.ok) return err(env, 'Could not add that member', 500);
+      await audit(env, 'join.add', 'group', gid + ':' + aid, '', ip);
+      await notify(env, aid, 'admin', 'Added to a study group', 'An admin added you to a study group.', null, null).catch(() => {});
+      return json(env, { ok: true });
+    }
+    return err(env, 'Unknown kind');
   }
 
   if (path === '/api/admin/joins/remove' && m === 'POST') {

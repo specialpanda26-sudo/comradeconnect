@@ -9,6 +9,7 @@ import { getSettings, saveSettings, DEFS, envDefault, getZones, DEFAULT_ZONES, g
 import { payMode, gatewayReady } from './pay.js';
 import { contactBlock } from './lib.js';
 import { notify } from './notifications.js';   // cc-fix1
+import { announceEvent, announceNotice } from './push.js';
 
 import * as store from './storage.js';
 import { mediaUrl, PRIVATE_BUCKET } from './storage.js';
@@ -92,6 +93,7 @@ export async function adminRoutes(req, env, url, ip) {
     const [p] = await rows(await patch(env, `payments?id=eq.${mm[1]}&status=eq.submitted`, act === 'approve' ? { status: 'paid', paid_at: new Date().toISOString() } : { status: 'failed' }));
     if (!p) return err(env, 'This payment is not waiting for a decision', 409);
     if (act === 'approve') await hooks.onPaid(env, p); else await hooks.onFailed(env, p);
+    if (p.aid) await notify(env, p.aid, 'payment', act === 'approve' ? 'Payment confirmed' : 'Payment not confirmed', act === 'approve' ? 'KSh ' + p.amount + ' was received. Thank you.' : 'We could not find your M-Pesa payment of KSh ' + p.amount + '. Check the code and try again.', 'payment', p.id);
     await A('payment.' + act, 'payment', p.id, { amount: p.amount, purpose: p.purpose, receipt: p.receipt });
     return json(env, { ok: true });
   }
@@ -139,6 +141,7 @@ export async function adminRoutes(req, env, url, ip) {
       const badge = b.badge !== false && v.claimed_role && v.claimed_role !== 'Student' ? (v.claimed_role === 'Local seller' ? 'Business' : v.claimed_role) : null;   // admin can approve the ID but refuse the role badge
       await patch(env, `profiles?aid=eq.${enc(v.aid)}`, badge ? { verified: true, badge } : { verified: true });
     }
+    await notify(env, v.aid, 'verification', act === 'approve' ? 'You are verified' : 'Verification not approved', act === 'approve' ? 'An admin approved your ID. You can now withdraw money.' : (str(b.note, 160) || 'An admin could not approve your ID. Send clearer photos and try again.'), 'verification', v.id);
     await A('verification.' + act, 'verification', v.id, { note: b.note || null, badge: act === 'approve' ? b.badge !== false : null });
     return json(env, { ok: true });
   }
@@ -203,6 +206,8 @@ export async function adminRoutes(req, env, url, ip) {
     else if (act === 'role') { if (!['user', 'seller', 'club_admin', 'admin'].includes(b.role)) return err(env, 'Unknown role'); await patch(env, `profiles?aid=eq.${enc(aid)}`, { role: b.role }); }
     else if (upd) await patch(env, `profiles?aid=eq.${enc(aid)}`, upd);
     else return err(env, 'Unknown action');
+    const US = { ban: ['Account suspended', 'An admin suspended your account.'], unban: ['Account restored', 'An admin restored your account.'], mute: ['You were muted', 'An admin muted you for ' + (int(b.hours, 1, 2160) || 1) + ' hour(s). You cannot post until then.'], unmute: ['You can post again', 'An admin lifted your mute.'], role: ['Your role changed', 'An admin changed your role to ' + str(b.role, 20) + '.'] }[act];
+    if (US) await notify(env, aid, 'account', US[0], US[1], null, null);
     await A('user.' + act, 'user', aid, { hours: b.hours || null, role: b.role || null, reason: str(b.reason, 200) || null });
     return json(env, { ok: true });
   }
@@ -227,6 +232,8 @@ export async function adminRoutes(req, env, url, ip) {
     }
     const r = await one(await post(env, kind, row));
     if (!r) return err(env, 'Could not save', 500);
+    if (kind === 'events') await announceEvent(env, null, row.title);
+    if (kind === 'notices') await announceNotice(env, row.title, row.body);
     await A(kind + '.create', kind, r.id, row);
     return json(env, r, 201);
   }
@@ -271,6 +278,7 @@ export async function adminRoutes(req, env, url, ip) {
   if (mm && m === 'POST') {
     const r = await rows(await patch(env, `club_orders?id=eq.${mm[1]}&status=eq.paid`, { status: 'collected' }));
     if (!r.length) return err(env, 'Order is not waiting for collection', 409);
+    await notify(env, r[0].aid, 'club', 'Order collected', 'Your Club shop order was marked as collected. Enjoy!', 'club', mm[1]);
     await A('club.order.collect', 'club_order', mm[1]);
     return json(env, { ok: true });
   }

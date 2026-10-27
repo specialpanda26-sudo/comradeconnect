@@ -39,9 +39,14 @@ export async function adminPushRoutes(req, env, url, ip) {
       return json(env, { ok: true, report });
     }
     const subs = await rows(await sb(env, 'push_subs?select=aid&limit=5000'));
-    const aids = [...new Set(subs.map((x) => x.aid).filter(Boolean))].slice(0, 2000);
+    let aids = [...new Set(subs.map((x) => x.aid).filter(Boolean))].slice(0, 2000);
+    const club = b.audience === 'club';
+    if (club) {                                      // only active club members
+      const mem = new Set((await rows(await sb(env, 'club_members?select=aid&status=eq.active&limit=5000'))).map((x) => x.aid));
+      aids = aids.filter((a) => mem.has(a));
+    }
     for (let i = 0; i < aids.length; i += 20) await Promise.all(aids.slice(i, i + 20).map((a) => notify(env, a, 'admin', title, body)));
-    await audit(env, 'push.send', 'all', 'everyone', title, ip);
+    await audit(env, 'push.send', 'all', club ? 'club' : 'everyone', title, ip);
     return json(env, { ok: true, accounts: aids.length });
   }
   return null;

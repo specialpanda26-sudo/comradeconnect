@@ -89,10 +89,11 @@ var ICON = {
   bell: '<path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
   story: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',
   live: '<circle cx="12" cy="12" r="2.5"/><path d="M7.5 7.5a6.4 6.4 0 0 0 0 9M16.5 7.5a6.4 6.4 0 0 1 0 9"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/>',
   update: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>'
 };
 function icon(kind) {
-  var map = { comment: 'comment', reel_comment: 'reel', clip_comment: 'reel', like_milestone: 'heart', order: 'bag', referral: 'gift', reward: 'gift', event: 'event', notice: 'bell', story_view: 'story', live: 'live', update: 'update' };
+  var map = { comment: 'comment', reel_comment: 'reel', clip_comment: 'reel', like_milestone: 'heart', order: 'bag', referral: 'gift', reward: 'gift', event: 'event', notice: 'bell', story_view: 'story', live: 'live', update: 'update', verification: 'check', account: 'bell', payment: 'bag', payout: 'bag', listing: 'bag', gift: 'gift', club: 'gift', admin: 'bell', message: 'comment' };
   var d = el('span', 'ic'); d.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[map[kind] || 'bell'] + '</svg>'; return d;
 }
 
@@ -164,6 +165,9 @@ function openTarget(n) {
   else if (n.ref_type === 'order') { go('market'); setTimeout(function () { var b = document.querySelector('#mseg button[data-s="orders"]'); if (b) b.click(); }, 350); }
   else if (n.ref_type === 'thread' && typeof window.ccOpenThread === 'function') window.ccOpenThread({ tid: n.ref_id, title: 'Anonymous message' });
   else if (n.ref_type === 'referral') go('rewards');
+  else if (n.ref_type === 'verification') go('me');
+  else if (n.ref_type === 'withdrawal' || n.ref_type === 'payment') { go('market'); setTimeout(function () { var b = document.querySelector('#mseg button[data-s="orders"]'); if (b) b.click(); }, 350); }
+  else if (n.ref_type === 'listing') { go('market'); setTimeout(function () { var b = document.querySelector('#mseg button[data-s="mine"]'); if (b) b.click(); }, 350); }
   else if (n.ref_type === 'story') go('feed');
 }
 function eventSheet(e) {

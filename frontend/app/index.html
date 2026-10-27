@@ -2949,7 +2949,7 @@ async function loadNotes(){
   if(prev!==null&&NT.total>prev)native(NT.total-prev===1?'You have a new notification':'You have '+(NT.total-prev)+' new notifications')
  }catch(e){}}
 function icFor(kind){
- var m={comment:'chat',reel_comment:'play',clip_comment:'play',like_milestone:'heart',order:'bag',referral:'gift',reward:'gift',event:'ticket',notice:'mega',story_view:'eye'};
+ var m={comment:'chat',reel_comment:'play',clip_comment:'play',like_milestone:'heart',order:'bag',referral:'gift',reward:'gift',event:'ticket',notice:'mega',story_view:'eye',verification:'shield',payment:'bag',payout:'bag',listing:'bag',club:'gift',gift:'gift',admin:'mega'};
  return m[kind]||'bell'}
 function openTarget(n){
  closeSheet();
@@ -2957,7 +2957,10 @@ function openTarget(n){
  if(t==='post'||t==='story'){S.cat='All';go('home')}
  else if(t==='clip'){S.wTab='clips';go('watch')}
  else if(t==='order'){S.mkTab='orders';go('market')}
- else if(t==='referral'){go('me');A.rewards()}}
+ else if(t==='referral'){go('me');A.rewards()}
+ else if(t==='verification'){go('me')}
+ else if(t==='payment'||t==='withdrawal'){S.mkTab='orders';go('market')}
+ else if(t==='listing'){S.mkTab='mine';go('market')}}
 function evRow(e){return{kind:'event',title:'New event: '+e.title,body:(e.date||'')+(e.venue?', '+e.venue:'')+' · '+(e.ticket_price>0?'Ticket KES '+Number(e.ticket_price).toLocaleString('en-KE'):'Free entry'),unread:true,at:e.at,ev:e}}
 function drawBell(rows){
  var box=$('#nlist');if(!box)return;

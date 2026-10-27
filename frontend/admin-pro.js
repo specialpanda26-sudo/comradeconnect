@@ -128,6 +128,8 @@ SECTIONS.joins = () => {
   else list = J.groups.map((x) => jrow(x.handle || x.aid, who(x), x.group + ' \u00b7 joined ' + when(x.at), '<button class="bad" data-jn="rm" data-kind="group" data-gid="' + esc(x.group_id) + '" data-aid="' + esc(x.aid) + '" data-nm="' + esc(who(x)) + '">Remove</button>'));
   const sub = '<div class="pro-sub" style="margin-bottom:12px">' + tabs.map((t) => '<button data-jn="tab" data-k="' + t[0] + '" class="' + (J.k === t[0] ? 'on' : '') + '">' + t[1] + ' (' + t[2] + ')</button>').join('') + '</div>';
   return ['<div class="card">' + sub + '<p class="sub">Removing a join is final. ' + (J.k === 'kura' ? 'A removed Kura entry loses all its votes.' : J.k === 'club' ? 'A removed club member cannot rejoin on their own.' : 'The person is taken out of the study group and gets a notice.') + ' Every removal is saved in the audit log.</p>'
+    + (J.k === 'club' ? '<div class="jtools"><input id="jn_add" placeholder="Add someone: type their @handle" autocomplete="off" aria-label="Handle to add"><button data-jn="add" data-kind="club">Add to club</button></div>' : '')
+    + (J.k === 'groups' ? '<div class="jtools"><input id="jn_add" placeholder="Add someone: type their @handle" autocomplete="off" aria-label="Handle to add"><select id="jn_gs" aria-label="Study group">' + [...new Map(J.groups.map((x) => [x.group_id, x.group])).entries()].map((g) => '<option value="' + esc(g[0]) + '">' + esc(g[1]) + '</option>').join('') + '</select><button data-jn="add" data-kind="group">Add to group</button></div>' : '')
     + '<div class="jtools"><input id="jn_q" placeholder="Search by name or username" autocomplete="off" aria-label="Search joins"></div><div id="jn_l">' + (list.length ? list.join('') : '<p class="sub" style="text-align:center;padding:24px 0">No one has joined here yet.</p>') + '</div></div>'];
 };
 document.addEventListener('input', (e) => {
@@ -138,6 +140,11 @@ document.addEventListener('input', (e) => {
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-jn]'); if (!b) return;
   if (b.dataset.jn === 'tab') { J.k = b.dataset.k; window.__rise = false; return render(); }
+  if (b.dataset.jn === 'add') {
+    const h = (document.getElementById('jn_add').value || '').trim(), g = document.getElementById('jn_gs');
+    if (!h) return toast('Type the handle first');
+    return act(b, () => api('/api/admin/joins/add', { kind: b.dataset.kind, handle: h, group_id: g ? g.value : undefined }), 'Added. They got a phone alert.');
+  }
   if (b.dataset.jn !== 'rm') return;
   const d = b.dataset, what = d.kind === 'kura' ? 'Kura entry' : d.kind === 'club' ? 'club membership' : 'study group membership';
   if (!confirm('Remove ' + (d.nm || 'this person') + "'s " + what + '? This cannot be undone.')) return;

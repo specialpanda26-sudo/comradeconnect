@@ -2,6 +2,7 @@
 // Ticket money goes to the host's wallet (price minus the platform fee) and is withdrawn like any sale.
 import { json, err, sb, rows, one, post, patch, enc, inList, str, int, UUID, deriveCode, tsEqual, throttle, tooMany, user, contactBlock } from './lib.js';
 import { validateTicket } from './club.js';
+import { announceEvent } from './push.js';
 import { getSettings } from './settings.js';
 import { campusRow } from './campus.js';
 
@@ -37,6 +38,7 @@ export async function myEventRoutes(req, env, url, ip) {
     if (!(await throttle(env, ip, 'event_create', u.aid, 10))) return tooMany(env);   // counted only for real attempts, so typos do not lock a host out
     const [ev] = await rows(await post(env, 'events', { ...campusRow(req), title, starts_on: date, starts_at: time || null, category, venue, details: details || null, ticket_price: price, capacity: price ? capacity : null, owner_aid: u.aid }, 'return=representation'));
     if (!ev) return err(env, 'Could not create the event. Try again.', 500);
+    await announceEvent(env, u.aid, title);   // phone notification to everyone who allowed "Events"
     return json(env, { id: ev.id, free: !price, scan_path: price ? `/scan.html?e=${ev.id}&k=${await scanKey(env, ev.id)}` : null }, 201);
   }
 

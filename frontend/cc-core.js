@@ -1643,8 +1643,8 @@ async function pollAlerts() {
     setUnread(total);
     if (fresh > 0 && alertsOn()) {
       const text = fresh === 1 ? 'You have a new message' : 'You have ' + fresh + ' new messages';
-      showBanner(text);
-      if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+      /* no pop-up banner: alerts go to the phone's notification bar */
+      if (false) {   // website alerts are switched off for good
         try { const n = new Notification('Comrade Connect', { body: text, tag: 'cc-msg', icon: 'icon-192.png' }); n.onclick = () => { window.focus(); openMessages(); n.close(); }; } catch (e) { /* some browsers only allow this from a service worker */ }
       }
     }

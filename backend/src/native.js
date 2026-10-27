@@ -2,6 +2,7 @@
 // The video itself never touches our server; we only keep the stream row, hearts, comments and viewers.
 import { liveEmbed } from './media.js';
 import { agoraToken, hasAgoraCert } from './agora.js';
+import { announceLive } from './push.js';
 import { viewerCounts, reapStale, hostsHere } from './live.js';
 import { json, err, sb, rows, one, post, patch, enc, str, randHex, user, isAdmin, throttle, tooMany } from './lib.js';
 
@@ -52,6 +53,7 @@ export async function nativeRoutes(req, env, url, ip) {
     const title = str(b.title, 80) || 'Live', channel = 'cc' + randHex(8);
     await patch(env, `live_streams?host_aid=eq.${enc(hostAid)}&status=eq.live`, { status: 'ended', ended_at: new Date().toISOString() });
     const s = await one(await post(env, 'live_streams', { host_aid: hostAid, title, input_uid: 'cc:' + channel }));
+    if (s) await announceLive(env, hostAid, title);   // phone notification to everyone who allowed "Live"
     return s ? json(env, { id: s.id, channel, native: true }, 201) : err(env, 'Could not start', 500);
   }
 

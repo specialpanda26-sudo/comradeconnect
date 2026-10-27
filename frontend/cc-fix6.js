@@ -10,7 +10,7 @@
   if (!P) return;
   var TK = 'ccfx_fcm', wired = false;
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return null; }
-  function enabled() { try { return (JSON.parse(ls('cs_nt') || '{"n2":1}') || {}).n2 !== 0; } catch (e) { return true; } }
+  function enabled() { return true; }   // which kinds you get is chosen in the bell panel > Alerts and kept on the server
   function signed() { var a = window.ccAuth && window.ccAuth(); return !!(a && a.token); }
   function call(p, body) { return window.ccCall(p, body ? { body: body, auth: false } : { auth: false }); }
   function openView(v) {

@@ -1,7 +1,7 @@
 // Web Push: lets the phone show a notification even when the app is closed.
 // Needs three settings: VAPID_PUBLIC, VAPID_PRIVATE, VAPID_SUBJECT.
 // Everything here is best effort: a failed push never breaks the action that caused it.
-import { json, err, sb, rows, post, enc, user, throttle, tooMany } from './lib.js';
+import { json, err, sb, rows, one, post, enc, user, throttle, tooMany } from './lib.js';
 
 const te = new TextEncoder();
 const b64u = (buf) => { let s = ''; new Uint8Array(buf).forEach((c) => { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
@@ -37,7 +37,7 @@ export async function sendFcm(env, s, payload) {
   const acc = fcmAccount(env); if (!acc) return;
   const r = await fetch(`https://fcm.googleapis.com/v1/projects/${acc.project_id}/messages:send`, {
     method: 'POST', headers: { Authorization: 'Bearer ' + (await fcmAccess(acc)), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: { token: s.endpoint.slice(4), notification: { title: String(payload.title || 'Comrade Connect'), body: String(payload.body || '') }, data: { view: String(payload.view || '') }, android: { priority: 'HIGH', notification: { tag: String(payload.tag || 'cc') } } } })
+    body: JSON.stringify({ message: { token: s.endpoint.slice(4), notification: { title: String(payload.title || 'Comrade Connect'), body: String(payload.body || '') }, data: { view: String(payload.view || ''), cat: String(payload.cat || '') }, android: { priority: 'HIGH', notification: { tag: String(payload.tag || 'cc') } } } })
   });
   const detail = r.ok ? '' : (await r.text().catch(() => '')).slice(0, 300);
   if (!r.ok) console.error('FCM send failed', r.status, detail);
@@ -76,23 +76,45 @@ async function vapidAuth(env, endpoint) {
   return 'vapid t=' + head + '.' + claims + '.' + b64u(sig) + ', k=' + env.VAPID_PUBLIC;
 }
 
-// Sends one notification to every phone this person allowed. Dead phones are removed.
+// ---- What each person wants to hear about (Me > Notifications, or the Alerts button in the bell). Everything is on until they switch it off. ----
+export const PUSH_CATS = ['comments', 'live', 'events', 'orders', 'wallet', 'messages', 'updates'];
+const KIND_CAT = { comment: 'comments', reel_comment: 'comments', clip_comment: 'comments', like_milestone: 'comments', story_view: 'comments', order: 'orders', gift: 'wallet', reward: 'wallet', referral: 'wallet', message: 'messages' };
+export const catOfKind = (k) => KIND_CAT[k] || 'updates';
+export const cleanPrefs = (src) => { const o = {}; PUSH_CATS.forEach((c) => { o[c] = !(src && typeof src === 'object' && src[c] === false); }); return o; };
+async function prefsOf(env, aid) {
+  try { const r = await one(await sb(env, `notif_prefs?select=prefs&aid=eq.${enc(aid)}`)); return cleanPrefs(r && r.prefs); } catch (e) { return cleanPrefs(null); }
+}
+
+// Sends one notification to the phones this person allowed (the Android app). Website push is switched off for good:
+// any old browser subscription is deleted the next time we meet it. A person who switched this kind off hears nothing.
 export async function sendPush(env, aid, payload) {
   try {
     if (!aid) return;
+    if (payload && payload.cat && !(await prefsOf(env, aid))[payload.cat]) return;
     const subs = await rows(await sb(env, `push_subs?select=endpoint,p256dh,auth&aid=eq.${enc(aid)}&limit=10`));
     if (!subs.length) return;
-    const text = JSON.stringify(payload);
     await Promise.all(subs.map(async (s) => {
       try {
         if (s.endpoint.startsWith('fcm:')) { await sendFcm(env, s, payload); return; }
-        if (!hasKeys(env)) return;
-        const r = await fetch(s.endpoint, { method: 'POST', headers: { Authorization: await vapidAuth(env, s.endpoint), 'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream', TTL: '86400', Urgency: 'high' }, body: await encryptPayload(s, text) });
-        if (r.status === 404 || r.status === 410) await sb(env, `push_subs?endpoint=eq.${enc(s.endpoint)}`, { method: 'DELETE' });
+        await sb(env, `push_subs?endpoint=eq.${enc(s.endpoint)}`, { method: 'DELETE' });
       } catch (e) { console.error('push to one phone failed', e && e.message); }
     }));
   } catch (e) { console.error('push failed', e && e.message); }
 }
+
+// One notification to every app phone whose owner has this kind switched on (new live, new event). Best effort, never throws.
+async function broadcast(env, cat, payload, skipAid) {
+  const subs = (await rows(await sb(env, 'push_subs?select=endpoint,aid&endpoint=like.fcm:*&limit=1500'))).filter((s) => s.aid && s.aid !== skipAid);
+  if (!subs.length) return 0;
+  let off = new Set();
+  try { off = new Set((await rows(await sb(env, `notif_prefs?select=aid&prefs->>${cat}=eq.false&limit=5000`))).map((r) => r.aid)); } catch (e) { /* table not made yet: everyone is on */ }
+  const to = subs.filter((s) => !off.has(s.aid));
+  for (let i = 0; i < to.length; i += 25) await Promise.all(to.slice(i, i + 25).map((s) => sendFcm(env, s, payload).catch(() => null)));
+  return to.length;
+}
+const within = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
+export const announceLive = (env, hostAid, title) => within(broadcast(env, 'live', { title: 'Someone is live now', body: title && title !== 'Live' ? String(title).slice(0, 80) : 'Tap to watch', view: 'live', tag: 'live', cat: 'live' }, hostAid).catch(() => 0), 6000);
+export const announceEvent = (env, ownerAid, title) => within(broadcast(env, 'events', { title: 'New event', body: String(title || '').slice(0, 80), view: 'bell', tag: 'event', cat: 'events' }, ownerAid).catch(() => 0), 6000);
 
 export async function pushRoutes(req, env, url, ip) {
   const path = url.pathname, m = req.method;
@@ -112,6 +134,7 @@ export async function pushRoutes(req, env, url, ip) {
   const ep = String(b.endpoint || '');
   if (!/^https:\/\/[^\s]{10,900}$/.test(ep)) return err(env, 'Bad request');
   if (path === '/api/push/subscribe') {
+    return json(env, { ok: true, off: true });   // website push is switched off for good
     const k = b.keys || {};
     if (!k.p256dh || !k.auth || String(k.p256dh).length > 200 || String(k.auth).length > 60) return err(env, 'Bad request');
     await post(env, 'push_subs', { endpoint: ep, aid: u.aid, p256dh: String(k.p256dh), auth: String(k.auth) }, 'resolution=merge-duplicates');

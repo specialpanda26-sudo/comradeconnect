@@ -50,6 +50,7 @@ SCHEMA.kura_follows = T(['contestant_id', 'aid']);
 
 SCHEMA.notifications = T(['id']);
 SCHEMA.notif_state = T(['aid']);
+SCHEMA.notif_prefs = T(['aid']);
 SCHEMA.media_comments = T(['id'], { defaults: { hidden: false } });
 SCHEMA.story_views = T(['media_id', 'viewer_aid']);
 SCHEMA.spots = T(['id'], { defaults: { hidden: false, likes: 0, campus: 'kirinyaga' } });

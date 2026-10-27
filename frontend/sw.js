@@ -91,12 +91,5 @@ self.addEventListener('notificationclick', (e) => {
   })());
 });
 
-self.addEventListener('push', (e) => {
-  let d = {};
-  try { d = e.data ? e.data.json() : {}; } catch (x) { d = { body: e.data ? e.data.text() : '' }; }
-  e.waitUntil((async () => {
-    const cs = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    if (cs.some((c) => c.visibilityState === 'visible')) return;   // you are in the app: the banner inside the app shows it
-    await self.registration.showNotification(d.title || 'Comrade Connect', { body: d.body || '', icon: '/icon-192.png', badge: '/icon-192.png', tag: d.tag || 'cc-push', renotify: true, data: { view: d.view || '' } });
-  })());
-});
+/* Website push is switched off for good: a push that still arrives is ignored. Alerts come through the Android app. */
+self.addEventListener('push', () => {});

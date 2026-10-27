@@ -126,7 +126,6 @@ function refresh(quiet) {
   return loadServer().then(function () {
     paintBell();
     var n = totalCount();
-    if (S.lastTotal >= 0 && n > S.lastTotal && document.hidden) systemAlert(n - S.lastTotal);
     S.lastTotal = n;
     if (panel) draw();
   }).catch(function () { if (!quiet) paintBell(); });
@@ -280,7 +279,7 @@ document.addEventListener('click', function (e) {
 
 function boot() {
   paintBell();
-  setTimeout(function () { refresh(true).then(function () { if (!document.hidden) showBanner(); }); }, 2500);
+  setTimeout(function () { refresh(true).then(function () { /* no pop-up banner: alerts go to the phone's notification bar */ }); }, 2500);
   setInterval(function () { if (!document.hidden) refresh(true); }, 60000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(true); });
   window.ccNotifyRefresh = function () { return refresh(true); };

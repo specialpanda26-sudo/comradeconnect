@@ -1,7 +1,7 @@
 // In-app notifications: comments on your stories, clips and reels, milestones, new orders, referral news, and new events.
 // Notifications never say who did something: the app is anonymous, so they only say what happened.
 import { json, err, sb, rows, one, post, patch, enc, inList, UUID, user, throttle, tooMany } from './lib.js';
-import { sendPush } from './push.js';
+import { sendPush, catOfKind, cleanPrefs } from './push.js';
 
 const snip = (t, n = 90) => { const s = String(t || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
 
@@ -10,7 +10,7 @@ export async function notify(env, aid, kind, title, body, refType, refId) {
   try {
     if (!aid) return false;
     const res = await post(env, 'notifications', { aid, kind, title: snip(title, 80), body: snip(body, 160), ref_type: refType || null, ref_id: refId ? String(refId) : null });
-    if (res.ok) await sendPush(env, aid, { title: snip(title, 80), body: snip(body, 160), view: 'bell', tag: 'n-' + kind });
+    if (res.ok) await sendPush(env, aid, { title: snip(title, 80), body: snip(body, 160), view: 'bell', tag: 'n-' + kind, cat: catOfKind(kind) });
     return res.ok;
   } catch (e) { console.error('notify failed', e && e.message); return false; }
 }
@@ -39,6 +39,20 @@ export async function notificationRoutes(req, env, url, ip) {
     const unread = items.filter((n) => !n.read).length;
     if (url.searchParams.get('count')) return json(env, { unread: unread + events.length });
     return json(env, { items, events, unread, unread_total: unread + events.length });
+  }
+
+  // Which kinds of alert this person wants on their phone: comments, live, events, orders, wallet, messages, updates.
+  if (path === '/api/notifications/prefs' && (m === 'GET' || m === 'POST')) {
+    const u = await a(); if (u instanceof Response) return u;
+    if (m === 'GET') {
+      let row = null; try { row = await one(await sb(env, `notif_prefs?select=prefs&aid=eq.${enc(u.aid)}`)); } catch (e) {}
+      return json(env, { prefs: cleanPrefs(row && row.prefs) });
+    }
+    if (!(await throttle(env, ip, 'notifprefs', u.aid, 120, 600))) return tooMany(env);
+    const b = await req.json().catch(() => ({})), prefs = cleanPrefs(b.prefs);
+    const res = await sb(env, 'notif_prefs', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify({ aid: u.aid, prefs, updated_at: new Date().toISOString() }) });
+    if (!res.ok) return err(env, 'Could not save. Try again.', 500);
+    return json(env, { ok: true, prefs });
   }
 
   if (path === '/api/notifications/read' && m === 'POST') {

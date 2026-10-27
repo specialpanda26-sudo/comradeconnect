@@ -41,6 +41,8 @@ export async function releaseOrder(env, id, by, from = ['handed']) {
   await credit(env, o.seller_aid, o.seller_amount ?? o.amount, 'sale', o.id, 'Sale');
   await awardPoints(env, o.seller_aid, 'sale', o.id, 10).catch(() => {});
   await awardPoints(env, o.buyer_aid, 'purchase', o.id, 5).catch(() => {});
+  await notify(env, o.seller_aid, 'order', 'You got paid', 'KSh ' + (o.seller_amount ?? o.amount) + ' from a sale was added to your wallet.', 'order', o.id);   // cc-fix1
+  await notify(env, o.buyer_aid, 'order', 'Order completed', 'Your order is complete. Thanks for buying on Comrade Connect.', 'order', o.id);
   return o;
 }
 // Points come back to the buyer. A plain order gets everything back; an order from a cart payment gets only its own share.
@@ -60,6 +62,8 @@ export async function refundOrder(env, id, by) {
   if (used > 0) await returnPoints(env, o);   // points go back to the buyer; one cart payment can hold several orders, so only this order's share
   await patch(env, `listings?id=eq.${o.listing_id}&status=eq.sold`, { status: 'approved' });
   await patch(env, `referrals?order_id=eq.${o.id}&status=eq.pending`, { status: 'void' });
+  await notify(env, o.buyer_aid, 'order', 'Order refunded', 'KSh ' + (o.amount - used) + ' was returned to your wallet.', 'order', o.id);   // cc-fix1
+  await notify(env, o.seller_aid, 'order', 'An order was refunded', 'The buyer was refunded and the item is back on sale.', 'order', o.id);
   return o;
 }
 
@@ -283,6 +287,7 @@ export async function marketRoutes(req, env, url, ip) {
       const r = await rows(await patch(env, `orders?id=eq.${id}&status=eq.held&dispute_status=eq.none`, {
         status: 'handed', handed_at: new Date().toISOString(), auto_release_at: ahead((await getSettings(env)).escrow_auto_release_days * DAY),
       }));
+      if (r.length) await notify(env, o.buyer_aid, 'order', 'Your item was handed over', 'The seller says it was handed to you. Tap Received in Orders if you have it.', 'order', o.id);   // cc-fix1
       return r.length ? json(env, { status: 'handed' }) : err(env, 'This order cannot be marked as handed over', 409);
     }
     if (act === 'confirm') {                                   // seller types the buyer's code to release the money
@@ -310,6 +315,7 @@ export async function marketRoutes(req, env, url, ip) {
       const r = await rows(await patch(env, `orders?id=eq.${id}&status=${inList(['held', 'handed'])}&dispute_status=eq.none`, {
         status: 'disputed', dispute_status: 'open', dispute_reason: reason, disputed_at: new Date().toISOString(), dispute_by: u.aid,
       }));
+      if (r.length) await notify(env, u.aid === o.buyer_aid ? o.seller_aid : o.buyer_aid, 'order', 'A problem was reported on an order', 'An admin will look into it. The money stays safe until it is settled.', 'order', o.id);   // cc-fix1
       return r.length ? json(env, { status: 'disputed' }) : err(env, 'This order cannot be disputed now', 409);
     }
   }

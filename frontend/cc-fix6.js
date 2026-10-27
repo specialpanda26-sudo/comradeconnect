@@ -49,12 +49,20 @@
       if (!d || !d.fcm) return;                                   // Firebase is not set up on the server yet
       wire(); makeChannel();
       return P.checkPermissions().then(function (p) {
-        if (p.receive === 'granted' || p.receive === 'denied') return p;
+        if (p.receive === 'granted') return p;
+        if (p.receive === 'denied') {   // cc-fix1: Android 13+ lets us ask once more; at most once a day so it never nags
+          var last = +ls('ccfx_ask') || 0; if (Date.now() - last < 864e5) return p;
+          ls('ccfx_ask', String(Date.now()));
+        }
         return P.requestPermissions();
       }).then(function (p) { if (p && p.receive === 'granted') return channel().then(function () { return P.register(); }); });
     }).catch(function () {});
   }
   setTimeout(sync, 7000);
+  (function keepTrying() {   // cc-fix1: signing in comes after launch, so keep checking until this phone has given its address to the server
+    var n = 0, t = setInterval(function () { if (ls(TK) || ++n > 40) { clearInterval(t); return; } sync(); }, 15000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(sync, 1500); });
+  })();
   window.addEventListener('focus', function () { setTimeout(sync, 1500); });
   document.addEventListener('click', function (e) {
     if (e.target.closest && e.target.closest('.ccfx-t')) { setTimeout(sync, 1200); setTimeout(sync, 5000); }

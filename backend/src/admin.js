@@ -7,6 +7,7 @@ import { validateTicket } from './club.js';
 import { getSettings, saveSettings, DEFS, envDefault, getZones, DEFAULT_ZONES, getGateways, saveGateways, GW_AREAS, GW_NAMES } from './settings.js';
 import { payMode, gatewayReady } from './pay.js';
 import { contactBlock } from './lib.js';
+import { notify } from './notifications.js';   // cc-fix1
 
 import * as store from './storage.js';
 import { mediaUrl, PRIVATE_BUCKET } from './storage.js';
@@ -106,10 +107,12 @@ export async function adminRoutes(req, env, url, ip) {
     if (act === 'approve') {
       const r = await rows(await patch(env, `listings?id=eq.${mm[1]}&status=eq.pending`, { status: 'approved', approved_by: 'admin', approved_at: new Date().toISOString(), reject_reason: null }));
       if (!r.length) return err(env, 'Listing is not waiting for review', 409);
+      await notify(env, r[0].seller_aid, 'listing', 'Your listing is live', '\u201c' + String(r[0].title || 'Your item').slice(0, 60) + '\u201d was approved and is now in the Market.', 'listing', r[0].id);   // cc-fix1
     } else if (act === 'reject') {
       const reason = str(b.reason, 200); if (!reason) return err(env, 'Give a reason so the seller can fix it');
       const r = await rows(await patch(env, `listings?id=eq.${mm[1]}&status=eq.pending`, { status: 'rejected', reject_reason: reason, approved_by: 'admin' }));
       if (!r.length) return err(env, 'Listing is not waiting for review', 409);
+      await notify(env, r[0].seller_aid, 'listing', 'Your listing needs a change', reason, 'listing', r[0].id);   // cc-fix1
     } else if (act === 'remove') await patch(env, `listings?id=eq.${mm[1]}&status=in.(pending,approved)`, { status: 'removed' });
     else return err(env, 'Unknown action');
     await A('listing.' + act, 'listing', mm[1], { reason: b.reason || null });
@@ -163,10 +166,12 @@ export async function adminRoutes(req, env, url, ip) {
       if ((await rows(await sb(env, `withdrawals?select=id&payout_ref=eq.${enc(ref)}&limit=1`))).length) return err(env, 'That M-Pesa code is already recorded on another payout', 409);
       const r = await rows(await patch(env, `withdrawals?id=eq.${mm[1]}&status=eq.requested`, { status: 'paid', payout_ref: ref, decided_by: 'admin', decided_at: new Date().toISOString() }));
       if (!r.length) return err(env, 'Already handled', 409);
+      await notify(env, r[0].aid, 'payout', 'Withdrawal sent', 'KSh ' + (r[0].net || r[0].amount) + ' was sent to your M-Pesa. Ref ' + ref + '.', 'withdrawal', r[0].id);   // cc-fix1
     } else if (act === 'reject') {
       const [w] = await rows(await patch(env, `withdrawals?id=eq.${mm[1]}&status=eq.requested`, { status: 'rejected', decided_by: 'admin', decided_at: new Date().toISOString() }));
       if (!w) return err(env, 'Already handled', 409);
       await credit(env, w.aid, w.amount, 'adjustment', 'wdrej:' + w.id, 'Withdrawal rejected, money returned');
+      await notify(env, w.aid, 'payout', 'Withdrawal rejected', 'KSh ' + w.amount + ' was returned to your wallet.', 'withdrawal', w.id);   // cc-fix1
     } else return err(env, 'Unknown action');
     await A('withdrawal.' + act, 'withdrawal', mm[1], null);
     return json(env, { ok: true });

@@ -5,6 +5,7 @@
 // Lifecycle: requested -> sending (claimed by ONE conditional update, so it can never be sent twice) -> paid | rejected (money returned).
 import { sb, rows, patch, enc, ago } from './lib.js';
 import { credit, intaKey, intaBase, intaHead } from './pay.js';
+import { notify } from './notifications.js';   // cc-fix1
 
 export const autoPayout = (env) => String(env.PAYOUT_MODE || 'intasend').trim().toLowerCase() !== 'manual' && !!intaKey(env);   // paying OUT needs the secret key; the publishable key cannot send money
 const num = (v, d) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : d; };
@@ -53,11 +54,13 @@ export async function settlePayout(env, w) {
     const ref = String(tx.provider_reference || 'IS-' + w.payout_tracking).toUpperCase();
     let res = await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending`, { status: 'paid', payout_ref: ref, decided_by: 'auto', decided_at: new Date().toISOString() });
     if (res.status === 409) res = await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending`, { status: 'paid', payout_ref: 'IS-' + w.payout_tracking, decided_by: 'auto', decided_at: new Date().toISOString() });
+    if (res.ok) await notify(env, w.aid, 'payout', 'Withdrawal sent', 'KSh ' + (w.net || w.amount) + ' was sent to your M-Pesa.', 'withdrawal', w.id);   // cc-fix1
     return 'paid';
   }
   if (st === 'failed') {
     const [x] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending`, { status: 'rejected', decided_by: 'auto', decided_at: new Date().toISOString() }));
     if (x) await credit(env, x.aid, x.amount, 'adjustment', 'wdrej:' + x.id, 'Payout failed, money returned');
+    if (x) await notify(env, x.aid, 'payout', 'Withdrawal failed', 'KSh ' + x.amount + ' was returned to your wallet.', 'withdrawal', x.id);   // cc-fix1
     return 'failed';
   }
   return 'waiting';

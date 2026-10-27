@@ -8,3 +8,8 @@
 @media(max-width:360px){.nb.on{padding:0 10px 0 4px!important;gap:6px!important;font-size:12px}}
 .sheet{will-change:transform;backface-visibility:hidden;transition-timing-function:cubic-bezier(.22,1,.36,1)}
 .sheet .ccx{position:absolute;top:14px;right:16px;width:40px;height:40px;border-radius:50%;border:0;background:#fff;box-shadow:0 6px 16px rgba(120,60,40,.14);display:grid;place-items:center;color:var(--ink);cursor:pointer;z-index:3}
+
+/* cc-campus-logos: each university shows its own logo in the campus picker; the short name sits behind it in case the logo cannot load */
+.ulg{position:relative;width:42px;height:42px;border-radius:14px;background:#fff;display:grid;place-items:center;flex:none;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(22,19,15,.08)}
+.ulg i{font:800 12px/1 Manrope,system-ui,sans-serif;font-style:normal;color:#16130f;letter-spacing:-.02em}
+.ulg img{position:absolute;inset:0;width:100%;height:100%;padding:6px;box-sizing:border-box;object-fit:contain;background:#fff}

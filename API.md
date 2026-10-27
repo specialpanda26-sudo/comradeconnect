@@ -12,7 +12,7 @@ Admin: header `X-Admin-Key` (the ADMIN_KEY secret). All writes are POST. Errors 
 | | `GET /api/market/listings?page&category&zone`, `GET /api/market/listings/:id` | approved only |
 | | [auth] `GET /api/market/mine`, `POST /api/market/listings/:id/remove` | |
 | | [auth] `POST /api/market/buy {listing_id, phone}` | returns payment `id`; poll `GET /api/pay/status?id=` (gives `order_id` once paid) |
-| Escrow | [auth] `GET /api/orders/mine` | buyer sees the 6-digit `code`; platform fee is 3% (`you_receive` is what the seller gets) |
+| Escrow | [auth] `GET /api/orders/mine` | buyer sees the 6-digit `code`; platform fee defaults to 7% and is editable in admin > Money and fees (`you_receive` is what the seller gets) |
 | | [auth] `POST /api/orders/:id/handed` (seller), `/confirm {code}` (seller), `/received` (buyer, no code needed), `/dispute {reason}` (either) | |
 | Wallet | [auth] `GET /api/wallet`, `POST /api/wallet/withdraw {amount, phone}` | needs verified ID |
 | Referral | [auth] `POST /api/referral/attribute {code}`, `GET /api/referral/me` | |
@@ -72,3 +72,112 @@ Run `supabase/user-events.sql` once. Any signed-in account can host up to 5 upco
 
 ## Credits
 Comrade Connect is built by Ogolla Tech. Developers: Christian N., Peter M.
+
+## Other endpoints (generated from `backend/src`)
+<!-- generated:other-endpoints -->
+These exist in the code and are not described above. The last column is the file to read for the exact fields and who may call them.
+
+| Method | Path | Source |
+|---|---|---|
+| GET | `/api/admin/clear` | `admin-clean.js` |
+| GET | `/api/admin/club/orders` | `admin.js` |
+| POST | `/api/admin/club/stock` | `admin.js` |
+| GET | `/api/admin/devices` | `device.js` |
+| POST | `/api/admin/devices/release` | `device.js` |
+| GET | `/api/admin/gateways` | `admin.js` |
+| see source | `/api/admin/health` | `support.js` |
+| GET | `/api/admin/joins` | `admin-joins.js` |
+| POST | `/api/admin/joins/add` | `admin-joins.js` |
+| POST | `/api/admin/joins/remove` | `admin-joins.js` |
+| GET | `/api/admin/kura` | `kura.js` |
+| POST | `/api/admin/kura/prize-url` | `kura.js` |
+| POST | `/api/admin/kura/season` | `kura.js` |
+| POST | `/api/admin/kura/season/new` | `kura.js` |
+| GET | `/api/admin/listings-live` | `admin.js` |
+| GET | `/api/admin/live-check` | `native.js` |
+| POST | `/api/admin/mail-test` | `reset.js` |
+| see source | `/api/admin/phones` | `support.js` |
+| GET | `/api/admin/post-rules` | `postrules.js` |
+| GET | `/api/admin/posts` | `admin-clean.js` |
+| GET | `/api/admin/push` | `admin-push.js` |
+| POST | `/api/admin/push/send` | `admin-push.js` |
+| POST | `/api/admin/push/update` | `admin-push.js` |
+| GET | `/api/admin/services` | `admin-services.js` |
+| GET | `/api/admin/stats` | `admin-users.js` |
+| see source | `/api/admin/support` | `support.js` |
+| POST | `/api/admin/tickets/validate` | `admin.js` |
+| see source | `/api/admin/transactions` | `support.js` |
+| POST | `/api/admin/users/create` | `admin-users.js` |
+| POST | `/api/admin/wallet/grant` | `admin.js` |
+| GET | `/api/admin/zones` | `admin.js` |
+| POST | `/api/auth/google` | `account.js` |
+| POST | `/api/auth/logout` | `account.js` |
+| see source | `/api/auth/relay` | `account.js` |
+| GET | `/api/auth/reset/available` | `reset.js` |
+| POST | `/api/auth/reset/confirm` | `reset.js` |
+| POST | `/api/auth/reset/start` | `reset.js` |
+| GET | `/api/c/wifi/map` | `content.js` |
+| GET | `/api/campuses` | `campus.js` |
+| POST | `/api/gift/confirm` | `gifts.js` |
+| GET | `/api/gift/public` | `gifts.js` |
+| POST | `/api/gift/send` | `gifts.js` |
+| GET | `/api/hostels/caretaker` | `hostels.js` |
+| POST | `/api/hostels/caretaker/register` | `hostels.js` |
+| POST | `/api/intasend/webhook` | `pay.js` |
+| POST | `/api/kura/apply` | `kura.js` |
+| GET | `/api/kura/board` | `kura.js` |
+| POST | `/api/kura/follow` | `kura.js` |
+| GET | `/api/kura/home` | `kura.js` |
+| GET | `/api/kura/me` | `kura.js` |
+| POST | `/api/kura/photo-url` | `kura.js` |
+| POST | `/api/kura/status` | `kura.js` |
+| POST | `/api/kura/vote` | `kura.js` |
+| POST | `/api/live/token` | `native.js` |
+| GET | `/api/lostfound` | `lostfound.js` |
+| GET | `/api/lostfound/meta` | `lostfound.js` |
+| see source | `/api/market/top` | `engage.js` |
+| POST | `/api/mbogi/create` | `mbogi.js` |
+| GET | `/api/me/avatar` | `native.js` |
+| POST | `/api/me/credentials` | `account.js` |
+| see source | `/api/me/gift` | `gifts.js` |
+| see source | `/api/me/phone` | `support.js` |
+| GET | `/api/me/recovery-email` | `recovery.js` |
+| POST | `/api/me/recovery-email/confirm` | `recovery.js` |
+| POST | `/api/me/recovery-email/remove` | `recovery.js` |
+| POST | `/api/me/recovery-email/start` | `recovery.js` |
+| GET | `/api/media/admin/clips` | `media.js` |
+| POST | `/api/messages/report` | `messages.js` |
+| GET | `/api/notifications` | `notifications.js` |
+| POST | `/api/notifications/clear` | `notifications.js` |
+| GET | `/api/notifications/prefs` | `notifications.js` |
+| POST | `/api/notifications/read` | `notifications.js` |
+| GET | `/api/papers` | `papers.js` |
+| GET | `/api/papers/meta` | `papers.js` |
+| POST | `/api/passkey/delete` | `passkeys.js` |
+| GET | `/api/passkey/list` | `passkeys.js` |
+| POST | `/api/passkey/login/options` | `passkeys.js` |
+| POST | `/api/passkey/login/verify` | `passkeys.js` |
+| POST | `/api/passkey/register/options` | `passkeys.js` |
+| POST | `/api/passkey/register/verify` | `passkeys.js` |
+| GET | `/api/pay/methods` | `pay.js` |
+| GET | `/api/posts` | `feed.js` |
+| see source | `/api/push/fcm` | `push.js` |
+| see source | `/api/push/fcm-remove` | `push.js` |
+| GET | `/api/push/key` | `push.js` |
+| see source | `/api/push/subscribe` | `push.js` |
+| see source | `/api/push/unsubscribe` | `push.js` |
+| see source | `/api/referral/dashboard` | `engage.js` |
+| GET | `/api/site-content` | `sitecontent.js` |
+| GET | `/api/spots` | `campus.js` |
+| GET | `/api/stories` | `stories.js` |
+| see source | `/api/streak` | `engage.js` |
+| GET | `/api/support/mine` | `support.js` |
+| POST | `/api/support/report` | `support.js` |
+| GET | `/api/trust` | `trust.js` |
+| POST | `/api/verify/email/confirm` | `trust.js` |
+| POST | `/api/verify/email/start` | `trust.js` |
+| GET | `/api/verify/email/status` | `trust.js` |
+| POST | `/api/verify/email/unlink` | `trust.js` |
+| GET | `/api/wallet/stats` | `account.js` |
+| POST | `/api/wholesale/join` | `wholesale.js` |
+| GET | `/api/wholesale/me` | `wholesale.js` |

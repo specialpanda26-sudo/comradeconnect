@@ -176,3 +176,11 @@ Findings (already diagnosed, not yet changed):
 - cc-ui2.js: the app locks every time you leave and come back (not for Android's own prompt, Google sign-in, or a file/camera picker you opened). cc-native.js exposes ccNativeBio.busy().
 - cc-ui2.css: lock and scan screens use black shadow + inner shading, no glow, light and dark.
 - Not tested on a real phone: Android's real prompt, and the exact relock timing when the phone's own prompt closes.
+
+## Current state (docs refresh)
+- The platform fee default is 7% (admin-editable); earlier notes in this file that say 3% are history.
+- Card payments were removed: there is no card code, test or redirect page. Payments are M-Pesa only (manual, TinyPesa or IntaSend STK push).
+- Setup needs `schema.sql` plus the other `supabase/*.sql` files. admin > SQL shows what is still missing.
+- `wrangler.toml` has a comma-separated `ALLOWED_ORIGINS`; the Cloudflare Worker route accepts only one address, Render accepts a list.
+- Phone alerts work for the Android app only (`FCM_SERVICE_ACCOUNT`, RENDER.md section 12). Website push is switched off in `backend/src/push.js`; its VAPID code and the lines after the early `return` in `/api/push/subscribe` are dead code.
+- `npm test` runs 217 tests against a fake database. They do not prove anything about the real Supabase, Render or payment providers.

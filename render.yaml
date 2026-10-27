@@ -37,3 +37,6 @@ services:
       - { key: INTASEND_PUBLISHABLE_KEY, sync: false }     # ISPubKey_... from IntaSend > Settings > API Keys (used with the secret key for the M-Pesa prompt; there is no card payment)
       - { key: INTASEND_SECRET_KEY, sync: false }          # ISSecretKey_... from IntaSend > Settings > API Keys
       - { key: INTASEND_WEBHOOK_CHALLENGE, sync: false }   # same string you type as "Challenge" in the IntaSend webhook
+      - { key: FCM_SERVICE_ACCOUNT, sync: false } # Firebase service account JSON: phone alerts for the Android app
+      - { key: SITE_URL, value: "https://comradeconnect.co.ke" }
+      - { key: SUPPORT_EMAIL, value: "support@comradeconnect.co.ke" }

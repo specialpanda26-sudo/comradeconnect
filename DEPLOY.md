@@ -1,3 +1,5 @@
+> **Production now runs on Render: follow `RENDER.md`.** This file describes the older Cloudflare Workers + Pages route and is kept for reference. Note that `ALLOWED_ORIGINS` takes one address on Workers; the comma-separated list in `wrangler.toml` only works on Render.
+
 # Comrade Connect: deploy guide (v8)
 
 Order matters: Supabase, then the Worker, then Pages, then payments (your M-Pesa number), then the domain.
@@ -10,6 +12,7 @@ Everything here runs on free plans with no card: Supabase, Cloudflare Workers an
 ## 1. Supabase (database)
 1. supabase.com > New project (pick a region near Kenya, e.g. Frankfurt or Mumbai). Save the database password.
 2. SQL Editor > New query > paste all of `supabase/schema.sql` > Run. It is safe to run again.
+   Run `supabase/schema.sql` first. It is only the base: another 28 files in `supabase/` add the tables for passkeys, password reset, push, notifications, Kura, gifts, Lost and Found, support and more. After `schema.sql`, open `admin.html` > **SQL**. It lists every part your database still needs, **Copy missing SQL** copies them in the right order, and **Open SQL editor** is where you paste and run them. Do this again after any update that adds a `.sql` file.
 3. Table editor: you should now see `payments, orders, listings, messages, threads, profiles, wallet_ledger, verifications, tickets, admin_audit_log` and the rest. Every table should show RLS enabled.
 4. Project Settings > API: copy the Project URL and the `service_role` key (secret; Worker only).
 5. Note: the schema drops the old `orders.code` column (plaintext). If you already have real orders, back up first.

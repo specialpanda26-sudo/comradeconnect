@@ -10,6 +10,7 @@ Your static site stays a Render **Static Site**. You will have two Render servic
 
 ## 1. Database first (Supabase)
 1. supabase.com > New project (production). SQL Editor > paste all of `supabase/schema.sql` > Run (safe to repeat). It also creates the buckets `cc-media` (public) and `cc-private` (private).
+1b. Run `supabase/schema.sql` first. It is only the base: another 28 files in `supabase/` add the tables for passkeys, password reset, push, notifications, Kura, gifts, Lost and Found, support and more. After `schema.sql`, open `admin.html` > **SQL**. It lists every part your database still needs, **Copy missing SQL** copies them in the right order, and **Open SQL editor** is where you paste and run them. Do this again after any update that adds a `.sql` file. (You can only do this after step 3, once the API runs and you can sign in to the admin panel.)
 2. Project Settings > API: copy the **Project URL** and the **service_role** key. The key is a secret: it goes only into Render, never into GitHub or the site.
 
 ## 2. Create the web service
@@ -48,7 +49,7 @@ Render > New > Web Service > connect the GitHub repo.
 **Optional tuning (defaults are fine)**: AI_MODEL, AI_DAILY_LIMIT, AI_GLOBAL_LIMIT, PLATFORM_FEE_PERCENT (7), ESCROW_AUTO_RELEASE_DAYS (3), REFERRAL_REWARD (20), REFERRAL_UNLOCK_DAYS (7), BOOST_PRICE (20), CLIP_MAX_MB (25), MEDIA_BUDGET_MB (800), WITHDRAW_REQUIRES_VERIFIED (1), MEDIA_BUCKET, PRIVATE_BUCKET.
 Only if you ever use TinyPesa: PAYMENT_MODE=tinypesa, TINYPESA_API_KEY, CALLBACK_SECRET.
 
-If PLATFORM_FEE_PERCENT changes, change `FEE` at the top of `frontend/cc-core.js` too so the app shows the same number.
+The fee is read by the app from the server (`GET /api/config`), so there is nothing to change in `frontend/cc-core.js`. You can also change it later in admin > Money and fees.
 
 ## 4. Give the API its own address
 Render > service > Settings > Custom Domains > add `api.comradeconnect.co.ke`. At your DNS provider add the CNAME Render shows. Wait for the green tick (HTTPS is automatic). Test: open https://api.comradeconnect.co.ke/healthz, it must show `{"ok":true}`.
@@ -104,8 +105,13 @@ Runs on its own while you are away. IntaSend sends the prompt, tells us when it 
 5. If a webhook is missed, the buyer's app and the 15-minute cron ask IntaSend directly, so nothing stays stuck.
 6. If money arrives after a payment expired, it goes to admin > Confirm M-Pesa for you to approve by hand (compare with your M-Pesa/IntaSend statement first).
 
-### Card payments (Visa and Mastercard) through IntaSend
-Every pay sheet then shows **M-Pesa | Card**. The buyer types the card on IntaSend's own secure page, so card numbers never reach our server.
-1. IntaSend dashboard > Settings > API Keys: also copy the **publishable key** (starts `ISPubKey_`) and set `INTASEND_PUBLISHABLE_KEY` on Render. Ask IntaSend to switch on card collections for your account.
-2. Optional: `INTASEND_CARD_TARIFF=CUSTOMER-PAYS` makes the buyer pay IntaSend's card fee (default `BUSINESS-PAYS`: you pay it). `SITE_URL` if your website is not https://comradeconnect.co.ke. `CARD_PAYMENTS=0` switches cards off.
-3. The same webhook as above confirms card payments. We always check the payment with IntaSend before crediting. Card payments are not retried by the 15-minute cron, so keep the webhook working; a payment that arrives late goes to admin > Confirm M-Pesa.
+## 12. Phone alerts (Android app only)
+Alerts on a locked phone work through Firebase for the Android app. Website push is switched off in the code, so the `VAPID_*` settings are not needed.
+- Set `FCM_SERVICE_ACCOUNT` on Render to the Firebase service account JSON (pasted as it is, or as base64). Without it the bell inside the app still works, but no alert reaches a locked phone.
+- Check: admin > Phone alerts.
+
+## 13. Other settings the server reads
+`SITE_URL` (default https://comradeconnect.co.ke), `SUPPORT_EMAIL`, `ADMIN_EMAIL` (where support reports are mailed; falls back to `SUPPORT_EMAIL`), `PASSKEY_RP_ID` and `PASSKEY_ORIGINS` (passkey sign-in; the origins default to your RP ID and its `www.` address), `DEVICE_LOCK` and `DEVICE_MAX_ACCOUNTS` (limit accounts per phone), `RESERVED_HANDLES` (extra usernames nobody may take), `PENDING_MINUTES` (how long an unpaid payment waits: 90 in manual mode, 30 otherwise). Every name with a short explanation is in `.env.example`.
+
+## 14. Not supported
+There is no card (Visa or Mastercard) payment. Payments are M-Pesa only: manual, TinyPesa or IntaSend.

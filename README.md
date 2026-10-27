@@ -9,15 +9,15 @@ Production setup on Render: **RENDER.md** (backend `server.js` + static site). `
 | `frontend/` | Static site (`index.html`, `cc-core.js`, `admin.html`, `config.js` = the only settings file) |
 | `server.js` | Starts the API on Render (Node 20+); `render.yaml` is the Blueprint |
 | `backend/src/` | Cloudflare Worker API (endpoints listed in `API.md`) |
-| `supabase/schema.sql` | Database tables, security rules and the two Storage buckets (safe to run again) |
+| `supabase/` | `schema.sql` is the base (tables, security rules, the two Storage buckets). The other files add features and are listed by admin > SQL (safe to run again) |
 | `tests/` | `npm test` (Worker, fake database, no keys) and `python3 tests/browser_*.py` (real page, fake Worker) |
 | `wrangler.toml` | Worker settings, no secrets |
 
 ## Free stack
-Cloudflare Workers + Pages, Supabase (database + Storage), Google sign-in, Gemini free tier, and **manual M-Pesa**: buyers pay your number, till or paybill, enter the M-Pesa code, and you confirm it in `admin.html`. TinyPesa (automatic prompts) is optional and has its own fees. Limits and caveats: the "Cost check" table in `DEPLOY.md`.
+Render (API and static site; Cloudflare Workers + Pages also supported), Supabase (database + Storage), Google sign-in, Gemini free tier, and **manual M-Pesa**: buyers pay your number, till or paybill, enter the M-Pesa code, and you confirm it in `admin.html`. TinyPesa (automatic prompts) is optional and has its own fees. Limits and caveats: the "Cost check" table in `DEPLOY.md`.
 
 ## Quick start
-1. Follow `DEPLOY.md` in order: Supabase, Worker, Pages, payments, domain.
+1. Follow `RENDER.md` in order (production): Supabase, the API service, the site, payments, domain. Then run the extra SQL: admin > SQL > Copy missing SQL. `DEPLOY.md` is the older Cloudflare route.
 2. Run the tests before real money: `npm test` and `python3 tests/browser_manualpay.py` (needs Playwright; no keys).
 3. Test with KSh 1 from two phones before launch.
 

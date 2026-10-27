@@ -37,7 +37,7 @@ export async function sendFcm(env, s, payload) {
   const acc = fcmAccount(env); if (!acc) return;
   const r = await fetch(`https://fcm.googleapis.com/v1/projects/${acc.project_id}/messages:send`, {
     method: 'POST', headers: { Authorization: 'Bearer ' + (await fcmAccess(acc)), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: { token: s.endpoint.slice(4), notification: { title: String(payload.title || 'Comrade Connect'), body: String(payload.body || '') }, data: { view: String(payload.view || ''), cat: String(payload.cat || '') }, android: { priority: 'HIGH', notification: { tag: String(payload.tag || 'cc') } } } })
+    body: JSON.stringify({ message: { token: s.endpoint.slice(4), notification: { title: String(payload.title || 'Comrade Connect'), body: String(payload.body || '') }, data: { view: String(payload.view || ''), cat: String(payload.cat || '') }, android: { priority: 'HIGH', notification: { tag: String(payload.tag || 'cc'), channel_id: 'cc_alerts', color: '#101422', notification_priority: 'PRIORITY_HIGH', visibility: 'PUBLIC', default_sound: true, default_vibrate_timings: true } } } })
   });
   const detail = r.ok ? '' : (await r.text().catch(() => '')).slice(0, 300);
   if (!r.ok) console.error('FCM send failed', r.status, detail);

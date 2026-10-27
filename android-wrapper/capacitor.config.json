@@ -11,6 +11,7 @@
       "comradeconnectback.onrender.com"
     ]
   },
+  "plugins": { "PushNotifications": { "presentationOptions": [] } },
   "android": {
     "allowMixedContent": false,
     "backgroundColor": "#000000"

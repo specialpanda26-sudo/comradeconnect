@@ -18,6 +18,9 @@
     if (v === 'live' && typeof window.go === 'function') { try { window.go('videos'); } catch (e) {} return; }
     var n = 0, t = setInterval(function () { var b = document.querySelector('.ccb'); if (b || ++n > 20) { clearInterval(t); if (b) b.click(); } }, 500);
   }
+  function makeChannel() {   // Android 8+: the panel entry needs a channel. Created once; asking again does nothing.
+    try { if (P.createChannel) P.createChannel({ id: 'cc_alerts', name: 'Comrade Connect alerts', description: 'Comments, events, live and updates', importance: 4, visibility: 1, vibration: true, lights: true }).catch(function () {}); } catch (e) {}
+  }
   function wire() {
     if (wired) return; wired = true;
     P.addListener('registration', function (t) {
@@ -25,7 +28,7 @@
       call('/api/push/fcm', { token: t.value }).catch(function () {});
     });
     P.addListener('registrationError', function () {});
-    P.addListener('pushNotificationReceived', function () { try { if (window.ccNotifyRefresh) window.ccNotifyRefresh(); } catch (e) {} });
+    P.addListener('pushNotificationReceived', function () { /* app is open: only refresh the bell, no pop-up of any kind */ try { if (window.ccNotifyRefresh) window.ccNotifyRefresh(); } catch (e) {} });
     P.addListener('pushNotificationActionPerformed', function (a) {
       var d = a && a.notification && a.notification.data;
       try { if (window.ccNotifyRefresh) window.ccNotifyRefresh(); } catch (e) {}
@@ -40,7 +43,7 @@
     }
     call('/api/push/key').then(function (d) {
       if (!d || !d.fcm) return;                                   // Firebase is not set up on the server yet
-      wire();
+      wire(); makeChannel();
       return P.checkPermissions().then(function (p) {
         if (p.receive === 'granted' || p.receive === 'denied') return p;
         return P.requestPermissions();

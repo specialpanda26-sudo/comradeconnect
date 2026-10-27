@@ -1,0 +1,14 @@
+/* cc-calm.css: no tap animations and no blue top gradient.
+   Loaded last, so it wins over the older files without editing them. */
+
+/* 1. nothing grows or shrinks while you press it */
+html body :is(button,.btn,.ib,.act,.chip,.pill,.tab,.pcard,.crd-tile,.box.g,.cct,.cct-i,.cls-ring,#fab,#tb button,a,[role="button"]):active{transform:none!important}
+html body .cct:active .cct-i{transform:none!important}
+
+/* 2. no flash or glow on tap (the phone's own tap highlight sits on top of the glass and looks like a mirror glare) */
+html,html body,html body *{-webkit-tap-highlight-color:transparent!important}
+html body :is(button,.btn,.ib,.act,.chip,.cct,.crd-tile,.pcard,a,[role="button"]):active{filter:none!important;outline:0!important}
+html body :is(button,.btn,.ib,a,[role="button"]):focus:not(:focus-visible){outline:0!important}
+
+/* 3. the blue glow at the top of the screen, light and dark theme */
+html body .bg::after,html[data-theme="light"] body .bg::after,:root[data-theme="light"] .bg::after{display:none!important;background:none!important;content:none!important}

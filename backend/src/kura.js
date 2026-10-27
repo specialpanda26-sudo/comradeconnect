@@ -2,7 +2,7 @@
 // Money rules: the vote packs and prices live in the database (kura_season.packs). The browser only sends the pack number,
 // so the price can never be changed from the phone. Votes are counted ONLY after the payment is confirmed (hooks.onPaid).
 import { json, err, sb, rows, one, post, patch, enc, str, UUID, normPhone, hasContact, randHex, throttle, tooMany, user, authProfile, isAdmin, audit } from './lib.js';
-import { initPayment, credit } from './pay.js';
+import { initPayment, credit, payFromWallet, wantsWallet } from './pay.js';
 import * as store from './storage.js';
 
 const GENDERS = ['female', 'male'];
@@ -213,6 +213,12 @@ export async function kuraRoutes(req, env, url, ip) {
     const supporter = str(b.name, 24);
     if (supporter && hasContact(supporter)) return err(env, 'Remove phone numbers, handles and links from the name');
     if (!(await throttle(env, ip, 'kuravote', u.aid, 30, 120))) return tooMany(env);
+    if (wantsWallet(b)) {
+      const votes = Math.floor(Number(pack.votes));
+      const w = await payFromWallet(env, ip, { aid: u.aid, purpose: 'kura', ref_id: c.id, amount: Number(pack.price), note: 'Kura votes: ' + String(c.name || '').slice(0, 30),
+        before: (p) => post(env, 'kura_votes', { contestant_id: c.id, aid: u.aid, payment_id: p.id, votes, amount: Number(pack.price), supporter_name: supporter || null }) });
+      return w.res || json(env, { id: w.id, paid: 'wallet', amount: Number(pack.price), votes }, 201);
+    }
     const r = await initPayment(env, ip, { aid: u.aid, purpose: 'kura', ref_id: c.id, amount: Number(pack.price), phone: b.phone, method: b.method, email: b.email });
     if (r.res) return r.res;
     await post(env, 'kura_votes', { contestant_id: c.id, aid: u.aid, payment_id: r.id, votes: Math.floor(Number(pack.votes)), amount: Number(pack.price), supporter_name: supporter || null });

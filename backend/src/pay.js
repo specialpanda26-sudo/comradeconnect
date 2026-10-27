@@ -167,6 +167,34 @@ export async function credit(env, aid, delta, kind, ref, note, status = 'availab
   return r.length > 0;
 }
 
+// Pay for anything from the in-app wallet instead of an M-Pesa prompt. The app can say pay_with:'wallet' or method:'wallet'.
+export const wantsWallet = (b) => !!b && (b.pay_with === 'wallet' || b.method === 'wallet');
+async function walletBalance(env, aid) {
+  const r = await sb(env, 'rpc/wallet_balance', { method: 'POST', body: JSON.stringify({ p: aid }) });
+  const n = await r.json().catch(() => 0);
+  return Number.isFinite(Number(n)) ? Number(n) : 0;
+}
+// Writes a payment that is already 'paid' (phone 'wallet'), takes the money out of the wallet, then runs the same hook an M-Pesa
+// payment would. `before(row)` runs after the money is taken and just before the hook (for rows the hook expects to find).
+// Returns { id } or { res } (an error Response). If anything fails the wallet row is voided, so nothing is charged.
+export async function payFromWallet(env, ip, { aid, purpose, ref_id, amount, boost_hours, note, before }) {
+  amount = Math.floor(Number(amount));
+  if (!aid || !(amount >= 1) || amount > 250000) return { res: err(env, 'Check the amount') };
+  if ((await walletBalance(env, aid)) < amount) return { res: err(env, 'Not enough wallet balance. Deposit first or pay with M-Pesa.', 402) };
+  const pid = crypto.randomUUID(), ref = 'pay:' + pid;
+  const row = await one(await post(env, 'payments', { id: pid, aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, purpose === 'order' ? 600 : 100) : null, amount, phone: 'wallet', ip, boost_hours: boost_hours || null, status: 'paid', receipt: 'WAL' + pid.replace(/-/g, '').slice(0, 12).toUpperCase(), paid_at: new Date().toISOString() }));
+  if (!row) return { res: err(env, 'Could not start the payment', 500) };
+  const undo = async () => { await patch(env, `wallet_ledger?kind=eq.purchase&ref=eq.${enc(ref)}`, { status: 'void' }); await patch(env, `payments?id=eq.${pid}`, { status: 'failed' }); };
+  if (!(await credit(env, aid, -amount, 'purchase', ref, note || 'Paid from wallet'))) {
+    await patch(env, `payments?id=eq.${pid}`, { status: 'failed' });
+    return { res: err(env, 'Wallet payment is not ready yet. Nothing was charged.', 503) };
+  }
+  if ((await walletBalance(env, aid)) < 0) { await undo(); return { res: err(env, 'Not enough wallet balance', 402) }; }   // two requests raced
+  try { if (before) await before(row); await hooks.onPaid(env, row); }
+  catch (e) { console.error('wallet pay: hook failed, wallet row voided', purpose, e && e.message); await undo(); return { res: err(env, 'Something went wrong. Nothing was charged.', 500) }; }
+  return { id: pid };
+}
+
 export async function payRoutes(req, env, url, ip) {
   const path = url.pathname;
 
@@ -192,6 +220,11 @@ export async function payRoutes(req, env, url, ip) {
       const [pst] = await rows(await sb(env, `posts?select=id,fee_pending&id=eq.${ref_id}&aid=eq.${encodeURIComponent(u.aid)}&hidden=eq.true&fee_pending=gt.0`));
       if (!pst) return err(env, 'That post is not waiting for payment', 404);
       amount = pst.fee_pending;
+    }
+    if (wantsWallet(b)) {                                            // boosts and post fees can come from the wallet; a deposit cannot
+      if (b.purpose === 'topup') return err(env, 'A deposit has to be paid by M-Pesa', 400);
+      const w = await payFromWallet(env, ip, { aid: u.aid, purpose: b.purpose, ref_id, amount, boost_hours, note: b.purpose === 'boost' ? 'Boosted a post' : 'Post fee' });
+      return w.res || json(env, { id: w.id, paid: 'wallet', amount });
     }
     const r = await initPayment(env, ip, { aid: u.aid, purpose: b.purpose, ref_id, amount, phone: b.phone, boost_hours, method: b.method, email: b.email });
     return r.res || json(env, { id: r.id, url: r.url });

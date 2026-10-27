@@ -1,7 +1,7 @@
 // Hostel vacancies. A caretaker registers once (the admin sets the fee, 0 = free), then posts vacant rooms with an exact
 // GPS location, room photos, the services included and a landmark note. Comrades browse them, see photos and get directions.
 import { json, err, sb, rows, one, post, patch, enc, int, str, UUID, user, authProfile, throttle, tooMany, normPhone, inList } from './lib.js';
-import { initPayment } from './pay.js';
+import { initPayment, payFromWallet, wantsWallet } from './pay.js';
 import { getSettings } from './settings.js';
 import { mediaUrl } from './storage.js';
 
@@ -69,6 +69,10 @@ export async function hostelRoutes(req, env, url, ip) {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const S = await getSettings(env), b = await body();
     if (await isCaretaker(env, u.aid)) return json(env, { registered: true });
+    if (wantsWallet(b)) {
+      const w = await payFromWallet(env, ip, { aid: u.aid, purpose: 'caretaker', amount: S.hostel_reg_fee, note: 'Caretaker registration' });
+      return w.res || json(env, { id: w.id, paid: 'wallet', registered: true, amount: S.hostel_reg_fee });
+    }
     if (b.method !== 'card' && !normPhone(b.phone)) return err(env, 'Enter a Safaricom or Airtel number like 0712345678');
     const r = await initPayment(env, ip, { aid: u.aid, purpose: 'caretaker', amount: S.hostel_reg_fee, phone: b.phone, method: b.method, email: b.email });
     return r.res || json(env, { id: r.id, url: r.url, amount: S.hostel_reg_fee });

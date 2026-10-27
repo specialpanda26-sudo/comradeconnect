@@ -103,7 +103,7 @@
       LIST = (d && d.streams) || []; lastAt = Date.now(); draw();
     }).catch(function () {}).then(function () { busy = false; });
   }
-  window.ccLiveStrip = { refresh: function () { load(true); }, list: function () { return LIST.slice(); } };
+  window.ccLiveStrip = { refresh: function () { load(true); }, list: function () { return LIST.slice(); }, open: open };
 
   function onFeed() { return (document.body.dataset.view || 'feed') === 'feed'; }
   function start() {

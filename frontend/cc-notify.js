@@ -7,7 +7,7 @@ if (window.__ccNotify) return; window.__ccNotify = 1;
 
 var API = (typeof CC_API !== 'undefined' ? CC_API : '').replace(/\/$/, '');
 var SEEN_KEY = 'cc_notice_seen', EV_KEY = 'ccn_ev_seen', ANN_KEY = 'ccn_announced';
-var S = { items: [], events: [], unread: 0, total: 0, loaded: false, tab: 'all', guest: false, lastTotal: -1 };
+var S = { items: [], events: [], live: [], snap: [], unread: 0, total: 0, loaded: false, tab: 'all', guest: false, lastTotal: -1 };
 var panel = null, banner = null, bell = null;
 
 function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
@@ -87,16 +87,30 @@ var ICON = {
   gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8h14v-8M12 8H8a2 2 0 1 1 0-4c2 0 4 4 4 4zm0 0h4a2 2 0 1 0 0-4c-2 0-4 4-4 4z"/>',
   event: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   bell: '<path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
-  story: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>'
+  story: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',
+  live: '<circle cx="12" cy="12" r="2.5"/><path d="M7.5 7.5a6.4 6.4 0 0 0 0 9M16.5 7.5a6.4 6.4 0 0 1 0 9"/>',
+  update: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>'
 };
 function icon(kind) {
-  var map = { comment: 'comment', reel_comment: 'reel', clip_comment: 'reel', like_milestone: 'heart', order: 'bag', referral: 'gift', reward: 'gift', event: 'event', notice: 'bell', story_view: 'story' };
+  var map = { comment: 'comment', reel_comment: 'reel', clip_comment: 'reel', like_milestone: 'heart', order: 'bag', referral: 'gift', reward: 'gift', event: 'event', notice: 'bell', story_view: 'story', live: 'live', update: 'update' };
   var d = el('span', 'ic'); d.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[map[kind] || 'bell'] + '</svg>'; return d;
 }
 
 /* ---------- loading ---------- */
 function guestEventsSeen() { try { return JSON.parse(ls(EV_KEY) || '[]') || []; } catch (e) { return []; } }
-function totalCount() { return S.unread + S.events.length + noticesUnseen(); }
+/* live streams and the "Update available" note: shown in the tab; they count on the bell until you have looked at them once */
+function readUpd() { try { var u = JSON.parse(ls('cc_upd_pending') || 'null'); return u && u.n && /^https:\/\//i.test(u.url || '') ? u : null; } catch (e) { return null; } }
+function liveKey(s) { return 'l' + s.id; }
+function updKey(u) { return 'u' + u.n; }
+function extraUnseen() {
+  var a = announced(), n = S.live.filter(function (s) { return a.indexOf(liveKey(s)) < 0; }).length, u = readUpd();
+  if (u && a.indexOf(updKey(u)) < 0) n++;
+  return n;
+}
+function totalCount() { return S.unread + S.events.length + noticesUnseen() + extraUnseen(); }
+function loadLive() {
+  return call('/api/live').then(function (d) { S.live = ((d && d.streams) || []).slice(0, 12); }).catch(function () {});
+}
 
 function paintBell() {
   bell = bell && bell.isConnected ? bell : document.querySelector('.ccb');
@@ -124,7 +138,7 @@ function loadServer() {
 }
 
 function refresh(quiet) {
-  return loadServer().then(function () {
+  return Promise.all([loadServer().catch(function () {}), loadLive()]).then(function () {
     paintBell();
     var n = totalCount();
     S.lastTotal = n;
@@ -175,6 +189,14 @@ function rowsFor(tab) {
   if (tab === 'all' || tab === 'events') S.events.forEach(function (e) {
     out.push({ at: e.at, kind: 'event', title: 'New event: ' + e.title, body: dayLabel(e.date) + (e.venue ? ', ' + e.venue : ''), unread: true, ev: e, time: ago(e.at) });
   });
+  if (tab === 'all' || tab === 'updates') {
+    var u = readUpd();
+    if (u) out.push({ at: Date.now(), kind: 'update', title: 'Update available', body: 'A new version of Comrade Connect is ready. Tap to update.', unread: S.snap.indexOf(updKey(u)) < 0, upd: u, time: '' });
+    S.live.forEach(function (s, i) {
+      var h = String((s.host && s.host.handle) || 'Comrade').replace(/^@/, '');
+      out.push({ at: Date.now() - 1 - i, kind: 'live', title: '@' + h + ' is live', body: (s.title ? s.title + '. ' : '') + (s.viewers || 0) + ' watching. Tap to join.', unread: S.snap.indexOf(liveKey(s)) < 0, live: s, time: 'now' });
+    });
+  }
   if (tab === 'all' || tab === 'updates') siteNotices().forEach(function (n, i) {
     out.push({ at: 1e12 - i, kind: 'notice', title: n.t, body: n.x, unread: false, link: n.l, time: '' });
   });
@@ -186,7 +208,7 @@ function draw() {
   var tabs = panel.querySelectorAll('.tb button'); [].forEach.call(tabs, function (b) { b.classList.toggle('on', b.dataset.t === S.tab); });
   var rs = rowsFor(S.tab);
   if (!rs.length) {
-    var em = el('div', 'em'); em.appendChild(el('b', '', S.tab === 'events' ? 'No new events' : S.tab === 'comments' ? 'No comments yet' : 'You are all caught up'));
+    var em = el('div', 'em'); em.appendChild(el('b', '', S.tab === 'events' ? 'No new events' : S.tab === 'comments' ? 'No comments yet' : S.tab === 'updates' ? 'No lives or updates right now' : 'You are all caught up'));
     em.appendChild(document.createTextNode(S.tab === 'events' ? 'When someone posts an event, it shows up here.' : 'Comments on your stories, clips and reels show up here, along with orders and invites.'));
     list.appendChild(em); return;
   }
@@ -198,6 +220,8 @@ function draw() {
     if (r.unread) { var d = el('span', 'dt'); d.setAttribute('aria-label', 'Unread'); b.appendChild(d); }
     b.onclick = function () {
       if (r.ev) { eventSheet(r.ev); return; }
+      if (r.upd) { close(); try { if (window.ccApp && ccApp.showUpdate) ccApp.showUpdate(r.upd.n, r.upd.notes, r.upd.url); else window.open(r.upd.url, '_blank', 'noopener'); } catch (e) {} return; }
+      if (r.live) { close(); try { if (window.ccLiveStrip && ccLiveStrip.open) ccLiveStrip.open(r.live); else if (typeof window.go === 'function') window.go('live'); } catch (e) {} return; }
       if (r.srv) { markRead([r.srv.id]); openTarget(r.srv); return; }
       if (/^https:\/\//i.test(r.link || '')) window.open(r.link, '_blank', 'noopener');
     };
@@ -219,7 +243,7 @@ function markAll() {   // now "Clear all": the notifications are removed, not ju
 function close() {
   var was = !!panel;
   if (panel) { panel.remove(); panel = null; } document.removeEventListener('keydown', onKey);
-  if (was) { S.items.forEach(function (n) { n.read = true; }); S.unread = 0; S.events = []; paintBell(); }
+  if (was) { S.items.forEach(function (n) { n.read = true; }); S.unread = 0; S.events = []; S.snap = []; paintBell(); }
 }
 function onKey(e) { if (e.key !== 'Escape') return; var ev = document.querySelector('.ccn-ev'); if (ev) ev.remove(); else close(); }
 function open() {
@@ -240,6 +264,7 @@ function open() {
   }
   bx.appendChild(el('div', 'ls')); panel.appendChild(bx); document.body.appendChild(panel);
   document.addEventListener('keydown', onKey);
+  S.snap = announced().slice();
   draw(); refresh(true);
   var a = siteNotices(); if (a.length) { ls(SEEN_KEY, noticeKey(a)); }
   markViewed();
@@ -247,7 +272,9 @@ function open() {
 /* Everything shown in the panel counts as read the moment it is seen. It stays drawn as new until the panel closes. */
 function markViewed() {
   var ids = S.items.filter(function (n) { return !n.read; }).map(function (n) { return n.id; });
-  rememberAnnounced(S.items.map(function (n) { return 'n' + n.id; }).concat(S.events.map(function (e) { return 'e' + e.id; })));
+  var u = readUpd();
+  rememberAnnounced(S.items.map(function (n) { return 'n' + n.id; }).concat(S.events.map(function (e) { return 'e' + e.id; })).concat(S.live.map(liveKey)).concat(u ? [updKey(u)] : []));
+  paintBell();
   if (S.guest) { var seen = guestEventsSeen(); S.events.forEach(function (e) { if (seen.indexOf(e.id) < 0) seen.push(e.id); }); ls(EV_KEY, JSON.stringify(seen.slice(-200))); }
   else if (ids.length || S.events.length) { call('/api/notifications/read', ids.length ? { ids: ids, events: true } : { events: true }).catch(function () {}); }
   S.viewed = ids.concat(S.events.map(function (e) { return 'e' + e.id; }));
@@ -284,6 +311,8 @@ function boot() {
   setInterval(function () { if (!document.hidden) refresh(true); }, 60000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(true); });
   window.ccNotifyRefresh = function () { return refresh(true); };
+  window.addEventListener('cc-update-pending', function () { paintBell(); if (panel) draw(); });
+  window.addEventListener('cc-live-updated', function () { var l = window.ccLiveStrip && ccLiveStrip.list && ccLiveStrip.list(); if (l) { S.live = l.slice(0, 12); paintBell(); if (panel) draw(); } });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

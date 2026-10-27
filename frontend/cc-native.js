@@ -96,7 +96,9 @@
         if (!rel) return say('Could not check for updates. Try again later.');
         var n = parseInt(String(rel.tag_name || '').replace(/\D/g, ''), 10) || 0;
         var a = (rel.assets || []).filter(function (x) { return /\.apk$/i.test(x.name); })[0];
-        if (!a || n <= cur) return say('You already have the newest version.');
+        if (!a || n <= cur) { try { localStorage.removeItem('cc_upd_pending'); } catch (e) {} try { window.dispatchEvent(new Event('cc-update-pending')); } catch (e) {} return say('You already have the newest version.'); }
+        var notesClean = String(rel.body || '').replace(/Install comrade-connect\.apk on your (Android )?phone\.?/i, '').replace(/[#*_`>]/g, '').trim().slice(0, 300);
+        try { localStorage.setItem('cc_upd_pending', JSON.stringify({ n: n, notes: notesClean, url: a.browser_download_url })); } catch (e) {} try { window.dispatchEvent(new Event('cc-update-pending')); } catch (e) {}
         var until = 0; try { until = +localStorage.getItem('cc_upd_until_' + n) || 0; } catch (e) {}
         if (force !== true && Date.now() < until) return;                                 // they tapped Cancel: ask again tomorrow
         showUpdate(n, String(rel.body || ''), a.browser_download_url);
@@ -120,6 +122,7 @@
     ov.querySelector('[data-x]').onclick = function () { try { localStorage.setItem('cc_upd_until_' + n, String(Date.now() + 864e5)); } catch (e) {} close(); };
     document.body.appendChild(ov);
   };
+  window.ccApp.showUpdate = function (n, notes, url) { showUpdate(n, String(notes || ''), url); };   // the notification tab uses this
   window.ccApp.checkUpdate = function () { checkUpdate(true); };                          // "Check for updates" buttons can call this
   window.addEventListener('load', function () { setTimeout(checkUpdate, 4000); });
   window.addEventListener('online', function () { setTimeout(checkUpdate, 1500); });

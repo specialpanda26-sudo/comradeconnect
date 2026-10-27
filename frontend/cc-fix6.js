@@ -21,6 +21,10 @@
   function makeChannel() {   // Android 8+: the panel entry needs a channel. Created once; asking again does nothing.
     try { if (P.createChannel) P.createChannel({ id: 'cc_alerts', name: 'Comrade Connect alerts', description: 'Comments, events, live and updates', importance: 4, visibility: 1, vibration: true, lights: true }).catch(function () {}); } catch (e) {}
   }
+  function channel() {
+    try { if (P.createChannel) return Promise.resolve(P.createChannel({ id: 'cc_alerts', name: 'Comrade Connect alerts', description: 'Orders, comments, live, events and app updates', importance: 4, visibility: 1, vibration: true, lights: true })).catch(function () {}); } catch (e) {}
+    return Promise.resolve();
+  }
   function wire() {
     if (wired) return; wired = true;
     P.addListener('registration', function (t) {
@@ -47,7 +51,7 @@
       return P.checkPermissions().then(function (p) {
         if (p.receive === 'granted' || p.receive === 'denied') return p;
         return P.requestPermissions();
-      }).then(function (p) { if (p && p.receive === 'granted') return P.register(); });
+      }).then(function (p) { if (p && p.receive === 'granted') return channel().then(function () { return P.register(); }); });
     }).catch(function () {});
   }
   setTimeout(sync, 7000);

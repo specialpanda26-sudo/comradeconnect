@@ -178,8 +178,22 @@ def patch_firebase():
     if 'com.google.gms.google-services' not in s:
         g.write_text(s + "\napply plugin: 'com.google.gms.google-services'\n", encoding='utf-8')
     print('Firebase ready')
+def patch_notif_icon():
+    """Small white logo for the phone's notification bar, and the default channel id for Firebase messages."""
+    for d, px in {'mdpi': 24, 'hdpi': 36, 'xhdpi': 48, 'xxhdpi': 72, 'xxxhdpi': 96}.items():
+        folder = RES / ('drawable-' + d); folder.mkdir(parents=True, exist_ok=True)
+        put(px, 0.8, transparent=True).save(folder / 'ic_stat_cc.png')
+    p = MAIN / 'AndroidManifest.xml'
+    s = p.read_text(encoding='utf-8')
+    if 'default_notification_icon' not in s:
+        meta = ('        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_cc" />\n'
+                '        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="cc_alerts" />\n')
+        if '</application>' not in s: sys.exit('STOP: AndroidManifest.xml has no </application>')
+        p.write_text(s.replace('</application>', meta + '    </application>', 1), encoding='utf-8')
+    print('notification icon ready')
+
 
 
 if not (MAIN / 'AndroidManifest.xml').exists():
     sys.exit('STOP: run `npx cap add android` first (no android/ folder found)')
-patch_manifest(); patch_deeplink(); patch_version(); patch_google_signin(); patch_firebase(); icons()
+patch_manifest(); patch_deeplink(); patch_version(); patch_google_signin(); patch_firebase(); patch_notif_icon(); icons()

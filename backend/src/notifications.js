@@ -10,7 +10,7 @@ export async function notify(env, aid, kind, title, body, refType, refId) {
   try {
     if (!aid) return false;
     const res = await post(env, 'notifications', { aid, kind, title: snip(title, 80), body: snip(body, 160), ref_type: refType || null, ref_id: refId ? String(refId) : null });
-    if (res.ok) await sendPush(env, aid, { title: snip(title, 80), body: snip(body, 160), view: 'bell', tag: 'n-' + kind, cat: catOfKind(kind) });
+    if (res.ok) await sendPush(env, aid, { title: snip(title, 80), body: snip(body, 160), view: 'bell', cat: catOfKind(kind) });
     return res.ok;
   } catch (e) { console.error('notify failed', e && e.message); return false; }
 }

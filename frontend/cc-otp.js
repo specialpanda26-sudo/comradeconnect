@@ -98,8 +98,8 @@ function enhance(real) {
   o.success = function () {   /* right code: the light settles green and a plain tick draws in */
     if (o.state !== 'busy') return Promise.resolve();
     return left(MIN_OK).then(function () {
-      o.state = 'ok'; root.classList.remove('cco-busy'); root.classList.add('cco-ok'); ic.innerHTML = SHIELD;
-      setText('Verified <b>Successfully</b>', 'Your security code has been confirmed.'); btnState('cco-bok', 'Verified & Secured');
+      o.state = 'ok'; root.classList.remove('cco-busy'); root.classList.add('cco-ok');
+      setText('Verified <b>Successfully</b>', 'Your security code has been confirmed.'); btnState('cco-bok', 'Verified');
       return sleep(reduce ? 400 : 1300);
     }).then(function () { setTimeout(function () { btnState(null); }, 80); setTimeout(function () { o.reset(true); }, 1500); });   /* by then the page has moved on */
   };

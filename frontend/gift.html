@@ -57,7 +57,7 @@ hr{border:0;border-top:1px solid var(--line);margin:22px 0}
 .steps li.done{color:var(--fg)}.steps li.done i{background:var(--ink);border-color:var(--ink)}@keyframes sp{to{transform:rotate(360deg)}}
 .okc{text-align:center;padding:14px 0}.okc svg{width:78px;height:78px;stroke:var(--or);fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.okc .ring{stroke-dasharray:190;stroke-dashoffset:190;animation:dr .6s ease forwards}.okc .tk{stroke-dasharray:50;stroke-dashoffset:50;animation:dr .4s .5s ease forwards}@keyframes dr{to{stroke-dashoffset:0}}
 .okc h1{margin-top:12px}[hidden]{display:none!important}
-</style></head><body>
+</style><link rel="stylesheet" href="cc-onetick.css?v=1"></head><body>
 <div class="o o1"></div><div class="o o2"></div><div class="o o3"></div>
 <main><div class="brand">COMRADE CONNECT</div>
 <div class="card" id="load"><p class="sub">Loading...</p></div>
@@ -81,7 +81,7 @@ hr{border:0;border-top:1px solid var(--line);margin:22px 0}
 <ul class="steps" id="st"><li data-s="p"><i></i>M-Pesa prompt sent to your phone</li><li data-s="n"><i></i>Enter your M-Pesa PIN</li><li data-s="v"><i></i>Verifying payment</li></ul>
 <div id="man" hidden><p class="hint" id="mi"></p><input id="mc" type="text" maxlength="12" placeholder="M-Pesa code, e.g. SJK7ABC123" style="margin-top:10px"><button class="btn" id="mg" type="button">Confirm payment</button></div>
 <p class="err" id="we"></p><button class="btn alt" id="wb" type="button" hidden>Back</button></div>
-<div class="card okc" id="done" hidden><svg viewBox="0 0 80 80"><circle class="ring" cx="40" cy="40" r="30"/><path class="tk" d="M27 41l9 9 18-20"/></svg><h1>Gift sent</h1><p class="sub" id="dm"></p><button class="btn alt" id="again" type="button">Send another gift</button></div>
+<div class="card okc" id="done" hidden><svg class="cc-tick" viewBox="0 0 100 100" aria-hidden="true"><circle class="h" cx="50" cy="50" r="49"/><circle class="c" cx="50" cy="50" r="39"/><path class="k" d="M33 52l12 12 23-25"/></svg><h1>Gift sent</h1><p class="sub" id="dm"></p><button class="btn alt" id="again" type="button">Send another gift</button></div>
 </main>
 <script src="config.js"></script>
 <script>

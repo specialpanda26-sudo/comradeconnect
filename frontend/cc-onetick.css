@@ -1,0 +1,38 @@
+/* cc-onetick.css v1: ONE tick everywhere + the plain code card.
+   The tick is the payment tick: sage halo, ink circle, tick that draws itself once (see ccTick in cc-core.js and cc-receipt.js).
+   The code card loses the blue light and the glass, and the green and shield ticks. Load after cc-verify.css and cc-dots.css. */
+
+/* ---- the tick itself, for pages that do not load cc-core.js (gift page) ---- */
+.cc-tick{width:88px;height:88px;margin:10px auto 2px;display:block;transform-origin:50% 50%;animation:cct-pop .5s cubic-bezier(.2,.9,.3,1.25) both}
+.cc-tick .h{fill:rgba(169,184,162,.38);stroke:none}.cc-tick .c{fill:var(--ink,#16130f);stroke:none}
+.cc-tick .k{fill:none;stroke:var(--inkfg,#fff);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:44;animation:cct-draw .35s ease-out .22s both}
+@keyframes cct-pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes cct-draw{from{stroke-dashoffset:44}to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.cc-tick,.cc-tick .k{animation:none}}
+
+/* ---- code card: no blue, no green, no glass ---- */
+html body .cco{--a:var(--fg,#16130f);--rc:var(--fg,#16130f);--g:var(--fg,#16130f);--edge:rgba(22,19,15,.12);
+  background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:4px 0 2px!important;margin:0!important;overflow:visible!important}
+html body .cco-stage{min-height:76px}
+html body .cco:before,html body .cco:after{display:none!important}
+html body .cco .cco-ic,html body .cco .cco-final{display:none!important}
+html body .cco input.cco-b{background:var(--g2,rgba(255,255,255,.86))!important;border:1.5px solid rgba(22,19,15,.1)!important;border-radius:12px!important;box-shadow:none!important;color:var(--fg,#16130f)!important;caret-color:var(--fg,#16130f)!important;transform:none!important}
+html body .cco input.cco-b.cco-f,html body .cco input.cco-b:focus{border-color:var(--fg,#16130f)!important;box-shadow:none!important}
+html body .cco.cco-err input.cco-b{border-color:var(--bad)!important;color:var(--bad)!important;box-shadow:none!important}
+:root[data-theme="dark"] body .cco input.cco-b{background:rgba(44,37,32,.86)!important;border-color:rgba(255,255,255,.12)!important}
+html body button.cco-bok{background:var(--ink,#16130f)!important;color:var(--inkfg,#fff)!important;box-shadow:none!important}
+
+/* ---- the tick after a right code: same look and timing as the payment tick ---- */
+html body .ccv-tk{width:66px;height:66px;background:var(--ink,#16130f)!important;box-shadow:0 0 0 5px rgba(169,184,162,.38)!important}
+html body .ccv-tk::before{display:none!important}
+html body .ccv-tk svg{width:34px;height:34px;stroke:var(--inkfg,#fff)!important;stroke-width:5.5}
+html body .cco-ok .ccv-tk{animation-duration:.5s!important;animation-timing-function:cubic-bezier(.2,.9,.3,1.25)!important}
+html body .cco-ok .ccv-tk svg{animation-duration:.35s!important;animation-delay:.22s!important;animation-timing-function:ease-out!important}
+html body .ccv-rules li.ok::before{background:var(--ink,#16130f)!important;border-color:var(--ink,#16130f)!important}
+html body .ccv-rules li.ok::after{border-color:var(--inkfg,#fff)!important}
+
+/* ---- the other ticks on the site follow the same colours ---- */
+.cm-ok{background:var(--ink,#16130f)!important;color:var(--inkfg,#fff)!important}
+.cf-dic{background:var(--ink,#16130f)!important;color:var(--inkfg,#fff)!important;box-shadow:0 0 0 6px rgba(169,184,162,.38)!important}
+html body #ccfp.ok .fpx-ck{color:var(--ink,#16130f)!important}
+.okc svg.cc-tick{width:88px;height:88px;stroke:none}

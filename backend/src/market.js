@@ -26,7 +26,7 @@ async function decorate(env, list, me) {          // photos + seller handle, nev
       photos: photos.filter((x) => x.listing_id === l.id).map((x) => mediaUrl(env, x.r2_key)),
       seller: { handle: p?.handle || 'Seller', verified: !!p?.verified, student: !!p?.student_verified, kind: badgeKind(p), rating: rt[l.seller_aid] || null },
       contact_phone: me && me.aid === l.seller_aid ? l.contact_phone || undefined : undefined,
-      mine: !!me && me.aid === l.seller_aid, createdAt: Date.parse(l.created_at),
+      lat: l.lat ?? null, lng: l.lng ?? null, mine: !!me && me.aid === l.seller_aid, createdAt: Date.parse(l.created_at),
     };
   });
 }
@@ -126,11 +126,17 @@ export async function marketRoutes(req, env, url, ip) {
     const S = await getSettings(env), category = CATS.includes(b.category) ? b.category : 'General', price = int(b.price, S.listing_price_min, S.listing_price_max);
     if (title.length < 3 || !price) return err(env, `Add a title and a price (KSh ${S.listing_price_min.toLocaleString('en-US')} to ${S.listing_price_max.toLocaleString('en-US')})`);
     const contact_phone = normPhone(b.contact_phone);
+    let geo = null;   // optional seller pin: both numbers, in range, or the listing is refused
+    if (b.lat != null && b.lat !== '' || b.lng != null && b.lng !== '') {
+      const la = Number(b.lat), ln = Number(b.lng);
+      if (b.lat == null || b.lng == null || !Number.isFinite(la) || !Number.isFinite(ln) || la < -90 || la > 90 || ln < -180 || ln > 180) return err(env, 'That location is not valid. Try Use my location again.');
+      geo = { lat: Math.round(la * 1e5) / 1e5, lng: Math.round(ln * 1e5) / 1e5 };
+    }
     if (!contact_phone) return err(env, 'Add your phone number (like 0712345678). The buyer sees it only after they pay.');
     const blk = contactBlock(env, title, description, zone, condition); if (blk) return blk;
     if (!isWholesaler(u) && (await activeListings(env, u.aid)) >= S.free_listing_limit) return err(env, `Free sellers can have ${S.free_listing_limit} items posted at once. Join the wholesalers community (KSh ${S.wholesale_fee}) to post as many as you want.`, 402);
     const live = (await getSettings(env)).listing_auto_publish === 1;
-    const ins = await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip,
+    const ins = await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip, ...(geo ? geo : {}),
       ...(live ? { status: 'approved', approved_by: 'auto', approved_at: new Date().toISOString() } : {}) });
     const insText = await ins.text().catch(() => ''); let l = null; try { const d = JSON.parse(insText); l = Array.isArray(d) ? d[0] : null; } catch (e) {}
     if (!l) {

@@ -1,0 +1,77 @@
+diff --git a/frontend/app/index.html b/frontend/app/index.html
+index 857d2dc..a1ae879 100644
+--- a/frontend/app/index.html
++++ b/frontend/app/index.html
+@@ -3533,3 +3533,3 @@ h2{font:600 24px/1.1 Unbounded,Poppins,sans-serif;margin:0 0 2px;letter-spacing:
+ .btn:active{transform:scale(.97)}.btn.ld{width:92px}.btn.ld .t{display:none}
+-.sn{display:none;gap:6px;align-items:center}.btn.ld .sn{display:flex}.sn b{width:8px;height:8px;border-radius:50%;background:#fff;animation:cgdt 1s infinite ease-in-out}.sn b:nth-child(2){animation-delay:.15s}.sn b:nth-child(3){animation-delay:.3s}@keyframes cgdt{0%,80%,100%{transform:scale(.5);opacity:.5}40%{transform:scale(1.15);opacity:1}}
++.sn{display:none;width:22px;height:22px;box-sizing:border-box;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:cgsp .7s linear infinite}.btn.ld .sn{display:block}.sn b{display:none}@keyframes cgsp{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.sn{animation-duration:2s}}
+ @keyframes cgrot{to{transform:rotate(360deg)}}
+diff --git a/frontend/cc-flow.css b/frontend/cc-flow.css
+index cea5d80..547f66e 100644
+--- a/frontend/cc-flow.css
++++ b/frontend/cc-flow.css
+@@ -70,6 +70,5 @@
+ .cf-wait::before{content:"";display:inline-block;width:14px;height:14px;margin-right:9px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:cf-sp .7s linear infinite}
+-.cf-wait::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 25%,rgba(255,255,255,.28) 50%,transparent 75%);transform:translateX(-100%);animation:cm-shim 1.1s linear infinite}
+ @keyframes cf-sp{to{transform:rotate(360deg)}}
+ .cf-fine{animation:cm-heart .5s cubic-bezier(.34,1.45,.5,1)}
+-@media (prefers-reduced-motion:reduce){.cf-wait::before{animation:none}.cf-wait::after{display:none}}
++@media (prefers-reduced-motion:reduce){.cf-wait::before{animation-duration:2s}}
+ 
+@@ -89,2 +88,2 @@
+ /* one loader per button: when the button has its own spinner/dots, the shared one stays off */
+-.cf-wait:has(.ccspin,.cm-dots,.sn)::before,.cf-wait:has(.ccspin,.cm-dots,.sn)::after,.cm-busy:has(.ccspin)::before{display:none!important}
++.cf-wait:has(.ccspin,.cm-spin,.sn)::before,.cm-busy:has(.ccspin)::before{display:none!important}
+diff --git a/frontend/cc-gate.js b/frontend/cc-gate.js
+index 59995a9..d9a30bd 100644
+--- a/frontend/cc-gate.js
++++ b/frontend/cc-gate.js
+@@ -71,3 +71,3 @@ h2{font:600 24px/1.1 Unbounded,Poppins,sans-serif;margin:0 0 2px;letter-spacing:
+ .btn:active{transform:scale(.97)}.btn.ld{width:92px}.btn.ld .t{display:none}
+-.sn{display:none;gap:6px;align-items:center}.btn.ld .sn{display:flex}.sn b{width:8px;height:8px;border-radius:50%;background:#fff;animation:cgdt 1s infinite ease-in-out}.sn b:nth-child(2){animation-delay:.15s}.sn b:nth-child(3){animation-delay:.3s}@keyframes cgdt{0%,80%,100%{transform:scale(.5);opacity:.5}40%{transform:scale(1.15);opacity:1}}
++.sn{display:none;width:22px;height:22px;box-sizing:border-box;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:cgsp .7s linear infinite}.btn.ld .sn{display:block}.sn b{display:none}@keyframes cgsp{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.sn{animation-duration:2s}}
+ @keyframes cgrot{to{transform:rotate(360deg)}}
+diff --git a/frontend/cc-motion.css b/frontend/cc-motion.css
+index ba52d37..24aedd8 100644
+--- a/frontend/cc-motion.css
++++ b/frontend/cc-motion.css
+@@ -57,7 +57,6 @@ html body #dm .bx{animation:cm-sheet .5s var(--cm-spring) both}
+ .cm-busy{position:relative;overflow:hidden;pointer-events:none}
+-.cm-busy::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 25%,rgba(255,255,255,.28) 50%,transparent 75%);transform:translateX(-100%);animation:cm-shim 1.1s linear infinite}
+-.cm-busy .cm-dots{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
+-.cm-busy .cm-dots b{width:5px;height:5px;border-radius:50%;background:currentColor;animation:cm-dot 1s infinite ease-in-out}
+-.cm-busy .cm-dots b:nth-child(2){animation-delay:.15s}.cm-busy .cm-dots b:nth-child(3){animation-delay:.3s}
+-@keyframes cm-dot{0%,80%,100%{transform:scale(.5);opacity:.5}40%{transform:scale(1.15);opacity:1}}
++.cm-busy{display:inline-flex;align-items:center;justify-content:center}
++.cm-busy .cm-spin{width:1.1em;height:1.1em;margin-left:9px;box-sizing:border-box;border:2.5px solid currentColor;border-right-color:transparent;border-radius:50%;opacity:.9;animation:cm-sp .7s linear infinite;flex:none}
++@keyframes cm-sp{to{transform:rotate(360deg)}}
++@media (prefers-reduced-motion:reduce){.cm-busy .cm-spin{animation-duration:2s}}
+ .cm-ok{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f08!important}
+diff --git a/frontend/cc-motion.js b/frontend/cc-motion.js
+index 64447d4..faf8ee9 100644
+--- a/frontend/cc-motion.js
++++ b/frontend/cc-motion.js
+@@ -24,3 +24,3 @@
+     btn.classList.add('cm-busy'); btn.setAttribute('aria-busy', 'true');
+-    btn.innerHTML = '<span>' + (label || 'Please wait') + '</span><span class="cm-dots"><b></b><b></b><b></b></span>';
++    btn.innerHTML = '<span>' + (label || 'Please wait') + '</span><span class="cm-spin" aria-hidden="true"></span>';
+     return function done(ok, msg) {
+diff --git a/frontend/index.html b/frontend/index.html
+index c1167e8..15fc677 100644
+--- a/frontend/index.html
++++ b/frontend/index.html
+@@ -448,6 +448,6 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
+ <link rel="stylesheet" href="cc-aqua.css?v=2"><link rel="stylesheet" href="cc-home.css?v=1"><link rel="stylesheet" href="cc-market.css?v=1"><link rel="stylesheet" href="cc-lockglass.css?v=2"><link rel="stylesheet" href="cc-theme.css?v=2"><link rel="stylesheet" href="cc-glass.css?v=5"><link rel="stylesheet" href="cc-ui1.css?v=2"><link rel="stylesheet" href="cc-ui2.css?v=1"><link rel="stylesheet" href="cc-ui3.css?v=1"><script src="cc-glass.js?v=5" defer></script><link rel="stylesheet" href="cc-ui4.css?v=1"><link rel="stylesheet" href="cc-ui5.css?v=2"><script src="cc-ui5.js?v=1" defer></script><link rel="stylesheet" href="cc-tiles.css?v=4"><link rel="stylesheet" href="cc-pages.css?v=4"><link rel="stylesheet" href="cc-lockpw.css?v=5">
+-<link rel="stylesheet" href="cc-edge.css?v=1"><link rel="stylesheet" href="cc-blend.css?v=1"><link rel="stylesheet" href="cc-guide.css?v=2"><script src="cc-tiles.js?v=4" defer></script><link rel="stylesheet" href="cc-otp.css?v=3"><script src="cc-verified.js?v=2"></script><link rel="stylesheet" href="cc-redesign.css?v=2"><link rel="stylesheet" href="cc-watch2.css?v=1"><link rel="stylesheet" href="cc-motion.css?v=1"><link rel="stylesheet" href="cc-flow.css?v=1"><link rel="stylesheet" href="cc-polish.css?v=1"><script src="cc-fix6.js?v=5" defer></script><script src="cc-fix5.js?v=2" defer></script><script src="cc-fix4.js?v=2" defer></script><link rel="stylesheet" href="cc-fix3.css?v=1"><script src="cc-fix2.js?v=1" defer></script><link rel="stylesheet" href="cc-fix1.css?v=1"><link rel="stylesheet" href="cc-fix7.css?v=1"><link rel="stylesheet" href="cc-fix8.css?v=1"><link rel="stylesheet" href="cc-fix9.css?v=1"><link rel="stylesheet" href="cc-verify.css?v=2"><link rel="stylesheet" href="cc-market-cart.css?v=2"><link rel="stylesheet" href="cc-market-polish.css?v=1"><link rel="stylesheet" href="cc-calm.css?v=1"></head>
++<link rel="stylesheet" href="cc-edge.css?v=1"><link rel="stylesheet" href="cc-blend.css?v=1"><link rel="stylesheet" href="cc-guide.css?v=2"><script src="cc-tiles.js?v=4" defer></script><link rel="stylesheet" href="cc-otp.css?v=3"><script src="cc-verified.js?v=2"></script><link rel="stylesheet" href="cc-redesign.css?v=2"><link rel="stylesheet" href="cc-watch2.css?v=1"><link rel="stylesheet" href="cc-motion.css?v=2"><link rel="stylesheet" href="cc-flow.css?v=2"><link rel="stylesheet" href="cc-polish.css?v=1"><script src="cc-fix6.js?v=5" defer></script><script src="cc-fix5.js?v=2" defer></script><script src="cc-fix4.js?v=2" defer></script><link rel="stylesheet" href="cc-fix3.css?v=1"><script src="cc-fix2.js?v=1" defer></script><link rel="stylesheet" href="cc-fix1.css?v=1"><link rel="stylesheet" href="cc-fix7.css?v=1"><link rel="stylesheet" href="cc-fix8.css?v=1"><link rel="stylesheet" href="cc-fix9.css?v=1"><link rel="stylesheet" href="cc-verify.css?v=2"><link rel="stylesheet" href="cc-market-cart.css?v=2"><link rel="stylesheet" href="cc-market-polish.css?v=1"><link rel="stylesheet" href="cc-calm.css?v=1"></head>
+ <body data-view="feed"><noscript><main style="padding:24px;font-family:sans-serif;color:#fff;background:#000"><h1>Comrade Connect: Kenyan university comrades</h1><p>The anonymous campus feed, safe marketplace with escrow, Hearts, roommates and study groups for Kenyan university comrades. Turn on JavaScript to use the app.</p></main></noscript>
+ <div class="bg"><i></i><i></i><svg class="mt" viewBox="0 0 1200 320" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path class="f2" d="M0 320V230L90 215 200 190 300 150 380 110 440 80 500 40 540 12 565 30 600 6 640 45 690 85 760 125 850 150 960 190 1080 215 1200 225V320Z"/><path class="f" d="M0 320V262L150 244 300 226 450 206 600 214 760 226 920 232 1080 246 1200 252V320Z"/><path class="l" d="M0 282Q300 268 600 282T1200 282M0 296Q300 283 600 296T1200 296M0 309Q300 298 600 309T1200 309"/></svg><div class="bw a">SPILL</div><div class="bw b">THE TEA</div></div>
+-<script src="cc-gate.js?v=wide1"></script><script src="cc-gate-curve.js?v=9"></script>
++<script src="cc-gate.js?v=wide2"></script><script src="cc-gate-curve.js?v=9"></script>
+ 
+@@ -2012,3 +2012,3 @@ document.head.appendChild(s);
+ <script src="cc-redesign-v5.js?v=1" defer></script>
+-<script src="cc-motion.js?v=1" defer></script>
++<script src="cc-motion.js?v=2" defer></script>
+ <script src="cc-flow.js?v=1b" defer></script><script src="cc-market-geo.js?v=1"></script><script src="cc-market-cart.js?v=4"></script>

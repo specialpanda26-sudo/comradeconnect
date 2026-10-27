@@ -68,10 +68,9 @@
 /* ---------- 3. buttons that are waiting for the server (cc-flow.js adds .cf-wait) ---------- */
 .cf-wait{position:relative;overflow:hidden;pointer-events:none}
 .cf-wait::before{content:"";display:inline-block;width:14px;height:14px;margin-right:9px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:cf-sp .7s linear infinite}
-.cf-wait::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 25%,rgba(255,255,255,.28) 50%,transparent 75%);transform:translateX(-100%);animation:cm-shim 1.1s linear infinite}
 @keyframes cf-sp{to{transform:rotate(360deg)}}
 .cf-fine{animation:cm-heart .5s cubic-bezier(.34,1.45,.5,1)}
-@media (prefers-reduced-motion:reduce){.cf-wait::before{animation:none}.cf-wait::after{display:none}}
+@media (prefers-reduced-motion:reduce){.cf-wait::before{animation-duration:2s}}
 
 /* ---------- 4. no more doubles ---------- */
 #ccrecnudge,.cf-hide,.cf-dupe{display:none!important}
@@ -87,4 +86,4 @@
 :root:root:root:root #ccea .cco-stage{height:60px}
 
 /* one loader per button: when the button has its own spinner/dots, the shared one stays off */
-.cf-wait:has(.ccspin,.cm-dots,.sn)::before,.cf-wait:has(.ccspin,.cm-dots,.sn)::after,.cm-busy:has(.ccspin)::before{display:none!important}
+.cf-wait:has(.ccspin,.cm-spin,.sn)::before,.cm-busy:has(.ccspin)::before{display:none!important}

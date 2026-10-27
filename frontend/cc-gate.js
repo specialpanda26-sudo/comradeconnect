@@ -69,7 +69,7 @@ h2{font:600 24px/1.1 Unbounded,Poppins,sans-serif;margin:0 0 2px;letter-spacing:
 .lnk{all:unset;cursor:pointer;color:#101422;font-size:12.5px;align-self:flex-end;font-weight:500}
 .btn{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;width:100%;height:50px;border-radius:999px;background:#101422;color:#fff;font-weight:500;font-size:15px;flex:none;align-self:center;overflow:hidden;transition:width .45s cubic-bezier(.65,0,.2,1),transform .15s}
 .btn:active{transform:scale(.97)}.btn.ld{width:92px}.btn.ld .t{display:none}
-.sn{display:none;gap:6px;align-items:center}.btn.ld .sn{display:flex}.sn b{width:8px;height:8px;border-radius:50%;background:#fff;animation:cgdt 1s infinite ease-in-out}.sn b:nth-child(2){animation-delay:.15s}.sn b:nth-child(3){animation-delay:.3s}@keyframes cgdt{0%,80%,100%{transform:scale(.5);opacity:.5}40%{transform:scale(1.15);opacity:1}}
+.sn{display:none;width:22px;height:22px;box-sizing:border-box;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:cgsp .7s linear infinite}.btn.ld .sn{display:block}.sn b{display:none}@keyframes cgsp{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.sn{animation-duration:2s}}
 @keyframes cgrot{to{transform:rotate(360deg)}}
 .btn:focus-visible,.lnk:focus-visible,.eye:focus-visible,.soc:focus-visible,.sw button:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
 .or{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:12px;margin:6px 0 2px}.or:before,.or:after{content:"";flex:1;height:1px;background:rgba(16,20,34,.12)}

@@ -22,7 +22,7 @@
     btn.__cmBusy = 1;
     btn.style.minWidth = w + 'px'; btn.style.minHeight = h + 'px';
     btn.classList.add('cm-busy'); btn.setAttribute('aria-busy', 'true');
-    btn.innerHTML = '<span>' + (label || 'Please wait') + '</span><span class="cm-dots"><b></b><b></b><b></b></span>';
+    btn.innerHTML = '<span>' + (label || 'Please wait') + '</span><span class="cm-spin" aria-hidden="true"></span>';
     return function done(ok, msg) {
       var wait = Math.max(0, 450 - (Date.now() - t0));   /* never flash: show it for at least a beat */
       setTimeout(function () {

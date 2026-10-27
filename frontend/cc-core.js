@@ -573,7 +573,7 @@ function openListing(id) {
   const l = S.list.find((x) => x.id === id) || S.mine.find((x) => x.id === id); if (!l) return;
   const strip = (l.photos || []).length > 1 ? '<div style="display:flex;gap:8px;overflow-x:auto;margin-top:8px">' + l.photos.slice(1).map((u) => '<img src="' + esc(u) + '" alt="" style="height:70px;border-radius:10px" loading="lazy">').join('') + '</div>' : '';
   $('#mvb').innerHTML = pic(l, 1) + strip + '<div class="flex items-center justify-between" style="margin-top:14px"><b style="font-size:22px">' + kes(l.price) + '</b><span class="badge">Escrow protected</span></div><h3 style="margin:8px 0 4px;font-size:17px">' + esc(l.title) + '</h3><p class="note" style="margin-top:0">@' + esc(l.zone || 'Campus') + (l.condition ? ', ' + esc(l.condition) : '') + ', listed ' + ago(l.createdAt) + ' by @' + esc(l.seller ? l.seller.handle : 'Seller') + '</p><p style="font-size:13px;line-height:1.7;margin:12px 0;overflow-wrap:anywhere">' + esc(l.description || 'No description.') + '</p>';
-  $('#mvbuy').hidden = !!l.mine || l.status !== 'approved'; $('#mvdm').hidden = !!l.mine; $('#mvbuy').dataset.id = id; $('#mvdm').dataset.id = id; openDm('mkview');
+  $('#mvbuy').hidden = !!l.mine || l.status !== 'approved'; $('#mvdm').hidden = !!l.mine; $('#mvbuy').dataset.id = id; $('#mvdm').dataset.id = id; try { window.ccMkGeo && ccMkGeo.show(l); } catch (e) {} openDm('mkview');
 }
 $('#mvdm').onclick = () => { const l = S.list.find((x) => x.id === $('#mvdm').dataset.id); if (!l) return; try { dmKey = 'mk:' + l.id; dmSnip = l.title; } catch (e) {} openDm('dm'); };
 
@@ -809,7 +809,7 @@ $('#msub').onclick = async () => {
   S.sending = true; const btn = $('#msub'); btn.disabled = true; btn.textContent = 'Uploading...';
   let id = null;
   try {
-    const l = await call('/api/market/listings', { body: { title: t, description: d || 'No description.', price: p, zone: $('#mzo').value, condition: $('#mco').value, contact_phone: cp, category: ($('#mcat') || {}).value || 'General' } });
+    const l = await call('/api/market/listings', { body: { title: t, description: d || 'No description.', price: p, zone: $('#mzo').value, condition: $('#mco').value, contact_phone: cp, category: ($('#mcat') || {}).value || 'General', ...(window.ccMkGeo ? ccMkGeo.get() : {}) } });
     id = l.id; ST.set('cc_sellphone', cp);
     for (let i = 0; i < S.photos.length; i++) { btn.textContent = 'Uploading photo ' + (i + 1) + ' of ' + S.photos.length + '...'; await uploadPhoto(id, S.photos[i].blob); }
     shut(); S.sub = 'mine'; draw(); loadMine(); toast(l.status === 'approved' ? 'Your item is live' : 'Sent for admin verification');

@@ -1,0 +1,13 @@
+/* cc-fix8.css: bottom bar. Round glass buttons; the open tab grows into an orange pill with a black dot on the right.
+   Every tab opens to the same size. Loaded after cc-fix7.css. */
+html:not([data-lay="desktop"]):not(.zz) body #tb{background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0 2px!important;gap:0!important;justify-content:space-between!important;align-items:center!important}
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v]{height:48px!important;padding:0!important;align-items:center!important;justify-content:center!important;transition:width .3s cubic-bezier(.2,.8,.2,1),flex-basis .3s cubic-bezier(.2,.8,.2,1),min-width .3s cubic-bezier(.2,.8,.2,1)}
+/* closed: round glass circle */
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v]:not(.on):not(.on2){flex:0 0 48px!important;width:48px!important;min-width:48px!important;border-radius:50%!important;background:var(--g)!important;border:1px solid var(--gb)!important;box-shadow:var(--sh)!important;-webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important}
+/* open: orange pill, same width for every tab */
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on,
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2{flex:0 0 124px!important;width:124px!important;min-width:124px!important;gap:8px!important;border-radius:999px!important;border:0!important;background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;box-shadow:0 8px 20px rgba(238,122,79,.35)!important;color:#1d0f06!important;font-size:13px!important;font-weight:700!important;white-space:nowrap}
+@media(max-width:360px){
+  html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v]:not(.on):not(.on2){flex-basis:44px!important;width:44px!important;min-width:44px!important}
+  html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on,html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2{flex-basis:112px!important;width:112px!important;min-width:112px!important;font-size:12px!important;gap:6px!important}
+}

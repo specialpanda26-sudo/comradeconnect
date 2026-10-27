@@ -30,3 +30,20 @@ iframe[src*="accounts.google.com"]{color-scheme:light !important;background:tran
    so the location pin and the bell sat behind it and the cards touched the screen edges. */
 #v-market{padding:124px 6vw 170px !important;margin-top:0 !important;box-sizing:border-box}
 html[data-lay="desktop"] #v-market{padding:124px 22px 60px !important}
+
+/* ---------- Sign in again panel (#ccrst): no more navy. Same warm look and ink buttons as the Forgot password page. ---------- */
+html body #ccrst{background:rgba(251,241,237,.7)!important;-webkit-backdrop-filter:blur(12px)!important;backdrop-filter:blur(12px)!important}
+:root[data-theme="dark"] body #ccrst{background:rgba(23,19,15,.78)!important}
+html body #ccrst>.box.g{background:linear-gradient(180deg,#ffdcc2 0,#fbe9df 120px,#fbf1ed 100%)!important;border:1px solid rgba(22,19,15,.08)!important;border-radius:28px!important;box-shadow:0 24px 60px -24px rgba(22,19,15,.45)!important;color:#16130f!important}
+:root[data-theme="dark"] body #ccrst>.box.g{background:linear-gradient(180deg,#3b2415 0,#241a13 140px,#17130f 100%)!important;border-color:rgba(255,255,255,.1)!important;color:#f6efe9!important}
+html body #ccrst h3,html body #ccrst .sub,html body #ccrst a{color:inherit}
+html body #ccrst h3{font:800 20px/1.2 Unbounded,Poppins,system-ui,sans-serif;letter-spacing:-.02em}
+html body #ccrst .sub{font-family:Poppins,system-ui,sans-serif;font-size:13.5px;opacity:.78}
+html body #ccrst #ccrst-e{color:#b3261e!important;opacity:1}
+html body #ccrst a{font-weight:600;text-decoration:underline;text-underline-offset:3px;opacity:1}
+html body #ccrst .fld input{background:rgba(255,255,255,.62)!important;border:1px solid rgba(22,19,15,.14)!important;border-radius:16px!important;color:#16130f!important}
+html body #ccrst .fld input:focus{border-color:#e8744f!important;background:#fff!important;outline:0}
+:root[data-theme="dark"] body #ccrst .fld input{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.16)!important;color:#f6efe9!important}
+html body #ccrst .btn.p{background:linear-gradient(120deg,#16130f,#4a423b)!important;color:#fff!important;border:0!important;border-radius:16px!important;font:600 15px Poppins,system-ui,sans-serif;box-shadow:0 10px 22px -8px rgba(22,19,15,.55)}
+html body #ccrst .btn.g{background:rgba(22,19,15,.06)!important;color:inherit!important;border:1px solid rgba(22,19,15,.14)!important;border-radius:16px!important;font:600 15px Poppins,system-ui,sans-serif}
+:root[data-theme="dark"] body #ccrst .btn.g{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.16)!important}

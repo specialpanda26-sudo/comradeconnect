@@ -170,7 +170,7 @@ export async function credit(env, aid, delta, kind, ref, note, status = 'availab
 export async function payRoutes(req, env, url, ip) {
   const path = url.pathname;
 
-  // Which ways to pay are switched on (the app shows the card option only when this says so).
+  // Which ways to pay are switched on. M-Pesa only.
   if (path === '/api/pay/methods' && req.method === 'GET') return json(env, { mpesa: true });
 
   // Generic payment: only boosts and top-ups. Orders, club and tickets have their own endpoints that fix the amount server-side.

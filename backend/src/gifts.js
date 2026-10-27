@@ -84,10 +84,10 @@ export async function giftRoutes(req, env, url, ip) {
     const S = await getSettings(env), pre = PRESETS.find((x) => x.id === b.item);
     const amount = pre ? pre.amount : int(b.amount, S.gift_min, S.gift_max), item = pre ? pre.id : 'custom';
     if (!amount) return err(env, `Choose a gift, or enter an amount from KSh ${S.gift_min} to KSh ${S.gift_max}`);
-    if (b.method !== 'card' && !normPhone(b.phone)) return err(env, 'Enter a Safaricom or Airtel number like 0712345678');
+    if (!normPhone(b.phone)) return err(env, 'Enter a Safaricom or Airtel number like 0712345678');
     const name = str(b.name, 24), msg = str(b.message, 200), email = mailOk(b.email) && mailReady(env) ? str(b.email, 120) : null;
     if (hasContact(name + ' ' + msg)) return err(env, 'Remove phone numbers, handles and links from the name and the message');
-    const r = await initPayment(env, ip, { aid: 'gift:' + l.id, purpose: 'gift', ref_id: l.id, amount, phone: b.phone, method: b.method, email });
+    const r = await initPayment(env, ip, { aid: 'gift:' + l.id, purpose: 'gift', ref_id: l.id, amount, phone: b.phone, email });
     if (r.res) return r.res;
     await post(env, 'gifts', { link_id: l.id, creator_aid: l.aid, payment_id: r.id, item, gross: amount, supporter_name: name || null, message: msg || null, receipt_email: email });
     return json(env, { id: r.id, url: r.url, amount });

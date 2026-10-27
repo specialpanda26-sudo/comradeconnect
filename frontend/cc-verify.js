@@ -34,7 +34,9 @@ function stepOf(pg) { var m = /Step\s+(\d)/.exec((pg.querySelector('#ccfg-st') |
 function paintButton(pg) {
   var go = pg.querySelector('#ccfg-go'), n = stepOf(pg); if (!go) return;
   var m = pg.querySelector('#ccfg-m'), p = pg.querySelector('#ccfg-p'), off = false;
-  if (n === 1) off = !okMail(m && m.value);
+  var lab = (pg.querySelector('#ccfg-st') || {}).textContent || '';
+  if (pg.classList.contains('ccrem') && (n === 3 || !/Step\s+\d/.test(lab))) off = false;   /* recovery email page: its step 3 and its Settings screen have nothing to type */
+  else if (n === 1) off = !okMail(m && m.value);
   else if (n === 3) off = !(p && p.value.length >= 8);
   go.classList.toggle('ccv-off', off);
 }

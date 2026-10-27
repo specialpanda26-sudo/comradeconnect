@@ -22,79 +22,104 @@
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || 'Something went wrong. Please try again.'); return d; }); });
   }
 
-  /* mode: 'new' (just signed up), 'manage' (already has an email), or 'add' (from Settings) */
+  /* mode: 'new' (just signed up), 'manage' (already has an email), or 'add' (from Settings).
+     It is now a FULL PAGE that reuses the Forgot password page (#ccfgt): same top bar, step bar, buttons, code boxes, envelope and lock pictures,
+     and the same Back handling. cc-pages.css, cc-verify.css, cc-verify.js and cc-otp.js style and animate it with no extra code. */
   function ask(mode, cb) {
-    if (busyNow || document.getElementById('ccea')) { if (cb) cb(); return; }
-    var m = window.ccTools && ccTools.sheet ? ccTools.sheet('') : null;
-    if (!m) { if (cb) cb(); return; }
-    busyNow = true; m.id = 'ccea';
-    var box = m.firstChild; box.textContent = '';
-    var wrap = el('div', 'cf-ea'); box.appendChild(wrap);
-    var ic = el('div', 'cf-ic'); ic.innerHTML = MAIL;
-    var h3 = el('h3', 'cf-h', mode === 'manage' ? 'Recovery email' : 'Add a recovery email');
-    var sub = el('p', 'cf-s');
-    var f = el('form'); f.noValidate = true; f.addEventListener('submit', function (e) { e.preventDefault(); });
-    var w1 = el('div', 'cf-f');
-    var em = el('input'); em.type = 'email'; em.name = 'email'; em.setAttribute('autocomplete', 'email'); em.setAttribute('inputmode', 'email'); em.setAttribute('autocapitalize', 'off'); em.placeholder = 'name@gmail.com'; em.setAttribute('aria-label', 'Your email'); w1.appendChild(em);
-    var w2 = el('div', 'cf-f'); w2.hidden = true;
-    var cd = el('input'); cd.name = 'code'; cd.setAttribute('inputmode', 'numeric'); cd.setAttribute('autocomplete', 'one-time-code'); cd.maxLength = 6; cd.placeholder = '6-digit code'; cd.setAttribute('aria-label', '6-digit code'); w2.appendChild(cd);
-    f.appendChild(w1); f.appendChild(w2);
-    var msg = el('p', 'cf-m'); msg.setAttribute('role', 'status'); msg.setAttribute('aria-live', 'polite');
-    var go = el('button', 'btn p cf-go', 'Send code'); go.type = 'button';
-    var link = el('button', 'cf-lnk', 'Skip, add it later'); link.type = 'button';
-    var hint = el('p', 'cf-hint', 'You can add it any time in Settings, under Recovery email.');
-    var done = el('div', 'cf-done'); done.hidden = true;
-    var dic = el('div', 'cf-dic'); dic.innerHTML = TICK; done.appendChild(dic); done.appendChild(el('b', '', 'Email saved')); done.appendChild(el('span', '', 'You can now reset your password by email.'));
-    [ic, h3, sub, f, msg, go, link, hint, done].forEach(function (n) { wrap.appendChild(n); });
+    if (busyNow || document.getElementById('ccea') || document.getElementById('ccfgt')) { if (cb) cb(); return; }
+    busyNow = true;
+    var ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+    var XICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    var pg = document.createElement('div');
+    pg.id = 'ccfgt'; pg.className = 'ccrem'; pg.setAttribute('role', 'dialog'); pg.setAttribute('aria-modal', 'true'); pg.setAttribute('aria-label', 'Recovery email');
+    pg.__cchint = 1;   /* cc-remember.js must not add its "send the reset code" shortcut to this page */
+    pg.innerHTML = '<div class="fp-top"><button type="button" class="fp-ic" id="ccfg-bk" aria-label="Back">' + ARROW + '</button>'
+      + '<div class="fp-brand"><img src="cc-mark.png" alt=""><span>Comrade Connect</span></div>'
+      + '<button type="button" class="fp-ic" id="ccfg-x" aria-label="Close">' + XICON + '</button></div>'
+      + '<div class="fp-body"><div class="fp-bar" id="ccfg-bar"><i class="on"></i><i></i><i></i></div><p class="fp-step" id="ccfg-st"></p><h1 id="ccfg-h"></h1>'
+      + '<p class="fp-sub" id="ccfg-in"></p>'
+      + '<div class="fp-f" id="ccfg-f1"><label for="ccfg-m">Your email</label><input id="ccfg-m" name="email" type="email" inputmode="email" placeholder="name@gmail.com" autocomplete="email" autocapitalize="off" aria-label="Your email"></div>'
+      + '<div id="ccfg-2" hidden><form id="ccfg-fm" style="display:contents" novalidate><div id="ccfg-cb"><div class="fp-f"><label for="ccfg-c">6-digit code</label>'
+      + '<input id="ccfg-c" name="code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" aria-label="6-digit code"></div></div></form></div>'
+      + '<p class="fp-msg" id="ccfg-e" role="status" aria-live="polite"></p>'
+      + '<button type="button" class="fp-go" id="ccfg-go">Send code</button>'
+      + '<button type="button" class="fp-link" id="ccfg-have" hidden>Send me a new code</button>'
+      + '<button type="button" class="fp-link" id="ccfg-si">Skip, add it later</button></div>';
+    document.body.appendChild(pg);
+    var $ = function (i) { return pg.querySelector('#' + i); };
+    var em = $('ccfg-m'), cd = $('ccfg-c'), go = $('ccfg-go'), have = $('ccfg-have'), si = $('ccfg-si');
+    var step = 1, sentTo = '', cool = 0, ct = 0, finished = false;
 
-    var step = 1, sentTo = '', cool = 0, ct = 0;
-    function setMsg(t, bad) { msg.textContent = t || ''; msg.classList.toggle('bad', !!bad); if (t && bad) { wrap.classList.remove('cf-shake'); void wrap.offsetWidth; wrap.classList.add('cf-shake'); } }
-    function close(skipped) { busyNow = false; clearInterval(ct); try { m.close(); } catch (e) {} if (skipped) say('No problem. Add it later in Settings, under Recovery email.'); if (cb) cb(); }
-    function paint() {
-      if (step === 1) {
-        h3.textContent = mode === 'manage' ? 'Change recovery email' : 'Add a recovery email';
+    function setMsg(t, bad) { var e = $('ccfg-e'); e.textContent = t || ''; e.classList.toggle('bad', !!(bad && t)); }
+    function onKey(ev) { if (ev.key === 'Escape') close(mode === 'new'); }
+    function close(skipped) {
+      if (finished) return; finished = true; busyNow = false; clearInterval(ct); document.removeEventListener('keydown', onKey);
+      try { pg.remove(); } catch (e) {}
+      if (skipped) say('No problem. Add it later in Settings, under Recovery email.');
+      if (cb) cb();
+    }
+    document.addEventListener('keydown', onKey);
+    function bar(n) { [].forEach.call(pg.querySelectorAll('#ccfg-bar i'), function (x, k) { x.classList.toggle('on', k < n); }); }
+    function tick() {
+      if (step !== 2) return;
+      if (cool > 0) { have.disabled = true; have.textContent = 'Send me a new code (' + cool + 's)'; }
+      else { have.disabled = false; have.textContent = 'Send me a new code'; clearInterval(ct); }
+    }
+    function startCool() { cool = 30; clearInterval(ct); ct = setInterval(function () { cool--; tick(); }, 1000); tick(); }
+    function paint() {   /* step 0 = already saved, 1 = type the email, 2 = type the code, 3 = saved */
+      var s = $('ccfg-st'), h = $('ccfg-h'), sub = $('ccfg-in');
+      pg.classList.toggle('mg', step === 0); pg.classList.toggle('ccv-ok', step === 3);
+      $('ccfg-f1').hidden = step !== 1; $('ccfg-2').hidden = step !== 2; have.hidden = step !== 2;
+      bar(step === 0 ? 0 : step);
+      if (step === 0) {
+        s.textContent = 'Settings'; h.textContent = 'Recovery email';
+        sub.textContent = 'Saved. You can reset your password by email if you forget it.';
+        go.textContent = 'Change email'; si.textContent = 'Done';
+      } else if (step === 1) {
+        s.textContent = 'Step 1 of 3'; h.textContent = mode === 'manage' ? 'Change recovery email' : 'Add a recovery email';
         sub.textContent = 'Optional. We use it only for "Forgot password" and to get you back in on a new phone. We keep a scrambled copy, never the email itself.';
-        w1.hidden = false; w2.hidden = true; go.textContent = 'Send code'; link.textContent = mode === 'manage' ? 'Cancel' : 'Skip, add it later'; hint.hidden = mode === 'manage';
+        go.textContent = 'Send code'; si.textContent = mode === 'new' ? 'Skip, add it later' : 'Cancel';
+      } else if (step === 2) {
+        s.textContent = 'Step 2 of 3'; h.textContent = 'Check your email';
+        sub.textContent = 'We sent a 6-digit code to ' + sentTo + '. It works for 15 minutes. It can take a minute, so check your spam folder too.';
+        go.textContent = 'Verify code'; si.textContent = mode === 'new' ? 'Skip, add it later' : 'Cancel'; tick();
       } else {
-        h3.textContent = 'Check your email';
-        sub.textContent = 'We sent a 6-digit code to ' + sentTo + '. It works for 15 minutes. Check spam too.';
-        w1.hidden = true; w2.hidden = false; go.textContent = 'Confirm'; link.textContent = cool > 0 ? 'Use a different email (resend in ' + cool + 's)' : 'Use a different email'; hint.hidden = true;
+        s.textContent = 'Step 3 of 3'; h.textContent = 'Email saved';
+        sub.textContent = 'You can now reset your password by email if you forget it.';
+        go.textContent = 'Done'; si.hidden = true;
       }
-      setMsg('');
+      si.hidden = step === 3; setMsg('');
     }
-    function startCool() { cool = 30; clearInterval(ct); ct = setInterval(function () { cool--; if (step === 2) link.textContent = cool > 0 ? 'Use a different email (resend in ' + cool + 's)' : 'Use a different email'; if (cool <= 0) clearInterval(ct); }, 1000); }
-    function manageView() {
-      h3.textContent = 'Recovery email'; sub.textContent = 'Saved. You can reset your password by email if you forget it.';
-      f.hidden = true; go.textContent = 'Change email'; link.textContent = 'Done'; hint.hidden = true; step = 0;
-    }
-    if (mode === 'manage') manageView(); else paint();
+    step = mode === 'manage' ? 0 : 1; paint();
 
-    link.onclick = function () {
-      if (step === 2) { step = 1; paint(); try { em.focus(); } catch (e) {} return; }
-      close(mode === 'new');
+    function focusField() { setTimeout(function () { try { if (step === 1) em.focus({ preventScroll: true }); else if (step === 2) { var b = pg.querySelector('.cco-b'); (b || cd).focus(); } } catch (e) {} }, 80); }
+    $('ccfg-x').onclick = function () { close(mode === 'new' && step < 3); };
+    si.onclick = function () { close(mode === 'new' && step < 3); };
+    $('ccfg-bk').onclick = function () { if (step === 2) { clearInterval(ct); step = 1; paint(); focusField(); } else close(mode === 'new' && step === 1); };
+    have.onclick = function () {
+      if (cool > 0) return; setMsg('');
+      call('/api/me/recovery-email/start', { email: em.value.trim() }).then(function (d) { sentTo = d.sent_to || em.value.trim(); setMsg(d.message || 'A new code is on its way.'); startCool(); }, function (e) { setMsg(e.message, true); });
     };
-    m.addEventListener('click', function (e) { if (e.target === m) close(mode === 'new'); });
     go.onclick = function () {
       setMsg('');
-      if (step === 0) { step = 1; f.hidden = false; paint(); try { em.focus(); } catch (e) {} return; }
+      if (step === 3) return close(false);
+      if (step === 0) { step = 1; paint(); focusField(); return; }
       if (step === 1) {
         if (!okMail(em.value)) return setMsg('Enter a real email address, for example name@gmail.com', true);
-        go.disabled = true; go.textContent = 'Sending...';
-        call('/api/me/recovery-email/start', { email: em.value.trim() }).then(function (d) { sentTo = d.sent_to || em.value.trim(); step = 2; startCool(); paint(); setTimeout(function () { var b = wrap.querySelector('.cco-b'); try { (b || cd).focus(); } catch (e) {} }, 60); },
+        go.disabled = true; go.textContent = 'Sending code...';
+        call('/api/me/recovery-email/start', { email: em.value.trim() }).then(function (d) { sentTo = d.sent_to || em.value.trim(); step = 2; paint(); startCool(); focusField(); },
           function (e) { setMsg(e.message, true); go.textContent = 'Send code'; }).then(function () { go.disabled = false; });
       } else {
         var c = String(cd.value).replace(/\D/g, '');
         if (c.length !== 6) return setMsg('The code has 6 digits.', true);
-        go.disabled = true; go.textContent = 'Checking...';
-        call('/api/me/recovery-email/confirm', { code: c }).then(function () {
-          f.hidden = true; go.hidden = true; link.hidden = true; hint.hidden = true; msg.hidden = true; sub.hidden = true; h3.hidden = true; ic.hidden = true; done.hidden = false;
-          setTimeout(function () { close(false); say('Email saved. You can now reset your password by email.'); }, 1500);
-        }, function (e) { setMsg(e.message, true); go.disabled = false; go.textContent = 'Confirm'; });
+        go.disabled = true; go.textContent = 'Checking code...';
+        call('/api/me/recovery-email/confirm', { code: c }).then(function () { step = 3; clearInterval(ct); paint(); say('Email saved. You can now reset your password by email.'); },
+          function (e) { setMsg(e.message, true); go.textContent = 'Verify code'; }).then(function () { go.disabled = false; });
       }
     };
     em.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go.click(); } });
     cd.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go.click(); } });
-    if (mode !== 'manage') setTimeout(function () { try { em.focus({ preventScroll: true }); } catch (e) {} }, 120);
+    if (mode !== 'manage') focusField();
   }
 
   /* wait while another full screen is up (first screen, lock screen, recovery code sheet, username setup) */

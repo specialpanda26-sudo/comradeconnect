@@ -81,3 +81,7 @@ html body #ccfgt .cco-stage{height:64px}
 .ccv-note{margin:10px 0 0;font:500 11.5px Poppins,system-ui,sans-serif;color:#6a625a}
 :root[data-theme="dark"] .ccv-rules li.ok{color:#f6efe9}
 @media (prefers-reduced-motion:reduce){.ccv-ill *,.ccv-dots i,.ccv-tk,.ccv-tk *{animation-duration:.01s!important;animation-delay:0s!important}}
+
+/* recovery email page (same #ccfgt page as Forgot password) */
+#ccfgt.ccrem.mg .fp-bar{display:none}
+#ccfgt.ccrem.mg .fp-step{text-transform:uppercase}

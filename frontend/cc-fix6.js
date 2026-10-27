@@ -14,6 +14,7 @@
   function signed() { var a = window.ccAuth && window.ccAuth(); return !!(a && a.token); }
   function call(p, body) { return window.ccCall(p, body ? { body: body, auth: false } : { auth: false }); }
   function openView(v) {
+    if (v === 'update') { try { if (window.ccApp && window.ccApp.checkUpdate) window.ccApp.checkUpdate(); } catch (e) {} return; }   // tapped "Update available"
     if (v === 'live' && typeof window.go === 'function') { try { window.go('videos'); } catch (e) {} return; }
     var b = document.querySelector('.ccb'); if (b) b.click();
   }

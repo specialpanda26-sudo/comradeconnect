@@ -1,7 +1,7 @@
 // Admin: send a phone alert to everyone who has the app, or a test to one handle.
 import { json, err, sb, rows, enc, str, isAdmin, audit } from './lib.js';
 import { notify } from './notifications.js';
-import { sendFcm } from './push.js';
+import { sendFcm, announceUpdate } from './push.js';
 
 export async function adminPushRoutes(req, env, url, ip) {
   const path = url.pathname, m = req.method;
@@ -11,6 +11,11 @@ export async function adminPushRoutes(req, env, url, ip) {
   if (path === '/api/admin/push' && m === 'GET') {
     const r = await rows(await sb(env, 'push_subs?select=aid,endpoint&limit=5000'));
     return json(env, { devices: r.length, app: r.filter((x) => String(x.endpoint).startsWith('fcm:')).length, accounts: new Set(r.map((x) => x.aid)).size });
+  }
+
+  if (path === '/api/admin/push/update' && m === 'POST') {
+    const b = await req.json().catch(() => ({}));
+    return json(env, { ok: true, ...(await announceUpdate(env, b.force === true)) });
   }
 
   if (path === '/api/admin/push/send' && m === 'POST') {

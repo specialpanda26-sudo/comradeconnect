@@ -116,6 +116,20 @@ const within = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))
 export const announceLive = (env, hostAid, title) => within(broadcast(env, 'live', { title: 'Someone is live now', body: title && title !== 'Live' ? String(title).slice(0, 80) : 'Tap to watch', view: 'live', tag: 'live', cat: 'live' }, hostAid).catch(() => 0), 6000);
 export const announceEvent = (env, ownerAid, title) => within(broadcast(env, 'events', { title: 'New event', body: String(title || '').slice(0, 80), view: 'bell', tag: 'event', cat: 'events' }, ownerAid).catch(() => 0), 6000);
 
+// A new app version is out: one phone notification to everyone with the app. Asked for by the build (see android.yml).
+// At most once every 12 hours unless force is true, so a day of small fixes does not spam anyone.
+export async function announceUpdate(env, force) {
+  let last = 0;
+  try { const r = await one(await sb(env, 'notif_state?select=events_seen_at&aid=eq.__app_update')); last = r ? Date.parse(r.events_seen_at) || 0 : 0; } catch (e) {}
+  if (!force && Date.now() - last < 12 * 3600e3) return { sent: 0, skipped: 'A new-version alert already went out in the last 12 hours. Send {"force":true} to send anyway.' };
+  try { await sb(env, 'notif_state', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify({ aid: '__app_update', events_seen_at: new Date().toISOString() }) }); } catch (e) {}
+  const subs = await rows(await sb(env, 'push_subs?select=aid&limit=5000'));
+  const aids = [...new Set(subs.map((x) => x.aid).filter(Boolean))].slice(0, 2000);
+  const payload = { title: 'Update available', body: 'A new version of Comrade Connect is ready. Tap to update.', view: 'update', tag: 'app-update' };
+  for (let i = 0; i < aids.length; i += 20) await Promise.all(aids.slice(i, i + 20).map((x) => sendPush(env, x, payload)));
+  return { sent: aids.length };
+}
+
 export async function pushRoutes(req, env, url, ip) {
   const path = url.pathname, m = req.method;
   if (!path.startsWith('/api/push')) return null;

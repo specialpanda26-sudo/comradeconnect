@@ -33,6 +33,8 @@ jobs:
       KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
       PUB_REPO: ${{ vars.RELEASES_REPO }}
       PUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+      NOTIFY_KEY: ${{ secrets.ADMIN_KEY }}
+      NOTIFY_URL: ${{ vars.API_URL }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -127,3 +129,11 @@ jobs:
           body: "Install comrade-connect.apk on your Android phone."
           make_latest: true
           files: android-wrapper/comrade-connect.apk
+
+      # Phone notification "Update available" to everyone with the app (at most once every 12 hours).
+      # Turn on by adding secret ADMIN_KEY (same value as on Render) and variable API_URL (your backend address, no slash at the end).
+      - name: Tell phones a new version is ready
+        if: ${{ env.NOTIFY_KEY != '' && env.NOTIFY_URL != '' }}
+        continue-on-error: true
+        working-directory: .
+        run: curl -fsS -X POST -H "X-Admin-Key: $NOTIFY_KEY" -H "Content-Type: application/json" -d '{}' "$NOTIFY_URL/api/admin/push/update"

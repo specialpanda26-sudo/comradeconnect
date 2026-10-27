@@ -161,7 +161,8 @@ function openTarget(n) {
   var go = window.go; if (typeof go !== 'function') return;
   if (n.ref_type === 'post') { go('feed'); setTimeout(function () { flash(document.querySelector('#feed .card[data-id="' + n.ref_id + '"]')); }, 350); }
   else if (n.ref_type === 'clip') { go('videos'); setTimeout(function () { var c = document.querySelector('#vl .vcard[data-id="' + n.ref_id + '"]'); if (c) { flash(c); setTimeout(function () { c.click(); }, 500); } }, 700); }
-  else if (n.ref_type === 'order') go('market');
+  else if (n.ref_type === 'order') { go('market'); setTimeout(function () { var b = document.querySelector('#mseg button[data-s="orders"]'); if (b) b.click(); }, 350); }
+  else if (n.ref_type === 'thread' && typeof window.ccOpenThread === 'function') window.ccOpenThread({ tid: n.ref_id, title: 'Anonymous message' });
   else if (n.ref_type === 'referral') go('rewards');
   else if (n.ref_type === 'story') go('feed');
 }
@@ -311,6 +312,7 @@ function boot() {
   setInterval(function () { if (!document.hidden) refresh(true); }, 60000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(true); });
   window.ccNotifyRefresh = function () { return refresh(true); };
+  window.ccNotifOpen = function (n) { openTarget(n); };   // cc-fix8: used when a phone notification is tapped
   window.addEventListener('cc-update-pending', function () { paintBell(); if (panel) draw(); });
   window.addEventListener('cc-live-updated', function () { var l = window.ccLiveStrip && ccLiveStrip.list && ccLiveStrip.list(); if (l) { S.live = l.slice(0, 12); paintBell(); if (panel) draw(); } });
 }

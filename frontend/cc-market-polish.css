@@ -1,0 +1,8 @@
+/* cc-market-polish.css v1 */
+html body #v-market :is(#mseg button,.mu-cats .mu-cat,.mkv button){-webkit-tap-highlight-color:transparent;outline:0}
+html body #v-market :is(.mu-cats .mu-cat,.mkv button):not(.on):is(:hover,:focus,:active,:focus-visible){background:var(--g)!important;color:var(--fg)!important}
+html body #v-market #mseg button:not(.on):is(:hover,:focus,:active,:focus-visible){background:transparent!important;color:var(--fg)!important}
+html body #v-market :is(#mseg button,.mu-cats .mu-cat,.mkv button).on{background:var(--ink)!important;color:var(--inkfg)!important}
+html body #v-market #mbrowse #mgrid.rail .mc::after{background:linear-gradient(to top,rgba(10,12,20,.92) 0,rgba(10,12,20,.8) 45%,rgba(10,12,20,.62) 75%,rgba(10,12,20,.5) 100%)!important}
+html body #v-market #mbrowse #mgrid.rail .mc .mb small.ccrt{display:none!important}
+html body #v-market #mbrowse #mgrid:not(.rail) .mc .mb{padding-right:52px}

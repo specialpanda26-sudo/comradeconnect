@@ -613,7 +613,7 @@ function paySteps(box, phone, amount, kind) {
   stepsCss();
   const K = PAYKIND[kind] || PAYKIND.escrow;
   let at = 0, manual = false, tm = 0, t0 = Date.now(), dead = false;
-  const card = () => !!(window.ccCardMode && window.ccCardMode());
+  const card = () => false;   // M-Pesa only
   const T = () => card()
     ? [['Opening secure card page', 'Visa or Mastercard'], ['Pay on the card page', 'Your card details never reach Comrade Connect'], ['Verifying payment', 'Confirming with the bank'], [K[1], K[2](amount)]]
     : manual

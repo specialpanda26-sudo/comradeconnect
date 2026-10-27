@@ -1,0 +1,60 @@
+/* cc-fix9.css: the bottom tab bar, one final and complete definition. Loaded after every other style, so it wins.
+   - Every tab is a 48px circle with its icon dead centre.
+   - The open tab grows into an orange pill and shrinks back. The corner radius never changes, so the shape stays a perfect circle or pill
+     at every moment of the animation (the old 50% radius turned into an oval half way).
+   - The orange fills in by fading, the label and the black dot fade and widen together, so nothing jumps.
+   Needs cc-tabfx.js (it wraps the labels in .tl and adds the .td dot). */
+:root{--cc-tab-ease:cubic-bezier(.32,.72,0,1)}
+
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb{background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0 2px!important;gap:0!important;justify-content:space-between!important;align-items:center!important;overflow:visible!important}
+
+/* every tab: a perfect circle, icon in the middle */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v]:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]){
+  position:relative!important;box-sizing:border-box!important;overflow:hidden!important;
+  flex:0 0 48px!important;width:48px!important;min-width:48px!important;height:48px!important;padding:0!important;margin:0!important;gap:0!important;
+  align-items:center!important;justify-content:center!important;
+  border:0!important;border-radius:999px!important;
+  background:var(--g)!important;color:var(--fg)!important;
+  box-shadow:var(--sh),inset 0 0 0 1px var(--gb)!important;
+  -webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important;
+  font:700 13px/1 Manrope,system-ui,sans-serif!important;white-space:nowrap!important;
+  transition:flex-basis .4s var(--cc-tab-ease),width .4s var(--cc-tab-ease),min-width .4s var(--cc-tab-ease),color .3s ease,box-shadow .35s ease!important;
+  -webkit-tap-highlight-color:transparent}
+
+/* the orange, faded in on top of the glass */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v]::before{content:""!important;position:absolute!important;inset:0!important;z-index:0!important;border-radius:inherit!important;background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;opacity:0!important;transition:opacity .3s ease!important;pointer-events:none!important}
+
+/* the open tab: pill */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]),
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]){
+  flex-basis:112px!important;width:112px!important;min-width:112px!important;color:#1d0f06!important;
+  box-shadow:0 8px 20px rgba(238,122,79,.35),inset 0 0 0 1px transparent!important}
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on::before,
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2::before{opacity:1!important}
+
+/* icon: fixed size, never shrinks, no margin, no spin */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v] svg{position:relative!important;z-index:1!important;display:block!important;flex:none!important;width:20px!important;height:20px!important;margin:0!important;animation:none!important;transform:none!important;color:inherit!important}
+
+/* label: closed = no width at all, so the icon is the only thing in the circle */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v] .tl{position:relative;z-index:1;display:block;flex:none;max-width:0;margin-left:0;overflow:hidden;opacity:0;font:700 13px/1 Manrope,system-ui,sans-serif;color:inherit;transition:max-width .4s var(--cc-tab-ease),margin-left .4s var(--cc-tab-ease),opacity .18s ease}
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on .tl,
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2 .tl{max-width:64px;margin-left:8px;opacity:1;transition:max-width .4s var(--cc-tab-ease),margin-left .4s var(--cc-tab-ease),opacity .3s ease .1s}
+
+/* black dot on the right of the open tab */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v] .td{position:relative;z-index:1;display:block;flex:none;width:0;height:6px;margin-left:0;border-radius:50%;background:#16130f;opacity:0;transition:width .4s var(--cc-tab-ease),margin-left .4s var(--cc-tab-ease),opacity .18s ease}
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on .td,
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2 .td{width:6px;margin-left:8px;opacity:1;transition:width .4s var(--cc-tab-ease),margin-left .4s var(--cc-tab-ease),opacity .3s ease .1s}
+
+/* the older "on" dot drawn with ::after is replaced by .td above (the small orange update dot on closed tabs is kept) */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on::after,
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2::after{content:none!important;display:none!important}
+
+@media(max-width:360px){
+  html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v]:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]){flex-basis:44px!important;width:44px!important;min-width:44px!important;height:44px!important}
+  html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]),
+  html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]){flex-basis:104px!important;width:104px!important;min-width:104px!important}
+  html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v] .tl{font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){
+  html body #tb#tb button[data-v],html body #tb#tb button[data-v]::before,html body #tb#tb button[data-v] .tl,html body #tb#tb button[data-v] .td{transition-duration:.01s!important;transition-delay:0s!important}
+}

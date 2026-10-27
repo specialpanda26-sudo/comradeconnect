@@ -90,6 +90,18 @@
   document.head.appendChild(st);
 
   var ALLU={id:'all',name:'All universities',short:'Kenya'};
+  function cover(u){
+    var cs=getComputedStyle(document.documentElement);
+    var bg=(cs.getPropertyValue('--bg')||'').trim()||'#101422',fg=(cs.getPropertyValue('--fg')||'').trim()||'#ffffff';
+    try{sessionStorage.setItem('cc_switching',JSON.stringify({n:u.name,bg:bg,fg:fg}))}catch(e){}
+    try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('cc_cache:')===0)localStorage.removeItem(k)})}catch(e){}   // saved lists of the old university
+    var o=document.getElementById('ccuniv');if(o)o.style.pointerEvents='none';
+    var v=el('div');v.id='cccov';
+    v.style.cssText='position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;text-align:center;padding:24px;background:'+bg+';color:'+fg+';font:600 18px Poppins,system-ui,sans-serif;opacity:0;clip-path:circle(0% at 50% 100%);transition:clip-path .42s cubic-bezier(.2,.8,.2,1),opacity .2s';
+    v.textContent='Switching to '+u.name;document.body.appendChild(v);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){v.style.opacity='1';v.style.clipPath='circle(150% at 50% 100%)'})});
+    setTimeout(function(){location.reload()},460);
+  }
   function choose(u){
     try{
       var prior=cur();
@@ -97,7 +109,7 @@
       else localStorage.setItem('cc_campus_home',u.id);
       localStorage.setItem(K,u.id);localStorage.setItem('cc_campus_name',u.name);localStorage.setItem('cc_campus_short',u.short||'')
     }catch(e){}
-    location.reload();
+    cover(u);
   }
   function show(list,must){
     if(open)return;open=true;
@@ -113,7 +125,7 @@
     var ls=el('div','ls');c.appendChild(ls);
     var dist=null;
     function item(u){
-      var b=el('button','it'+(u.id===cur()?' on':''));b.type='button';b.appendChild(el('span','',u.name));
+      var b=el('button','it'+(u.id===(cur()||'kirinyaga')?' on':''));b.type='button';b.appendChild(el('span','',u.name));
       if(dist&&dist[u.id]!=null)b.appendChild(el('small','',dist[u.id]<10?dist[u.id].toFixed(1)+' km':Math.round(dist[u.id])+' km'));
       b.onclick=function(){choose(u)};return b;
     }
@@ -169,6 +181,6 @@
   }
   function start(){chip();new MutationObserver(chip).observe(document.body,{childList:true,subtree:true})}
   function later(f){var n=0;(function w(){if(document.getElementById('ccgate')&&n++<600)return setTimeout(w,300);f()})()}   // wait for the opening screens (ccgate)
-  if(!cur()){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){later(function(){go(true)})});else later(function(){go(true)})}
+  /* the picker never opens by itself: tap Change on the main page */
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();

@@ -3,7 +3,7 @@
 (function(){
   var P='cc_cache:';
   window.ccFetch=async function(url,opts,ttl){
-    ttl=ttl||60000;var k=P+url,now=Date.now(),hit=null;
+    ttl=ttl||60000;var k=P+(function(){try{return localStorage.getItem('cc_campus')||''}catch(e){return ''}})()+'|'+url,now=Date.now(),hit=null;
     try{hit=JSON.parse(localStorage.getItem(k)||'null')}catch(e){}
     if(hit&&now-hit.t<ttl)return hit.d;
     try{

@@ -16,7 +16,7 @@
   function openView(v) {
     if (v === 'update') { try { if (window.ccApp && window.ccApp.checkUpdate) window.ccApp.checkUpdate(); } catch (e) {} return; }   // tapped "Update available"
     if (v === 'live' && typeof window.go === 'function') { try { window.go('videos'); } catch (e) {} return; }
-    var b = document.querySelector('.ccb'); if (b) b.click();
+    var n = 0, t = setInterval(function () { var b = document.querySelector('.ccb'); if (b || ++n > 20) { clearInterval(t); if (b) b.click(); } }, 500);
   }
   function wire() {
     if (wired) return; wired = true;
@@ -25,8 +25,11 @@
       call('/api/push/fcm', { token: t.value }).catch(function () {});
     });
     P.addListener('registrationError', function () {});
+    P.addListener('pushNotificationReceived', function () { try { if (window.ccNotifyRefresh) window.ccNotifyRefresh(); } catch (e) {} });
     P.addListener('pushNotificationActionPerformed', function (a) {
-      var d = a && a.notification && a.notification.data; openView(d && d.view);
+      var d = a && a.notification && a.notification.data;
+      try { if (window.ccNotifyRefresh) window.ccNotifyRefresh(); } catch (e) {}
+      openView(d && d.view);
     });
   }
   function sync() {

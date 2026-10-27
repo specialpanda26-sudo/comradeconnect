@@ -1,5 +1,5 @@
 // Admin: send a phone alert to everyone who has the app, or a test to one handle.
-import { json, err, sb, rows, enc, str, isAdmin, audit } from './lib.js';
+import { json, err, sb, rows, post, enc, str, isAdmin, audit } from './lib.js';
 import { notify } from './notifications.js';
 import { sendFcm, announceUpdate } from './push.js';
 
@@ -23,11 +23,13 @@ export async function adminPushRoutes(req, env, url, ip) {
     const title = str(b.title, 60), body = str(b.body, 160), handle = str(b.handle, 40).replace(/^@/, '');
     if (title.length < 2 || body.length < 2) return err(env, 'Add a title and a message');
     if (handle) {                                   // test to one account, and say exactly what Google answered
-      const p = await rows(await sb(env, `profiles?select=aid&handle=eq.${enc(handle)}&limit=1`));
+      let p = await rows(await sb(env, `profiles?select=aid,handle&handle=eq.${enc(handle)}&limit=1`));
+      if (!p.length) p = (await rows(await sb(env, `profiles?select=aid,handle&handle=ilike.${enc(handle.replace(/[%*]/g, ''))}&limit=5`))).filter((x) => String(x.handle || '').toLowerCase() === handle.toLowerCase()).slice(0, 1);
       if (!p.length) return err(env, 'No account with that handle');
       const subs = (await rows(await sb(env, `push_subs?select=endpoint&aid=eq.${enc(p[0].aid)}&limit=10`))).filter((s) => String(s.endpoint).startsWith('fcm:'));
-      if (!subs.length) return json(env, { ok: true, report: ['That account has no app phone registered. Open the app on that phone, sign in and tap Allow.'] });
-      const report = [];
+      const bell = await post(env, 'notifications', { aid: p[0].aid, kind: 'admin', title, body, ref_type: null, ref_id: null }).catch(() => null);
+      const report = [bell && bell.ok ? 'Saved in their bell.' : 'Could not save it in their bell.'];
+      if (!subs.length) { report.push('That account has no app phone registered. Open the app on that phone, sign in and tap Allow.'); return json(env, { ok: true, report }); }
       for (const s of subs) {
         try {
           const r = await sendFcm(env, s, { title, body, view: 'bell', tag: 'admin' });

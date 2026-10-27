@@ -49,6 +49,7 @@ SCHEMA.kura_votes = T(['id'], { defaults: { status: 'pending', supporter_name: n
 SCHEMA.kura_follows = T(['contestant_id', 'aid']);
 
 SCHEMA.notifications = T(['id']);
+SCHEMA.push_subs = T(['endpoint']);
 SCHEMA.notif_state = T(['aid']);
 SCHEMA.notif_prefs = T(['aid']);
 SCHEMA.media_comments = T(['id'], { defaults: { hidden: false } });
@@ -69,6 +70,7 @@ export class MockDB {
     if (op === 'in') return raw.replace(/^\(|\)$/g, '').split(',').map(decodeURIComponent).includes(String(v));
     if (v === null || v === undefined) return false;
     if (op === 'eq') return String(v) === raw;
+    if (op === 'ilike') return String(v).toLowerCase() === raw.toLowerCase();
     if (op === 'neq') return String(v) !== raw;
     const a = typeof v === 'number' ? v : String(v), b = typeof v === 'number' ? Number(raw) : raw;
     return op === 'gt' ? a > b : op === 'gte' ? a >= b : op === 'lt' ? a < b : op === 'lte' ? a <= b : false;
@@ -77,7 +79,7 @@ export class MockDB {
     const RES = new Set(['select', 'order', 'limit', 'offset']);
     for (const [k, val] of params) {
       if (RES.has(k)) continue;
-      const m = val.match(/^(not\.is|eq|neq|gte|gt|lte|lt|in|is)\.(.*)$/);
+      const m = val.match(/^(not\.is|ilike|eq|neq|gte|gt|lte|lt|in|is)\.(.*)$/);
       if (!m) throw new Error('mock: unsupported filter ' + k + '=' + val);
       rows = rows.filter((r) => this._cmp(r[k], m[1], m[2]));
     }

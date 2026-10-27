@@ -1,31 +1,13 @@
-/* cc-dots.css v1: ONE loading animation everywhere = the five wave dots (orange, rose, sage, ink, coral).
-   Replaces every spinning ring on the site (buttons, full-screen loader, sign-in, uploads, lock screen, steps).
-   Pure CSS: each old spinner keeps its element and its dots are drawn with box-shadow, so no page code changes. Load this file last. */
-.ccspin,
-#ccfrst .ccspin,
-.cf-wait::before,
-button.cco-bspin::before,
-.cs-l .cs-s.a .cs-i::after,
-#ccld .ccld-s,
-.gb-sp,
-#ccu .sp,
-html body #lk.lkg.lkg.rec #lkr.busy:after{
-  --d:9px;--p:15px;--y:10px;--c2:#c4727a;--c3:#a9b8a2;--c4:currentColor;--c5:#e8744f;
+/* cc-dots-otp-only: the five wave dots are used on the OTP code check and nowhere else.
+   Payment checks, buttons, uploads, the lock screen and the full-screen loader keep their plain ring and tick. */
+button.cco-bspin::before{
+  --d:6px;--p:10px;--y:6px;--c2:#c4727a;--c3:#a9b8a2;--c4:currentColor;--c5:#e8744f;
   --p2:calc(var(--p)*2);--p3:calc(var(--p)*3);--p4:calc(var(--p)*4);
   --y0:0px;--y1:calc(var(--y)*-.33);--y2:calc(var(--y)*-.67);--y3:calc(var(--y)*-1);
+  content:"";display:inline-block!important;vertical-align:middle!important;margin-right:calc(var(--p)*4 + 10px)!important;
   box-sizing:content-box!important;width:var(--d)!important;height:var(--d)!important;min-width:0!important;
   border:0!important;border-radius:50%!important;background:#ff8a3d!important;
   box-shadow:var(--p) 0 0 var(--c2),var(--p2) 0 0 var(--c3),var(--p3) 0 0 var(--c4),var(--p4) 0 0 var(--c5)!important;
   animation:ccdw 1.1s ease-in-out infinite!important;transform:none!important}
-/* inline ones reserve the room the dots take, so the text next to them does not overlap */
-.ccspin,#ccfrst .ccspin,.cf-wait::before,button.cco-bspin::before{--d:6px;--p:10px;--y:6px;display:inline-block!important;margin-right:calc(var(--p)*4 + 10px)!important;vertical-align:middle!important}
-.cf-wait::before,button.cco-bspin::before,.cs-l .cs-s.a .cs-i::after,.gb-sp,#ccld .ccld-s,#ccu .sp{content:""}
-/* full-screen loader: centred */
-#ccld .ccld-s{position:relative;left:calc(var(--p)*-2);margin:6px auto 22px!important}
-/* sign-in button, upload card, lock screen, step list */
-.gb-sp{--d:6px;--p:10px;--y:6px;right:calc(20px + var(--p)*4 + var(--d))!important}
-#ccu .sp{--d:6px;--p:10px;--y:6px;margin-right:calc(var(--p)*4)!important}
-html body #lk.lkg.lkg.rec #lkr.busy:after{--d:7px;--p:12px;--y:7px;margin:calc(var(--d)/-2) 0 0 calc(var(--p)*-2 - var(--d)/2)!important}
-.cs-l .cs-s.a .cs-i::after{--d:3px;--p:5px;--y:3px;position:relative;left:calc(var(--p)*-2)}
 @keyframes ccdw{0%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}10%{translate:0 var(--y1);box-shadow:var(--p) var(--y1) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}20%{translate:0 var(--y2);box-shadow:var(--p) var(--y2) 0 var(--c2),var(--p2) var(--y1) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}30%{translate:0 var(--y3);box-shadow:var(--p) var(--y3) 0 var(--c2),var(--p2) var(--y2) 0 var(--c3),var(--p3) var(--y1) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}40%{translate:0 var(--y2);box-shadow:var(--p) var(--y2) 0 var(--c2),var(--p2) var(--y3) 0 var(--c3),var(--p3) var(--y2) 0 var(--c4),var(--p4) var(--y1) 0 var(--c5)}50%{translate:0 var(--y1);box-shadow:var(--p) var(--y1) 0 var(--c2),var(--p2) var(--y2) 0 var(--c3),var(--p3) var(--y3) 0 var(--c4),var(--p4) var(--y2) 0 var(--c5)}60%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y1) 0 var(--c3),var(--p3) var(--y2) 0 var(--c4),var(--p4) var(--y3) 0 var(--c5)}70%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y1) 0 var(--c4),var(--p4) var(--y2) 0 var(--c5)}80%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y1) 0 var(--c5)}90%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}100%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}}
-@media (prefers-reduced-motion:reduce){.ccspin,#ccfrst .ccspin,.cf-wait::before,button.cco-bspin::before,.cs-l .cs-s.a .cs-i::after,#ccld .ccld-s,.gb-sp,#ccu .sp,html body #lk.lkg.lkg.rec #lkr.busy:after{animation:none!important}}
+@media (prefers-reduced-motion:reduce){button.cco-bspin::before{animation:none!important}}

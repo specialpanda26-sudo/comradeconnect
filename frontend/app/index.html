@@ -432,7 +432,7 @@ select.in{appearance:none;-webkit-appearance:none;background-image:linear-gradie
 .nb.tkh{outline:3px solid var(--o);outline-offset:2px}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Bricolage+Grotesque:wght@800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="cc-proto-fix.css?v=1"></head>
+<link rel="stylesheet" href="../cc-dots.css?v=2"><link rel="stylesheet" href="cc-proto-fix.css?v=1"></head>
 <body>
 <noscript>Comrade Connect needs JavaScript to run.</noscript>
 <div class="stage">
@@ -1130,7 +1130,7 @@ function showLock(page){const l=$('#lock');l.innerHTML=lockHtml(page);l.classLis
  if(page==='otp'){const bx=$('#otpb'),ins=$$('input',bx),m=$('#otpm'),v=$('#otpv');let tries=0,left=30,locked=false;
   const val=()=>ins.map(x=>x.value).join(''),chk=()=>{v.disabled=val().length<6||locked;if(val().length===6&&!locked)setTimeout(go2,250)};
   const go2=()=>{if(locked||val().length<6||!$('#otpb'))return;if(!(window.CC&&typeof CC.verifyResetCode==='function')){m.textContent='Code check is not connected yet';return}
-   Promise.resolve().then(()=>CC.verifyResetCode(val())).then(()=>{bx.classList.add('okb');m.textContent='Code confirmed';v.innerHTML=ic('check','s')+' Verified';v.disabled=true;setTimeout(()=>A.lunlock(),900)},()=>{tries++;bx.classList.add('badb');m.textContent=tries>=3?'Too many tries. Ask for a new code.':'That code is not right. '+(3-tries)+' tries left.';if(tries>=3)locked=true;if(navigator.vibrate)navigator.vibrate([60,40,60]);setTimeout(()=>{bx.classList.remove('badb');ins.forEach(x=>x.value='');ins[0].focus();chk()},500)})};
+   v.disabled=true;v.classList.add('cco-bspin');v.textContent='Verifying code';Promise.resolve().then(()=>CC.verifyResetCode(val())).then(()=>{v.classList.remove('cco-bspin');bx.classList.add('okb');m.textContent='Code confirmed';v.innerHTML=ic('check','s')+' Verified';v.disabled=true;setTimeout(()=>A.lunlock(),900)},()=>{v.classList.remove('cco-bspin');v.textContent='Verify';tries++;bx.classList.add('badb');m.textContent=tries>=3?'Too many tries. Ask for a new code.':'That code is not right. '+(3-tries)+' tries left.';if(tries>=3)locked=true;if(navigator.vibrate)navigator.vibrate([60,40,60]);setTimeout(()=>{bx.classList.remove('badb');ins.forEach(x=>x.value='');ins[0].focus();chk()},500)})};
   ins.forEach((x,k)=>{x.oninput=()=>{x.value=x.value.replace(/\D/g,'').slice(-1);m.textContent='';if(x.value&&ins[k+1])ins[k+1].focus();chk()};x.onkeydown=e=>{if(e.key==='Backspace'&&!x.value&&ins[k-1]){ins[k-1].focus();ins[k-1].value='';chk()}};
    x.onpaste=e=>{const t=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6);if(!t)return;e.preventDefault();[...t].forEach((c,n)=>ins[n].value=c);ins[Math.min(t.length,5)].focus();chk()}});
   v.onclick=go2;ins[0].focus();

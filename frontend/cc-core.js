@@ -504,7 +504,7 @@ function draw() {
   if (S.sub === 'browse') {
     const q = $('#mkq').value.trim().toLowerCase();
     const a = S.list.filter((l) => !q || (l.title + ' ' + (l.description || '')).toLowerCase().includes(q));
-    let h = a.map((l) => '<button class="mc g" data-id="' + esc(l.id) + '">' + pic(l) + '<div class="mb"><b>' + esc(l.title) + '</b><em>' + kes(l.price) + '</em><small>@' + esc(l.zone || 'Campus') + (l.condition ? ', ' + esc(l.condition) : '') + '</small><small class="mtl">' + SHLD + 'Escrow protected</small><small class="mtl">' + esc(sellerBits(l).join(' \u00B7 ') || 'New seller') + '</small></div></button>').join('');
+    let h = a.map((l) => '<button class="mc g" data-id="' + esc(l.id) + '">' + pic(l) + '<div class="mb"><b>' + esc(l.title) + '</b><em>' + kes(l.price) + '</em><small>@' + esc(l.zone || 'Campus') + (l.condition ? ', ' + esc(l.condition) : '') + '</small><small class="mtl">' + SHLD + 'Escrow protected</small><small class="mtl">' + esc(sellerBits(l).map((t) => t.replace(/<svg[\s\S]*?<\/svg>\s*/g, '')).join(' \u00B7 ') || 'New seller') + '</small></div></button>').join('');
     if (S.loading.browse && !S.list.length) h = loadingP;
     else if (S.error.browse) h += retry('browse');
     else if (!a.length) h = '<p class="sub" style="grid-column:1/3">' + (S.list.length ? 'Nothing matches. Try another word.' : 'No items yet. Sell the first one.') + '</p>';
@@ -1718,5 +1718,6 @@ async function createAccount(kind, creds) {
 window.ccOpenThread = openThread;
 window.CC = { forgot: (e, back) => promptForgot(e, back), createAccount, signIn: (msg) => promptRestore(msg || 'Enter your username or account ID and your password or recovery code.', 'Log in'), needSignup, registerFlow, showWelcome, ensureAccount, restoreAccount, call, pollAlerts, DM, putFile, waitPaid, payNow };
 window.ccSteps = { paySteps, withdrawFlow, stepsCss };
+window.ccMk = { waitPaid, S, loadOrders, kes, fee: () => FEE };
 window.ccTools = { sheet, call, toast, copyText, sleep };   // used by cc-tickets.js   // the same progress animation for deposits, withdrawals, boosts, plans and the club      // used by the other sections
 })();

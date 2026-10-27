@@ -112,7 +112,7 @@ export async function reconcileIntasend(env) {
 // ---------- Card payments (IntaSend hosted checkout: the buyer types the card on IntaSend's own page, card numbers never touch our server) ----------
 // Needs INTASEND_PUBLISHABLE_KEY. Optional: INTASEND_CARD_TARIFF (BUSINESS-PAYS = we pay the card fee, CUSTOMER-PAYS = the buyer does), SITE_URL, CARD_PAYMENTS=0 to switch cards off.
 const CARD_PREFIX = 'ic:';
-export const cardReady = (env) => payMode(env) === 'intasend' && !!intaPub(env) && String(env.CARD_PAYMENTS ?? '1') !== '0';
+export const cardReady = () => false;
 const siteUrl = (env) => String(env.SITE_URL || 'https://comradeconnect.co.ke').replace(/\/$/, '');
 async function intaCheckout(env, row, email) {
   const tariff = String(env.INTASEND_CARD_TARIFF || 'BUSINESS-PAYS').toUpperCase() === 'CUSTOMER-PAYS' ? 'CUSTOMER-PAYS' : 'BUSINESS-PAYS';

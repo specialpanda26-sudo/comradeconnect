@@ -33,11 +33,28 @@ async function fcmAccess(acc) {
   fcmTok = { v: d.access_token, exp: Date.now() + (d.expires_in || 3600) * 1000 };
   return fcmTok.v;
 }
+// cc-fix6: what each phone receives. App versions that carry the native notification service saved their token as 'fcm2':
+// they get a data-only message (title and text inside data) and build the grouped / chat-style notification themselves.
+// Older app versions keep the plain banner so nobody loses notifications while they update.
+const dstr = (v, n) => String(v == null ? '' : v).slice(0, n);
+export function fcmMessage(s, payload) {
+  const p = payload || {}, token = String(s.endpoint || '').slice(4);
+  const title = dstr(p.title || 'Comrade Connect', 80), text = dstr(p.body, 240);
+  const data = { view: dstr(p.view, 24), cat: dstr(p.cat, 16), kind: dstr(p.kind, 24), ref_type: dstr(p.ref_type, 24), ref_id: dstr(p.ref_id, 64) };
+  if (s.p256dh !== 'fcm2') {
+    return { message: { token, notification: { title, body: text }, data, android: { priority: 'HIGH', notification: { tag: dstr(p.tag || 'cc', 40), channel_id: 'cc_alerts', color: '#101422', notification_priority: 'PRIORITY_HIGH', visibility: 'PUBLIC', default_sound: true, default_vibrate_timings: true } } } };
+  }
+  const cid = dstr(p.cid, 80), rep = dstr(p.rep, 40);
+  const android = { priority: 'HIGH', ttl: dstr(p.ttl || '86400s', 12) };
+  if (rep) android.collapse_key = rep;                       // live and app-update replace each other; chats and orders never collapse
+  return { message: { token, data: { ...data, cc: '2', cid, rep, sender: dstr(p.sender, 40), title, body: text, ts: String(Date.now()) }, android,
+    apns: { headers: { 'apns-priority': '10' }, payload: { aps: { alert: { title, body: text }, sound: 'default', 'thread-id': dstr(cid || rep || p.cat || 'cc', 64) } } } } };
+}
 export async function sendFcm(env, s, payload) {
   const acc = fcmAccount(env); if (!acc) return;
   const r = await fetch(`https://fcm.googleapis.com/v1/projects/${acc.project_id}/messages:send`, {
     method: 'POST', headers: { Authorization: 'Bearer ' + (await fcmAccess(acc)), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: { token: s.endpoint.slice(4), notification: { title: String(payload.title || 'Comrade Connect'), body: String(payload.body || '') }, data: { view: String(payload.view || ''), cat: String(payload.cat || '') }, android: { priority: 'HIGH', notification: { tag: String(payload.tag || 'cc'), channel_id: 'cc_alerts', color: '#101422', notification_priority: 'PRIORITY_HIGH', visibility: 'PUBLIC', default_sound: true, default_vibrate_timings: true } } } })
+    body: JSON.stringify(fcmMessage(s, payload))
   });
   const detail = r.ok ? '' : (await r.text().catch(() => '')).slice(0, 300);
   if (!r.ok) console.error('FCM send failed', r.status, detail);
@@ -104,7 +121,7 @@ export async function sendPush(env, aid, payload) {
 
 // One notification to every app phone whose owner has this kind switched on (new live, new event). Best effort, never throws.
 async function broadcast(env, cat, payload, skipAid) {
-  const subs = (await rows(await sb(env, 'push_subs?select=endpoint,aid&endpoint=like.fcm:*&limit=1500'))).filter((s) => s.aid && s.aid !== skipAid);
+  const subs = (await rows(await sb(env, 'push_subs?select=endpoint,aid,p256dh&endpoint=like.fcm:*&limit=1500'))).filter((s) => s.aid && s.aid !== skipAid);
   if (!subs.length) return 0;
   let off = new Set();
   try { off = new Set((await rows(await sb(env, `notif_prefs?select=aid&prefs->>${cat}=eq.false&limit=5000`))).map((r) => r.aid)); } catch (e) { /* table not made yet: everyone is on */ }
@@ -113,8 +130,8 @@ async function broadcast(env, cat, payload, skipAid) {
   return to.length;
 }
 const within = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
-export const announceLive = (env, hostAid, title) => within(broadcast(env, 'live', { title: 'Someone is live now', body: title && title !== 'Live' ? String(title).slice(0, 80) : 'Tap to watch', view: 'live', tag: 'live', cat: 'live' }, hostAid).catch(() => 0), 6000);
-export const announceEvent = (env, ownerAid, title) => within(broadcast(env, 'events', { title: 'New event', body: String(title || '').slice(0, 80), view: 'bell', tag: 'event', cat: 'events' }, ownerAid).catch(() => 0), 6000);
+export const announceLive = (env, hostAid, title, streamId) => within(broadcast(env, 'live', { title: 'Someone is live now', body: title && title !== 'Live' ? String(title).slice(0, 80) : 'Tap to watch', view: 'live', tag: 'live', cat: 'live', kind: 'live', ref_type: 'live', ref_id: streamId || '', rep: 'live', ttl: '1800s' }, hostAid).catch(() => 0), 6000);
+export const announceEvent = (env, ownerAid, title) => within(broadcast(env, 'events', { title: 'New event', body: String(title || '').slice(0, 80), view: 'bell', tag: 'event', cat: 'events', kind: 'event', ref_type: 'event' }, ownerAid).catch(() => 0), 6000);
 
 // A new app version is out: one phone notification to everyone with the app. Asked for by the build (see android.yml).
 // At most once every 12 hours unless force is true, so a day of small fixes does not spam anyone.
@@ -125,7 +142,7 @@ export async function announceUpdate(env, force) {
   try { await sb(env, 'notif_state', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify({ aid: '__app_update', events_seen_at: new Date().toISOString() }) }); } catch (e) {}
   const subs = await rows(await sb(env, 'push_subs?select=aid&limit=5000'));
   const aids = [...new Set(subs.map((x) => x.aid).filter(Boolean))].slice(0, 2000);
-  const payload = { title: 'Update available', body: 'A new version of Comrade Connect is ready. Tap to update.', view: 'update', tag: 'app-update' };
+  const payload = { title: 'Update available', body: 'A new version of Comrade Connect is ready. Tap to update.', view: 'update', tag: 'app-update', kind: 'update', rep: 'app-update' };
   for (let i = 0; i < aids.length; i += 20) await Promise.all(aids.slice(i, i + 20).map((x) => sendPush(env, x, payload)));
   return { sent: aids.length };
 }
@@ -141,7 +158,7 @@ export async function pushRoutes(req, env, url, ip) {
   if (path === '/api/push/fcm' || path === '/api/push/fcm-remove') {
     const tk = String(b.token || '');
     if (!/^[\w:.\-]{20,400}$/.test(tk)) return err(env, 'Bad request');
-    if (path === '/api/push/fcm') await post(env, 'push_subs', { endpoint: 'fcm:' + tk, aid: u.aid, p256dh: 'fcm', auth: 'fcm' }, 'resolution=merge-duplicates');
+    if (path === '/api/push/fcm') await post(env, 'push_subs', { endpoint: 'fcm:' + tk, aid: u.aid, p256dh: b.v === 2 ? 'fcm2' : 'fcm', auth: 'fcm' }, 'resolution=merge-duplicates');
     else await sb(env, `push_subs?endpoint=eq.${enc('fcm:' + tk)}&aid=eq.${enc(u.aid)}`, { method: 'DELETE' });
     return json(env, { ok: true });
   }

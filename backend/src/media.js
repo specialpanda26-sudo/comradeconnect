@@ -176,7 +176,7 @@ export async function mediaRoutes(req, env, url, ip) {
     if (!link) return err(env, 'Paste the live link from YouTube, Facebook, TikTok or Twitch (it must start with https://)');
     await patch(env, `live_streams?host_aid=eq.${enc(hostAid)}&status=eq.live`, { status: 'ended', ended_at: new Date().toISOString() });
     const s = await one(await post(env, 'live_streams', { host_aid: hostAid, title, input_uid: link }));   // input_uid now holds the watch link
-    if (s) await announceLive(env, hostAid, title);
+    if (s) await announceLive(env, hostAid, title, s.id);
     return s ? json(env, { id: s.id, watch_url: link, embed_url: liveEmbed(link) }, 201) : err(env, 'Could not start', 500);
   }
   mm = path.match(/^\/api\/live\/([0-9a-f-]{36})\/end$/);

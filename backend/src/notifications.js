@@ -5,12 +5,14 @@ import { sendPush, catOfKind, cleanPrefs } from './push.js';
 
 const snip = (t, n = 90) => { const s = String(t || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
 
+const VIEW_OF = { order: 'orders', post: 'post', story: 'post', clip: 'clip', thread: 'message', listing: 'listing', referral: 'rewards' };   // cc-fix6
 // Best effort: a failed notification must never break the action that caused it.
 export async function notify(env, aid, kind, title, body, refType, refId) {
   try {
     if (!aid) return false;
     const res = await post(env, 'notifications', { aid, kind, title: snip(title, 80), body: snip(body, 160), ref_type: refType || null, ref_id: refId ? String(refId) : null });
-    if (res.ok) await sendPush(env, aid, { title: snip(title, 80), body: snip(body, 160), view: 'bell', cat: catOfKind(kind) });
+    if (res.ok) await sendPush(env, aid, { title: snip(title, 80), body: snip(body, 160), view: kind === 'message' ? 'message' : (VIEW_OF[refType] || 'bell'), cat: catOfKind(kind), kind, ref_type: refType || '', ref_id: refId ? String(refId) : '',
+      ...(kind === 'message' && refId ? { cid: 'thread:' + refId, sender: 'Anonymous' } : {}) });   // cc-fix6: the app is anonymous, so the sender is always Anonymous
     return res.ok;
   } catch (e) { console.error('notify failed', e && e.message); return false; }
 }

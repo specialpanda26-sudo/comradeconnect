@@ -46,7 +46,10 @@ function draw() {
   var host = $('#ccw'); if (!host || !W) return;
   host.textContent = '';
   if (W.active) {
-    host.appendChild(el('b', '', 'Wholesaler \u2713'));
+    var hb = el('b', 'ccw-h', 'Wholesaler'), tk = el('span', 'ccw-tk'); tk.setAttribute('role', 'img'); tk.setAttribute('aria-label', 'Active');
+    tk.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><defs><linearGradient id="ccwg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffa05a"/><stop offset="1" stop-color="#ee6f4a"/></linearGradient></defs><circle cx="12" cy="12" r="10" fill="url(#ccwg)"/><path d="M7.6 12.4l3 3 5.8-6.2" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    hb.appendChild(tk); host.appendChild(hb);
+    if (!document.getElementById('ccw-css')) { var cs = el('style'); cs.id = 'ccw-css'; cs.textContent = '.ccw-h{display:inline-flex;align-items:center;gap:8px}.ccw-tk{display:inline-flex;filter:drop-shadow(0 2px 5px rgba(238,111,74,.35))}'; document.head.appendChild(cs); }
     var s = el('p', 'sub', 'Active for ' + days(W.until) + ' more day' + (days(W.until) === 1 ? '' : 's') + '. Post as many items as you want, up to ' + W.photos + ' photos each.'); s.style.marginTop = '4px'; host.appendChild(s);
     var rb = btn('Renew for ' + kes(W.fee) + ' (+' + W.days + ' days)', 'btn g', join); rb.style.cssText = 'width:100%;margin-top:10px'; host.appendChild(rb);
   } else {

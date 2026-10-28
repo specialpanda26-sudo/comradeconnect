@@ -432,7 +432,7 @@ select.in{appearance:none;-webkit-appearance:none;background-image:linear-gradie
 .nb.tkh{outline:3px solid var(--o);outline-offset:2px}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Bricolage+Grotesque:wght@800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../cc-dots.css?v=2"><link rel="stylesheet" href="cc-proto-fix.css?v=2"><link rel="stylesheet" href="cc-maps.css?v=1"></head>
+<link rel="stylesheet" href="../cc-dots.css?v=2"><link rel="stylesheet" href="cc-proto-fix.css?v=2"><link rel="stylesheet" href="cc-maps.css?v=2"></head>
 <body>
 <noscript>Comrade Connect needs JavaScript to run.</noscript>
 <div class="stage">
@@ -2026,6 +2026,8 @@ CC.pay=async function(o){
    d=await jpost('/api/market/buy',{listing_id:c.listing_id,listing_ids:c.listing_ids,phone:phone,use_points:!!o.usePoints,method:method,pay_with:wallet?'wallet':undefined})}
   else if(c.purpose==='wholesale'){
    d=await jpost('/api/wholesale/join',{phone:phone,method:wallet?'wallet':method})}
+  else if(c.purpose==='caretaker'){
+   d=await jpost('/api/hostels/caretaker/register',{phone:phone,method:wallet?'wallet':method,pay_with:wallet?'wallet':undefined})}
   else{
    if(wallet)throw new Error('Wallet payment is not available for this. Use M-Pesa or card.');
    var b={purpose:c.purpose,phone:phone,method:method};
@@ -2033,7 +2035,7 @@ CC.pay=async function(o){
    if(c.purpose==='spillfee')b.ref_id=c.ref_id;
    if(c.purpose==='topup')b.amount=o.amount;
    d=await jpost('/api/pay',b)}
-  if(!(d.paid==='wallet'||d.active)){
+  if(!(d.paid==='wallet'||d.active||d.registered)){
    if(!d.id)throw new Error('Could not start the payment. Try again.');
    if(d.url){try{window.open(d.url,'_blank')}catch(e){}toast('Finish on the card page, then come back here.')}
    await waitPaid(d.id)}
@@ -3862,4 +3864,4 @@ async function take(){
 take();
 })();
 </script>
-<script src="cc-maps.js?v=1"></script><script src="cc-push.js?v=1"></script><script src="cc-proto-fix.js?v=1" defer></script></body></html>
+<script src="cc-maps.js?v=2"></script><script src="cc-hostels-post.js?v=1"></script><script src="cc-push.js?v=1"></script><script src="cc-proto-fix.js?v=1" defer></script></body></html>

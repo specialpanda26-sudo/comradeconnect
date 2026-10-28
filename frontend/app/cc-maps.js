@@ -278,10 +278,12 @@ function miniBlock(p, head, note) {
   var d = 'data-lat="' + p.lat + '" data-lng="' + p.lng + '" data-t="' + esc(p.t || 'Meeting place') + '"';
   return '<div class="ccmini"><div class="ccmini-h"><b>' + head + '</b><span>' + esc(trace(p)) + '</span></div><div class="ccmini-map" data-ccmini data-cc="mini" ' + d + ' data-lat="' + p.lat + '" data-lng="' + p.lng + '"></div><div class="ccm-act"><button type="button" class="btn w sm" data-cc="dir" ' + d + '>' + icon('pin') + ' Directions</button><button type="button" class="btn w sm" data-cc="mini" ' + d + '>Open map</button></div><p class="note">' + note + '</p></div>';
 }
-function picker(done) {
+function picker(done, po) {
+  po = po || {};
   closeOverlay();
-  var el = shell('Pin your meeting place', '<div class="ccm-body"><div class="ccm-map"></div><div class="ccm-cross"><svg viewBox="0 0 24 24" width="44" height="44" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" fill="#43302a" stroke="#fff" stroke-width="1.5"/><circle cx="12" cy="10" r="2.6" fill="#fff"/></svg></div><button type="button" class="ccm-me" data-cc="pme">' + icon('pin') + ' Use my location</button></div><div class="ccm-foot"><p class="note" style="margin:0">Move the map so the pin sits on the place. Pick somewhere public. Your location stays on your phone until you confirm.</p><button type="button" class="btn o" data-cc="pok">Confirm this place</button></div>');
-  OV = { el: el, picker: done, ctl: makeMap(q('.ccm-map', el), { center: PIN ? [PIN.lat, PIN.lng] : undefined, zoom: PIN ? 17 : (ME ? 16 : 14) }) };
+  var el = shell(po.title || 'Pin your meeting place', '<div class="ccm-body"><div class="ccm-map"></div><div class="ccm-cross"><svg viewBox="0 0 24 24" width="44" height="44" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" fill="#43302a" stroke="#fff" stroke-width="1.5"/><circle cx="12" cy="10" r="2.6" fill="#fff"/></svg></div><button type="button" class="ccm-me" data-cc="pme">' + icon('pin') + ' Use my location</button></div><div class="ccm-foot"><p class="note" style="margin:0">' + esc(po.hint || 'Move the map so the pin sits on the place. Pick somewhere public. Your location stays on your phone until you confirm.') + '</p><button type="button" class="btn o" data-cc="pok">' + esc(po.ok || 'Confirm this place') + '</button></div>');
+  var sp = po.start || (po.title ? null : PIN);
+  OV = { el: el, picker: done, ctl: makeMap(q('.ccm-map', el), { center: sp ? [sp.lat, sp.lng] : undefined, zoom: sp ? 17 : (ME ? 16 : 14) }) };
   OV.ctl.ready.then(null, function (e) { say(e.message); closeOverlay(); });
 }
 function pickUi() {
@@ -410,6 +412,6 @@ new MutationObserver(function (ms) {
   for (var i = 0; i < ms.length; i++) { var t = ms[i].target; if (!(t && t.closest && t.closest('.leaflet-container'))) { raf = requestAnimationFrame(scan); return; } }
 }).observe(document.body, { childList: true, subtree: true });
 
-window.ccMaps = { realKm: function (p) { return ME && p && okLL(p.lat, p.lng) ? Math.max(0.1, Math.round(hav(ME, p) * 10) / 10) : null; }, locate: locate, openPoint: openPoint, openWifiMap: openWifiMap, openHostelMap: openHostelMap, shareWifi: shareWifi, scan: scan };
+window.ccMaps = { x: { call: call, picker: picker, openOverlay: openOverlay, closeOverlay: closeOverlay, top: top, acts: acts, trLine: trLine, trace: trace, esc: esc, say: say, icon: icon, signedIn: signedIn, needAcct: needAcct, okLL: okLL, locate: locate, mountMini: mountMini, dir: dir, r5: r5, getOV: function () { return OV; }, showCard: showCard, ovLoad: ovLoad }, realKm: function (p) { return ME && p && okLL(p.lat, p.lng) ? Math.max(0.1, Math.round(hav(ME, p) * 10) / 10) : null; }, locate: locate, openPoint: openPoint, openWifiMap: openWifiMap, openHostelMap: openHostelMap, shareWifi: shareWifi, scan: scan };
 scan();
 })();

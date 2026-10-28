@@ -38,3 +38,13 @@
 .ccban{margin-bottom:12px}
 .ccrange{width:100%;accent-color:#5c6d56}.ccrng{display:flex;justify-content:space-between;font-size:11px;color:var(--mut,#6a625a);font-weight:700}
 .ccchk{display:flex;gap:10px;align-items:center;font-weight:700;font-size:13.5px;margin:10px 0}.ccchk input{width:20px;height:20px;accent-color:#5c6d56;flex:none}
+
+/* hostel vacancy form and owner card */
+.cchv .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cchv-c{flex-wrap:wrap;overflow:visible}.cchv-c .chip{margin:0 6px 8px 0}
+.cchv-ph{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.cchv-p{position:relative;display:inline-block}.cchv-p img{height:84px;width:auto;border-radius:12px;display:block}
+.cchv-p button{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:#43302a;color:#fff;font-size:13px;line-height:24px;padding:0}
+.cchv-o{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line,rgba(127,127,127,.25))}
+.cchv-o small{display:block;opacity:.7;margin-top:2px}
+.cchv-b{display:flex;flex-wrap:wrap;gap:8px}

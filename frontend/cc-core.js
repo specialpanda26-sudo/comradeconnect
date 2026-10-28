@@ -260,11 +260,27 @@ function promptRestore(msg, title, force) {
   const m = sheet('<h3>' + esc(title || 'Sign in again') + '</h3><p class="sub" style="margin-top:6px">' + esc(msg || 'This phone is not signed in to your account.') + '</p>'
     + (googleOn() ? '<div id="ccrg" style="display:flex;justify-content:center;margin-top:12px;min-height:44px"></div><p class="sub" style="text-align:center;margin-top:8px">or use the recovery code you saved</p>' : '<p class="sub">Enter the account ID and recovery code you saved.</p>')
     + '<div class="fld" style="margin-top:10px"><input id="ccrst-a" placeholder="Account ID or username" autocomplete="off" autocapitalize="off" aria-label="Account ID or username"></div>'
-    + '<div class="fld"><input id="ccrst-c" type="password" placeholder="Password or code" autocomplete="off" autocapitalize="off" aria-label="Password or recovery code"></div>'
+    + '<div class="fld"><input id="ccrst-c" type="password" placeholder="Password or code" autocomplete="off" autocapitalize="off" aria-label="Password or recovery code"><button type="button" class="ccrst-eye" id="ccrst-eye" aria-label="Show password"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div>'
     + '<p class="sub" id="ccrst-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
     + '<div class="two"><button class="btn g" id="ccrst-x">Cancel</button><button class="btn p" id="ccrst-go">Restore</button></div>'
     + '<p class="sub" style="text-align:center;margin-top:12px"><a href="#" id="ccrst-fg">Forgot password?</a></p>');
   m.id = 'ccrst';
+  { // show / hide the password: eye icon on the right of the field
+    const pw = m.querySelector('#ccrst-c'), eb = m.querySelector('#ccrst-eye');
+    const SHOW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+    const HIDE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+    if (pw && eb) {
+      eb.onmousedown = (ev) => ev.preventDefault();               // keep the keyboard open
+      eb.onclick = (ev) => {
+        ev.preventDefault();
+        const showing = pw.type === 'text';
+        pw.type = showing ? 'password' : 'text';
+        eb.innerHTML = showing ? HIDE : SHOW;
+        eb.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        eb.setAttribute('aria-pressed', showing ? 'false' : 'true');
+      };
+    }
+  }
   { const gone = new MutationObserver(() => { if (!document.body.contains(m)) { gone.disconnect(); if (Date.now() - (window.__ccRstOkAt || 0) > 4000) window.__ccRstQuiet = Date.now() + 600000; } }); gone.observe(document.body, { childList: true }); }
   ccCancelTap();
   const _close = m.close; m.close = () => { ccCancelTap(); _close(); };

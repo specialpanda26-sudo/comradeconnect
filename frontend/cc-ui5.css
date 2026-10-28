@@ -50,3 +50,12 @@ html body #ccrst .btn.g{background:rgba(22,19,15,.06)!important;color:inherit!im
 
 /* Sign in again: every button is a curved pill, same as the rest of the site */
 html body #ccrst .btn.btn.btn,html body #ccrst button.ccpk-in.ccpk-in,html body #ccrst .two>.btn.btn{border-radius:999px!important;min-height:52px}
+
+/* ---------- Sign in again: one box per field, show-password eye ---------- */
+html body #ccrst .fld{background:none!important;box-shadow:none!important;padding:0!important;border-radius:0!important;border:0!important;position:relative}
+html body #ccrst .fld input{border-radius:999px!important;padding-left:20px!important}
+html body #ccrst .fld input#ccrst-c{padding-right:56px!important}
+html body #ccrst .ccpk-in{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px}
+html body #ccrst .ccrst-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:grid;place-items:center;border:0!important;border-radius:50%!important;background:none!important;box-shadow:none!important;color:rgba(22,19,15,.6);padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+html body #ccrst .ccrst-eye svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+:root[data-theme="dark"] body #ccrst .ccrst-eye{color:rgba(246,239,233,.7)}

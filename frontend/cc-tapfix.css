@@ -1,0 +1,7 @@
+/* cc-tapfix.css: a tapped switch or tab goes back to its normal colour when you let go. Only the chosen one (.on) is dark.
+   Covers the Club switch (Shop, Tickets, Orders, Help) and every other segmented switch and tab strip. */
+html body .seg{background:var(--g)!important}
+html body .seg button:not(.on),html body .seg button:not(.on):hover,html body .seg button:not(.on):focus,html body .seg button:not(.on):active,html body .seg button:not(.on):focus-visible{background:transparent!important;background-image:none!important;color:var(--fg)!important;-webkit-text-fill-color:var(--fg)!important;opacity:1!important;box-shadow:none!important;border:0!important;text-shadow:none!important;outline:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body .seg button.on,html body .seg button.on:hover,html body .seg button.on:focus,html body .seg button.on:active{background:var(--ink)!important;color:var(--inkfg)!important;-webkit-text-fill-color:var(--inkfg)!important;opacity:1!important}
+html body .crd-seg button:not(.on),html body .crd-seg button:not(.on):hover,html body .crd-seg button:not(.on):focus,html body .crd-seg button:not(.on):active{background:transparent!important;color:var(--fg)!important;opacity:1!important}
+html body .tab:not(.on):hover,html body .tab:not(.on):focus,html body .tab:not(.on):active,html body .vt button:not(.on):hover,html body .vt button:not(.on):focus,html body .vt button:not(.on):active{background:var(--g)!important;color:var(--fg)!important;opacity:1!important}

@@ -1,8 +1,11 @@
 /* Comrade Connect service worker: app screens, fonts and pictures keep working without data.
-   The API itself is saved by cc-offline.js, not here. */
-const BUILD = 'dev';
+   The API itself is saved by cc-offline.js, not here.
+   BUILD changes on every deploy (the push script stamps it), so each deploy gets a fresh cache and the old one is deleted.
+   App files (html, js, css) are fetched fresh when online and only fall back to the saved copy when offline or very slow. */
+const BUILD = '20261028123552';
 const SHELL = 'cc-shell-' + BUILD, RUNTIME = 'cc-runtime-v1';
 const CDN = ['https://cdn.tailwindcss.com/3.4.17', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];
+const APPFILE = /\.(?:js|css|html|json|webmanifest)$/i;
 
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
@@ -16,8 +19,8 @@ self.addEventListener('install', (e) => {
       const a = new URL(u, self.location.origin + '/'); urls.add(a.pathname + a.search);
     });
     await c.put('/index.html', r);
-    await Promise.allSettled([...urls].map((u) => c.add(u)));
-    await Promise.allSettled(['/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/favicon.png', '/apple-touch-icon.png'].map((u) => fetch(u, { cache: 'reload' }).then((x) => x.ok && c.put(u, x))));
+    // fetch past the browser's own cache so an old copy can never be saved as the new build
+    await Promise.allSettled([...urls].map((u) => fetch(u, { cache: 'reload' }).then((x) => x.ok && c.put(u, x))));
     await Promise.allSettled(CDN.map((u) => fetch(u, { mode: 'no-cors' }).then((x) => c.put(u, x))));
     self.skipWaiting();
   })());
@@ -25,12 +28,22 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
-    for (const k of await caches.keys()) if (k.startsWith('cc-shell-') && k !== SHELL) await caches.delete(k);
+    for (const k of await caches.keys()) if ((k.startsWith('cc-shell-') && k !== SHELL) || k === 'cc-api-v1') await caches.delete(k);
     await self.clients.claim();
   })());
 });
 
 const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('slow')), ms));
+
+async function fresh(req, url, ms) {                              // online: newest file. Offline or very slow: the saved copy
+  try {
+    const r = await Promise.race([fetch(url, { cache: 'no-cache', credentials: 'same-origin' }), timeout(ms)]);
+    if (r && r.ok) { const c = await caches.open(SHELL); c.put(req, r.clone()); }
+    return r;
+  } catch (x) {
+    return (await caches.match(req)) || (await caches.match(req, { ignoreSearch: true })) || Response.error();
+  }
+}
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
@@ -42,12 +55,19 @@ self.addEventListener('fetch', (e) => {
 
   if (req.mode === 'navigate') {                                  // page: fresh when online, saved copy when not
     e.respondWith((async () => {
-      try { return await Promise.race([fetch(req), timeout(4000)]); }
-      catch (x) { return (await caches.match(req, { ignoreSearch: true })) || (await caches.match('/index.html')) || Response.error(); }
+      try {
+        const r = await Promise.race([fetch(req), timeout(6000)]);
+        if (r && r.ok && !r.redirected && (url.pathname === '/' || url.pathname === '/index.html')) caches.open(SHELL).then((c) => c.put('/index.html', r.clone()));
+        return r;
+      } catch (x) { return (await caches.match(req, { ignoreSearch: true })) || (await caches.match('/index.html')) || Response.error(); }
     })());
     return;
   }
-  if (same) {                                                     // own files: saved copy first, refreshed in the background
+  if (same && (APPFILE.test(url.pathname) || ['script', 'style'].includes(req.destination))) {   // app files: never an old build while online
+    e.respondWith(fresh(req, req.url, 4000));
+    return;
+  }
+  if (same) {                                                     // pictures, icons and other files: saved copy first, refreshed in the background
     e.respondWith((async () => {
       const hit = await caches.match(req);
       const net = fetch(req).then((r) => { if (r && r.ok && !/\/(media)\//.test(url.pathname)) caches.open(SHELL).then((c) => c.put(req, r.clone())); return r; }).catch(() => null);

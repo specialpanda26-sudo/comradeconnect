@@ -7,7 +7,7 @@
   'use strict';
   if (window.__ccOffline) return; window.__ccOffline = 1;
   var API = (typeof CC_API === 'string') ? CC_API : '';
-  var CACHE = 'cc-api-v1', MAX = 160;
+  var CACHE = 'cc-api-v2', MAX = 160;
   var SKIP = /^\/api\/(admin|auth|live|pay|payments|callback|upload|media\/upload)/;
   var prev = window.fetch, hasCaches = 'caches' in window;
   var bar = null, hideT = 0;

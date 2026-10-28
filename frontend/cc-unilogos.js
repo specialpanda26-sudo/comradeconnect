@@ -26,7 +26,7 @@ var U = [
 ['Management University of Africa','mua.ac.ke','MUA'],['Great Lakes University of Kisumu','gluk.ac.ke','GLUK'],['Africa International University','aiu.ac.ke','AIU'],
 ['Scott Christian University','scott.ac.ke','SCU']
 ];
-var LOCAL = {'university of nairobi':'uon','south eastern kenya university':'seku','tom mboya university':'tmu','co-operative university of kenya':'cuk','university of kabianga':'kabianga','presbyterian university of east africa':'pueac',"st. paul's university":'spu','pan africa christian university':'panac','turkana university college':'turkana','bomet university college':'bomet'};   // logos kept in img/unilogos
+var LOCAL = {'university of nairobi':'uon','south eastern kenya university':'seku','tom mboya university':'tmu','co-operative university of kenya':'cuk','university of kabianga':'kabianga','presbyterian university of east africa':'pueac',"st. paul's university":'spu','pan africa christian university':'panac','turkana university college':'turkana','bomet university college':'bomet','daystar university':'daystar'};   // logos kept in img/unilogos
 var BY = {}; U.forEach(function (a) { BY[a[0].toLowerCase()] = a; });
 function cfg() { try { return JSON.parse(localStorage.getItem('cc_site_v1') || '{}') || {}; } catch (e) { return {}; } }
 function ini(n) { var w = (n || '').replace(/[^A-Za-z ]/g, '').split(/\s+/).filter(function (x) { return x && !/^(of|and|the|for)$/i.test(x); }); return (w.map(function (x) { return x[0]; }).join('') || 'U').slice(0, 3).toUpperCase(); }

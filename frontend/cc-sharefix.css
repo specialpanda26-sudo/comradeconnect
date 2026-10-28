@@ -1,0 +1,19 @@
+/* cc-sharefix.css: feed card action bar.
+   Before: the bar was a pill that wrapped, so "Share" dropped to a second row and stretched the grey pill into a blob.
+   Now: one tidy row. On phones Share is a round WhatsApp icon button; on wider screens it shows the word too. */
+html body .card .bar{display:flex;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:4px;padding:5px;box-sizing:border-box;max-width:100%;border-radius:999px;overflow:hidden}
+html body .card .bar>*{flex:0 0 auto;min-width:0}
+html body .card .bar .act{height:34px;padding:0 10px;gap:5px;white-space:nowrap;justify-content:center}
+html body .card .bar .act svg{width:16px;height:16px}
+html body .card .bar .views{padding:0 4px;gap:4px;white-space:nowrap}
+html body .card .bar .act.wa{margin-left:auto;width:34px;padding:0;gap:0;font-size:0;line-height:0}
+html body .card .bar .act.wa svg{width:18px;height:18px;margin:0}
+@media (min-width:520px){
+  html body .card .bar{gap:6px}
+  html body .card .bar .act{padding:0 13px}
+  html body .card .bar .act.wa{width:auto;padding:0 14px;gap:7px;font-size:12px;line-height:normal}
+}
+@media (max-width:340px){
+  html body .card .bar .act{padding:0 8px}
+  html body .card .bar .views{display:none}
+}

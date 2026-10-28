@@ -23,6 +23,12 @@ export function wifiParse(b) {
     out.lat = +lat.toFixed(5); out.lng = +lng.toFixed(5); out.accuracy_m = Number.isFinite(acc) ? Math.max(0, acc) : null;
   }
 
+  if (b.mbps !== undefined && b.mbps !== null && b.mbps !== '' && kind !== 'reseller') {
+    const mb = int(b.mbps, 1, 100);
+    if (mb === null) return 'Speed must be between 1 and 100 Mbps';
+    out.speed_note = mb + ' Mbps';
+  }
+
   if (kind === 'share') {
     if (!hasLoc) return 'Tap Use my real location while you are at the network';
     if (!b.consent) return 'Confirm that you own this network or have permission to share it';

@@ -258,13 +258,13 @@ export async function marketRoutes(req, env, url, ip) {
     const u = await user(req, env); if (u instanceof Response) return u;
     const a = enc(u.aid);
     const all = [...await rows(await sb(env, `orders?buyer_aid=eq.${a}&order=created_at.desc&limit=50`)), ...await rows(await sb(env, `orders?seller_aid=eq.${a}&order=created_at.desc&limit=50`))];
-    const ls = all.length ? await rows(await sb(env, `listings?select=id,title,contact_phone&id=${inList(all.map((o) => o.listing_id))}`)) : [];
+    const ls = all.length ? await rows(await sb(env, `listings?select=id,title,contact_phone,lat,lng&id=${inList(all.map((o) => o.listing_id))}`)) : [];
     const mine = await myRatings(env, all.filter((o) => o.buyer_aid === u.aid && o.status === 'released').map((o) => o.id));
     const out = [];
     for (const o of all.sort((x, y) => (x.created_at < y.created_at ? 1 : -1))) {
       const buyer = o.buyer_aid === u.aid;
       out.push({
-        id: o.id, role: buyer ? 'buyer' : 'seller', title: ls.find((l) => l.id === o.listing_id)?.title || 'Item',
+        id: o.id, lat: ls.find((l) => l.id === o.listing_id)?.lat ?? null, lng: ls.find((l) => l.id === o.listing_id)?.lng ?? null, role: buyer ? 'buyer' : 'seller', title: ls.find((l) => l.id === o.listing_id)?.title || 'Item',
         seller_phone: buyer && ['held', 'handed', 'disputed', 'released'].includes(o.status) ? ls.find((l) => l.id === o.listing_id)?.contact_phone || null : undefined, amount: o.amount,
         you_receive: buyer ? undefined : o.seller_amount, fee: buyer ? undefined : o.fee, status: o.status, dispute_status: o.dispute_status, dispute_reason: o.dispute_reason, dispute_due_at: o.dispute_status === 'open' && o.disputed_at ? new Date(Date.parse(o.disputed_at) + disputeHours(env) * 3600e3).toISOString() : undefined,
         // only the buyer can see the handover code; the seller must be given it in person

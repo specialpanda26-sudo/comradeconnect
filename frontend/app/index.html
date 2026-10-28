@@ -432,7 +432,7 @@ select.in{appearance:none;-webkit-appearance:none;background-image:linear-gradie
 .nb.tkh{outline:3px solid var(--o);outline-offset:2px}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Bricolage+Grotesque:wght@800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../cc-dots.css?v=2"><link rel="stylesheet" href="cc-proto-fix.css?v=2"></head>
+<link rel="stylesheet" href="../cc-dots.css?v=2"><link rel="stylesheet" href="cc-proto-fix.css?v=2"><link rel="stylesheet" href="cc-maps.css?v=1"></head>
 <body>
 <noscript>Comrade Connect needs JavaScript to run.</noscript>
 <div class="stage">
@@ -1163,7 +1163,7 @@ const MAINC=['Books','Electronics','Furniture','Clothes','Food','Services'];
 const inCat=(p,c)=>c==='All'||(c==='Other'?!MAINC.includes(p.c):p.c===c);
 /* distance: worked out from the seller's zone (we do not track exact locations), so it is a close estimate */
 const ZKM={'On campus':.5,'Kerugoya':1.1,'Kutus':1.8,'Kagio':3.4},ZPOS={'On campus':[30,62],'Kerugoya':[46,38],'Kutus':[66,54],'Kagio':[74,22]};
-const km=p=>{const b=ZKM[p.z]!=null?ZKM[p.z]:2.6;return Math.round((b+(p.id%4)*.1)*10)/10};
+const km=p=>{const rk=window.ccMaps&&ccMaps.realKm(p);if(rk!=null)return rk;const b=ZKM[p.z]!=null?ZKM[p.z]:2.6;return Math.round((b+(p.id%4)*.1)*10)/10};
 const kmt=p=>km(p).toFixed(1)+' km';
 const bg=p=>p.photos&&p.photos[0]?`background-image:url('${esc(p.photos[0])}');background-size:cover;background-position:center`:'';
 const cnt=()=>Object.keys(S.mc).filter(k=>S.mc[k]>0&&PRODS.some(p=>String(p.id)===k)).length;
@@ -1849,7 +1849,7 @@ window.CCMETA=async function(){
 /* ---- listings ---- */
 var hash=function(s){return parseInt(String(s).replace(/-/g,'').slice(0,8),16)||1};
 function toProd(l){var r=l.seller&&l.seller.rating;
- return{id:hash(l.id),uid:l.id,t:l.title,p:l.price,c:l.category,z:l.zone||'On campus',s:(l.seller&&l.seller.handle)||'Seller',st:r?r.avg:0,sold:0,d:l.description||'',photos:l.photos||[],mine:!!l.mine}}
+ return{id:hash(l.id),uid:l.id,lat:(typeof l.lat==='number'?l.lat:null),lng:(typeof l.lng==='number'?l.lng:null),t:l.title,p:l.price,c:l.category,z:l.zone||'On campus',s:(l.seller&&l.seller.handle)||'Seller',st:r?r.avg:0,sold:0,d:l.description||'',photos:l.photos||[],mine:!!l.mine}}
 var PAT=0;
 async function loadProds(){
  try{
@@ -3862,4 +3862,4 @@ async function take(){
 take();
 })();
 </script>
-<script src="cc-push.js?v=1"></script><script src="cc-proto-fix.js?v=1" defer></script></body></html>
+<script src="cc-maps.js?v=1"></script><script src="cc-push.js?v=1"></script><script src="cc-proto-fix.js?v=1" defer></script></body></html>

@@ -52,6 +52,7 @@ SCHEMA.notifications = T(['id']);
 SCHEMA.push_subs = T(['endpoint']);
 SCHEMA.notif_state = T(['aid']);
 SCHEMA.notif_prefs = T(['aid']);
+SCHEMA.zones = T(['campus', 'name']);   // admin-editable zones, one list per campus
 SCHEMA.media_comments = T(['id'], { defaults: { hidden: false } });
 SCHEMA.story_views = T(['media_id', 'viewer_aid']);
 SCHEMA.spots = T(['id'], { defaults: { hidden: false, likes: 0, campus: 'kirinyaga' } });

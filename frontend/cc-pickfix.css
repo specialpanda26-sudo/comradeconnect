@@ -1,0 +1,2 @@
+/* cc-pickfix.css: the X button no longer sits on top of the words in the university picker. */
+html body #ccuniv .cd>h2,html body #ccuniv .cd>h2+p{padding-right:58px!important;box-sizing:border-box}

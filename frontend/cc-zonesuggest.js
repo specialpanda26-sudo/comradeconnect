@@ -86,6 +86,7 @@
     }
     function pick(r) { radius = Math.max(10, Math.min(20000, Math.round(r))); inp.value = ''; chips(); load(); }
     go.onclick = function () { var v = Number(inp.value); if (!isFinite(v) || v < 10) { inp.focus(); return; } pick(v); };
+    var tm; inp.oninput = function () { clearTimeout(tm); tm = setTimeout(function () { var v = Number(inp.value); if (isFinite(v) && v >= 10) pick(v, true); }, 600); };
     inp.onkeydown = function (e) { if (e.key === 'Enter') go.onclick(); };
     sh.appendChild(lb); sh.appendChild(lm); sh.appendChild(rr); sh.appendChild(cu); sh.appendChild(list); sh.appendChild(foot);
     root.appendChild(sh); document.body.appendChild(root);

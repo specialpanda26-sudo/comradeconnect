@@ -21,7 +21,7 @@ export const notifySnippet = snip;
 export async function notifyAdmins(env, kind, title, body, refType, refId) {
   try {
     const ids = new Set(String(env.ADMIN_AIDS || '').split(',').map((x) => x.trim()).filter(Boolean));
-    try { (await rows(await sb(env, 'profiles?select=aid&role=eq.admin&limit=20'))).forEach((p) => p.aid && ids.add(p.aid)); } catch (e) { /* no role column: ADMIN_AIDS only */ }
+    try { (await rows(await sb(env, 'profiles?select=aid&or=' + enc('(role.eq.admin,badge.eq.Comrade Connect)') + '&limit=20'))).forEach((p) => p.aid && ids.add(p.aid)); } catch (e) { /* no role column: ADMIN_AIDS only */ }
     await Promise.all([...ids].slice(0, 20).map((a) => notify(env, a, kind, title, body, refType, refId)));
     return ids.size;
   } catch (e) { console.error('notifyAdmins failed', e && e.message); return 0; }

@@ -113,12 +113,17 @@ export async function contentRoutes(req, env, url, ip) {
   if (path === '/api/c/wifi/map' && req.method === 'GET') {            // every shared network that has a real location, for the map
     const me = req.headers.get('X-Token') ? await authProfile(req, env) : null;
     const kd = url.searchParams.get('kind');
-    const r = await rows(await sb(env, `wifi?hidden=eq.false&lat=not.is.null${campusQuery(req)}&order=created_at.desc&limit=500${['spot', 'share', 'reseller'].includes(kd) ? '&kind=eq.' + kd : ''}`));
+    const kf = ['spot', 'share', 'reseller'].includes(kd) ? '&kind=eq.' + kd : '';
+    let r = await rows(await sb(env, `wifi?hidden=eq.false&lat=not.is.null${campusQuery(req)}&order=created_at.desc&limit=500${kf}`));
+    if (me) {                                                         // your own Wi-Fi always shows for you, even while it waits for an admin or sits on another campus
+      const mine = await rows(await sb(env, `wifi?aid=eq.${enc(me.aid)}&lat=not.is.null&order=created_at.desc&limit=50${kf}`));
+      const have = new Set(r.map((x) => x.id)); r = r.concat(mine.filter((x) => !have.has(x.id)));
+    }
     const v = r.length ? await rows(await sb(env, `wifi_votes?select=wifi_id,value&wifi_id=${inList(r.map((x) => x.id))}`)) : [];
     const items = r.map((x) => {
       const sc = v.filter((y) => y.wifi_id === x.id), p = wifiMask(pub(x, me), me);
       return { id: p.id, kind: p.kind, place: p.place, zone: p.zone, business: p.business, ssid: p.ssid, password: p.password, has_password: p.has_password, locked: p.locked, speed_note: p.speed_note,
-        lat: p.lat, lng: p.lng, score: sc.reduce((t, y) => t + y.value, 0), votes: sc.length, tech: p.tech, packages: p.packages, mine: p.mine };
+        lat: p.lat, lng: p.lng, score: sc.reduce((t, y) => t + y.value, 0), votes: sc.length, tech: p.tech, packages: p.packages, mine: p.mine, pending: !!x.hidden };
     });
     return json(env, { items });
   }

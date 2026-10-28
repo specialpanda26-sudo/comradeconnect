@@ -56,6 +56,12 @@
     '#wfov .ch{display:flex;gap:8px;padding:0 14px 8px;overflow-x:auto}',
     '#wfov .ch button,#wfov .tp button{flex:none;padding:8px 16px;border-radius:999px;font:500 12px Poppins,sans-serif;color:var(--mut);background:var(--g);border:1px solid var(--gb);cursor:pointer}',
     '#wfov .ch button.on{background:var(--ink);color:var(--inkfg);border-color:var(--ink);font-weight:600}',
+    /* the map buttons must always be readable: solid colours, no glass or blend effects from other style sheets */
+    'html body #wfov .ch,html body #wfov .tp{flex:none}html body #wfov .ch{flex-wrap:nowrap;scrollbar-width:none}html body #wfov .ch::-webkit-scrollbar{display:none}',
+    'html body #wfov .ch button,html body #wfov .tp button,html body #wfov .me{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;background:var(--bg)!important;background-image:none!important;color:var(--fg)!important;-webkit-text-fill-color:var(--fg)!important;opacity:1!important;filter:none!important;text-shadow:none!important;mix-blend-mode:normal!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border:1px solid var(--line,rgba(22,19,15,.18))!important;box-shadow:0 2px 8px rgba(22,19,15,.08)!important;font-weight:600!important;-webkit-tap-highlight-color:transparent;outline:0}',
+    'html body #wfov .ch button.on{background:var(--ink)!important;color:var(--inkfg)!important;-webkit-text-fill-color:var(--inkfg)!important;border-color:var(--ink)!important}',
+    'html body #wfov .ch button:focus-visible,html body #wfov .tp button:focus-visible,html body #wfov .me:focus-visible{outline:2px solid var(--fg)!important;outline-offset:2px}',
+    '#wfov .ch button svg,#wfov .me svg{width:16px;height:16px;margin:0;flex:none}',
     '#wfmap{flex:1;min-height:0;position:relative;z-index:0}',
     '#wfov .me{position:absolute;right:12px;top:120px;z-index:1000;padding:10px 14px;border-radius:999px;font:600 12px Poppins,sans-serif;color:var(--fg);background:var(--g);border:1px solid var(--gb);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);cursor:pointer}',
     '#wfov .cd{position:absolute;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:1000;max-height:55%;overflow:auto;max-width:520px;margin:0 auto}',
@@ -238,7 +244,7 @@
   };
   function mapCard(w) {
     var h = '', d = M.me ? km(M.me, w) : null, up = Math.round(((w.votes || 0) + (w.score || 0)) / 2), down = (w.votes || 0) - up;
-    h += '<div class="flex items-center justify-between"><span><span class="badge">' + (w.kind === 'reseller' ? ic('tool') + 'Plans' : ic('wifi') + 'Free to join') + '</span>' + (w.zone ? '<span class="badge" style="margin-left:6px">@' + esc(w.zone) + '</span>' : '')
+    h += '<div class="flex items-center justify-between"><span><span class="badge">' + (w.kind === 'reseller' ? ic('tool') + 'Plans' : ic('wifi') + 'Free to join') + '</span>' + (w.zone ? '<span class="badge" style="margin-left:6px">@' + esc(w.zone) + '</span>' : '') + (w.mine ? '<span class="badge" style="margin-left:6px">' + (w.pending ? 'Yours, waiting for approval' : 'Yours') + '</span>' : '')
       + (d !== null ? '<span class="badge" style="margin-left:6px">' + dist(d) + ' away</span>' : '') + '</span><button class="act" data-wm="x" aria-label="Close">' + ic('x') + '</button></div>';
     h += '<p style="margin:10px 0 2px;font-weight:600;overflow-wrap:anywhere">' + esc(w.place) + '</p>' + (w.business ? '<p class="sub" style="margin:0">' + esc(w.business) + '</p>' : '');
     if (w.kind === 'share') {
@@ -266,12 +272,12 @@
   async function loadPins() {
     var n = $('#wfov-n'); if (n) n.textContent = 'Loading...';
     var d;
-    try { d = await X.call('/api/c/wifi/map' + (M.kind ? '?kind=' + M.kind : ''), { auth: false }); } catch (e) { if (n) n.textContent = ''; return say(e.message || 'Could not load the map pins'); }
+    try { d = await X.call('/api/c/wifi/map' + (M.kind === 'reseller' ? '?kind=reseller' : ''), { auth: false }); } catch (e) { if (n) n.textContent = ''; return say(e.message || 'Could not load the map pins'); }
     if (!M.map) return;
     Object.keys(M.markers).forEach(function (k) { M.map.removeLayer(M.markers[k]); }); M.markers = {};
-    M.items = (d.items || []).filter(hasLoc); M.sel = null; pick(null);
+    M.items = (d.items || []).filter(hasLoc).filter(function (w) { return M.kind === 'share' ? w.kind !== 'reseller' : true; }); M.sel = null; pick(null);
     M.items.forEach(function (w) { var mk = L.marker([w.lat, w.lng], { icon: pinIcon(w, false), title: w.place, keyboard: true }).addTo(M.map); mk.on('click', function () { pick(w); }); M.markers[w.id] = mk; });
-    if (n) n.textContent = M.items.length ? M.items.length + (M.items.length === 1 ? ' place on the map' : ' places on the map') : 'Nothing here yet';
+    if (n) n.textContent = M.items.length ? M.items.length + (M.items.length === 1 ? ' place on the map' : ' places on the map') : 'No free Wi-Fi pinned here yet. Share yours from the Wi-Fi tab.';
     if (M.items.length) { var pts = M.items.map(function (w) { return [w.lat, w.lng]; }); if (M.me) pts.push([M.me.lat, M.me.lng]); M.map.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom: 17 }); }
   }
   function closeMap() {
@@ -283,7 +289,7 @@
     if ($('#wfov')) return;
     var ov = document.createElement('div'); ov.id = 'wfov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Wi-Fi map');
     ov.innerHTML = '<div class="tp"><b>Wi-Fi map</b><span class="sub" id="wfov-n">Loading map...</span><button type="button" data-wm="close">Close</button></div>'
-      + '<div class="ch">' + [['', 'All'], ['share', 'Free to join'], ['reseller', 'Plans and installation']].map(function (c) { return '<button type="button" data-wm="kind" data-k="' + c[0] + '" class="' + (M.kind === c[0] ? 'on' : '') + '">' + c[1] + '</button>'; }).join('') + '</div>'
+      + '<div class="ch">' + [['', 'All', 'map'], ['share', 'Free to join', 'wifi'], ['reseller', 'Plans and installation', 'tool']].map(function (c) { return '<button type="button" data-wm="kind" data-k="' + c[0] + '" class="' + (M.kind === c[0] ? 'on' : '') + '">' + ic(c[2]) + c[1] + '</button>'; }).join('') + '</div>'
       + '<div id="wfmap"></div><button type="button" class="me" data-wm="me">' + ic('pin') + 'Near me</button><div class="box g cd" id="wfov-cd" hidden></div>';
     document.body.appendChild(ov); document.body.style.overflow = 'hidden'; document.addEventListener('keydown', mapKey);
     ov.addEventListener('click', onMapClick);
@@ -294,6 +300,14 @@
     M.map.on('click', function () { pick(null); });
     setTimeout(function () { if (M.map) M.map.invalidateSize(); }, 80);
     await loadPins();
+    locateMe(true, false);
+  }
+  async function locateMe(silent, zoom) {          // drops the blue dot where you are; a silent try (on opening) never shows an error
+    try {
+      var l = await getLoc(); if (!M.map) return; M.me = { lat: l.lat, lng: l.lng }; if (M.meMark) M.map.removeLayer(M.meMark);
+      M.meMark = L.marker([l.lat, l.lng], { icon: L.divIcon({ className: '', html: '<div class="wfme" style="width:16px;height:16px"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }), interactive: false }).addTo(M.map);
+      if (zoom || !M.items.length) M.map.setView([l.lat, l.lng], 16);
+    } catch (er) { if (!silent) say(er.message); }
   }
   async function onMapClick(e) {
     var b = e.target.closest('[data-wm]'); if (!b) return; var a = b.dataset.wm;
@@ -304,12 +318,7 @@
       if (a === 'sh') { M.shown[M.sel.id] = !M.shown[M.sel.id]; return pick(M.sel); }
       if (a === 'cp' && M.sel) { try { await navigator.clipboard.writeText(b.dataset.k === 'pw' ? M.sel.password : M.sel.ssid); say('Copied'); } catch (er) { say('Could not copy. Select the text and copy it.'); } return; }
       if (a === 'signin') { await X.ensureAccount(); var keep = M.sel && M.sel.id; await loadPins(); var again = M.items.filter(function (w) { return w.id === keep; })[0]; if (again) pick(again); return; }
-      if (a === 'me') {
-        b.disabled = true;
-        try { var l = await getLoc(); M.me = { lat: l.lat, lng: l.lng }; if (M.meMark) M.map.removeLayer(M.meMark); M.meMark = L.marker([l.lat, l.lng], { icon: L.divIcon({ className: '', html: '<div class="wfme" style="width:16px;height:16px"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }), interactive: false }).addTo(M.map); M.map.setView([l.lat, l.lng], 16); }
-        catch (er) { say(er.message); }
-        b.disabled = false;
-      }
+      if (a === 'me') { b.disabled = true; await locateMe(false, true); b.disabled = false; }
     } catch (er) { say(er.message || 'Something went wrong'); }
   }
 

@@ -19,7 +19,7 @@
     { sel: '.mu-cats .mu-cat', key: function (b) { var c = (b.dataset.c || '').toLowerCase(); return c === 'electronics' ? 'tech' : c; } },
     { sel: '#xt .tab', key: function (b) { return X[b.dataset.x] || ''; } },
     { sel: '.tabs.z .tab[data-xc]', key: function (b) { var c = (b.dataset.xc || '').toLowerCase().replace('gas refill', 'gas'); return ICON['sv_' + c] ? 'sv_' + c : 'sv_general'; } },
-    { sel: '#xbody [data-spc]', key: function (b) { var c = (b.dataset.spc || '').toLowerCase(); return ICON['sp_' + c] ? 'sp_' + c : 'sp_other'; } }
+    { sel: '#xbody [data-spc]:not(.sp-chip)', key: function (b) { var c = (b.dataset.spc || '').toLowerCase(); return ICON['sp_' + c] ? 'sp_' + c : 'sp_other'; } }
   ];
   var EXT = ['webp', 'jpg', 'png'];
 

@@ -20,9 +20,17 @@ css.textContent =
 '#cctop .tp-r{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line,rgba(255,255,255,.14))}#cctop .tp-r:last-child{border-bottom:0}' +
 '#cctop .tp-k{flex:none;width:22px;font-size:13px;font-weight:600;color:var(--mut,var(--mut))}#cctop .tp-x{flex:1;min-width:0}#cctop .tp-x b{display:block;font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cctop .tp-x small{display:block;margin-top:2px;font-size:12px;color:var(--mut,var(--mut))}' +
 '#cctop .tp-v{flex:none;font-size:13px;font-weight:600}#cctop .me b{text-decoration:underline;text-underline-offset:3px}' +
+'#cctop .tp-d{all:unset;box-sizing:border-box;flex:none;cursor:pointer;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--fg,#16130f);background:rgba(127,127,127,.14);-webkit-tap-highlight-color:transparent}#cctop .tp-d svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}#cctop .tp-d:focus-visible{outline:2px solid var(--fg,#16130f);outline-offset:2px}#cctop .tp-d[disabled]{opacity:.45;pointer-events:none}' +
+'#cctop .tp-all{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:9px 14px;border-radius:999px;font-size:12px;font-weight:600;color:var(--fg,#16130f);background:rgba(127,127,127,.14)}#cctop .tp-all svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}#cctop .tp-all:focus-visible{outline:2px solid var(--fg,#16130f);outline-offset:2px}' +
 '#cctop .tp-bar{height:3px;border-radius:2px;background:var(--line,rgba(255,255,255,.18));margin-top:7px;overflow:hidden}#cctop .tp-bar i{display:block;height:100%;background:var(--fg,#fff)}';
 document.head.appendChild(css);
 
+var TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
+function hide(payload, btn) {
+  if (btn) btn.disabled = true;
+  return window.ccCall('/api/market/top/hide', { body: payload }).then(function () { at = 0; load(); })
+    .catch(function (e) { if (btn) btn.disabled = false; try { if (typeof toast === 'function') toast(e.message || 'Could not delete'); } catch (x) {} });
+}
 function stars(s) { return s.rating ? s.rating.toFixed(1) + ' from ' + s.ratings + (s.ratings === 1 ? ' rating' : ' ratings') : 'No ratings yet'; }
 function body() {
   var b = el('div', 'tp-b'), t = el('div', 'tp-t'); t.setAttribute('role', 'tablist');
@@ -37,8 +45,11 @@ function body() {
     var r = el('div', 'tp-r'), x = el('div', 'tp-x'); x.appendChild(el('b', '', c.category)); var bar = el('div', 'tp-bar'), i = el('i'); i.style.width = Math.round(c.sales / max * 100) + '%'; bar.appendChild(i); x.appendChild(bar);
     r.appendChild(x); r.appendChild(el('span', 'tp-v', c.sales + (c.sales === 1 ? ' sale' : ' sales'))); list.appendChild(r); }); }
   if (tab === 'r') D.recent.forEach(function (s) {
-    var r = el('div', 'tp-r'), x = el('div', 'tp-x'); x.appendChild(el('b', '', s.title)); x.appendChild(el('small', '', ago(s.at))); r.appendChild(x); r.appendChild(el('span', 'tp-v', kes(s.price))); list.appendChild(r);
+    var r = el('div', 'tp-r'), x = el('div', 'tp-x'); x.appendChild(el('b', '', s.title)); x.appendChild(el('small', '', ago(s.at))); r.appendChild(x); r.appendChild(el('span', 'tp-v', kes(s.price)));
+    if (D.admin && s.id) { var d = el('button', 'tp-d'); d.type = 'button'; d.setAttribute('aria-label', 'Delete this sale from the list'); d.innerHTML = TRASH; d.onclick = function () { if (confirm('Delete "' + s.title + '" from the sales list? The order and the money are not touched.')) hide({ id: s.id }, d); }; r.appendChild(d); }
+    list.appendChild(r);
   });
+  if (tab === 'r' && D.admin && D.recent.length) { var all = el('button', 'tp-all'); all.type = 'button'; all.innerHTML = TRASH; all.appendChild(document.createTextNode('Clear all sales logs')); all.onclick = function () { if (confirm('Clear ALL sales from the Top sales card? Orders and money are not touched.')) hide({ all: true }, all); }; list.appendChild(all); }
   b.appendChild(list); return b;
 }
 function draw() {

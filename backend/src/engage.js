@@ -1,5 +1,5 @@
 // Things that bring people back: Market top sales, the daily streak, and the invite-a-friend dashboard.
-import { json, err, sb, rows, enc, inList, user, ago, DAY } from './lib.js';
+import { json, err, sb, rows, enc, inList, user, ago, DAY, patch, isAdmin, audit } from './lib.js';
 import { getSettings } from './settings.js';
 import { alias } from './stories.js';
 import { badgeKind } from './lib.js';
@@ -21,12 +21,29 @@ export function streakOf(days, today = kenyaDay()) {
 
 export async function engageRoutes(req, env, url, ip) {
   const path = url.pathname, m = req.method;
+  // Admin: take one "just sold" line (or all of them) off the Market top-sales card. The order itself, the money and the earnings totals are not touched.
+  if (path === '/api/market/top/hide' && m === 'POST') {
+    let who = null;
+    if (isAdmin(req, env)) who = 'admin';
+    else { const u = await user(req, env); if (u instanceof Response) return u; if (u.role !== 'admin') return err(env, 'Admins only', 403); who = u.aid; }
+    const b = await req.json().catch(() => ({}));
+    const id = String(b.id || '');
+    if (b.all === true) { const r = await patch(env, 'orders?status=eq.released&hide_top=eq.false', { hide_top: true }); if (!r.ok) return err(env, 'Could not clear the list. Run the top-sales-hide.sql file in Supabase first.', 500); }
+    else if (/^[0-9a-f-]{36}$/i.test(id)) { const r = await patch(env, `orders?id=eq.${enc(id)}&status=eq.released`, { hide_top: true }); if (!r.ok) return err(env, 'Could not delete this line. Run the top-sales-hide.sql file in Supabase first.', 500); }
+    else return err(env, 'Pick a sale to delete');
+    try { await audit(env, 'topsales.hide', 'orders', b.all === true ? 'all' : id, { by: who }, ip); } catch (e) { /* the log is optional */ }
+    return json(env, { ok: true });
+  }
   if (m !== 'GET' || !(path === '/api/market/top' || path === '/api/streak' || path === '/api/referral/dashboard')) return null;
 
   // ---------- Market: top sellers and what is selling, from finished sales in the last 30 days ----------
   if (path === '/api/market/top') {
-    const sold = await rows(await sb(env, `orders?select=id,listing_id,seller_aid,amount,created_at&status=eq.released&created_at=gte.${enc(ago(30 * DAY))}&order=created_at.desc&limit=2000`));
-    if (!sold.length) return json(env, { sellers: [], categories: [], recent: [], total_sales: 0, days: 30 });
+    const base = `orders?select=id,listing_id,seller_aid,amount,created_at&status=eq.released&created_at=gte.${enc(ago(30 * DAY))}&order=created_at.desc&limit=2000`;
+    let sr = await sb(env, base + '&hide_top=eq.false'); if (!sr.ok) sr = await sb(env, base);   // before top-sales-hide.sql is run the column does not exist yet
+    const sold = await rows(sr);
+    const meTop = req.headers.get('X-Token') ? await user(req, env) : null;
+    const canHide = isAdmin(req, env) || !!(meTop && !(meTop instanceof Response) && meTop.role === 'admin');
+    if (!sold.length) return json(env, { sellers: [], categories: [], recent: [], total_sales: 0, days: 30, admin: canHide });
     const aids = [...new Set(sold.map((o) => o.seller_aid))];
     const profs = await rows(await sb(env, `profiles?select=aid,banned,verified,badge,role,student_verified&aid=${inList(aids)}`));
     const bad = new Set(profs.filter((p) => p.banned).map((p) => p.aid));
@@ -44,8 +61,8 @@ export async function engageRoutes(req, env, url, ip) {
     const ls = await rows(await sb(env, `listings?select=id,title,category,price&id=${inList(ok.slice(0, 200).map((o) => o.listing_id))}`));
     const cats = new Map(); for (const o of ok.slice(0, 200)) { const c = (ls.find((l) => l.id === o.listing_id) || {}).category; if (c) cats.set(c, (cats.get(c) || 0) + 1); }
     const categories = [...cats.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([category, sales]) => ({ category, sales }));
-    const recent = ok.slice(0, 6).map((o) => { const l = ls.find((x) => x.id === o.listing_id); return l ? { title: l.title, price: o.amount, at: Date.parse(o.created_at) } : null; }).filter(Boolean);
-    return json(env, { sellers, categories, recent, total_sales: ok.length, days: 30 });
+    const recent = ok.slice(0, 6).map((o) => { const l = ls.find((x) => x.id === o.listing_id); return l ? { id: o.id, title: l.title, price: o.amount, at: Date.parse(o.created_at) } : null; }).filter(Boolean);
+    return json(env, { sellers, categories, recent, total_sales: ok.length, days: 30, admin: canHide });
   }
 
   const u = await user(req, env); if (u instanceof Response) return u;

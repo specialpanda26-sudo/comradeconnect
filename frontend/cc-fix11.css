@@ -1,0 +1,7 @@
+/* cc-fix11.css: Market switch (Browse, My listings, Orders) is always readable. The chosen one is dark with light text, the others are plain
+   with dark text. No other style sheet can turn them black. Load last. */
+html body #v-market #mseg{background:var(--g)!important;border:0!important;box-shadow:var(--sh)!important;gap:4px}
+html body #v-market #mseg button,
+html body #v-market #mseg button:hover,html body #v-market #mseg button:focus,html body #v-market #mseg button:active{background:transparent!important;background-image:none!important;color:var(--fg)!important;-webkit-text-fill-color:var(--fg)!important;opacity:1!important;box-shadow:none!important;border:0!important;text-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body #v-market #mseg button.on,
+html body #v-market #mseg button.on:hover,html body #v-market #mseg button.on:focus,html body #v-market #mseg button.on:active{background:var(--ink)!important;color:var(--inkfg)!important;-webkit-text-fill-color:var(--inkfg)!important}

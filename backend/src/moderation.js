@@ -23,3 +23,11 @@ export function checkText(text = '', blockedNames = []) {
   }
   return { ok: action === 'allow', action, reasons };
 }
+
+// cc-fix13: the Spill Bot rules on the server too, so nobody can switch the bot off by editing the page. Same rules as the app.
+export function spillBotBlock(text = '') {
+  const s = String(text).toLowerCase();
+  if (/\b(gun|pistol|bhang|weed|bangi|cocaine|vodka|whisky|whiskey|beer|chang'?aa|exam ?papers?|leaked|stolen|fake id)\b/.test(s)) return 'Spill Bot: this item type is not allowed on Comrade Connect.';
+  if (/(pay|send|tuma).{0,20}(first|deposit|fare|before)|pay (me )?(direct|outside|cash only)|outside (the )?(app|site)/.test(s)) return 'Spill Bot: payments go through Comrade Connect escrow only. Remove any ask to pay first or pay outside.';
+  return null;
+}

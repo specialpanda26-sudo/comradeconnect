@@ -1438,7 +1438,7 @@ function openLegal(k){const d=LEGAL[k];if(!d)return;$('#lt').textContent=d[0];$(
 document.addEventListener('click',e=>{const a=e.target.closest('[data-legal]');if(!a)return;e.preventDefault();openLegal(a.dataset.legal)});
 const legalRoute=()=>{const k=location.hash.slice(1);if(LEGAL[k])openLegal(k)};addEventListener('hashchange',legalRoute);setTimeout(legalRoute,300);
 $('#yr').textContent=new Date().getFullYear();
-const BOT=ST.get('cs_bot',null)||{on:true,role:'moderator',hu:true},svb=()=>ST.set('cs_bot',BOT);
+const BOT=ST.get('cs_bot',null)||{on:true,role:'moderator',hu:true},svb=()=>{BOT.on=true;ST.set('cs_bot',BOT)};BOT.on=true;/* cc-fix13: Spill Bot is always on */
 function botSay(role,t){const s=t.toLowerCase(),W=(a,b)=>BOT.hu?a:b;
  if(role==='moderator'){if(contactHit(t))return W('Hii haitaendi, comrade. Numbers, handles and off-site payments are not allowed here. Keep it on Comrade Connect so you stay protected.','Blocked: contact details or off-site payment detected.');const b=spillBot(t,0);if(b.v==='reject')return W('Eish, I cannot approve that one. '+b.why,'Rejected. '+b.why);return W('Looks clean to me, sawa. This can go through.','Approved. No issues found.')}
  if(role==='support'){const k=[[/refund|money back|dispute/,'Report a problem before you release payment. An admin reviews it and can refund you.'],[/code|handover/,'Your 6-digit handover code is in Market, Orders. Share it with the seller only after you have checked the item.'],[/withdraw|payout|mpesa/,'Withdrawals go to M-Pesa after your school ID is verified. Your wallet is under Market, Orders.'],[/badge|class rep|verif/,'Open Me, then Get verified. Add your role and school ID and an admin will check it.'],[/hearts|date|dating/,'Hearts is 18+. When two people both tap Interested in each other, a private chat opens. Numbers and links stay blocked.']].find(x=>x[0].test(s)),a=k?k[1]:'I have passed this to an admin, they will reply soon.';return W('Pole for the trouble. '+a,a)}
@@ -1446,8 +1446,8 @@ function botSay(role,t){const s=t.toLowerCase(),W=(a,b)=>BOT.hu?a:b;
  if(role==='guide')return W('Karibu comrade! Start with Spill on the Feed, then check Market for safe deals and Hearts under Explore. The tour in Me shows it all.','Welcome. Use Feed to post, Market to trade with escrow and Explore for Hearts. Tour: Me, Take the tour.');
  if(role==='matchmaker')return contactHit(t)?W('Tip: leave numbers out. After a match you chat inside the app, which keeps you safe.','Remove contact details. After a match you chat inside the app.'):W('Good start! Say what you enjoy and who you hope to meet. Keep it kind and honest.','Add interests and what you are looking for.');
  return W('Heads up comrades! ','Announcement: ')+(t.charAt(0).toUpperCase()+t.slice(1)).replace(/([^.!?])$/,'$1.')+(BOT.hu?' Stay safe and keep it on Comrade Connect.':'')}
-function drawBot(){$('#bon').checked=BOT.on;$('#bhu').checked=BOT.hu;$('#brl').value=BOT.role;$('#bst').textContent=BOT.on?'Bot is on. It checks listings and can play any role below. The contact filter always stays on.':'Bot is off. New listings go straight to admin review. The contact filter stays on.'}
-$('#bon').onchange=e=>{BOT.on=e.target.checked;svb();drawBot()};$('#bhu').onchange=e=>{BOT.hu=e.target.checked;svb()};$('#brl').onchange=e=>{BOT.role=e.target.value;svb()};
+function drawBot(){BOT.on=true;$('#bon').checked=true;$('#bon').disabled=true;$('#bhu').checked=BOT.hu;$('#brl').value=BOT.role;$('#bst').textContent=BOT.on?'Bot is on. It checks listings and can play any role below. The contact filter always stays on.':'Bot is off. New listings go straight to admin review. The contact filter stays on.'}
+$('#bon').onchange=e=>{BOT.on=true;e.target.checked=true;svb();drawBot()};$('#bhu').onchange=e=>{BOT.hu=e.target.checked;svb()};$('#brl').onchange=e=>{BOT.role=e.target.value;svb()};
 $('#btry').onclick=()=>{const o=$('#bout');o.hidden=false;if(!BOT.on){o.textContent='Spill Bot is off. Turn it on to try it.';return}o.innerHTML='<b>Spill Bot ('+esc($('#brl').selectedOptions[0].text)+')</b><br>'+esc(botSay(BOT.role,$('#bin').value.trim()||'hello'))};
 $('#madm').addEventListener('click',drawBot);drawBot();
 const RR=['Class rep','Hostel rep'],idOK=()=>!!(ME.ver&&ME.ver.st==='approved'),isOff=()=>idOK()&&ME.ver.role!=='Student'&&ME.ver.role!=='Business';
@@ -1646,7 +1646,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-logos.js?v=1"></script><script src="cc-landing.js?v=3"></script><script src="cc-getapp.js?v=8"></script><script src="cc-firstrun.js?v=9"></script><script src="cc-core.js?v=16"></script>
+<script src="cc-logos.js?v=1"></script><script src="cc-landing.js?v=3"></script><script src="cc-getapp.js?v=8"></script><script src="cc-firstrun.js?v=9"></script><script src="cc-core.js?v=16"></script><script src="cc-touchfix.js?v=1"></script>
 <script src="cc-paychoice.js?v=1"></script><script src="cc-welcome.js?v=4"></script><script src="cc-lockscreen.js?v=6"></script><script src="cc-lockglass.js?v=3"></script><script src="cc-lockpw.js?v=2"></script><script src="cc-receipt.js?v=6"></script><script src="cc-wifi.js?v=3"></script><script src="cc-hostels.js?v=4"></script><script src="cc-profile.js?v=9"></script><script src="cc-me.js?v=4"></script><script src="cc-closex.js?v=5"></script><script src="cc-nav.js?v=2"></script>
 <script src="cc-xcancel.js?v=7"></script><script src="cc-zones.js?v=3"></script>
 <script src="cc-onewelcome.js?v=1"></script>

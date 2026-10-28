@@ -10,6 +10,7 @@ import { creditFor, creditForMany, spendPoints, giveBack, giveBackShare, awardPo
 const CATS = ['General', 'Electronics', 'Books', 'Clothes', 'Furniture', 'Food', 'Services', 'Other'];
 import { mediaUrl } from './storage.js';
 import { badgeKind } from './lib.js';
+import { spillBotBlock } from './moderation.js';
 import { ratingMap, myRatings } from './ratings.js';
 
 async function decorate(env, list, me) {          // photos + seller handle, never the seller's aid
@@ -138,6 +139,7 @@ export async function marketRoutes(req, env, url, ip) {
     }
     if (!contact_phone) return err(env, 'Add your phone number (like 0712345678). The buyer sees it only after they pay.');
     const blk = contactBlock(env, title, description, zone, condition); if (blk) return blk;
+    const botNo = spillBotBlock(title + ' ' + description); if (botNo) return err(env, botNo, 422);   // cc-fix13
     if (!isWholesaler(u) && (await activeListings(env, u.aid)) >= S.free_listing_limit) return err(env, `Free sellers can have ${S.free_listing_limit} items posted at once. Join the wholesalers community (KSh ${S.wholesale_fee}) to post as many as you want.`, 402);
     const live = (await getSettings(env)).listing_auto_publish === 1;
     const ins = await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip, ...(geo ? geo : {}),

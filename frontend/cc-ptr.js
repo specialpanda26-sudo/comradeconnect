@@ -11,14 +11,14 @@
   var st = document.createElement('style');
   st.textContent = 'html,body{overscroll-behavior-y:contain}'
     + '#ccptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 58px);width:52px;height:52px;margin-left:-26px;z-index:300;display:grid;place-items:center;border-radius:50%;'
-    + 'background:color-mix(in srgb,var(--bg,#000) 82%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--gb,rgba(255,255,255,.22));color:var(--fg,#fff);'
+    + 'color:var(--fg,#fff);'
     + 'opacity:0;transform:translateY(-80px);pointer-events:none;will-change:transform,opacity}'
     + '#ccptr.rel{transition:transform .28s cubic-bezier(.2,.9,.3,1),opacity .2s}'
     + '#ccptr svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}'
     + '#ccptr circle{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}'
-    + '#ccptr .t{opacity:.18}'
+    + '#ccptr .t{display:none}'
     + '#ccptr .lg{width:26px;height:19px;background:currentColor;-webkit-mask:var(--ptr-mask) center/contain no-repeat;mask:var(--ptr-mask) center/contain no-repeat}'
-    + '#ccptr.spin svg{animation:ccptr 0.9s linear infinite}'
+    + '#ccptr.spin svg{animation:ccptr 2.4s linear infinite}'
     + '@keyframes ccptr{to{transform:rotate(270deg)}}';
   document.head.appendChild(st);
 

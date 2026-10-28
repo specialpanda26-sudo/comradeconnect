@@ -1,0 +1,12 @@
+/* cc-buttons.css v1 (section 1 of 2): no white or black filter on buttons.
+   Loaded after cc-calm.css, so it wins without editing the older files. Nothing is removed, only switched off. */
+html body .tab::after,
+html body .tab.lit::after,
+html[data-theme="light"] body .tab::after,
+:root[data-theme="light"] .tab::after{content:none!important;display:none!important;background:none!important;mix-blend-mode:normal!important;opacity:0!important}
+html body :is(button,.btn,.ib,.act,.chip,.pill,.tab,.crd-tile,[role="button"]):not(:disabled){-webkit-tap-highlight-color:transparent!important;transition:opacity .15s ease,background-color .2s ease,border-color .2s ease,color .2s ease}
+html body :is(button,.btn,.ib,.act,.chip,.pill,.tab,.crd-tile,[role="button"]):not(:disabled):active{opacity:.82;filter:none!important;transform:none!important;box-shadow:none}
+@media (hover:none){
+  html body :is(.tab,.vt button,.chip,.pill,.act,.ib):not(.on):not(.liked):is(:hover,:focus,:focus-visible){background-image:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+}
+html body :is(.btn,.ib,.tab,.act,.chip,.pill,button):focus-visible{outline:2px solid rgba(255,138,61,.75)!important;outline-offset:3px}

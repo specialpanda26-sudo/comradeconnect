@@ -2,7 +2,7 @@
    The API itself is saved by cc-offline.js, not here.
    BUILD changes on every deploy (the push script stamps it), so each deploy gets a fresh cache and the old one is deleted.
    App files (html, js, css) are fetched fresh when online and only fall back to the saved copy when offline or very slow. */
-const BUILD = '20261028123552';
+const BUILD = '20261028125027';
 const SHELL = 'cc-shell-' + BUILD, RUNTIME = 'cc-runtime-v1';
 const CDN = ['https://cdn.tailwindcss.com/3.4.17', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];
 const APPFILE = /\.(?:js|css|html|json|webmanifest)$/i;

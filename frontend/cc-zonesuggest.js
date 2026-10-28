@@ -9,7 +9,7 @@
   var API = function () { return (typeof CC_API !== 'undefined' && CC_API) || ''; };
   var RADII = [[10, '10 m'], [100, '100 m'], [500, '500 m'], [1000, '1 km'], [2000, '2 km'], [5000, '5 km']];
   var STEPS = [100, 500, 1000, 2000, 5000, 10000, 20000];
-  var open = false, radius = 2000, memo = {}, pushed = false, root = null;
+  var open = false, here = null, radius = 2000, memo = {}, pushed = false, root = null;
 
   function ls(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
   function campus() { var c = ls('cc_campus'); if (!c || c === 'all') c = ls('cc_campus_home') || (c === 'all' ? '' : 'kirinyaga'); return c; }
@@ -70,6 +70,15 @@
     var rr = el('div', 'rr'), cu = el('div', 'cu'), list = el('div', 'ls'), foot = el('p', 'ft');
     var inp = el('input'); inp.type = 'number'; inp.min = '10'; inp.max = '20000'; inp.step = '10'; inp.inputMode = 'numeric'; inp.placeholder = 'Your own distance'; inp.setAttribute('aria-label', 'Distance in metres');
     var go = el('button', 'go', 'Show'); go.type = 'button';
+    var lb = el('button', 'go', 'Use my exact location'); lb.type = 'button'; lb.style.margin = '10px 0 0'; lb.style.width = '100%';
+    var lm = el('p', 'sub'); lm.hidden = true;
+    lb.onclick = function () {
+      if (here) { here = null; lb.textContent = 'Use my exact location'; lm.hidden = true; load(); return; }
+      if (!navigator.geolocation) { lm.hidden = false; lm.textContent = 'This phone cannot share its location.'; return; }
+      lm.hidden = false; lm.textContent = 'Finding where you are...';
+      navigator.geolocation.getCurrentPosition(function (p) { here = { lat: p.coords.latitude, lng: p.coords.longitude }; lb.textContent = 'Back to the university'; lm.textContent = 'Scanning around you (about ' + Math.round(p.coords.accuracy || 0) + ' m accurate).'; load(); },
+        function (e) { lm.textContent = e && e.code === 1 ? 'Location is blocked. Allow it in your browser settings.' : 'Could not get your location. Try again outside or near a window.'; }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+    };
     cu.appendChild(inp); cu.appendChild(el('span', '', 'metres')); cu.appendChild(go);
     function chips() {
       rr.textContent = '';
@@ -78,7 +87,7 @@
     function pick(r) { radius = Math.max(10, Math.min(20000, Math.round(r))); inp.value = ''; chips(); load(); }
     go.onclick = function () { var v = Number(inp.value); if (!isFinite(v) || v < 10) { inp.focus(); return; } pick(v); };
     inp.onkeydown = function (e) { if (e.key === 'Enter') go.onclick(); };
-    sh.appendChild(rr); sh.appendChild(cu); sh.appendChild(list); sh.appendChild(foot);
+    sh.appendChild(lb); sh.appendChild(lm); sh.appendChild(rr); sh.appendChild(cu); sh.appendChild(list); sh.appendChild(foot);
     root.appendChild(sh); document.body.appendChild(root);
     document.addEventListener('keydown', onKey);
     try { history.pushState({ ccz: 1 }, ''); pushed = true; } catch (e) { pushed = false; }
@@ -88,7 +97,7 @@
     function wave() { list.textContent = ''; var w = el('div', 'wv'); for (var i = 0; i < 5; i++) w.appendChild(el('i')); w.setAttribute('role', 'status'); w.setAttribute('aria-label', 'Finding zones'); list.appendChild(w); }
     function render(d) {
       list.textContent = ''; foot.textContent = '';
-      if (d.campus && d.campus.name) { h.textContent = 'Best zones near ' + (d.campus.short || d.campus.name); sub.textContent = 'Where most students live around ' + d.campus.name + ', within ' + fmt(d.radius_m) + '.'; }
+      if (d.campus && d.campus.name) { h.textContent = 'Best zones near ' + (d.campus.short || d.campus.name); sub.textContent = 'Top places where students live ' + (d.center && d.center.me ? 'around you' : 'around ' + d.campus.name) + ', within ' + fmt(d.radius_m) + '.'; }
       if (!d.zones.length) {
         var n = d.nearest_outside, step = n && STEPS.filter(function (s) { return s >= n.distance_m; })[0];
         var btn = null;
@@ -101,11 +110,11 @@
         it.appendChild(el('div', 'rk', String(i + 1)));
         it.appendChild(el('div', 'nm', z.name || 'Unnamed busy area'));
         var sc = el('div', 'sc', String(z.score)); sc.appendChild(el('small', '', 'student signal')); it.appendChild(sc);
-        it.appendChild(el('div', 'mt', (z.distance_m != null ? fmt(z.distance_m) + (z.direction ? ' ' + z.direction : '') + ' from campus' : 'Distance not known') + (z.existing ? ' \u00b7 already a zone' : '')));
+        it.appendChild(el('div', 'mt', (z.distance_m != null ? fmt(z.distance_m) + (z.direction ? ' ' + z.direction : '') + (d.center && d.center.me ? ' from you' : ' from campus') : 'Distance not known') + (z.existing ? ' \u00b7 already a zone' : '')));
         var bar = el('div', 'bar'), fill = el('i'); fill.style.width = Math.max(4, Math.min(100, z.score)) + '%'; bar.appendChild(fill); it.appendChild(bar);
         var e = z.evidence || {}, tg = el('div', 'tg'), add = function (n, one, many) { if (n > 0) tg.appendChild(el('b', '', n + ' ' + (n === 1 ? one : many))); };
         add(e.vacancies, 'vacancy post', 'vacancy posts'); add(e.hostel_reviews, 'hostel review', 'hostel reviews'); add(e.rooms, 'room post', 'room posts'); add(e.wifi, 'Wi-Fi spot', 'Wi-Fi spots'); add(e.services, 'service', 'services'); add(e.buildings, 'mapped home', 'mapped homes');
-        if (!tg.children.length) tg.appendChild(el('b', '', 'From the map'));
+        if (!tg.children.length) tg.appendChild(el('b', '', z.saved ? 'Saved zone' : 'From the map'));
         it.appendChild(tg);
         if (z.lat != null) { var a = el('a', 'mp', 'See on map'); a.href = 'https://www.google.com/maps/search/?api=1&query=' + z.lat + ',' + z.lng; a.target = '_blank'; a.rel = 'noopener noreferrer'; it.appendChild(a); }
         list.appendChild(it);
@@ -114,10 +123,10 @@
     }
     function load() {
       if (!id) { var b = el('button', 'go', 'Choose a university'); b.type = 'button'; b.onclick = function () { close(); if (window.ccChangeCampus) window.ccChangeCampus(); }; say('Pick one university first, then we can find its zones.', b); return; }
-      var key = id + ':' + radius; if (memo[key]) return render(memo[key]);
+      var key = id + ':' + radius + ':' + (here ? here.lat.toFixed(4) + ',' + here.lng.toFixed(4) : ''); if (memo[key]) return render(memo[key]);
       wave();
       var mine = radius;
-      fetch(API() + '/api/zones/suggest?campus=' + encodeURIComponent(id) + '&radius=' + radius).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); }).then(function (o) {
+      fetch(API() + '/api/zones/suggest?campus=' + encodeURIComponent(id) + '&radius=' + radius + '&limit=7' + (here ? '&lat=' + here.lat + '&lng=' + here.lng : '')).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); }).then(function (o) {
         if (!open || mine !== radius) return;
         if (!o.ok) { say((o.d && o.d.error) || 'Could not find zones right now.'); return; }
         memo[key] = o.d; render(o.d);

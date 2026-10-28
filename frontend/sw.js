@@ -68,7 +68,7 @@ self.addEventListener('fetch', (e) => {
   }
 });
 
-const SHARE_HOME = '/';   // where shared things open. Change to '/' once the new app is the main page.
+const SHARE_HOME = '/app/';   // where shared things open. Change to '/' once the new app is the main page.
 async function ccShare(req) {
   try {
     const fd = await req.formData(), file = fd.get('media'), c = await caches.open('cc-share');

@@ -15,7 +15,7 @@ test('native sheet: Credential Manager with GetGoogleIdOption and the Web client
 });
 
 test('the same Web client ID is used by the website, the app config and the plugin', () => {
-  for (const f of ['frontend/config.js']) {
+  for (const f of ['frontend/config.js', 'frontend/app/config.js']) {
     const c = R(f);
     assert.ok(c.includes("CC_GOOGLE_ID = '" + WEB + "'"), f + ' has a different Web client ID');
     assert.ok(/CC_NATIVE_GOOGLE\s*=\s*true/.test(c), f + ' must turn the native sheet on');

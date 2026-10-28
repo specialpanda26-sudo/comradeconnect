@@ -9,17 +9,9 @@ export const LF_CATS = ['National ID', 'Student ID', 'Phone', 'ATM card', 'Walle
 export const LF_PLACES = ['Kerugoya town', 'Kutus', 'Campus main gate', 'Library', 'Lecture halls', 'Cafeteria', 'Hostels', 'Matatu stage', 'Market', 'Other'];
 const hasBigNumber = (t) => /\d{6,}/.test(String(t || '').replace(/[\s\-.]/g, ''));
 const today = () => new Date().toISOString().slice(0, 10);
-const inKenya = (lat, lng) => lat > -5 && lat < 5.6 && lng > 33.5 && lng < 42;
-// Optional map pin. Returns {} when none was sent, an error text when it is not a real place in Kenya, or {lat, lng}.
-const pinOf = (b) => {
-  if (b.lat == null || b.lng == null || b.lat === '' || b.lng === '') return {};
-  const lat = Number(b.lat), lng = Number(b.lng);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !inKenya(lat, lng)) return 'That pin is not in Kenya. Move the pin or leave it off';
-  return { lat: +lat.toFixed(5), lng: +lng.toFixed(5) };
-};
 
 const pub = (r, me, ver) => ({
-  id: r.id, campus: r.campus, kind: r.kind, category: r.category, title: r.title, details: r.details || '', place: r.place || '', lat: r.lat ?? null, lng: r.lng ?? null,
+  id: r.id, campus: r.campus, kind: r.kind, category: r.category, title: r.title, details: r.details || '', place: r.place || '',
   happenedOn: r.happened_on, status: r.status, createdAt: Date.parse(r.created_at), resolvedAt: r.resolved_at ? Date.parse(r.resolved_at) : null,
   mine: !!me && me.aid === r.aid, verified: ver.has(r.aid),
 });
@@ -59,9 +51,8 @@ export async function lostFoundRoutes(req, env, url, ip) {
     if (hasBigNumber(title) || hasBigNumber(details) || hasBigNumber(place)) return err(env, 'Do not post ID, card or serial numbers. Keep them to prove the owner in the chat.');
     let on = String(b.happened_on || '').slice(0, 10) || today();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(on) || on > today() || on < new Date(Date.now() - 60 * DAY).toISOString().slice(0, 10)) return err(env, 'Pick a date within the last 60 days');
-    const pin = pinOf(b); if (typeof pin === 'string') return err(env, pin);
     if (!(await throttle(env, ip, 'lostfound', u.aid, 6, 24))) return tooMany(env);
-    const r = await one(await post(env, 'lost_found', { aid: u.aid, campus: campusOrHome(req), kind, category, title, details: details || null, place: place || null, happened_on: on, ip, ...pin }));
+    const r = await one(await post(env, 'lost_found', { aid: u.aid, campus: campusOrHome(req), kind, category, title, details: details || null, place: place || null, happened_on: on, ip }));
     if (!r) return err(env, 'Could not save the post. Try again.', 500);
     const ver = new Set(u.verified || u.student_verified ? [u.aid] : []);
     return json(env, pub(r, u, ver), 201);

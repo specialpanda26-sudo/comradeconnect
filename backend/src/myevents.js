@@ -6,14 +6,6 @@ import { announceEvent } from './push.js';
 import { getSettings } from './settings.js';
 import { campusRow } from './campus.js';
 
-const inKenya = (lat, lng) => lat > -5 && lat < 5.6 && lng > 33.5 && lng < 42;
-// Optional map pin. Returns {} when none was sent, an error text when it is not a real place in Kenya, or {lat, lng}.
-const pinOf = (b) => {
-  if (b.lat == null || b.lng == null || b.lat === '' || b.lng === '') return {};
-  const lat = Number(b.lat), lng = Number(b.lng);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !inKenya(lat, lng)) return 'That pin is not in Kenya. Move the pin or leave it off';
-  return { lat: +lat.toFixed(5), lng: +lng.toFixed(5) };
-};
 const realDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(new Date(d + 'T00:00:00Z')) && new Date(d + 'T00:00:00Z').toISOString().slice(0, 10) === d;
 // The scan key is derived from the event id and the server secret, so nothing extra is stored.
 export const CATS = ['Party', 'Music', 'Sports', 'Academic', 'Club', 'Faith', 'Other'];
@@ -38,14 +30,13 @@ export async function myEventRoutes(req, env, url, ip) {
     const price = freeEv ? null : int(b.ticket_price, 1, 20000); if (!freeEv && !price) return err(env, 'Ticket price: KSh 1 to 20,000, or leave it empty for a free event');
     const time = String(b.time || ''); if (time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return err(env, 'Pick a valid start time');
     const category = CATS.includes(b.category) ? b.category : 'Other';
-    const pin = pinOf(b); if (typeof pin === 'string') return err(env, pin);
     let capacity = null;
     if (b.capacity !== undefined && b.capacity !== '' && b.capacity !== null) { capacity = int(b.capacity, 1, 5000); if (!capacity) return err(env, 'Capacity: 1 to 5,000 people'); }
     const blk = contactBlock(env, title, venue, details); if (blk) return blk;
     const open = await rows(await sb(env, `events?select=id&owner_aid=eq.${enc(u.aid)}&hidden=eq.false&starts_on=gte.${today}`));
     if (open.length >= 5) return err(env, 'You already have 5 upcoming events. Wait for one to finish or cancel one.');
     if (!(await throttle(env, ip, 'event_create', u.aid, 10))) return tooMany(env);   // counted only for real attempts, so typos do not lock a host out
-    const [ev] = await rows(await post(env, 'events', { ...campusRow(req), title, starts_on: date, starts_at: time || null, category, venue, details: details || null, ticket_price: price, capacity: price ? capacity : null, owner_aid: u.aid, ...pin }, 'return=representation'));
+    const [ev] = await rows(await post(env, 'events', { ...campusRow(req), title, starts_on: date, starts_at: time || null, category, venue, details: details || null, ticket_price: price, capacity: price ? capacity : null, owner_aid: u.aid }, 'return=representation'));
     if (!ev) return err(env, 'Could not create the event. Try again.', 500);
     await announceEvent(env, u.aid, title);   // phone notification to everyone who allowed "Events"
     return json(env, { id: ev.id, free: !price, scan_path: price ? `/scan.html?e=${ev.id}&k=${await scanKey(env, ev.id)}` : null }, 201);

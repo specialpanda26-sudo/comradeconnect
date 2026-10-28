@@ -82,8 +82,8 @@ def main():
         vendor(OUT / 'app' / 'index.html', '../')
 
     # APP_ENTRY: which app opens when the Android app starts. empty or new = the new app, classic = the old one.
-    entry = (os.environ.get('APP_ENTRY') or 'classic').strip().lower()
-    if entry == 'new' and (OUT / 'app' / 'index.html').exists():
+    entry = (os.environ.get('APP_ENTRY') or 'new').strip().lower()
+    if entry != 'classic' and (OUT / 'app' / 'index.html').exists():
         (OUT / 'index.html').rename(OUT / 'classic.html')
         (OUT / 'index.html').write_text(
             '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
@@ -93,7 +93,7 @@ def main():
             '<body><noscript><a href="app/index.html" style="color:#fff">Open Comrade Connect</a></noscript></body></html>', encoding='utf-8')
         print('entry    -> new app (app/index.html); the old page is kept as classic.html')
     else:
-        print('entry    -> full app (index.html)')
+        print('entry    -> classic app (index.html)')
 
     # the scrolling background video: 1080p only
     sb = OUT / 'cc-scrollbg.js'

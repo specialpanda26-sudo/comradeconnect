@@ -35,7 +35,7 @@
         + '<p>Your account and saved data stay as they are. When the download finishes, open it and tap Install.</p>';
       c.querySelector('#ccupd-go').onclick = function () { try { P.Browser.open({ url: state.url }); } catch (e) { location.href = state.url; } };
     } else {
-      c.innerHTML = '<b>Comrade Connect is up to date</b><p>' + esc(state.msg || (state.cur ? 'Version ' + state.cur : 'Checking for updates...')) + '</p>'
+      c.innerHTML = '<b>' + (/offline/i.test(state.msg) ? 'You are offline' : 'Comrade Connect is up to date') + '</b><p>' + esc(state.msg || (state.cur ? 'Version ' + state.cur : 'Checking for updates...')) + '</p>'
         + '<div class="r"><button type="button" class="g" id="ccupd-chk"' + (state.checking ? ' disabled' : '') + '>' + (state.checking ? 'Checking...' : 'Check for updates') + '</button></div>';
       c.querySelector('#ccupd-chk').onclick = function () { check(true); };
     }

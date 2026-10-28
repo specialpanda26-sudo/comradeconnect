@@ -1,7 +1,9 @@
-/* cc-offline.js: the app never goes blank without data.
+/* cc-offline.js v4: the app never goes blank without data.
    1) Every read from the server is saved on the phone. No data? The saved copy is shown instead.
-   2) A slow or sleeping server falls back to the saved copy after 8 seconds.
+   2) A slow or sleeping server falls back to the saved copy after 5 seconds.
    3) A service worker keeps the app screens, fonts and pictures for offline use.
+   4) v4: one calm glass notice says "offline" (or "server slow") for as long as it is true, it appears the moment the
+      phone goes offline, and it goes away by itself when the connection is back. No second toast, no page reload loop.
    Loaded right after the fetch shim in index.html, so it sits on top of the sign-in headers. */
 (function () {
   'use strict';
@@ -10,28 +12,49 @@
   var CACHE = 'cc-api-v2', MAX = 160;
   var SKIP = /^\/api\/(admin|auth|live|pay|payments|callback|upload|media\/upload)/;
   var prev = window.fetch, hasCaches = 'caches' in window;
-  var bar = null, hideT = 0;
+  var bar = null, hideT = 0, mode = '';
+  var OFFLINE_TOAST = /^You are offline\. Check your internet connection\.?$/;
 
   function css() {
     if (document.getElementById('ccoff-css')) return;
     var s = document.createElement('style'); s.id = 'ccoff-css';
-    s.textContent = '#ccoff{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:9998;display:flex;align-items:center;gap:10px;padding:9px 12px 9px 16px;border-radius:999px;background:var(--fg,#fff);color:var(--bg,#101422);font:600 12.5px Poppins,system-ui,sans-serif;box-shadow:0 8px 30px rgba(16,20,34,.45);max-width:92vw}#ccoff button{border:0;border-radius:999px;padding:6px 12px;background:var(--bg,#101422);color:var(--fg,#fff);font:600 12px Poppins,system-ui,sans-serif}';
+    s.textContent = '#ccoff{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:9998;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;border-radius:999px;background:color-mix(in srgb,var(--bg,#000) 55%,transparent);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);border:1px solid var(--gb,rgba(255,255,255,.22));color:var(--fg,#fff);font:600 12.5px Poppins,system-ui,sans-serif;box-shadow:var(--sh,0 8px 30px rgba(0,0,0,.3));max-width:92vw;animation:ccoffin .25s ease both}'
+      + '@keyframes ccoffin{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}'
+      + '#ccoff i{width:8px;height:8px;border-radius:50%;background:#ff8a3d;flex:none}'
+      + '#ccoff button{border:1px solid var(--gb,rgba(255,255,255,.3));border-radius:999px;padding:6px 12px;background:transparent;color:inherit;font:700 12px Poppins,system-ui,sans-serif;cursor:pointer}';
     (document.head || document.documentElement).appendChild(s);
   }
-  function show() {
-    clearTimeout(hideT);
+  function text(m) { return m === 'slow' ? 'Server is slow. Showing saved data' : 'You are offline. Showing saved data'; }
+  function show(m) {
+    m = m || 'offline'; clearTimeout(hideT);
     var go = function () {
       css();
-      if (bar && bar.isConnected) return;
+      if (bar && bar.isConnected) {                              // already there: only the wording and the button can change
+        if (mode !== m) { mode = m; bar.querySelector('span').textContent = text(m); bar.querySelector('button').style.display = m === 'slow' ? '' : 'none'; }
+        return;
+      }
+      mode = m;
       bar = document.createElement('div'); bar.id = 'ccoff'; bar.setAttribute('role', 'status');
-      bar.innerHTML = '<span>Offline. Showing saved data</span><button type="button">Retry</button>';
-      bar.querySelector('button').onclick = function () { location.reload(); };
+      bar.innerHTML = '<i></i><span></span><button type="button">Retry</button>';
+      bar.querySelector('span').textContent = text(m);
+      var b = bar.querySelector('button'); b.style.display = m === 'slow' ? '' : 'none';   // offline: nothing to retry until the connection is back
+      b.onclick = function () { location.reload(); };
       document.body.appendChild(bar);
     };
     if (document.body) go(); else document.addEventListener('DOMContentLoaded', go);
   }
-  function hide() { clearTimeout(hideT); hideT = setTimeout(function () { if (bar) { bar.remove(); bar = null; } }, 400); }
+  function hide() { clearTimeout(hideT); hideT = setTimeout(function () { if (navigator.onLine === false) return; if (bar) { bar.remove(); bar = null; mode = ''; } }, 400); }
+
+  window.addEventListener('offline', function () { show('offline'); });
   window.addEventListener('online', hide);
+  if (navigator.onLine === false) show('offline');                // opened with no connection: say so straight away
+
+  // The page's safety net also toasts "You are offline" on the same event. The notice above already says it, so that toast is dropped.
+  document.addEventListener('DOMContentLoaded', function () {
+    var t = document.getElementById('toast'); if (!t || !window.MutationObserver) return;
+    new MutationObserver(function () { if (OFFLINE_TOAST.test((t.textContent || '').trim()) && bar) t.classList.remove('on'); })
+      .observe(t, { attributes: true, attributeFilter: ['class'], childList: true, characterData: true, subtree: true });
+  });
 
   function keyFor(u) {
     var a = window.ccAuth && window.ccAuth();
@@ -60,11 +83,11 @@
           if (r && r.ok) { c.put(k, r.clone()).then(function () { trim(c); }, function () {}); hide(); }
           return r;
         });
-        if (!hit) return net.catch(function (e) { if (navigator.onLine === false) show(); throw e; });
+        if (!hit) return net.catch(function (e) { if (navigator.onLine === false) show('offline'); throw e; });
         var wait = new Promise(function (res) { setTimeout(function () { res(null); }, navigator.onLine === false ? 0 : 5000); });
         return Promise.race([net.catch(function () { return null; }), wait]).then(function (r) {
           if (r && (r.ok || r.status < 500)) return r;
-          show(); return hit;                                    // no data, server asleep or failing: the saved copy
+          show(navigator.onLine === false ? 'offline' : 'slow'); return hit;     // no data, server asleep or failing: the saved copy
         });
       });
     }, function () { return prev.apply(self, args); });

@@ -1,0 +1,4 @@
+/* cc-fix12.css: the "Which university are you in?" search box keeps its full size (it was being squashed thin by the long list below it). Load last. */
+html body #ccuniv input{flex:none!important;height:52px!important;min-height:52px!important;box-sizing:border-box!important;font-size:16px!important;margin-bottom:12px!important;-webkit-appearance:none;appearance:none}
+html body #ccuniv .loc{flex:none!important;min-height:52px!important}
+html body #ccuniv .cd>h2,html body #ccuniv .cd>p{flex:none}

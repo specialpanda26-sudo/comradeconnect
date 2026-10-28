@@ -3305,7 +3305,7 @@ async function loadEvents(){
   var seen={};
   var map=function(e){var m=mine[e.id];seen[e.id]=1;
    return{uid:e.id,t:e.title,date:e.date,time:e.time,d:dlabel(e.date,e.time),p:(e.venue||'Campus')+(e.organizer?' · '+e.organizer:''),venue:e.venue,details:e.details,
-    price:e.ticket_price||0,left:e.left,cap:e.capacity,mine:!!m,sold:m?m.sold:undefined,scanned:m?m.scanned:undefined,earn:m?m.you_earn:undefined,door:m?m.scan_path:undefined}};
+    lat:e.lat,lng:e.lng,price:e.ticket_price||0,left:e.left,cap:e.capacity,mine:!!m,sold:m?m.sold:undefined,scanned:m?m.scanned:undefined,earn:m?m.you_earn:undefined,door:m?m.scan_path:undefined}};
   var list=(d.events||[]).filter(function(e){return!HIDEV[e.id]}).map(map);
   Object.keys(mine).forEach(function(id){if(!seen[id]){var e=mine[id];list.push(map({id:e.id,title:e.title,date:e.date,time:e.time,venue:e.venue,ticket_price:e.ticket_price,capacity:e.capacity}))}});
   SEC.events.items.length=0;list.forEach(function(x){SEC.events.items.push(x)});
@@ -3864,4 +3864,4 @@ async function take(){
 take();
 })();
 </script>
-<script src="cc-maps.js?v=2"></script><script src="cc-hostels-post.js?v=1"></script><script src="cc-push.js?v=1"></script><script src="cc-proto-fix.js?v=1" defer></script></body></html>
+<script src="cc-maps.js?v=2"></script><script src="cc-hostels-post.js?v=1"></script><script src="cc-places.js?v=1"></script><script src="cc-push.js?v=1"></script><script src="cc-proto-fix.js?v=1" defer></script></body></html>

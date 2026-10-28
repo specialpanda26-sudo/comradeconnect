@@ -48,3 +48,6 @@
 .cchv-o{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line,rgba(127,127,127,.25))}
 .cchv-o small{display:block;opacity:.7;margin-top:2px}
 .cchv-b{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Land spots, Lost and Found, Events pins */
+.ccp.sp{background:#3f7d6e}.ccp.lo{background:#c0392b}.ccp.fo{background:#2e7d4f}.ccp.ev{background:#7b5cc4}

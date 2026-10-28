@@ -44,6 +44,9 @@ html body #ccrst a{font-weight:600;text-decoration:underline;text-underline-offs
 html body #ccrst .fld input{background:rgba(255,255,255,.62)!important;border:1px solid rgba(22,19,15,.14)!important;border-radius:16px!important;color:#16130f!important}
 html body #ccrst .fld input:focus{border-color:#e8744f!important;background:#fff!important;outline:0}
 :root[data-theme="dark"] body #ccrst .fld input{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.16)!important;color:#f6efe9!important}
-html body #ccrst .btn.p{background:linear-gradient(120deg,#16130f,#4a423b)!important;color:#fff!important;border:0!important;border-radius:16px!important;font:600 15px Poppins,system-ui,sans-serif;box-shadow:0 10px 22px -8px rgba(22,19,15,.55)}
-html body #ccrst .btn.g{background:rgba(22,19,15,.06)!important;color:inherit!important;border:1px solid rgba(22,19,15,.14)!important;border-radius:16px!important;font:600 15px Poppins,system-ui,sans-serif}
+html body #ccrst .btn.p{background:linear-gradient(120deg,#16130f,#4a423b)!important;color:#fff!important;border:0!important;border-radius:999px!important;font:600 15px Poppins,system-ui,sans-serif;box-shadow:0 10px 22px -8px rgba(22,19,15,.55)}
+html body #ccrst .btn.g{background:rgba(22,19,15,.06)!important;color:inherit!important;border:1px solid rgba(22,19,15,.14)!important;border-radius:999px!important;font:600 15px Poppins,system-ui,sans-serif}
 :root[data-theme="dark"] body #ccrst .btn.g{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.16)!important}
+
+/* Sign in again: every button is a curved pill, same as the rest of the site */
+html body #ccrst .btn.btn.btn,html body #ccrst button.ccpk-in.ccpk-in,html body #ccrst .two>.btn.btn{border-radius:999px!important;min-height:52px}

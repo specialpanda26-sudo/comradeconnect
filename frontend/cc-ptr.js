@@ -1,4 +1,4 @@
-/* cc-ptr.js v1: swipe down from the top of any tab to refresh the app.
+/* cc-ptr.js v2 (scroll + centering fix): swipe down from the top of any tab to refresh the app.
    A plain circle with the Comrade Connect logo in the middle: black in light mode, white in dark mode (both follow the theme colour).
    Pull until the circle fills, let go, and the app reloads on the same tab. Nothing else is touched. */
 (function () {
@@ -12,12 +12,12 @@
   st.textContent = 'html,body{overscroll-behavior-y:contain}'
     + '#ccptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 58px);width:52px;height:52px;margin-left:-26px;z-index:300;display:grid;place-items:center;border-radius:50%;'
     + 'color:var(--fg,#fff);'
-    + 'opacity:0;transform:translateY(-80px);pointer-events:none;will-change:transform,opacity}'
+    + 'opacity:0;transform:translateY(-80px);pointer-events:none}'
     + '#ccptr.rel{transition:transform .28s cubic-bezier(.2,.9,.3,1),opacity .2s}'
     + '#ccptr svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}'
     + '#ccptr circle{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}'
     + '#ccptr .t{display:none}'
-    + '#ccptr .lg{width:26px;height:19px;background:currentColor;-webkit-mask:var(--ptr-mask) center/contain no-repeat;mask:var(--ptr-mask) center/contain no-repeat}'
+    + '#ccptr .ptrlg{position:absolute;left:50%;top:50%;width:26px;height:19px;margin:0!important;padding:0;transform:translate(-50%,-50%);display:block!important;background:currentColor;-webkit-mask:var(--ptr-mask) center/contain no-repeat;mask:var(--ptr-mask) center/contain no-repeat}'
     + '#ccptr.spin svg{animation:ccptr 2.4s linear infinite}'
     + '@keyframes ccptr{to{transform:rotate(270deg)}}';
   document.head.appendChild(st);
@@ -34,12 +34,12 @@
   function build() {
     if (el) return;
     el = document.createElement('div'); el.id = 'ccptr'; el.setAttribute('aria-hidden', 'true');
-    el.innerHTML = '<svg viewBox="0 0 52 52"><circle class="t" cx="26" cy="26" r="22"/><circle class="p" cx="26" cy="26" r="22"/></svg><span class="lg"></span>';
+    el.innerHTML = '<svg viewBox="0 0 52 52"><circle class="t" cx="26" cy="26" r="22"/><circle class="p" cx="26" cy="26" r="22"/></svg><span class="ptrlg"></span>';
     prog = el.querySelector('.p'); prog.style.strokeDasharray = C + ' ' + C; prog.style.strokeDashoffset = C;
     document.body.appendChild(el);
   }
   function setMask() {
-    var m = maskOf(); if (m) el.style.setProperty('--ptr-mask', m); else el.querySelector('.lg').style.display = 'none';
+    var m = maskOf(); if (m) el.style.setProperty('--ptr-mask', m); else el.querySelector('.ptrlg').style.display = 'none';
   }
   function top() { var s = document.scrollingElement || document.documentElement; return (s.scrollTop || window.pageYOffset || 0) <= 0; }
   function allowed(t) {
@@ -57,7 +57,7 @@
     el.style.opacity = Math.min(1, d / 28);
     el.style.transform = 'translateY(' + (shift - 70) + 'px) scale(' + (0.7 + 0.3 * p) + ')';
     prog.style.strokeDashoffset = C * (1 - p);
-    el.querySelector('.lg').style.opacity = 0.45 + 0.55 * p;
+    el.querySelector('.ptrlg').style.opacity = 0.45 + 0.55 * p;
   }
   function reset() {
     el.classList.add('rel'); el.classList.remove('spin'); el.style.opacity = 0; el.style.transform = 'translateY(-80px)';
@@ -72,30 +72,42 @@
     setTimeout(function () { location.reload(); }, 850);
   }
 
+  // Every listener is passive, so the browser never waits for this script before it scrolls.
+  // At the very top there is nothing to scroll, and "overscroll-behavior-y:contain" (set above) stops the
+  // browser's own pull-to-refresh, so the pull animation does not need to cancel the touch.
+  function stop() { if (on) { on = false; reset(); } track = false; dist = 0; }
+  function end() {
+    var go = on && dist >= TH; track = false;
+    if (!on) return; on = false;
+    if (go) refresh(); else reset();
+  }
   document.addEventListener('touchstart', function (e) {
+    if (on) stop();                                           // a pull that never got its "touchend" (the page re-drew under the finger)
     track = on = false; dist = 0;
     if (busy || e.touches.length !== 1 || !top() || !allowed(e.target)) return;
     build(); y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; track = true;
+    var t = e.target;                                         // a touch that ends on a removed element does not reach "document", so listen on the element itself too
+    if (t && t.addEventListener) {
+      t.addEventListener('touchend', end, { once: true, passive: true });
+      t.addEventListener('touchcancel', stop, { once: true, passive: true });
+    }
   }, { passive: true });
   document.addEventListener('touchmove', function (e) {
     if (!track || busy) return;
+    if (e.touches.length !== 1) { stop(); return; }
     var dy = e.touches[0].clientY - y0, dx = e.touches[0].clientX - x0;
     if (!on) {
       if (dy < 0 || Math.abs(dx) > Math.abs(dy)) { if (dy < -6 || Math.abs(dx) > 12) track = false; return; }
       if (dy < 10 || !top()) return;
       on = true; el.classList.remove('rel'); setMask();
     }
-    if (!top()) { on = false; track = false; reset(); return; }
-    dist = dy; if (e.cancelable) e.preventDefault(); draw(dist);
-  }, { passive: false });
-  function end() {
-    if (!track && !on) return;
-    var go = on && dist >= TH; track = false;
-    if (!on) return; on = false;
-    if (go) refresh(); else reset();
-  }
+    if (!top()) { stop(); return; }
+    dist = dy; draw(dist);
+  }, { passive: true });
   document.addEventListener('touchend', end, { passive: true });
-  document.addEventListener('touchcancel', function () { if (on) { on = false; track = false; reset(); } }, { passive: true });
+  document.addEventListener('touchcancel', stop, { passive: true });
+  document.addEventListener('visibilitychange', function () { if (document.hidden && !busy) stop(); });
+  window.addEventListener('pagehide', function () { if (!busy) stop(); });
 
   // after the reload, come back to the tab you were on
   var back = ''; try { back = sessionStorage.getItem(KEY) || ''; sessionStorage.removeItem(KEY); } catch (e) {}

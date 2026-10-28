@@ -339,7 +339,7 @@
 
   async function enter(code, o) {
     if (R) return;
-    var room = document.createElement('div'); room.id = 'mbg-room'; room.setAttribute('role', 'dialog'); room.setAttribute('aria-modal', 'true'); room.setAttribute('aria-label', 'Mbogi Talk meeting');
+    var room = document.createElement('div'); room.id = 'mbg-room'; room.classList.add('ccx-owned'); room.setAttribute('role', 'dialog'); room.setAttribute('aria-modal', 'true'); room.setAttribute('aria-label', 'Mbogi Talk meeting');
     room.innerHTML = '<div class="mbg-load"><div><b>Joining...</b><p class="sub" style="margin:6px 0 0;color:rgba(255,255,255,.7)">Allow the camera and microphone if your phone asks.</p></div></div>'
       + '<header class="mbg-top"><div class="mbg-ti"><b></b><button type="button" class="mbg-code" aria-label="Copy the meeting code"><span></span>' + ico('copy') + '</button></div><button type="button" class="mbg-cnt" aria-label="People in this meeting">' + ico('users') + '<b>1</b></button></header>'
       + '<main class="mbg-grid" aria-live="polite"></main><footer class="mbg-bar"></footer>';

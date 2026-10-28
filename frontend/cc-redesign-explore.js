@@ -154,8 +154,6 @@ function frame(){
   var l=document.createElement('div');v.insertBefore(d,h);l.appendChild(h);if(p&&p.parentNode===v)l.appendChild(p);
   if(p)p.textContent='Everything around campus';
   d.appendChild(l);
-  var b=document.createElement('button');b.type='button';b.className='ib';b.setAttribute('aria-label','Search');b.innerHTML='<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">'+P.search+'</svg>';
-  b.onclick=function(){var f=$('#fnd');if(f)f.click()};d.appendChild(b);
  }
  if(!$('.crd-sh',v)){
   var xb=$('#xbody',v);if(!xb)return;

@@ -1,4 +1,4 @@
-/* cc-ptr.js v2 (scroll + centering fix): swipe down from the top of any tab to refresh the app.
+/* cc-ptr.js v3 (scroll + centering fix): swipe down from the top of any tab to refresh the app.
    A plain circle with the Comrade Connect logo in the middle: black in light mode, white in dark mode (both follow the theme colour).
    Pull until the circle fills, let go, and the app reloads on the same tab. Nothing else is touched. */
 (function () {
@@ -9,8 +9,7 @@
   var el, ring, prog, lg, y0 = 0, x0 = 0, dist = 0, on = false, track = false, busy = false;
 
   var st = document.createElement('style');
-  st.textContent = 'html,body{overscroll-behavior-y:contain}'
-    + '#ccptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 58px);width:52px;height:52px;margin-left:-26px;z-index:300;display:grid;place-items:center;border-radius:50%;'
+  st.textContent = '#ccptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 58px);width:52px;height:52px;margin-left:-26px;z-index:300;display:grid;place-items:center;border-radius:50%;'
     + 'color:var(--fg,#fff);'
     + 'opacity:0;transform:translateY(-80px);pointer-events:none}'
     + '#ccptr.rel{transition:transform .28s cubic-bezier(.2,.9,.3,1),opacity .2s}'
@@ -72,20 +71,24 @@
     setTimeout(function () { location.reload(); }, 850);
   }
 
+  // The browser's own pull-to-refresh is switched off only while a pull at the very top is happening.
+  // Nothing is set on html/body the rest of the time, so normal scrolling is never touched.
+  function lock() { try { document.documentElement.style.overscrollBehaviorY = 'contain'; } catch (e) {} }
+  function unlock() { try { document.documentElement.style.overscrollBehaviorY = ''; } catch (e) {} }
+
   // Every listener is passive, so the browser never waits for this script before it scrolls.
-  // At the very top there is nothing to scroll, and "overscroll-behavior-y:contain" (set above) stops the
-  // browser's own pull-to-refresh, so the pull animation does not need to cancel the touch.
-  function stop() { if (on) { on = false; reset(); } track = false; dist = 0; }
+  // At the very top there is nothing to scroll, so the pull animation does not need to cancel the touch.
+  function stop() { if (on) { on = false; reset(); } track = false; dist = 0; unlock(); }
   function end() {
-    var go = on && dist >= TH; track = false;
+    var go = on && dist >= TH; track = false; unlock();
     if (!on) return; on = false;
     if (go) refresh(); else reset();
   }
   document.addEventListener('touchstart', function (e) {
     if (on) stop();                                           // a pull that never got its "touchend" (the page re-drew under the finger)
-    track = on = false; dist = 0;
+    track = on = false; dist = 0; unlock();
     if (busy || e.touches.length !== 1 || !top() || !allowed(e.target)) return;
-    build(); y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; track = true;
+    build(); y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; track = true; lock();
     var t = e.target;                                         // a touch that ends on a removed element does not reach "document", so listen on the element itself too
     if (t && t.addEventListener) {
       t.addEventListener('touchend', end, { once: true, passive: true });
@@ -97,7 +100,7 @@
     if (e.touches.length !== 1) { stop(); return; }
     var dy = e.touches[0].clientY - y0, dx = e.touches[0].clientX - x0;
     if (!on) {
-      if (dy < 0 || Math.abs(dx) > Math.abs(dy)) { if (dy < -6 || Math.abs(dx) > 12) track = false; return; }
+      if (dy < 0 || Math.abs(dx) > Math.abs(dy)) { if (dy < -6 || Math.abs(dx) > 12) { track = false; unlock(); } return; }
       if (dy < 10 || !top()) return;
       on = true; el.classList.remove('rel'); setMask();
     }

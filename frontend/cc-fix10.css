@@ -1,0 +1,20 @@
+/* cc-fix10.css: Alerts sheet no longer overlaps, payment steps show ticks. Load last. */
+html body div.ccn.ccn-pf .bx{overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:block!important}
+html body div.ccn.ccn-pf .bx>.hd,html body div.ccn.ccn-pf .bx>.pf-sub,html body div.ccn.ccn-pf .bx>.pf-st,html body div.ccn.ccn-pf .bx>.pc-wrap{flex:none}
+html body div.ccn.ccn-pf .ls{flex:none!important;height:auto!important;max-height:none!important;min-height:0;overflow:visible!important;display:flex;flex-direction:column;gap:10px}
+html body div.ccn.ccn-pf .ls>.pf-row{flex:none}
+html body div.ccn.ccn-pf .pc-wrap{position:relative;clear:both;margin:18px 2px 24px!important;padding-top:14px}
+html body div.ccn.ccn-pf .pc-wrap .btn{display:block;width:100%;position:relative}
+html body div.ccn.ccn-pf .pc-out{padding-bottom:12px}
+html body .cs-l .cs-s .cs-i::after{
+  content:""!important;display:block!important;box-sizing:content-box!important;width:5px!important;height:10px!important;
+  border:solid var(--gb,rgba(120,110,100,.5))!important;border-width:0 2.5px 2.5px 0!important;border-radius:0!important;
+  background:none!important;transform:rotate(45deg) translate(-1px,-1px)!important;animation:none!important;opacity:1;color:inherit;font-size:0}
+html body .cs-l .cs-s.a .cs-i{border-color:#ee7a4f!important;border-top-color:#ee7a4f!important;background:transparent!important;animation:cs-pulse 1.6s ease-out infinite}
+html body .cs-l .cs-s.a .cs-i::after{border-color:#ee7a4f!important;animation:cc10-tick 1.2s ease-in-out infinite!important}
+html body .cs-l .cs-s.d .cs-i{background:var(--ink,#16130f)!important;border-color:var(--ink,#16130f)!important}
+html body .cs-l .cs-s.d .cs-i::after{border-color:var(--inkfg,#fff)!important;animation:cc10-pop .35s ease-out both!important}
+html body .cs-l .cs-s.f .cs-i::after{content:"\00d7"!important;width:auto!important;height:auto!important;border:0!important;transform:none!important;color:var(--bad,#d8493e)!important;font-size:20px!important;line-height:1;font-weight:700}
+@keyframes cc10-tick{0%,100%{opacity:.25;transform:rotate(45deg) translate(-1px,-1px) scale(.7)}50%{opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1.05)}}
+@keyframes cc10-pop{from{opacity:0;transform:rotate(45deg) translate(-1px,-1px) scale(0)}to{opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1)}}
+@media (prefers-reduced-motion:reduce){html body .cs-l .cs-s.a .cs-i::after{animation:none!important;opacity:1}}

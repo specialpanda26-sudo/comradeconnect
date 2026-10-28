@@ -13,7 +13,7 @@ test('native notifications: channel id stays cc_alerts, group + summary + Messag
 
 test('native notifications: the service only builds our own data-only messages and passes the rest to the Capacitor plugin', () => {
   const j = R('android-wrapper/native/CCMessagingService.java');
-  assert.ok(j.includes('"2".equals(d.get("cc"))') && j.includes('!CCNotifier.foreground'));
+  assert.ok(j.includes('"2".equals(d.get("cc"))') && !j.includes('"2".equals(d.get("cc")) && !CCNotifier.foreground'));
   assert.ok(j.includes('PushNotificationsPlugin') && j.includes('sendRemoteMessage') && j.includes('onNewToken'));
 });
 

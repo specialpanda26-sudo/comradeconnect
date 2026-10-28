@@ -121,7 +121,7 @@ export async function pushTest(env, aid) {
 
 // ---- What each person wants to hear about (Me > Notifications, or the Alerts button in the bell). Everything is on until they switch it off. ----
 export const PUSH_CATS = ['comments', 'live', 'events', 'orders', 'wallet', 'messages', 'updates'];
-const KIND_CAT = { comment: 'comments', reel_comment: 'comments', clip_comment: 'comments', like_milestone: 'comments', story_view: 'comments', order: 'orders', listing: 'orders', payout: 'wallet', /* cc-fix1 */ gift: 'wallet', reward: 'wallet', referral: 'wallet', message: 'messages', payment: 'wallet', club: 'orders' };
+const KIND_CAT = { comment: 'comments', reel_comment: 'comments', clip_comment: 'comments', like_milestone: 'comments', live_comment: 'comments', story_view: 'comments', order: 'orders', listing: 'orders', payout: 'wallet', /* cc-fix1 */ gift: 'wallet', reward: 'wallet', referral: 'wallet', message: 'messages', payment: 'wallet', club: 'orders' };
 export const catOfKind = (k) => KIND_CAT[k] || 'updates';
 export const cleanPrefs = (src) => { const o = {}; PUSH_CATS.forEach((c) => { o[c] = !(src && typeof src === 'object' && src[c] === false); }); return o; };
 async function prefsOf(env, aid) {
@@ -152,13 +152,23 @@ async function broadcast(env, cat, payload, skipAid) {
   let off = new Set();
   try { off = new Set((await rows(await sb(env, `notif_prefs?select=aid&prefs->>${cat}=eq.false&limit=5000`))).map((r) => r.aid)); } catch (e) { /* table not made yet: everyone is on */ }
   const to = subs.filter((s) => !off.has(s.aid));
-  for (let i = 0; i < to.length; i += 25) await Promise.all(to.slice(i, i + 25).map((s) => sendFcm(env, s, payload).catch(() => null)));
+  let ok = 0;   // cc-fix10
+  for (let i = 0; i < to.length; i += 25) await Promise.all(to.slice(i, i + 25).map((s) => sendFcm(env, s, payload).then((r) => { if (r && r.ok) ok++; }).catch((e) => { console.error('broadcast send failed', e && e.message); })));
+  console.log('broadcast ' + cat + ': phones=' + subs.length + ' switched_off=' + (subs.length - to.length) + ' accepted=' + ok);
   return to.length;
 }
 const within = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
 export const announceLive = (env, hostAid, title, streamId) => within(broadcast(env, 'live', { title: 'Someone is live now', body: title && title !== 'Live' ? String(title).slice(0, 80) : 'Tap to watch', view: 'live', tag: 'live', cat: 'live', kind: 'live', ref_type: 'live', ref_id: streamId || '', rep: 'live', ttl: '1800s' }, hostAid).catch(() => 0), 6000);
 export const announceEvent = (env, ownerAid, title) => within(broadcast(env, 'events', { title: 'New event', body: String(title || '').slice(0, 80), view: 'bell', tag: 'event', cat: 'events', kind: 'event', ref_type: 'event' }, ownerAid).catch(() => 0), 6000);
 
+const LIVE_C = new Map();   // cc-fix10
+export const announceLiveComment = (env, hostAid, streamId, text) => {
+  try {
+    if (!hostAid || hostAid === 'admin' || Date.now() - (LIVE_C.get(streamId) || 0) < 15000) return Promise.resolve();
+    LIVE_C.set(streamId, Date.now()); if (LIVE_C.size > 500) LIVE_C.clear();
+    return sendPush(env, hostAid, { title: 'New comment on your live', body: String(text || 'Someone commented').slice(0, 100), view: 'live', tag: 'live-comment', cat: 'comments', kind: 'live_comment', ref_type: 'live', ref_id: streamId, rep: 'livec-' + String(streamId).slice(0, 8), ttl: '300s' });
+  } catch (e) { return Promise.resolve(); }
+};
 export const announceNotice = (env, title, body) => within(broadcast(env, 'updates', { title: String(title || 'Notice').slice(0, 80), body: String(body || '').slice(0, 160) || 'Tap to read', view: 'bell', tag: 'notice', cat: 'updates', kind: 'notice', ref_type: 'notice' }).catch(() => 0), 6000);
 
 // A new app version is out: one phone notification to everyone with the app. Asked for by the build (see android.yml).

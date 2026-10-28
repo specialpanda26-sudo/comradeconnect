@@ -16,8 +16,10 @@ public class CCMessagingService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage message) {
         Map<String, String> d = message.getData();
-        if (d != null && "2".equals(d.get("cc")) && !CCNotifier.foreground) {
+        if (d != null && "2".equals(d.get("cc"))) {
+            // cc-fix10: every alert goes to the notification bar, also while the app is open
             try { CCNotifier.show(this, d); } catch (Throwable e) { /* never crash the push service */ }
+            if (CCNotifier.foreground) forward("sendRemoteMessage", RemoteMessage.class, message);
             return;
         }
         forward("sendRemoteMessage", RemoteMessage.class, message);

@@ -1,5 +1,6 @@
 // Live extras: viewer count, hearts and chat for a stream the host runs on YouTube / Facebook / TikTok / Twitch.
 // The stream itself is not ours; we only add the people-count, the hearts and the comments around it.
+import { announceLiveComment } from './push.js';
 import { voiceOf, voiceCheck, stripMarkers } from './voice.js';
 import { json, err, sb, rows, one, post, patch, enc, str, int, ago, sha256Hex, throttle, tooMany, user, isAdmin, contactBlock } from './lib.js';
 
@@ -72,8 +73,9 @@ export async function liveRoutes(req, env, url, ip) {
     if (vKey && !(await voiceCheck(env, vKey))) return err(env, 'The voice note did not upload. Try again.');
     const blocked = vKey ? null : contactBlock(env, text); if (blocked) return blocked;
     if (!(await throttle(env, ip, 'lcm', u.aid, 300))) return tooMany(env);
-    const s = await one(await sb(env, `live_streams?select=id,status&id=eq.${mm[1]}`)); if (!s || s.status !== 'live') return err(env, 'This stream has ended', 404);
+    const s = await one(await sb(env, `live_streams?select=id,status,host_aid&id=eq.${mm[1]}`)); if (!s || s.status !== 'live') return err(env, 'This stream has ended', 404); /* cc-fix10 select */
     const c = await one(await post(env, 'live_comments', { stream_id: s.id, aid: u.aid, name: u.handle || 'Comrade', text: vKey ? text + ' [vn:' + vKey + ']' : text }, 'return=representation'));
+    if (c && s.host_aid !== u.aid) announceLiveComment(env, s.host_aid, s.id, text).catch(() => {});   // cc-fix10
     return c ? json(env, { id: c.id, name: c.name, text: voiceOf(env, c.text).text, audio: voiceOf(env, c.text).audio, at: c.created_at }, 201) : err(env, 'Could not send', 500);
   }
 

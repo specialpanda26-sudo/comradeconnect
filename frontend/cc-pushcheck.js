@@ -63,7 +63,7 @@
   }
   function build() {
     var bx = document.querySelector('.ccn.ccn-pf .bx');
-    if (!bx || bx.querySelector('.pc-wrap')) return;
+    if (bx) { var old = bx.querySelector('.pc-wrap'); if (old) old.remove(); } return;   // panel removed
     var w = el('div', 'pc-wrap'); w.style.cssText = 'margin:16px 2px 4px;padding-top:14px;border-top:1px solid rgba(120,110,100,.25)';
     var h = el('b', '', 'Not getting alerts?'); h.style.cssText = 'display:block;font:800 15px/1.3 Manrope,system-ui,sans-serif;color:var(--fg)';
     var s = el('p', '', 'This checks every step from the app to Firebase and tells you which one is broken.'); s.style.cssText = 'margin:4px 0 10px;font:600 12.5px/1.45 Manrope,system-ui,sans-serif;color:var(--mut)';

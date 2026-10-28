@@ -106,7 +106,7 @@
     try{
       var prior=cur();
       if(u.id==='all'){if(prior&&prior!=='all')localStorage.setItem('cc_campus_home',prior)}   // posts you write still go under your own university
-      else localStorage.setItem('cc_campus_home',u.id);
+      else{localStorage.setItem('cc_campus_home',u.id);localStorage.setItem('cc_zs_pending',u.id)}   /* cc-zonesuggest.js opens the best-zones sheet once after the switch */
       localStorage.setItem(K,u.id);localStorage.setItem('cc_campus_name',u.name);localStorage.setItem('cc_campus_short',u.short||'')
     }catch(e){}
     cover(u);

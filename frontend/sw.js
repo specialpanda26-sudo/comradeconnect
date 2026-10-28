@@ -3,7 +3,7 @@
    BUILD changes on every deploy (the push script stamps it), so each deploy gets a fresh cache and the old one is deleted.
    App files (html, js, css) are fetched fresh when online and only fall back to the saved copy when offline or very slow.
    v2: legal pages are saved too, a failing server (5xx) falls back to the saved page, clean links like /terms open terms.html offline. */
-const BUILD = '20261028125802';
+const BUILD = '20261028125824';
 const SHELL = 'cc-shell-' + BUILD, RUNTIME = 'cc-runtime-v1';
 const CDN = ['https://cdn.tailwindcss.com/3.4.17', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];
 const PAGES = ['/terms.html', '/privacy.html', '/legal.html', '/contact.html', '/about.html', '/safety.html', '/refunds.html', '/payments.html', '/cookies.html', '/trust.html', '/trust.css', '/get.html'];

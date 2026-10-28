@@ -4,7 +4,7 @@ import { credit } from './pay.js';
 import { badgeKind, reservedHandle } from './lib.js';
 import { getSettings, withdrawFee, publicConfig } from './settings.js';
 import { trySendNow, reconcilePayouts } from './payouts.js';
-import { notify } from './notifications.js';
+import { notify, notifyAdmins } from './notifications.js';
 import { passwordProblem } from './passwords.js';
 import { deviceGate, deviceClaim, deviceBindIfFree } from './device.js';
 import { normAnyEmail } from './recovery.js';
@@ -255,6 +255,7 @@ export async function accountRoutes(req, env, url, ip) {
       return err(env, 'Not enough available balance');
     }
     const how = await trySendNow(env, w).catch((e) => { console.error('payout error', e && e.message); return 'manual'; });
+    if (how === 'manual') await notifyAdmins(env, 'withdraw_request', 'New withdrawal request', 'KSh ' + (amount - fee) + ' to ' + norm + '. Send it by M-Pesa, then mark it Paid or Rejected.', 'withdrawal_request', w.id);   // cc-fix11
     if (how === 'toosmall') return err(env, 'That is below the smallest amount M-Pesa can send. Your money is still in your wallet.');
     if (how === 'limit') return err(env, 'You have reached the daily withdrawal limit. Your money is still in your wallet. Try again tomorrow.');
     if (how === 'refused') return err(env, 'We could not send to M-Pesa right now. Your money is still in your wallet. Please try again in a few minutes.', 502);

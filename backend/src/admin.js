@@ -170,12 +170,12 @@ export async function adminRoutes(req, env, url, ip) {
       if ((await rows(await sb(env, `withdrawals?select=id&payout_ref=eq.${enc(ref)}&limit=1`))).length) return err(env, 'That M-Pesa code is already recorded on another payout', 409);
       const r = await rows(await patch(env, `withdrawals?id=eq.${mm[1]}&status=eq.requested`, { status: 'paid', payout_ref: ref, decided_by: 'admin', decided_at: new Date().toISOString() }));
       if (!r.length) return err(env, 'Already handled', 409);
-      await notify(env, r[0].aid, 'payout', 'Withdrawal sent', 'KSh ' + (r[0].net || r[0].amount) + ' was sent to your M-Pesa. Ref ' + ref + '.', 'withdrawal', r[0].id);   // cc-fix1
+      await notify(env, r[0].aid, 'payout', 'Withdrawal paid', 'KSh ' + (r[0].net || r[0].amount) + ' has been sent to your M-Pesa (' + String(r[0].phone || '').replace(/^254/, '0') + '). M-Pesa ref ' + ref + '.', 'withdrawal', r[0].id);   // cc-fix1
     } else if (act === 'reject') {
       const [w] = await rows(await patch(env, `withdrawals?id=eq.${mm[1]}&status=eq.requested`, { status: 'rejected', decided_by: 'admin', decided_at: new Date().toISOString() }));
       if (!w) return err(env, 'Already handled', 409);
       await credit(env, w.aid, w.amount, 'adjustment', 'wdrej:' + w.id, 'Withdrawal rejected, money returned');
-      await notify(env, w.aid, 'payout', 'Withdrawal rejected', 'KSh ' + w.amount + ' was returned to your wallet.', 'withdrawal', w.id);   // cc-fix1
+      await notify(env, w.aid, 'payout', 'Withdrawal rejected', 'Your request for KSh ' + w.amount + ' was rejected. The money is back in your wallet.', 'withdrawal', w.id);   // cc-fix1
     } else return err(env, 'Unknown action');
     await A('withdrawal.' + act, 'withdrawal', mm[1], null);
     return json(env, { ok: true });

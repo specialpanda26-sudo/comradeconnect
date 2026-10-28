@@ -17,6 +17,15 @@ export async function notify(env, aid, kind, title, body, refType, refId) {
   } catch (e) { console.error('notify failed', e && e.message); return false; }
 }
 export const notifySnippet = snip;
+// cc-fix11: tell every admin (profiles with role 'admin', plus the optional ADMIN_AIDS setting: account ids separated by commas).
+export async function notifyAdmins(env, kind, title, body, refType, refId) {
+  try {
+    const ids = new Set(String(env.ADMIN_AIDS || '').split(',').map((x) => x.trim()).filter(Boolean));
+    try { (await rows(await sb(env, 'profiles?select=aid&role=eq.admin&limit=20'))).forEach((p) => p.aid && ids.add(p.aid)); } catch (e) { /* no role column: ADMIN_AIDS only */ }
+    await Promise.all([...ids].slice(0, 20).map((a) => notify(env, a, kind, title, body, refType, refId)));
+    return ids.size;
+  } catch (e) { console.error('notifyAdmins failed', e && e.message); return 0; }
+}
 
 const today = () => new Date().toISOString().slice(0, 10);
 const fmtItem = (n) => ({ id: n.id, kind: n.kind, title: n.title, body: n.body, ref_type: n.ref_type, ref_id: n.ref_id, read: !!n.read_at, at: Date.parse(n.created_at) });

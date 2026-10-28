@@ -967,6 +967,7 @@ q('#dcm').addEventListener('click',e=>{if(e.target.id==='dcm')q('#dcm').classLis
     <div id="mprev" style="margin-top:10px"></div>
     <div class="fld"><input id="mti" maxlength="60" placeholder="What are you selling?" aria-label="Title"></div>
     <div class="fld"><input id="mpr" type="number" inputmode="numeric" placeholder="Price in KSh" aria-label="Price in KSh"></div>
+    <div class="fld"><input id="mqt" type="number" inputmode="numeric" min="1" max="999" placeholder="How many do you have? (leave empty for 1)" aria-label="How many you have"></div>
     <div class="fld"><select id="mcat" aria-label="Category"><option>General</option><option>Electronics</option><option>Books</option><option>Clothes</option><option>Furniture</option><option>Food</option><option>Services</option><option>Other</option></select></div>
     <div class="fld"><select id="mco" aria-label="Condition"><option>New</option><option>Like new</option><option selected>Used, good</option><option>Used, fair</option></select></div>
     <div class="fld"><select id="mzo" aria-label="Where is it"></select></div>
@@ -1646,7 +1647,7 @@ addEventListener('scroll',()=>root.style.setProperty('--p',Math.min(scrollY/Math
  addEventListener('pointermove',e=>{if(cur)pos(e,cur)});
  const off=()=>{if(!cur)return;const t=cur;cur=null;tm=setTimeout(()=>t.classList.remove('lit'),420)};addEventListener('pointerup',off);addEventListener('pointercancel',off)})();
 </script>
-<script src="cc-logos.js?v=1"></script><script src="cc-landing.js?v=3"></script><script src="cc-getapp.js?v=8"></script><script src="cc-firstrun.js?v=9"></script><script src="cc-core.js?v=17"></script><script src="cc-touchfix.js?v=1"></script>
+<script src="cc-logos.js?v=1"></script><script src="cc-landing.js?v=3"></script><script src="cc-getapp.js?v=8"></script><script src="cc-firstrun.js?v=9"></script><script src="cc-core.js?v=18"></script><script src="cc-touchfix.js?v=1"></script>
 <script src="cc-paychoice.js?v=1"></script><script src="cc-welcome.js?v=4"></script><script src="cc-lockscreen.js?v=6"></script><script src="cc-lockglass.js?v=3"></script><script src="cc-lockpw.js?v=2"></script><script src="cc-receipt.js?v=6"></script><script src="cc-wifi.js?v=4"></script><script src="cc-hostels.js?v=4"></script><script src="cc-profile.js?v=9"></script><script src="cc-me.js?v=4"></script><script src="cc-closex.js?v=5"></script><script src="cc-nav.js?v=2"></script>
 <script src="cc-xcancel.js?v=7"></script><script src="cc-zones.js?v=3"></script>
 <script src="cc-onewelcome.js?v=1"></script>

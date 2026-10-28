@@ -22,7 +22,7 @@ async function decorate(env, list, me) {          // photos + seller handle, nev
   return list.map((l) => {
     const p = profs.find((x) => x.aid === l.seller_aid);
     return {
-      id: l.id, title: l.title, description: l.description, category: l.category, price: l.price, zone: l.zone, condition: l.condition,
+      id: l.id, title: l.title, description: l.description, category: l.category, price: l.price, zone: l.zone, condition: l.condition, stock: l.stock ?? 1,
       status: l.status, reject_reason: me && me.aid === l.seller_aid ? l.reject_reason : undefined,
       photos: photos.filter((x) => x.listing_id === l.id).map((x) => mediaUrl(env, x.r2_key)),
       seller: { handle: p?.handle || 'Seller', verified: !!p?.verified, student: !!p?.student_verified, kind: badgeKind(p), rating: rt[l.seller_aid] || null },
@@ -30,6 +30,32 @@ async function decorate(env, list, me) {          // photos + seller handle, nev
       lat: l.lat ?? null, lng: l.lng ?? null, mine: !!me && me.aid === l.seller_aid, createdAt: Date.parse(l.created_at),
     };
   });
+}
+
+// ---------- stock: a listing can hold many units. One sale takes one unit; the listing shows as sold only when none are left ----------
+// Each step is one conditional UPDATE on the stock number we just read, so two buyers can never take the same last unit.
+// If the stock column is not there yet (the SQL has not been run), everything falls back to the old one-item behaviour.
+async function takeUnit(env, id) {
+  for (let i = 0; i < 8; i++) {
+    const l = await one(await sb(env, `listings?id=eq.${enc(id)}&status=eq.approved`));
+    if (!l) return null;
+    if (l.stock === undefined) { const [o] = await rows(await patch(env, `listings?id=eq.${enc(id)}&status=eq.approved`, { status: 'sold' })); return o || null; }
+    if (l.stock < 1) return null;
+    const left = l.stock - 1;
+    const [w] = await rows(await patch(env, `listings?id=eq.${enc(id)}&status=eq.approved&stock=eq.${l.stock}`, { stock: left, status: left === 0 ? 'sold' : 'approved' }));
+    if (w) return w;
+  }
+  return null;
+}
+async function putBackUnit(env, id) {   // a refund or a failed order: the unit goes back on the shelf
+  for (let i = 0; i < 8; i++) {
+    const l = await one(await sb(env, `listings?id=eq.${enc(id)}&status=in.(approved,sold)`));
+    if (!l) return null;
+    if (l.stock === undefined) { await patch(env, `listings?id=eq.${enc(id)}&status=eq.sold`, { status: 'approved' }); return l; }
+    const [w] = await rows(await patch(env, `listings?id=eq.${enc(id)}&status=in.(approved,sold)&stock=eq.${l.stock}`, { stock: Math.min(999, l.stock + 1), status: 'approved' }));
+    if (w) return w;
+  }
+  return null;
 }
 
 // ---------- escrow transitions (each is one conditional UPDATE, so two requests can never both win) ----------
@@ -61,7 +87,7 @@ export async function refundOrder(env, id, by) {
   const used = o.credit_ksh || 0;   // the buyer paid cash for the price minus the points credit
   if (o.amount - used > 0) await credit(env, o.buyer_aid, o.amount - used, 'refund', o.id, 'Order refunded');
   if (used > 0) await returnPoints(env, o);   // points go back to the buyer; one cart payment can hold several orders, so only this order's share
-  await patch(env, `listings?id=eq.${o.listing_id}&status=eq.sold`, { status: 'approved' });
+  await putBackUnit(env, o.listing_id);
   await patch(env, `referrals?order_id=eq.${o.id}&status=eq.pending`, { status: 'void' });
   await notify(env, o.buyer_aid, 'order', 'Order refunded', 'KSh ' + (o.amount - used) + ' was returned to your wallet.', 'order', o.id);   // cc-fix1
   await notify(env, o.seller_aid, 'order', 'An order was refunded', 'The buyer was refunded and the item is back on sale.', 'order', o.id);
@@ -74,7 +100,7 @@ import { notify } from './notifications.js';
 const cartParts = (p) => String(p.ref_id || '').split(',').filter(Boolean).map((t) => { const [id, c] = t.split('~'); return { id, credit: Math.max(0, parseInt(c, 10) || 0) }; });
 export async function createOrderFromPayment(env, p) {
   if (/[,~]/.test(String(p.ref_id || ''))) return (await createCartOrders(env, p))[0] || null;
-  const [l] = await rows(await patch(env, `listings?id=eq.${p.ref_id}&status=eq.approved`, { status: 'sold' }));   // claim the listing atomically
+  const l = await takeUnit(env, p.ref_id);   // claim one unit atomically
   if (!l) { await credit(env, p.aid, p.amount, 'refund', 'pay:' + p.id, 'Item no longer available'); if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id); return null; }
   const credit_ksh = p.credit_ksh || 0, price = p.amount + credit_ksh;   // price = cash paid + points credit
   const fee = feeOf(price, (await getSettings(env)).platform_fee_percent);   // fixed on the order now: later fee changes never touch it
@@ -83,7 +109,7 @@ export async function createOrderFromPayment(env, p) {
     id, payment_id: p.id, listing_id: l.id, buyer_aid: p.aid, seller_aid: l.seller_aid, amount: price, fee, seller_amount: price - fee, ...(credit_ksh ? { credit_ksh } : {}),
     status: 'held', code_hash: await codeHash(env, 'order', id, await deriveCode(env, 'order', id, 6)),
   }));
-  if (!o) { await patch(env, `listings?id=eq.${l.id}`, { status: 'approved' }); if (credit_ksh) await giveBack(env, p.aid, 'pay:' + p.id); return null; }
+  if (!o) { await putBackUnit(env, l.id); if (credit_ksh) await giveBack(env, p.aid, 'pay:' + p.id); return null; }
   await afterOrderMade(env, p, l, o);
   return o;
 }
@@ -104,14 +130,14 @@ export async function createCartOrders(env, p) {
       if (cash > 0) await credit(env, p.aid, cash, 'refund', 'pay:' + p.id + ':' + part.id, why);
       if (part.credit > 0) await giveBackShare(env, p.aid, p.id, part.id, part.credit, p.credit_ksh);
     };
-    const [l] = await rows(await patch(env, `listings?id=eq.${enc(part.id)}&status=eq.approved`, { status: 'sold' }));
+    const l = await takeUnit(env, part.id);
     if (!l) { await back('Item no longer available'); continue; }
     const price = l.price, fee = feeOf(price, fee_pct), id = crypto.randomUUID();
     const o = await one(await post(env, 'orders', {
       id, payment_id: p.id, listing_id: l.id, buyer_aid: p.aid, seller_aid: l.seller_aid, amount: price, fee, seller_amount: price - fee, ...(part.credit ? { credit_ksh: part.credit } : {}),
       status: 'held', code_hash: await codeHash(env, 'order', id, await deriveCode(env, 'order', id, 6)),
     }));
-    if (!o) { await patch(env, `listings?id=eq.${l.id}`, { status: 'approved' }); await back('Could not make the order'); continue; }
+    if (!o) { await putBackUnit(env, l.id); await back('Could not make the order'); continue; }
     await afterOrderMade(env, p, l, o);
     made.push(o);
   }
@@ -131,6 +157,7 @@ export async function marketRoutes(req, env, url, ip) {
     const S = await getSettings(env), category = CATS.includes(b.category) ? b.category : 'General', price = int(b.price, S.listing_price_min, S.listing_price_max);
     if (title.length < 3 || !price) return err(env, `Add a title and a price (KSh ${S.listing_price_min.toLocaleString('en-US')} to ${S.listing_price_max.toLocaleString('en-US')})`);
     const contact_phone = normPhone(b.contact_phone);
+    const stock = int(b.stock, 1, 999) || 1;   // how many of this item the seller has
     let geo = null;   // optional seller pin: both numbers, in range, or the listing is refused
     if (b.lat != null && b.lat !== '' || b.lng != null && b.lng !== '') {
       const la = Number(b.lat), ln = Number(b.lng);
@@ -142,7 +169,7 @@ export async function marketRoutes(req, env, url, ip) {
     const botNo = spillBotBlock(title + ' ' + description); if (botNo) return err(env, botNo, 422);   // cc-fix13
     if (!isWholesaler(u) && (await activeListings(env, u.aid)) >= S.free_listing_limit) return err(env, `Free sellers can have ${S.free_listing_limit} items posted at once. Join the wholesalers community (KSh ${S.wholesale_fee}) to post as many as you want.`, 402);
     const live = (await getSettings(env)).listing_auto_publish === 1;
-    const ins = await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip, ...(geo ? geo : {}),
+    const ins = await post(env, 'listings', { seller_aid: u.aid, title, description, category, price, zone, condition: condition || null, contact_phone, ip, ...(stock > 1 ? { stock } : {}), ...(geo ? geo : {}),
       ...(live ? { status: 'approved', approved_by: 'auto', approved_at: new Date().toISOString() } : {}) });
     const insText = await ins.text().catch(() => ''); let l = null; try { const d = JSON.parse(insText); l = Array.isArray(d) ? d[0] : null; } catch (e) {}
     if (!l) {
@@ -176,6 +203,14 @@ export async function marketRoutes(req, env, url, ip) {
     const u = await user(req, env, true); if (u instanceof Response) return u;
     const r = await rows(await patch(env, `listings?id=eq.${mm[1]}&seller_aid=eq.${enc(u.aid)}&status=in.(pending,approved,rejected)`, { status: 'removed' }));
     return r.length ? json(env, { ok: true }) : err(env, 'Cannot remove this listing', 409);
+  }
+
+  mm = path.match(/^\/api\/market\/listings\/([0-9a-f-]{36})\/stock$/);
+  if (mm && m === 'POST') {   // the seller says how many they have now (0 = sold out)
+    const u = await user(req, env, true); if (u instanceof Response) return u;
+    const n = int((await body()).stock, 0, 999); if (n === null) return err(env, 'Enter a number from 0 to 999');
+    const r = await rows(await patch(env, `listings?id=eq.${mm[1]}&seller_aid=eq.${enc(u.aid)}&status=in.(approved,sold)`, { stock: n, status: n > 0 ? 'approved' : 'sold' }));
+    return r.length ? json(env, { ok: true, stock: n }) : err(env, 'Cannot change the stock of this listing', 409);
   }
 
   // ---- buy: starts the M-Pesa prompt; the order is created when the callback confirms payment ----

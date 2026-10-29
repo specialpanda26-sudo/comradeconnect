@@ -1,0 +1,20 @@
+/* cc-otp-calm v4: while anything is being verified the WHOLE page blurs, small dots + message sit in the centre, then one tick + message. */
+html body button.cco-bspin::before{display:none!important;content:none!important;animation:none!important;margin:0!important}
+html body .ccv-ov{display:none!important}
+html body .cco-busy .cco-row,html body .cco-ok .cco-row{opacity:1!important;transform:none!important}
+#cc-fullov{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .25s;background:rgba(255,255,255,.28);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+@media (prefers-color-scheme:dark){#cc-fullov{background:rgba(20,16,12,.35)}}
+#cc-fullov.on{opacity:1;pointer-events:auto}
+#cc-fullov .c{display:grid;justify-items:center;gap:16px}
+#cc-fullov .m{margin:0;font:600 15px/1.3 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink,#16130f);text-align:center}
+#cc-fullov .d{display:flex;gap:6px;height:14px;align-items:flex-end}
+#cc-fullov.ok .d{display:none}
+#cc-fullov .d i{width:6px;height:6px;border-radius:50%;animation:ccfw 1.1s ease-in-out infinite}
+#cc-fullov .d i:nth-child(1){background:#ff8a3d}#cc-fullov .d i:nth-child(2){background:#c4727a;animation-delay:.1s}#cc-fullov .d i:nth-child(3){background:#a9b8a2;animation-delay:.2s}#cc-fullov .d i:nth-child(4){background:var(--ink,#16130f);animation-delay:.3s}#cc-fullov .d i:nth-child(5){background:#e8744f;animation-delay:.4s}
+@keyframes ccfw{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+#cc-fullov .t{display:none;width:64px;height:64px;border-radius:50%;background:var(--ink,#16130f);place-items:center;transform:scale(0)}
+#cc-fullov.ok .t{display:grid;animation:ccfp .45s cubic-bezier(.2,.9,.3,1.25) forwards}
+#cc-fullov .t svg{width:34px;height:34px;fill:none;stroke:var(--inkfg,#fff);stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:30;stroke-dashoffset:30}
+#cc-fullov.ok .t svg{animation:ccfd .35s ease-out .2s forwards}
+@keyframes ccfp{to{transform:scale(1)}}@keyframes ccfd{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){#cc-fullov .d i{animation:none}}

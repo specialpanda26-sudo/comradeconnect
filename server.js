@@ -8,7 +8,7 @@ import worker, { runCron } from './backend/src/index.js';
 // Defaults for every non-secret setting. Anything you set in Render's Environment tab wins (an empty value counts as "not set").
 const DEFAULTS = {
   ALLOWED_ORIGINS: '', AI_MODEL: 'gemini-3.1-flash-lite', AI_DAILY_LIMIT: '20', AI_GLOBAL_LIMIT: '1000',
-  PAYMENT_MODE: 'manual', MPESA_PAY_TYPE: 'send', MPESA_PAY_TO: '', MPESA_PAY_NAME: '',
+  MPESA_PAY_TYPE: 'send', MPESA_PAY_TO: '', MPESA_PAY_NAME: '',
   REFERRAL_UNLOCK_DAYS: '7', REFERRAL_REWARD: '20', ESCROW_AUTO_RELEASE_DAYS: '3', PLATFORM_FEE_PERCENT: '7',
   GOOGLE_CLIENT_ID: '', MEDIA_BUCKET: 'cc-media', PRIVATE_BUCKET: 'cc-private',
   BOOST_PRICE: '30', BOOST_PRICE_3D: '70', CLIP_MAX_MB: '25', MEDIA_BUDGET_MB: '800', WITHDRAW_REQUIRES_VERIFIED: '1',
@@ -22,10 +22,7 @@ const missing = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'ADMIN_KEY', 'HASH_PEPP
 if (missing.length) { console.error('Missing required environment variables: ' + missing.join(', ')); process.exit(1); }
 if (env.ADMIN_KEY.length < 8) console.warn('WARNING: ADMIN_KEY is shorter than 8 characters. Use at least 8.');
 if (!env.ALLOWED_ORIGINS || env.ALLOWED_ORIGINS === '*') console.warn('WARNING: ALLOWED_ORIGINS is open to every website. Set it to your site, e.g. https://comradeconnect.co.ke');
-if (env.PAYMENT_MODE === 'tinypesa' && !(env.TINYPESA_LINK_API_KEY || env.TINYPESA_ACCOUNT_API_KEY || env.TINYPESA_API_KEY)) console.warn('WARNING: PAYMENT_MODE=tinypesa but TINYPESA_API_KEY is empty. Buyers will see "Payments are not set up yet".');
-if (env.PAYMENT_MODE === 'tinypesa' && !env.TINYPESA_USERNAME) console.warn('WARNING: PAYMENT_MODE=tinypesa but TINYPESA_USERNAME is empty. Set it to the link username shown next to your TinyPesa link API key.');
-if (env.PAYMENT_MODE === 'tinypesa' && !env.CALLBACK_SECRET) console.warn('WARNING: PAYMENT_MODE=tinypesa but CALLBACK_SECRET is empty. Every TinyPesa callback will be rejected and no payment will ever complete.');
-if (env.PAYMENT_MODE === 'manual' && !env.MPESA_PAY_TO) console.warn('WARNING: MPESA_PAY_TO is empty, buyers will not see where to send money.');
+for (const k of ['PAYHERO_API_KEY', 'PAYHERO_API_SECRET', 'PAYHERO_CHANNEL_ID', 'PAYHERO_CALLBACK_SECRET', 'CALLBACK_URL']) if (!env[k]) console.warn('WARNING: ' + k + ' is empty. M-Pesa deposits and withdrawals will not work until it is set.');
 
 const MAX_BODY = 30 * 1024 * 1024;
 const origins = () => String(env.ALLOWED_ORIGINS || '').split(',').map((x) => x.trim().replace(/\/$/, '')).filter(Boolean);

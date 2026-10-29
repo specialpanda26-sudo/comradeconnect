@@ -32,6 +32,7 @@ export async function trySendNow(env, w) {
 export async function settleWithdrawal(env, cb) {
   let w = null;
   if (cb.ref) [w] = await rows(await sb(env, `withdrawals?payout_tracking=eq.${enc(cb.ref)}&limit=1`));
+  if (!w && cb.receipt) [w] = await rows(await sb(env, `withdrawals?payout_tracking=eq.${enc(cb.receipt)}&limit=1`));
   if (!w && cb.ref) { const id = String(cb.ref).replace(/^CC-WDL-/i, ''); if (UUID.test(id)) [w] = await rows(await sb(env, `withdrawals?id=eq.${id}&limit=1`)); }
   if (!w) { console.log('finoq webhook: no withdrawal matches', cb.ref || '(no ref)'); return 'unknown'; }
   const OPEN = 'status=in.(sending,requested)';

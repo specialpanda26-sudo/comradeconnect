@@ -1,6 +1,6 @@
 // M-Pesa via FinoQ (PayHero) v2. Only the webhook marks payments paid/failed; all writes are conditional.
 import { getSettings } from './settings.js';
-import { json, err, sb, rows, one, post, patch, enc, normPhone, ago, tsEqual, user, UUID } from './lib.js';
+import { json, err, sb, rows, one, post, patch, enc, normPhone, ago, tsEqual, user, UUID, bump } from './lib.js';
 import { finoqReady, finoqStkPush, depRef, parseFinoqWebhook } from './finoq.js';
 import { settleWithdrawal } from './payouts.js';
 
@@ -38,6 +38,8 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   amount = Math.floor(Number(amount));
   if (!finoqReady(env)) { console.error('payments: PAYHERO_API_KEY / PAYHERO_API_SECRET missing'); return { res: err(env, 'Payments are not set up yet', 503) }; }
   if (!phone || !(amount >= 1) || amount > 250000 || !aid) return { res: err(env, 'Check the phone number and amount') };
+  // Daily caps so nobody can spam STK prompts at strangers: per account and per phone number.
+  if (!(await bump(env, 'stk:aid:' + aid, Number(env.STK_DAILY_PER_ACCOUNT || 30))) || !(await bump(env, 'stk:phone:' + phone, Number(env.STK_DAILY_PER_PHONE || 10)))) return { res: err(env, 'Too many payment attempts today. Try again tomorrow.', 429) };
   const id = crypto.randomUUID(), ref = depRef(id);
   const pr = await post(env, 'payments', { id, request_id: ref, aid, purpose, ref_id: ref_id ? String(ref_id).slice(0, purpose === 'order' ? 600 : 100) : null, amount, phone, ip, boost_hours: boost_hours || null, ...(credit_ksh > 0 ? { credit_ksh } : {}) });
   const pj = await pr.json().catch(() => null);
@@ -94,11 +96,21 @@ async function settleDeposit(env, cb) {
   if (!p) { console.log('finoq webhook: no deposit matches', cb.ref || '(no ref)'); return 'unknown'; }
   if (cb.success) {
     if (!['pending', 'expired'].includes(p.status)) return 'duplicate';
-    const good = !cb.amount || cb.amount >= p.amount;
-    if (!good) { const [u] = await rows(await patch(env, `payments?id=eq.${p.id}&${OPEN}`, { status: 'underpaid', checkout_id: cb.receipt || null })); if (u) await hooks.onFailed(env, u); return 'underpaid'; }
+    // A success callback must name an amount at least as big as the price. A missing amount is NOT treated as fully paid.
+    if (!(cb.amount > 0)) { console.error('finoq webhook: success without amount, not credited', p.id); return 'no_amount'; }
+    // The prompt only went to p.phone, so a different payer number is suspicious (compare the last 9 digits).
+    if (cb.phone && p.phone && p.phone !== 'wallet' && cb.phone.slice(-9) !== String(p.phone).replace(/\D/g, '').slice(-9)) { console.error('finoq webhook: phone mismatch, not credited', p.id); return 'phone_mismatch'; }
+    if (cb.amount < p.amount) { const [u] = await rows(await patch(env, `payments?id=eq.${p.id}&${OPEN}`, { status: 'underpaid', checkout_id: cb.receipt || null })); if (u) await hooks.onFailed(env, u); return 'underpaid'; }
     const [upd] = await rows(await patch(env, `payments?id=eq.${p.id}&${OPEN}`, { status: 'paid', receipt: cb.receipt || null, checkout_id: cb.receipt || null, paid_at: new Date().toISOString() }));
-    if (upd) await hooks.onPaid(env, upd);
-    return upd ? 'paid' : 'duplicate';
+    if (!upd) return 'duplicate';
+    try { await hooks.onPaid(env, upd); }
+    catch (e) {
+      // Paid but not delivered: reopen the payment so a repeated callback (or an admin Approve) can deliver it. Never leave it stuck as 'paid'.
+      console.error('finoq webhook: onPaid failed, reopening payment', upd.id, e && e.message);
+      await patch(env, `payments?id=eq.${upd.id}&status=eq.paid`, { status: 'expired' });
+      throw e;
+    }
+    return 'paid';
   }
   if (cb.failed) {
     if (p.status !== 'pending') return 'duplicate';
@@ -109,13 +121,13 @@ async function settleDeposit(env, cb) {
   return 'waiting';
 }
 
-// Safety net (15-min cron): expire unanswered STK pushes.
-export async function reconcileIntasend(env) {
-  const stale = await rows(await sb(env, `payments?select=id&status=eq.pending&created_at=lt.${ago(15 * 60e3)}&limit=100`));
-  let n = 0;
-  for (const p of stale) { const [x] = await rows(await patch(env, `payments?id=eq.${p.id}&status=eq.pending`, { status: 'expired' })); if (x) n++; }
-  return n;
+// Safety net (15-min cron): expire unanswered STK pushes AND run the failed cleanup (points back, stock back, notices).
+export async function reconcileDeposits(env) {
+  const expired = await markFailed(env, `payments?status=eq.pending&created_at=lt.${ago(15 * 60e3)}`, 'expired', 'no_response', null);
+  for (const p of expired) await hooks.onFailed(env, p);
+  return expired.length;
 }
+export const reconcileIntasend = reconcileDeposits;   // old name, kept so index.js and old imports still work
 
 export async function payRoutes(req, env, url, ip) {
   const path = url.pathname;
@@ -153,7 +165,9 @@ export async function payRoutes(req, env, url, ip) {
     const cb = parseFinoqWebhook(body);
     console.log('finoq webhook:', cb.ref || '(no ref)', cb.status || '?', 'amount', cb.amount || '?');
     if (!cb.ref) return json(env, { ok: true });
-    const result = cb.ref.startsWith('CC-WDL-') ? await settleWithdrawal(env, cb) : await settleDeposit(env, cb);
+    let result;
+    try { result = cb.ref.startsWith('CC-WDL-') ? await settleWithdrawal(env, cb) : await settleDeposit(env, cb); }
+    catch (e) { console.error('finoq webhook: settle failed', cb.ref, e && e.message); return json(env, { ok: false, error: 'retry' }, 500); }
     return json(env, { ok: true, result });
   }
 

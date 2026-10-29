@@ -1,7 +1,8 @@
 // FinoQ (PayHero) v2 wrapper. Pure HTTP, no DB writes.
 export const finoqBase = (env) => String(env.PAYHERO_BASE_URL || 'https://backend.payhero.co.ke').replace(/\/+$/, '');
-export const finoqChannel = (env) => { const n = Number(env.PAYHERO_CHANNEL_ID || 14575); return Number.isFinite(n) && n > 0 ? n : 14575; };
-export const finoqReady = (env) => !!(String(env.PAYHERO_API_KEY || '').trim() && String(env.PAYHERO_API_SECRET || '').trim());
+// No hardcoded fallback: a missing or bad channel id must fail loudly, never charge someone else's channel.
+export const finoqChannel = (env) => { const n = Number(String(env.PAYHERO_CHANNEL_ID || '').trim()); return Number.isFinite(n) && n > 0 ? n : 0; };
+export const finoqReady = (env) => !!(String(env.PAYHERO_API_KEY || '').trim() && String(env.PAYHERO_API_SECRET || '').trim() && finoqChannel(env));
 export const finoqAuth = (env) => 'Basic ' + btoa(String(env.PAYHERO_API_KEY || '').trim() + ':' + String(env.PAYHERO_API_SECRET || '').trim());
 export const finoqHead = (env) => ({ 'Content-Type': 'application/json', Authorization: finoqAuth(env) });
 export const finoqCallback = (env) => String(env.CALLBACK_URL || env.PAYHERO_CALLBACK_URL || '').trim();
@@ -23,12 +24,14 @@ export async function finoqStkPush(env, { amount, phone, ref }) {
   return call(env, '/api/v2/payments', body, 'STK push');
 }
 
+// PayHero "Withdraw To Mobile": POST /api/v2/withdraw, channel 'mobile', payment_service 'b2c', network_code 63902 = M-Pesa.
 export async function finoqPayout(env, { amount, phone, ref, narration }) {
-  const body = { amount: Math.floor(Number(amount)), phone_number: phone, channel_id: finoqChannel(env), external_reference: ref, narration: String(narration || 'Comrade Connect Withdrawal').slice(0, 120) };
-  const r = await call(env, '/api/v2/payouts', body, 'payout');
+  const body = { amount: Math.floor(Number(amount)), phone_number: phone, network_code: '63902', channel: 'mobile', payment_service: 'b2c', channel_id: finoqChannel(env), external_reference: ref, narration: String(narration || 'Comrade Connect Withdrawal').slice(0, 120) };
+  const cb = finoqCallback(env); if (cb) body.callback_url = cb;
+  const r = await call(env, '/api/v2/withdraw', body, 'payout');
   if (!r.ok) return r;
   const t = r.data, d = t && typeof t.data === 'object' && t.data ? t.data : t;
-  return { ok: true, tx: String(d.reference || d.transaction_id || d.transactionId || d.id || ref), data: t };
+  return { ok: true, tx: String(d.merchant_reference || d.reference || d.checkout_request_id || d.transaction_id || d.transactionId || d.id || ref), data: t };
 }
 
 // Reads PayHero's nested {response:{ExternalReference,Status,...}} AND flat snake_case formats.

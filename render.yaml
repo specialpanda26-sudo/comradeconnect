@@ -12,7 +12,6 @@ services:
     envVars:
       - { key: NODE_VERSION, value: "22" }
       - { key: ALLOWED_ORIGINS, value: "https://comradeconnect.co.ke,https://www.comradeconnect.co.ke,https://localhost" }
-      - { key: PAYMENT_MODE, value: tinypesa }   # "manual" = free, you confirm codes by hand
       - { key: SUPABASE_URL, sync: false }
       - { key: SUPABASE_SERVICE_KEY, sync: false }
       - { key: ADMIN_KEY, sync: false }
@@ -20,9 +19,12 @@ services:
       - { key: CRON_SECRET, sync: false }
       - { key: GEMINI_API_KEY, sync: false }
       - { key: GOOGLE_CLIENT_ID, sync: false }
-      - { key: TINYPESA_API_KEY, sync: false }   # TinyPesa link API key (the one shown with a link username)
-      - { key: TINYPESA_USERNAME, sync: false }  # the link username that goes with the link API key
-      - { key: CALLBACK_SECRET, sync: false }    # same string you put after ?s= in the TinyPesa callback URL
+      - { key: PAYHERO_API_KEY, sync: false }          # PayHero (FinoQ) > API Keys > API Username
+      - { key: PAYHERO_API_SECRET, sync: false }       # PayHero > API Keys > API Password. Secret: server only
+      - { key: PAYHERO_CHANNEL_ID, sync: false }       # your PayHero payments-wallet channel id. No default: if missing, payments say "not set up yet"
+      - { key: PAYHERO_CALLBACK_SECRET, sync: false }  # any long random string; must match the ?s= in CALLBACK_URL or every callback gets a 403
+      - { key: CALLBACK_URL, sync: false }             # https://YOUR-API/api/webhooks/payhero?s=YOUR_SECRET  (same secret as above)
+      - { key: PAYHERO_PAYOUTS_ENABLED, value: "1" }   # 0 = pay withdrawals by hand
       - { key: MAIL_FROM, sync: false }          # e.g. Comrade Connect <noreply@comradeconnect.co.ke>. Needed for Forgot password (verified sender in Brevo or Resend)
       - { key: BREVO_API_KEY, sync: false }      # starts with xkeysib- . Use this OR RESEND_API_KEY. Without one of them Forgot password answers "not switched on yet"
       - { key: RESEND_API_KEY, sync: false }
@@ -34,9 +36,6 @@ services:
       - { key: MPESA_PAY_TYPE, value: send }
       - { key: MPESA_PAY_TO, sync: false }
       - { key: MPESA_PAY_NAME, sync: false }
-      - { key: INTASEND_PUBLISHABLE_KEY, sync: false }     # ISPubKey_... from IntaSend > Settings > API Keys (used with the secret key for the M-Pesa prompt; there is no card payment)
-      - { key: INTASEND_SECRET_KEY, sync: false }          # ISSecretKey_... from IntaSend > Settings > API Keys
-      - { key: INTASEND_WEBHOOK_CHALLENGE, sync: false }   # same string you type as "Challenge" in the IntaSend webhook
       - { key: FCM_SERVICE_ACCOUNT, sync: false } # Firebase service account JSON: phone alerts for the Android app
       - { key: SITE_URL, value: "https://comradeconnect.co.ke" }
       - { key: SUPPORT_EMAIL, value: "support@comradeconnect.co.ke" }

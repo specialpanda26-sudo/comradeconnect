@@ -1,5 +1,5 @@
 // Comrade Connect API (Cloudflare Worker). All secrets live here, never in the HTML.
-import { json, err, corsHeaders, sb, rows, patch, ago } from './lib.js';
+import { json, err, corsHeaders, sb, rows, patch, ago, enc } from './lib.js';
 import { feedRoutes } from './feed.js';
 import { payRoutes, hooks, manualMode, markFailed, reconcileIntasend } from './pay.js';
 import { accountRoutes, unlockReferrals } from './account.js';
@@ -60,7 +60,10 @@ hooks.onPaid = async (env, p) => {
   else if (p.purpose === 'ticket') await ticketPaid(env, p);
   else if (p.purpose === 'boost') await boostPost(env, p);
   else if (p.purpose === 'spillfee') await patch(env, `posts?id=eq.${p.ref_id}&fee_pending=gt.0`, { hidden: false, fee_pending: 0, created_at: new Date().toISOString() });   // paid: the spill goes live
-  else if (p.purpose === 'topup') { if (await credit(env, p.aid, p.amount, 'topup', 'pay:' + p.id, 'Wallet deposit')) await notify(env, p.aid, 'wallet', 'Deposit received', 'KSh ' + p.amount + ' was added to your wallet.', 'wallet', p.id); }
+  else if (p.purpose === 'topup') {
+    if (await credit(env, p.aid, p.amount, 'topup', 'pay:' + p.id, 'Wallet deposit')) await notify(env, p.aid, 'wallet', 'Deposit received', 'KSh ' + p.amount + ' was added to your wallet.', 'wallet', p.id);
+    else { const [had] = await rows(await sb(env, `wallet_ledger?select=id&kind=eq.topup&ref=eq.${enc('pay:' + p.id)}&limit=1`)); if (!had) throw new Error('wallet credit failed'); }   // already credited = fine; never credited = let the payment be retried
+  }
   else if (p.purpose === 'wholesale') await extendWholesale(env, p.aid);
   else if (p.purpose === 'caretaker') await caretakerPaid(env, p);
   else if (p.purpose === 'kura') await kuraPaid(env, p);

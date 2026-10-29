@@ -27,7 +27,7 @@ const svg = (k, s) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
 const GROUPS = [
   { n: 'Overview', icon: 'grid', h: 'Dashboard', lead: 'Track your users, money and what needs a decision, live.', tabs: ['dashboard'] },
   { n: 'Users', icon: 'users', h: 'Users', lead: 'Find anyone and control their account.', tabs: ['users', 'phones', 'grant'] },
-  { n: 'Review', icon: 'inbox', h: 'Waiting for you', lead: 'Everything that needs a decision from you.', tabs: ['listings', 'confirm', 'withdrawals', 'verifications', 'disputes', 'reports', 'payments', 'support'] },
+  { n: 'Review', icon: 'inbox', h: 'Waiting for you', lead: 'Everything that needs a decision from you.', tabs: ['listings', 'withdrawals', 'verifications', 'disputes', 'reports', 'payments', 'support'] },
   { n: 'Market', icon: 'bag', h: 'Market and campus', lead: 'Items, events, notices, sponsors and the club shop.', tabs: ['live', 'events', 'notices', 'sponsors', 'club', 'services', 'push'] },
   { n: 'Kura', icon: 'star', h: 'Kura', lead: 'Contestants, votes and the season.', tabs: ['kura'] },
   { n: 'Joins', icon: 'link', h: 'Joins', lead: 'See who joined what, and remove a join when you need to.', tabs: ['joins'] },
@@ -88,7 +88,7 @@ const NICE = { login: 'Signed in', 'site.update': 'Edited the site', 'settings.u
 SECTIONS.dashboard = () => {
   const s = P.stats;
   if (!s) return ['<div class="card"><h3>Dashboard</h3><p class="sub">The numbers could not load. Check that the server is running the newest code, then tap the refresh button.</p></div>'];
-  const c = Q.counts, todo = c.listings + c.withdrawals + c.disputes + c.verifications + c.reports + c.confirm + c.underpaid, u = s.users, o = s.orders, e = P.earn;
+  const c = Q.counts, todo = c.listings + c.withdrawals + c.disputes + c.verifications + c.reports + c.underpaid, u = s.users, o = s.orders, e = P.earn;
   const l7 = s.signups.slice(23).reduce((t, x) => t + x.n, 0), p7 = s.signups.slice(16, 23).reduce((t, x) => t + x.n, 0);
   const delta = p7 ? '<i class="' + (l7 >= p7 ? '' : 'dn') + '">' + (l7 >= p7 ? '\u2191 +' : '\u2193 -') + Math.abs(Math.round(((l7 - p7) * 100) / p7)) + '%</i> vs last week' : num(u.last30d) + ' joined in 30 days';
   const kp = (ic, cl, label, val, sub, tabk) => '<div class="card pk"' + (tabk ? ' data-tab="' + tabk + '"' : '') + '><span class="ic ' + cl + '">' + svg(ic, 24) + '</span><div><small>' + label + '</small><b' + (typeof val === 'number' ? '>' + num(val) : ' class="m">' + val) + '</b></div><div class="dl">' + sub + '</div></div>';
@@ -99,7 +99,7 @@ SECTIONS.dashboard = () => {
     + kp('wallet', 'b', 'Total earned', e ? kes(e.total_earned) : '-', e ? kes(earned) + ' in the last 30 days' : 'Not loaded', 'settings') + '</div>';
   const trend = '<div class="card"><div class="ph2"><h3>New users</h3><span class="pill">' + num(u.last30d) + ' in 30 days</span></div>' + area(s.signups) + '</div>';
   const how = '<div class="card"><div class="ph2"><h3>How people sign in</h3></div>' + donut(u.types, TYPE, 'Users') + '</div>';
-  const att = [['listings', 'Items to approve', c.listings], ['confirm', 'M-Pesa to confirm', c.confirm], ['withdrawals', 'Withdrawals to send', c.withdrawals], ['verifications', 'ID checks', c.verifications], ['disputes', 'Disputes', c.disputes], ['reports', 'Reports', c.reports], ['payments', 'Underpaid', c.underpaid]].filter((x) => x[2] > 0);
+  const att = [['listings', 'Items to approve', c.listings], ['withdrawals', 'Withdrawals to send', c.withdrawals], ['verifications', 'ID checks', c.verifications], ['disputes', 'Disputes', c.disputes], ['reports', 'Reports', c.reports], ['payments', 'Underpaid', c.underpaid]].filter((x) => x[2] > 0);
   const attn = '<div class="card"><div class="ph2"><h3>Needs your attention</h3><span class="pill ' + (todo ? 'r' : '') + '">' + (todo ? todo + ' waiting' : 'All clear') + '</span></div>'
     + (att.length ? '<div class="pl">' + att.map((x, i) => '<button data-tab="' + x[0] + '"><span class="n">' + (i + 1) + '</span><span class="t">' + x[1] + '</span><span class="go"><span class="pill r">' + x[2] + '</span></span></button>').join('') + '</div>' : '<p class="sub" style="padding:18px 0">Nothing is waiting for you.</p>') + '</div>';
   const roles = '<div class="card"><div class="ph2"><h3>Roles</h3></div>' + donut(u.roles, ROLE, 'Accounts') + '</div>';
@@ -156,7 +156,7 @@ function shell() {
   const body = document.body, app = $('#app');
   if (body.classList.contains('out') || !app || !Q || app.querySelector('.login')) { body.classList.remove('pro'); return; }
   body.classList.add('pro');
-  const gi = groupOf(tab), g = GROUPS[gi], c = Q.counts || {}, review = (c.listings || 0) + (c.withdrawals || 0) + (c.disputes || 0) + (c.verifications || 0) + (c.reports || 0) + (c.confirm || 0) + (c.underpaid || 0);
+  const gi = groupOf(tab), g = GROUPS[gi], c = Q.counts || {}, review = (c.listings || 0) + (c.withdrawals || 0) + (c.disputes || 0) + (c.verifications || 0) + (c.reports || 0) + (c.underpaid || 0);
   let sb = $('.pro-sb');
   if (!sb) {
     sb = document.createElement('aside'); sb.className = 'pro-sb'; sb.setAttribute('aria-label', 'Sections'); body.appendChild(sb);

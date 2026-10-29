@@ -10,16 +10,8 @@
 
 <h2>1. Who holds your money, and how</h2>
 
-<div data-mode="manual">
-<div class="card"><p><b>Payment method: M-Pesa sent directly to us.</b> No automatic payment gateway is used. At checkout the app shows the M-Pesa details to pay (Send Money, Till or Paybill). The account name on the M-Pesa confirmation must read <b data-t="payments.pay_to_name">the name shown at checkout</b>. If the name is different, do not pay.</p>
-<p><b>What happens next.</b> You enter the M-Pesa confirmation code in the app. An admin matches that code to our M-Pesa statement and confirms it. Only then is your order created and the item marked sold.</p></div>
-</div>
-<div data-mode="intasend" hidden>
-<div class="card"><p><b>Payment gateway: IntaSend.</b> When you pay, IntaSend sends an M-Pesa prompt to your phone. You enter your M-Pesa PIN on your phone. We never see or store your PIN. IntaSend collects the payment and passes it to us. We confirm every payment directly with IntaSend before your order is created; a message alone is never trusted.</p>
-<p data-show-if="payments.gateway.fallback">If IntaSend cannot send a prompt, we may use <b data-t="payments.gateway.fallback">another provider</b> instead. The same rules below apply.</p></div>
-</div>
-<div data-mode="tinypesa" hidden>
-<div class="card"><p><b>Payment gateway: TinyPesa.</b> When you pay, TinyPesa sends an M-Pesa prompt to your phone. You enter your M-Pesa PIN on your phone. We never see or store your PIN. We create your order only after the payment is confirmed.</p></div>
+<div data-mode="payhero">
+<div class="card"><p><b>Payment gateway: PayHero.</b> When you pay, PayHero sends an M-Pesa prompt to your phone. You enter your M-Pesa PIN on your phone. We never see or store your PIN. Your order is created only after PayHero confirms the payment to our server; a message or screenshot alone is never trusted.</p></div>
 </div>
 
 <p><b>What "held in escrow" means.</b> After your payment is confirmed, the money belongs to that one order. The seller cannot take it until a release event happens (section 3). Escrow is a record kept by <b data-t="operator.name">comradeconnect</b> in its own ledger. It is not a bank account, and money in escrow or in your wallet is not a bank deposit and earns no interest. The marketplace fee is worked out when the order is created and is only kept when a sale is released.</p>

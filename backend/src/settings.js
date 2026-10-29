@@ -60,51 +60,6 @@ export async function getSettings(env) {
   return vals;
 }
 
-// ---------- Which payment gateway each part of the site uses (admin > Money > Payment gateways) ----------
-// Stored in the same `settings` table as numbers: gw_<area> = 0 (site default), 1 (manual M-Pesa), 2 (TinyPesa), 3 (IntaSend).
-export const GW_CODES = { default: 0, manual: 1, tinypesa: 2, intasend: 3 };
-export const GW_NAMES = { default: 'Site default', manual: 'Manual M-Pesa (you confirm)', tinypesa: 'TinyPesa', intasend: 'IntaSend' };
-export const GW_AREAS = {
-  gift: { label: 'Gifts (Buy me a gift)', def: 'tinypesa', purposes: ['gift'] },
-  market: { label: 'Market orders', def: 'default', purposes: ['order'] },
-  wallet: { label: 'Wallet top-ups, boosts and post fees', def: 'default', purposes: ['topup', 'boost', 'spillfee'] },
-  events: { label: 'Event tickets and Club shop', def: 'default', purposes: ['ticket', 'club'] },
-  kura: { label: 'Kura votes', def: 'default', purposes: ['kura'] },
-  membership: { label: 'Wholesaler and hostel caretaker fees', def: 'default', purposes: ['wholesale', 'caretaker'] },
-};
-export const areaOf = (purpose) => Object.keys(GW_AREAS).find((k) => GW_AREAS[k].purposes.includes(purpose)) || null;
-const GCACHE = new WeakMap();
-export async function getGateways(env) {
-  const c = GCACHE.get(env);
-  if (c && Date.now() - c.at < 10e3) return c.vals;
-  const vals = {}, byCode = Object.fromEntries(Object.entries(GW_CODES).map(([k, v]) => [v, k]));
-  for (const a of Object.keys(GW_AREAS)) vals[a] = GW_AREAS[a].def;
-  try {
-    for (const r of await rows(await sb(env, 'settings?select=key,value'))) {
-      if (!String(r.key).startsWith('gw_')) continue;
-      const a = String(r.key).slice(3), n = Number(r.value);
-      if (GW_AREAS[a] && byCode[n]) vals[a] = byCode[n];
-    }
-  } catch (e) { /* settings table not created yet: the built-in choices are used */ }
-  GCACHE.set(env, { at: Date.now(), vals });
-  return vals;
-}
-export async function saveGateways(env, input) {
-  if (!input || typeof input !== 'object') return { error: 'Nothing to save' };
-  const cur = await getGateways(env), changed = {};
-  for (const [a, g] of Object.entries(input)) {
-    if (!GW_AREAS[a]) return { error: 'Unknown area: ' + a };
-    if (!(g in GW_CODES)) return { error: 'Unknown gateway: ' + g };
-    if (g !== cur[a]) changed[a] = [cur[a], g];
-  }
-  for (const [a, [, g]] of Object.entries(changed)) {
-    const res = await post(env, 'settings', { key: 'gw_' + a, value: GW_CODES[g], updated_at: new Date().toISOString() }, 'resolution=merge-duplicates,return=representation');
-    if (!res.ok) return { error: 'Could not save (' + res.status + '). Run the catch-up SQL in Supabase, then try again.' };
-  }
-  GCACHE.delete(env);
-  return { changed };
-}
-
 export const DEFAULT_ZONES = ['Kerugoya', 'Kutus', 'Kagio', 'On campus'];
 // The zones comrades pick from. The admin edits them (admin > Zones); an empty table means the built-in four.
 // Each campus has its own list. campus = an id, or 'all' / nothing for every campus together.

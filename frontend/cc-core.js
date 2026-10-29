@@ -618,7 +618,7 @@ function stepsCss() {
   document.head.appendChild(st);
 }
 const stepLi = (c, t, sub) => '<div class="cs-s ' + c + '"><span class="cs-i"></span><div><b>' + t + '</b><small>' + (sub || '') + '</small></div></div>';
-// Money-in progress: send the prompt > enter the PIN > verify > done. go() takes 'send' | 'prompt' | 'manual' | 'verify' | 'done'.
+// Money-in progress: send the prompt > enter the PIN > verify > done. go() takes 'send' | 'prompt' | 'verify' | 'done'.
 // kind: 'escrow' (default) | 'deposit' | 'plan' | 'boost' | 'club'. Only the wording of the heading and the last step changes.
 const PAYKIND = {
   escrow: ['Paying', 'Payment received', (a) => kes(a) + ' is held safely in escrow', 'Held safely in escrow'],
@@ -630,24 +630,22 @@ const PAYKIND = {
 function paySteps(box, phone, amount, kind) {
   stepsCss();
   const K = PAYKIND[kind] || PAYKIND.escrow;
-  let at = 0, manual = false, tm = 0, t0 = Date.now(), dead = false;
+  let at = 0, tm = 0, t0 = Date.now(), dead = false;
   const card = () => false;   // M-Pesa only
   const T = () => card()
     ? [['Opening secure card page', 'Visa or Mastercard'], ['Pay on the card page', 'Your card details never reach Comrade Connect'], ['Verifying payment', 'Confirming with the bank'], [K[1], K[2](amount)]]
-    : manual
-    ? [['Starting your payment', 'Reference created for ' + kes(amount)], ['Pay with M-Pesa, then enter the code', 'Waiting for your M-Pesa code'], ['Checking your payment', 'An admin confirms it, usually within a few minutes'], [K[3], K[2](amount)]]
     : [['Sending M-Pesa prompt', 'To ' + esc(phone)], ['Prompt sent. Enter your PIN', 'Check your phone'], ['Verifying payment', 'Confirming with M-Pesa'], [K[1], K[2](amount)]];
   const draw = (bad) => {
     box.innerHTML = '<p class="cs-h">' + K[0] + '<b>' + kes(amount) + '</b></p><div class="cs-l" role="status" aria-live="polite">'
       + T().map((x, i) => stepLi(bad && i === at ? 'f' : i < at || at === 4 ? 'd' : i === at ? 'a' : '', x[0], i === 1 && i === at && !bad ? '<span id="cs-t">' + (card() ? 'Finish on the card page' : 'Check your phone') + '</span>' : x[1])).join('') + '</div>';
   };
   const tick = () => { const n = box.querySelector('#cs-t'); if (!n) return; const s = Math.floor((Date.now() - t0) / 1000);
-    n.textContent = (card() ? 'Finish on the card page' : manual ? 'Waiting for your M-Pesa code' : 'Check your phone') + ' (' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ')'
-      + (!manual && !card() && s > 40 ? '. No prompt? Check the number you entered.' : ''); };
+    n.textContent = (card() ? 'Finish on the card page' : 'Check your phone') + ' (' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ')'
+      + (!card() && s > 40 ? '. No prompt? Check the number you entered.' : ''); };
   const api = {
     go(st) {
       if (dead) return;
-      if (st === 'manual') { manual = true; at = 1; } else at = { send: 0, prompt: 1, verify: 2, done: 4 }[st] ?? at;
+      at = { send: 0, prompt: 1, verify: 2, done: 4 }[st] ?? at;
       draw(false); clearInterval(tm); t0 = Date.now(); if (at === 1) tm = setInterval(tick, 1000);
     },
     fail(msg) { clearInterval(tm); draw(true); if (msg) box.insertAdjacentHTML('beforeend', '<p class="cs-e">' + esc(msg) + '</p>'); },
@@ -1437,36 +1435,13 @@ function drawClubX() {
 }
 /* a payment sheet: phone, wait for the M-Pesa prompt, confirm. The amount is only shown here; the Worker fixes it. */
 /* Manual M-Pesa (free mode): says how to pay, asks for the M-Pesa code from the message, sends it to the Worker. */
-function askCode(id, man) {
-  return new Promise((resolve, reject) => {
-    const m = sheet('<h3>Pay with M-Pesa</h3><p class="sub" style="margin-top:6px">Send exactly <b>' + kes(man.amount) + '</b>:</p>'
-      + '<p class="note" style="color:var(--fg);margin-top:6px">' + esc(man.steps) + (man.name ? '<br>Name M-Pesa shows: <b>' + esc(man.name) + '</b>' : '') + '</p>'
-      + (man.pay_to ? '<button class="btn g" id="ccmc2" style="width:100%;margin-top:8px">Copy ' + (man.type === 'send' ? 'number' : man.type === 'till' ? 'till number' : 'business number') + '</button>' : '')
-      + '<p class="note">Then paste the 10-character code from the M-Pesa message, like SJK7ABC123.</p>'
-      + '<div class="fld" style="margin-top:10px"><input id="ccmc" maxlength="12" autocapitalize="characters" autocomplete="off" placeholder="M-Pesa code" aria-label="M-Pesa code"></div><p class="note" id="ccme" style="color:var(--fg)"></p>'
-      + '<div class="two" style="margin-top:12px"><button class="btn g" id="ccmx">Cancel</button><button class="btn p" id="ccmg">I have paid</button></div>');
-    const q = (x) => m.querySelector(x);
-    if (q('#ccmc2')) q('#ccmc2').onclick = () => copyText(man.pay_to);
-    q('#ccmx').onclick = () => { m.close(); reject(new Error('Payment not finished. If you already paid, buy again and enter the M-Pesa code.')); };
-    let busy = false;
-    q('#ccmg').onclick = async () => {
-      if (busy) return;
-      const code = q('#ccmc').value.toUpperCase().replace(/[\s-]/g, '');
-      if (!/^[A-Z0-9]{10}$/.test(code)) return (q('#ccme').textContent = 'The code has 10 letters and numbers, like SJK7ABC123.');
-      busy = true; q('#ccme').textContent = '';
-      try { await call('/api/pay/confirm', { body: { id, code } }); m.close(); resolve(); } catch (e) { q('#ccme').textContent = e.message; busy = false; }
-    };
-  });
-}
-/* Waits until a payment is paid. Automatic mode: waits for the M-Pesa prompt. Manual mode: asks for the code, then tells the buyer an admin is checking. */
+/* Waits until a payment is paid: waits for the M-Pesa prompt, then for PayHero's confirmation. */
 async function waitPaid(id, on) {
   on = on || (() => {});
-  let st = null, asked = false;
+  let st = null;
   for (let i = 0; i < 60; i++) {
     if (i) await sleep(3000);
     try { st = await call('/api/pay/status?id=' + encodeURIComponent(id), { auth: false }); } catch (e) { continue; }
-    if (st.manual && !asked) { asked = true; on('manual'); await askCode(id, st.manual); i = -1; continue; }
-    if (st.status === 'submitted') { on('verify'); await sleep(900); const e = new Error('Code received. We are checking your payment. It shows under Orders and Wallet once confirmed, usually within a few minutes.'); e.pending = true; throw e; }
     if (st.status !== 'pending') break;
   }
   if (st && st.status !== 'pending') { on('verify'); await sleep(1200); }   // the "Verifying payment" step is always visible for a moment

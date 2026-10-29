@@ -5,7 +5,7 @@
 const Z = { settings: [], earn: null, payouts: [], sponsors: null, pstatus: 'paid', gw: null };
 const get = async (p) => { try { return await api(p); } catch (e) { return null; } };
 async function loadZ() {
-  const r = await Promise.all([get('/api/admin/settings'), get('/api/admin/earnings'), get('/api/admin/payouts?status=' + Z.pstatus), get('/api/admin/sponsors'), get('/api/admin/gateways')]);
+  const r = await Promise.all([get('/api/admin/settings'), get('/api/admin/earnings'), get('/api/admin/payouts?status=' + Z.pstatus), get('/api/admin/sponsors')]);
   Z.gw = r[4] || null;
   Z.settings = (r[0] && r[0].settings) || []; Z.earn = r[1]; Z.payouts = (r[2] && r[2].payouts) || []; Z.sponsors = r[3] && r[3].sponsors ? r[3].sponsors : null;   // null = use the public list
 }
@@ -27,14 +27,7 @@ SECTIONS.settings = () => {
   const form = '<div class="card"><h3>Fees and prices</h3><p class="sub">Changes apply to NEW orders, boosts and withdrawals. Anything already paid keeps its old rate.</p>'
     + Z.settings.map((s) => '<label class="sub" style="display:block;margin-top:12px">' + esc(s.label) + (s.unit ? ' (' + esc(s.unit) + ')' : '') + '<input data-set="' + esc(s.key) + '" inputmode="decimal" value="' + esc(s.value) + '"></label><p class="sub" style="margin:2px 0 0">' + esc(s.help || '') + ' Allowed: ' + esc(s.min) + ' to ' + esc(s.max) + '.</p>').join('')
     + '<div class="row"><button class="p" id="setsave">Save changes</button></div></div>';
-  let gw = '';
-  if (Z.gw) {
-    gw = '<div class="card"><h3>Payment gateways</h3><p class="sub">Choose which gateway takes the money for each part of the site. Changes apply to the next payment. If a gateway has no keys on the server it is skipped and the site default is used.</p>'
-      + Z.gw.areas.map((a) => '<label class="sub" style="display:block;margin-top:12px">' + esc(a.label) + '<select data-gw="' + esc(a.key) + '" style="width:100%;margin-top:4px">'
-        + Z.gw.gateways.map((g) => '<option value="' + esc(g.id) + '"' + (g.id === a.value ? ' selected' : '') + '>' + esc(g.name) + (g.ready ? '' : ' (keys not set)') + '</option>').join('') + '</select></label>').join('')
-      + '<div class="row"><button class="p" id="gwsave">Save gateways</button></div></div>';
-  }
-  return [gw, earn, form];
+  return [earn, form];
 };
 
 SECTIONS.payouts = () => ['<div class="row"><button data-x="pf" data-s="paid">Paid</button><button data-x="pf" data-s="rejected">Rejected or cancelled</button></div>']
@@ -60,10 +53,6 @@ addEdit('notices', 'ntdel', 'ntedit', 'Edit'); addEdit('events', 'evdel', 'evedi
 
 document.addEventListener('click', async (e) => {
   const t = e.target;
-  if (t.closest('#gwsave')) {
-    const values = {}; document.querySelectorAll('[data-gw]').forEach((i) => { values[i.dataset.gw] = i.value; });
-    return act(t, () => api('/api/admin/gateways', { values }), 'Gateways saved');
-  }
   if (t.closest('#setsave')) {
     const values = {}; document.querySelectorAll('[data-set]').forEach((i) => { values[i.dataset.set] = i.value.trim(); });
     return act(t, () => api('/api/admin/settings', { values }), 'Saved');

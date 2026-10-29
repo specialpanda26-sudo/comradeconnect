@@ -14,24 +14,6 @@ export async function markFailed(env, filter, status, reason, code) {
   return rows(res);
 }
 
-// retired gateways: inert stubs so other modules keep importing
-export const tinyKeys = () => [];
-export const payMode = () => 'finoq';
-export const manualMode = () => false;
-export const gatewayReady = (env) => ({ manual: false, tinypesa: false, intasend: false, finoq: finoqReady(env) });
-export const gatewayFor = () => 'finoq';
-export const intaKey = () => '', intaPub = () => '', intaBase = () => '', intaReady = () => false;
-export const intaHead = () => ({ 'Content-Type': 'application/json' });
-export const intaBody = (env, o) => o;
-export async function settleIntasend() { return 'ignored'; }
-
-export function manualInfo(env, p) {
-  const to = String(env.MPESA_PAY_TO || ''), type = ['till', 'paybill'].includes(env.MPESA_PAY_TYPE) ? env.MPESA_PAY_TYPE : 'send', ref = 'CC' + String(p.id).slice(0, 8).toUpperCase();
-  const steps = type === 'till' ? `M-Pesa > Lipa na M-Pesa > Buy Goods and Services > Till number ${to}`
-    : type === 'paybill' ? `M-Pesa > Lipa na M-Pesa > Paybill > Business number ${to} > Account number ${ref}` : `M-Pesa > Send Money > ${to}`;
-  return { type, pay_to: to, name: String(env.MPESA_PAY_NAME || ''), amount: p.amount, ref, steps };
-}
-
 // STK push. request_id is saved at insert so a fast webhook always finds the row.
 export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone: rawPhone, boost_hours, credit_ksh, method, email }) {
   const phone = normPhone(rawPhone);
@@ -127,7 +109,6 @@ export async function reconcileDeposits(env) {
   for (const p of expired) await hooks.onFailed(env, p);
   return expired.length;
 }
-export const reconcileIntasend = reconcileDeposits;   // old name, kept so index.js and old imports still work
 
 export async function payRoutes(req, env, url, ip) {
   const path = url.pathname;
@@ -170,8 +151,6 @@ export async function payRoutes(req, env, url, ip) {
     catch (e) { console.error('finoq webhook: settle failed', cb.ref, e && e.message); return json(env, { ok: false, error: 'retry' }, 500); }
     return json(env, { ok: true, result });
   }
-
-  if (path === '/api/pay/confirm' && req.method === 'POST') return err(env, 'Payments are confirmed automatically now', 400);
 
   if (path === '/api/pay/status' && req.method === 'GET') {
     const id = url.searchParams.get('id') || '';

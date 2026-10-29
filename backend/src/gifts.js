@@ -1,5 +1,5 @@
 import { json, err, sb, rows, one, post, patch, enc, user, str, int, UUID, hasContact, normPhone, throttle, tooMany } from './lib.js';
-import { initPayment, credit, gatewayFor } from './pay.js';
+import { initPayment, credit } from './pay.js';
 import { getSettings, feeOf } from './settings.js';
 import { mailReady, sendMail } from './mail.js';
 import { notify } from './notifications.js';
@@ -73,7 +73,7 @@ export async function giftRoutes(req, env, url, ip) {
     const l = await bySlug(env, url.searchParams.get('c') || '');
     if (!l || !l.active) return err(env, 'This gift link is not active', 404);
     const S = await getSettings(env);
-    return json(env, { ...publicLink(env, l), presets: PRESETS, min: S.gift_min, max: S.gift_max, receipts: mailReady(env), manual: (await gatewayFor(env, 'gift')) === 'manual' });
+    return json(env, { ...publicLink(env, l), presets: PRESETS, min: S.gift_min, max: S.gift_max, receipts: mailReady(env) });
   }
 
   if (path === '/api/gift/send' && m === 'POST') {
@@ -93,16 +93,5 @@ export async function giftRoutes(req, env, url, ip) {
     return json(env, { id: r.id, url: r.url, amount });
   }
 
-  if (path === '/api/gift/confirm' && m === 'POST') {
-    if ((await gatewayFor(env, 'gift')) !== 'manual') return err(env, 'Payments are confirmed automatically', 400);
-    const b = await body(), code = String(b.code || '').toUpperCase().replace(/[\s-]/g, '');
-    if (!UUID.test(String(b.id || ''))) return err(env, 'bad id');
-    if (!/^[A-Z0-9]{10}$/.test(code)) return err(env, 'The M-Pesa code has 10 letters and numbers, like SJK7ABC123');
-    if (!(await throttle(env, ip, 'giftconfirm', b.id, 10, 40))) return tooMany(env);
-    const res = await patch(env, `payments?id=eq.${b.id}&purpose=eq.gift&status=in.(pending,submitted)`, { status: 'submitted', receipt: code });
-    if (res.status === 409) return err(env, 'That M-Pesa code was already used', 409);
-    const [p] = await rows(res);
-    return p ? json(env, { ok: true, status: 'submitted' }) : err(env, 'This payment is no longer waiting for a code', 404);
-  }
   return null;
 }

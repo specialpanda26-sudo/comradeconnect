@@ -81,7 +81,7 @@ test('cron: unanswered deposits expire AND run the failed cleanup (points return
   t.after(() => { hooks.onFailed = prev; });
   const out = await w.cron();
   assert.equal(failedFor, row.id, 'onFailed ran for the expired payment');
-  assert.equal(w.row('payments', (x) => x.id === row.id).status, 'expired'); assert.ok(out.intasendChecked >= 1);
+  assert.equal(w.row('payments', (x) => x.id === row.id).status, 'expired'); assert.ok(out.depositsExpired >= 1);
   assert.equal((await hook(w, row.request_id, { amount: 100 })).data.result, 'paid', 'a late success still credits');
 });
 

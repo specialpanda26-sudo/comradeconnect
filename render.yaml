@@ -33,9 +33,6 @@ services:
       - { key: DEVICE_LOCK, value: "1" }
       - { key: DEVICE_MAX_ACCOUNTS, value: "3" }
       - { key: PASSKEY_RP_ID, value: comradeconnect.co.ke }
-      - { key: MPESA_PAY_TYPE, value: send }
-      - { key: MPESA_PAY_TO, sync: false }
-      - { key: MPESA_PAY_NAME, sync: false }
       - { key: FCM_SERVICE_ACCOUNT, sync: false } # Firebase service account JSON: phone alerts for the Android app
       - { key: SITE_URL, value: "https://comradeconnect.co.ke" }
       - { key: SUPPORT_EMAIL, value: "support@comradeconnect.co.ke" }

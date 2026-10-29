@@ -10,13 +10,11 @@ ALLOWED_ORIGINS = "https://comradeconnect.co.ke,https://www.comradeconnect.co.ke
 AI_MODEL = "gemini-3.1-flash-lite"
 AI_DAILY_LIMIT = "20"
 AI_GLOBAL_LIMIT = "1000"
-# --- Payments (free by default) ---
-# "manual": buyers send money to YOUR number, till or paybill and enter the M-Pesa code; you confirm it in the admin panel. No sign-up, no API, no fees from us.
-# "tinypesa": automatic M-Pesa prompt through TinyPesa (needs TINYPESA_API_KEY and CALLBACK_SECRET; TinyPesa has its own fees).
-PAYMENT_MODE = "manual"
-MPESA_PAY_TYPE = "send"        # send (Send Money to a phone) | till (Buy Goods) | paybill
-MPESA_PAY_TO = ""              # your phone number, till number or paybill number
-MPESA_PAY_NAME = ""            # the name M-Pesa shows when buyers type the number (so they know it is you)
+# --- Payments: PayHero. Keys are secrets: set them with `npx wrangler secret put NAME` (PAYHERO_API_KEY, PAYHERO_API_SECRET, PAYHERO_CALLBACK_SECRET) ---
+PAYHERO_CHANNEL_ID = ""
+PAYHERO_BASE_URL = "https://backend.payhero.co.ke"
+PAYHERO_PAYOUTS_ENABLED = "1"
+# CALLBACK_URL = "https://YOUR-API/api/webhooks/payhero?s=SECRET"   (set as a secret, it contains the secret)
 # Escrow and referral rules (days / KES)
 REFERRAL_UNLOCK_DAYS = "7"
 REFERRAL_REWARD = "20"

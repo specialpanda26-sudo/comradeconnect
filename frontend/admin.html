@@ -244,8 +244,6 @@ const SECTIONS = {
       + (off ? '<button data-do="vapprove_nb">Approve ID only</button>' : '') + '<button class="bad" data-do="vreject">Reject</button></div></div>';
   }),
   reports: () => Q.content_reports.map((r) => rep(r, 'content')).concat(Q.message_reports.map((r) => rep(r, 'message'))),
-  confirm: () => (Q.confirm || []).map((p) => '<div class="card" data-id="' + esc(p.id) + '"><h3>' + kes(p.amount) + ': check M-Pesa</h3>' + kv([['M-Pesa code', p.receipt], ['Buyer phone', p.phone], ['For', p.purpose], ['Sent', when(p.created_at)]])
-    + '<p class="sub">Open your M-Pesa messages. Approve only if a message shows this exact code and at least ' + esc(kes(p.amount)) + '.</p><div class="row"><button class="ok" data-do="payok">Money received</button><button class="bad" data-do="paybad">Not received</button></div></div>'),
   payments: () => Q.underpaid.map((p) => '<div class="card"><h3>' + kes(p.amount) + ' underpaid</h3>' + kv([['Purpose', p.purpose], ['Account', p.aid], ['Receipt', p.receipt], ['Time', when(p.created_at)]]) + '<p class="sub">Handle by hand: contact the payer, refund or collect the balance.</p></div>'),
   events: () => {
     const form = '<div class="card"><h3>New event</h3><input id="ev_t" placeholder="Title, e.g. Fresher bash" maxlength="100"><input id="ev_d" placeholder="Date, YYYY-MM-DD" maxlength="10"><input id="ev_v" placeholder="Venue" maxlength="80"><input id="ev_p" placeholder="Ticket price in KSh (leave empty for no tickets)" inputmode="numeric" maxlength="5"><input id="ev_x" placeholder="Details" maxlength="400"><div class="row"><button class="p" id="evadd">Add event</button></div></div>';
@@ -271,10 +269,10 @@ const SECTIONS = {
 };
 function rep(r, kind) { return '<div class="card" data-id="' + esc(r.id) + '" data-kind="' + kind + '"><h3>' + (kind === 'content' ? 'Reported ' + esc(r.target_type || 'item') : 'Reported message') + '</h3>' + kv([['Reason', r.reason], ['Message', r.snapshot], ['Reported account', r.reported_aid], ['Target', r.target_id], ['Reported', when(r.created_at)]])
   + '<div class="row">' + (kind === 'content' ? '<button class="bad" data-do="ractionhide">Take action and hide it</button>' : '') + '<button data-do="raction">Mark as actioned</button><button data-do="rdismiss">Dismiss</button></div></div>'; }
-const LABEL = { listings: 'Listings', withdrawals: 'Withdrawals', disputes: 'Disputes', verifications: 'ID checks', reports: 'Reports', confirm: 'Confirm M-Pesa', payments: 'Underpaid', users: 'Accounts', events: 'Events', club: 'Club', notices: 'Notices', sponsors: 'Sponsors', videos: 'Videos' };
-const COUNT = () => ({ listings: Q.counts.listings, withdrawals: Q.counts.withdrawals, disputes: Q.counts.disputes, verifications: Q.counts.verifications, reports: Q.counts.reports, confirm: Q.counts.confirm, payments: Q.counts.underpaid, users: 0, events: 0, club: X.orders.length, notices: 0, sponsors: 0 });
+const LABEL = { listings: 'Listings', withdrawals: 'Withdrawals', disputes: 'Disputes', verifications: 'ID checks', reports: 'Reports', payments: 'Underpaid', users: 'Accounts', events: 'Events', club: 'Club', notices: 'Notices', sponsors: 'Sponsors', videos: 'Videos' };
+const COUNT = () => ({ listings: Q.counts.listings, withdrawals: Q.counts.withdrawals, disputes: Q.counts.disputes, verifications: Q.counts.verifications, reports: Q.counts.reports, payments: Q.counts.underpaid, users: 0, events: 0, club: X.orders.length, notices: 0, sponsors: 0 });
 
-const TILES = [['listings', 'Listings'], ['confirm', 'To confirm'], ['withdrawals', 'Withdrawals'], ['verifications', 'ID checks'], ['disputes', 'Disputes'], ['reports', 'Reports']];
+const TILES = [['listings', 'Listings'], ['withdrawals', 'Withdrawals'], ['verifications', 'ID checks'], ['disputes', 'Disputes'], ['reports', 'Reports']];
 function countUp(root) {
   root.querySelectorAll('[data-n]').forEach((el) => {
     const to = +el.dataset.n, t0 = performance.now(), d = 900;
@@ -347,8 +345,6 @@ document.addEventListener('click', async (e) => {
   if (d === 'spdel') { if (!confirm('Delete this sponsor?')) return; return act(b, () => api('/api/admin/sponsors/' + id, { action: 'delete' }), 'Sponsor deleted'); }
   if (d === 'evdel') { if (!confirm('Delete this event? Tickets already sold stay valid in the database but the event disappears from the app.')) return; return act(b, () => api('/api/admin/events/' + id, { action: 'delete' }), 'Event deleted'); }
   if (d === 'cpstock') { const v = ask('New stock quantity (the number on the shelf):'); if (v === null) return; if (!/^\d+$/.test(v)) return toast('Enter a number'); return act(b, () => api('/api/admin/club/stock', { product_id: id, qty: +v }), 'Stock updated'); }
-  if (d === 'payok') { if (!confirm('Approve? Only if your M-Pesa message shows this code and the full amount. This starts the order and cannot be undone.')) return; return act(b, () => api('/api/admin/payments/' + id, { action: 'approve' }), 'Payment confirmed'); }
-  if (d === 'paybad') { if (!confirm('Refuse this code? The buyer will see the payment as failed and must pay again.')) return; return act(b, () => api('/api/admin/payments/' + id, { action: 'reject' }), 'Payment refused'); }
   if (d === 'cocollect') { if (!confirm('Mark as collected? Check the buyer\'s Ref first.')) return; return act(b, () => api('/api/admin/club/orders/' + id + '/collect', {}), 'Marked collected'); }
   if (d === 'approve') return act(b, () => api('/api/admin/listings/' + id, { action: 'approve' }), 'Approved');
   if (d === 'reject') { const r = ask('Reason for the seller (they will see it):'); if (!r) return; return act(b, () => api('/api/admin/listings/' + id, { action: 'reject', reason: r }), 'Rejected'); }

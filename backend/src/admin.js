@@ -5,8 +5,7 @@ import { credit, hooks } from './pay.js';
 import { HIDE } from './content.js';
 import { validateTicket } from './club.js';
 import { CAMPUS_IDS, DEFAULT_CAMPUS } from './campus.js';
-import { getSettings, saveSettings, DEFS, envDefault, getZones, DEFAULT_ZONES, getGateways, saveGateways, GW_AREAS, GW_NAMES } from './settings.js';
-import { payMode, gatewayReady } from './pay.js';
+import { getSettings, saveSettings, DEFS, envDefault, getZones, DEFAULT_ZONES } from './settings.js';
 import { contactBlock } from './lib.js';
 import { notify } from './notifications.js';   // cc-fix1
 import { announceEvent, announceNotice } from './push.js';
@@ -68,34 +67,20 @@ export async function adminRoutes(req, env, url, ip) {
       return rows(r);
     };
     const failed = await failedList();
-    const [ls, vs, disputes, wds, creps, mreps, under, confirm] = await Promise.all([
+    const [ls, vs, disputes, wds, creps, mreps, under] = await Promise.all([
       sb(env, 'listings?status=eq.pending&order=created_at.asc&limit=50'), sb(env, 'verifications?select=id,aid,full_name,claimed_role,id_number,group_link,barcode_check,created_at&status=eq.pending&order=created_at.asc&limit=50'),
       sb(env, 'orders?dispute_status=eq.open&order=disputed_at.asc&limit=50'), sb(env, 'withdrawals?status=eq.requested&order=created_at.asc&limit=50'),
       sb(env, 'content_reports?status=eq.open&order=created_at.asc&limit=100'), sb(env, 'message_reports?status=eq.open&order=created_at.asc&limit=100'),
       sb(env, 'payments?select=id,aid,purpose,amount,receipt,created_at&status=eq.underpaid&order=created_at.desc&limit=50'),
-      sb(env, 'payments?select=id,purpose,amount,phone,receipt,created_at&status=eq.submitted&order=created_at.asc&limit=50'),
     ].map((p) => p.then(rows)));
     const photos = ls.length ? await rows(await sb(env, `media?select=listing_id,r2_key&kind=eq.listing_photo&status=eq.ready&listing_id=${inList(ls.map((l) => l.id))}`)) : [];
     const titles = disputes.length ? await rows(await sb(env, `listings?select=id,title&id=${inList(disputes.map((o) => o.listing_id))}`)) : [];
     return json(env, {
-      counts: { listings: ls.length, verifications: vs.length, disputes: disputes.length, withdrawals: wds.length, reports: creps.length + mreps.length, underpaid: under.length, confirm: confirm.length, failed: failed.length },
+      counts: { listings: ls.length, verifications: vs.length, disputes: disputes.length, withdrawals: wds.length, reports: creps.length + mreps.length, underpaid: under.length, failed: failed.length },
       listings: ls.map((l) => ({ id: l.id, title: l.title, description: l.description, price: l.price, category: l.category, seller: l.seller_aid, createdAt: Date.parse(l.created_at), photos: photos.filter((p) => p.listing_id === l.id).map((p) => mediaUrl(env, p.r2_key)) })),
-      verifications: vs, withdrawals: wds, underpaid: under, confirm, failed, content_reports: creps, message_reports: mreps,
+      verifications: vs, withdrawals: wds, underpaid: under, failed, content_reports: creps, message_reports: mreps,
       disputes: disputes.map((o) => ({ id: o.id, title: titles.find((t) => t.id === o.listing_id)?.title, amount: o.amount, status: o.status, reason: o.dispute_reason, opened_by: o.dispute_by === o.buyer_aid ? 'buyer' : 'seller', buyer: o.buyer_aid, seller: o.seller_aid, at: o.disputed_at })),
     });
-  }
-
-  // ---- manual M-Pesa: the buyer sent a code; you checked your M-Pesa message ----
-  let mm = path.match(/^\/api\/admin\/payments\/([0-9a-f-]{36})$/);
-  if (mm && m === 'POST') {
-    const act = (await body()).action;
-    if (act !== 'approve' && act !== 'reject') return err(env, 'Unknown action');
-    const [p] = await rows(await patch(env, `payments?id=eq.${mm[1]}&status=eq.submitted`, act === 'approve' ? { status: 'paid', paid_at: new Date().toISOString() } : { status: 'failed' }));
-    if (!p) return err(env, 'This payment is not waiting for a decision', 409);
-    if (act === 'approve') await hooks.onPaid(env, p); else await hooks.onFailed(env, p);
-    if (p.aid && act === 'approve' && !['topup', 'boost', 'spillfee'].includes(p.purpose)) await notify(env, p.aid, 'payment', 'Payment confirmed', 'KSh ' + p.amount + ' was received. Thank you.', 'payment', p.id);   // reject: onFailed tells them
-    await A('payment.' + act, 'payment', p.id, { amount: p.amount, purpose: p.purpose, receipt: p.receipt });
-    return json(env, { ok: true });
   }
 
   if (path === '/api/admin/listings-live' && m === 'GET') {
@@ -104,7 +89,7 @@ export async function adminRoutes(req, env, url, ip) {
     return json(env, { listings: ls.map((l) => ({ id: l.id, title: l.title, description: l.description, price: l.price, category: l.category, seller: l.seller_aid, createdAt: Date.parse(l.created_at), photos: ph.filter((p) => p.listing_id === l.id).map((p) => mediaUrl(env, p.r2_key)) })) });
   }
 
-  mm = path.match(/^\/api\/admin\/listings\/([0-9a-f-]{36})$/);
+  let mm = path.match(/^\/api\/admin\/listings\/([0-9a-f-]{36})$/);
   if (mm && m === 'POST') {
     const b = await body(), act = b.action;
     if (act === 'approve') {
@@ -297,21 +282,6 @@ export async function adminRoutes(req, env, url, ip) {
     const r = await saveSettings(env, (await body()).values);
     if (r.error) return err(env, r.error);
     await A('settings.update', 'settings', null, r.changed);
-    return json(env, { ok: true, changed: Object.keys(r.changed).length });
-  }
-  // ---- which payment gateway each part of the site uses ----
-  if (path === '/api/admin/gateways' && m === 'GET') {
-    const cur = await getGateways(env), ready = gatewayReady(env), site = payMode(env);
-    return json(env, {
-      site_default: site,
-      gateways: [{ id: 'default', name: 'Site default (' + GW_NAMES[site] + ')', ready: true }].concat(['manual', 'tinypesa', 'intasend'].map((id) => ({ id, name: GW_NAMES[id], ready: ready[id] }))),
-      areas: Object.entries(GW_AREAS).map(([key, d]) => ({ key, label: d.label, value: cur[key] })),
-    });
-  }
-  if (path === '/api/admin/gateways' && m === 'POST') {
-    const r = await saveGateways(env, (await body()).values);
-    if (r.error) return err(env, r.error);
-    await A('gateways.update', 'settings', null, r.changed);
     return json(env, { ok: true, changed: Object.keys(r.changed).length });
   }
   // ---- what the company has earned ----

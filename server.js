@@ -8,7 +8,6 @@ import worker, { runCron } from './backend/src/index.js';
 // Defaults for every non-secret setting. Anything you set in Render's Environment tab wins (an empty value counts as "not set").
 const DEFAULTS = {
   ALLOWED_ORIGINS: '', AI_MODEL: 'gemini-3.1-flash-lite', AI_DAILY_LIMIT: '20', AI_GLOBAL_LIMIT: '1000',
-  MPESA_PAY_TYPE: 'send', MPESA_PAY_TO: '', MPESA_PAY_NAME: '',
   REFERRAL_UNLOCK_DAYS: '7', REFERRAL_REWARD: '20', ESCROW_AUTO_RELEASE_DAYS: '3', PLATFORM_FEE_PERCENT: '7',
   GOOGLE_CLIENT_ID: '', MEDIA_BUCKET: 'cc-media', PRIVATE_BUCKET: 'cc-private',
   BOOST_PRICE: '30', BOOST_PRICE_3D: '70', CLIP_MAX_MB: '25', MEDIA_BUDGET_MB: '800', WITHDRAW_REQUIRES_VERIFIED: '1',

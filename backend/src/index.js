@@ -1,7 +1,7 @@
 // Comrade Connect API (Cloudflare Worker). All secrets live here, never in the HTML.
 import { json, err, corsHeaders, sb, rows, patch, ago, enc } from './lib.js';
 import { feedRoutes } from './feed.js';
-import { payRoutes, hooks, manualMode, markFailed, reconcileIntasend } from './pay.js';
+import { payRoutes, hooks, markFailed, reconcileDeposits } from './pay.js';
 import { accountRoutes, unlockReferrals } from './account.js';
 import { passkeyRoutes } from './passkeys.js';
 import { deviceAdminRoutes } from './device.js';
@@ -133,8 +133,8 @@ export async function runCron(env) {
   out.clubExpired = await step('club', expireClubOrders(env));
   out.unpaidDrafts = await dropUnpaidDrafts(env).catch(() => -1);
   out.payouts = await reconcilePayouts(env).catch((e) => { console.error('payout reconcile error', e && e.message); return -1; });
-  out.intasendChecked = await reconcileIntasend(env).catch((e) => { console.error('intasend reconcile error', e && e.message); return -1; });   // before expiring, so a paid prompt is never expired by mistake
-  const stale = await markFailed(env, `payments?status=eq.pending&created_at=lte.${ago(Number(env.PENDING_MINUTES || (manualMode(env) ? 90 : 30)) * 60e3)}`, 'expired', 'no_response', null);
+  out.depositsExpired = await reconcileDeposits(env).catch((e) => { console.error('deposit reconcile error', e && e.message); return -1; });
+  const stale = await markFailed(env, `payments?status=eq.pending&created_at=lte.${ago(Number(env.PENDING_MINUTES || 30) * 60e3)}`, 'expired', 'no_response', null);
   for (const p of stale) await hooks.onFailed(env, p);
   out.expiredPayments = stale.length;
   const purge = await rows(await sb(env, `verifications?select=id,r2_key&r2_key=not.is.null&purge_after=lte.${new Date().toISOString()}&status=neq.pending&limit=50`));

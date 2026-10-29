@@ -79,7 +79,6 @@ hr{border:0;border-top:1px solid var(--line);margin:22px 0}
 <button class="btn" id="go" type="button" disabled>Send gift with M-Pesa</button></div>
 <div class="card" id="wait" hidden><div class="eye">Sending your gift</div><h1 id="wt">Check your phone</h1>
 <ul class="steps" id="st"><li data-s="p"><i></i>M-Pesa prompt sent to your phone</li><li data-s="n"><i></i>Enter your M-Pesa PIN</li><li data-s="v"><i></i>Verifying payment</li></ul>
-<div id="man" hidden><p class="hint" id="mi"></p><input id="mc" type="text" maxlength="12" placeholder="M-Pesa code, e.g. SJK7ABC123" style="margin-top:10px"><button class="btn" id="mg" type="button">Confirm payment</button></div>
 <p class="err" id="we"></p><button class="btn alt" id="wb" type="button" hidden>Back</button></div>
 <div class="card okc" id="done" hidden><svg class="cc-tick" viewBox="0 0 100 100" aria-hidden="true"><circle class="h" cx="50" cy="50" r="49"/><circle class="c" cx="50" cy="50" r="39"/><path class="k" d="M33 52l12 12 23-25"/></svg><h1>Gift sent</h1><p class="sub" id="dm"></p><button class="btn alt" id="again" type="button">Send another gift</button></div>
 </main>
@@ -107,18 +106,16 @@ function draw(){var g=$('gr');g.textContent='';D.presets.concat([{id:'custom',la
  b.onclick=function(){sel=p.id;[].forEach.call(g.children,function(c){c.classList.remove('on');c.setAttribute('aria-pressed','false')});b.classList.add('on');b.setAttribute('aria-pressed','true');$('cu').classList.toggle('show',p.id==='custom');if(p.id==='custom')$('am').focus();$('er').textContent='';refresh()};g.appendChild(b)})}
 function api(path,o){return fetch(API+path,o).then(function(r){return r.json().catch(function(){return {}}).then(function(d){if(!r.ok){var e=new Error(d.error||'Something went wrong. Try again.');e.status=r.status;throw e}return d})})}
 function mark(s){var order=['p','n','v'],i=order.indexOf(s);[].forEach.call($('st').children,function(li,k){li.className=k<i?'done':k===i?'now':''})}
-function fail(m){busy=false;$('we').textContent=m;$('wb').hidden=false;$('wt').textContent='Gift not sent';mark('x');$('man').hidden=true}
+function fail(m){busy=false;$('we').textContent=m;$('wb').hidden=false;$('wt').textContent='Gift not sent';mark('x')}
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
 async function poll(id){
- var asked=false;
  for(var i=0;i<60;i++){
   if(i)await sleep(3000);
   var st;try{st=await api('/api/pay/status?id='+encodeURIComponent(id))}catch(e){continue}
-  if(st.manual&&!asked){asked=true;$('man').hidden=false;$('mi').textContent='Pay '+st.manual.steps+'. Amount KES '+st.manual.amount+'. Then type the M-Pesa code you receive.';$('st').hidden=true;$('wt').textContent='Pay with M-Pesa';await new Promise(function(res){$('mg').onclick=async function(){try{await api('/api/gift/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,code:$('mc').value})});$('man').hidden=true;$('st').hidden=false;$('wt').textContent='Checking your payment';mark('v');$('we').textContent='Code received. Your gift shows once an admin confirms the payment.';return res(1)}catch(e){$('we').textContent=e.message}}});return 'manual'}
   if(i===1)mark('n');
   if(st.status==='paid')return 'paid';
   if(st.status==='underpaid')throw new Error('The amount paid was less than required. Keep your M-Pesa message and contact support.');
-  if(st.status!=='pending'&&st.status!=='submitted'){var WHY={cancelled:'You cancelled the M-Pesa prompt. Nothing was charged.',insufficient:'Your M-Pesa balance was too low. Nothing was charged.',wrong_pin:'The M-Pesa PIN was wrong. Nothing was charged.'};throw new Error(WHY[st.reason]||'The payment was cancelled or failed. If you did pay, keep your M-Pesa message and contact support.')}
+  if(st.status!=='pending'){var WHY={cancelled:'You cancelled the M-Pesa prompt. Nothing was charged.',insufficient:'Your M-Pesa balance was too low. Nothing was charged.',wrong_pin:'The M-Pesa PIN was wrong. Nothing was charged.'};throw new Error(WHY[st.reason]||'The payment was cancelled or failed. If you did pay, keep your M-Pesa message and contact support.')}
  }
  throw new Error('We have not had the M-Pesa confirmation yet. If you entered your PIN, the gift arrives once it is confirmed. Keep the M-Pesa SMS.');
 }
@@ -131,7 +128,7 @@ async function send(){
  busy=true;refresh();
  try{
   var d=await api('/api/gift/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-   show('wait');$('wt').textContent='Check your phone';$('we').textContent='';$('wb').hidden=true;$('st').hidden=false;$('man').hidden=true;mark('p');
+   show('wait');$('wt').textContent='Check your phone';$('we').textContent='';$('wb').hidden=true;$('st').hidden=false;mark('p');
   var res=await poll(d.id);busy=false;
   if(res==='paid'){mark('v');await sleep(500);$('dm').textContent='Thank you for supporting '+D.title+'. You paid KES '+a.toLocaleString('en-KE')+'.';show('done')}
   else{busy=false;$('wb').hidden=false}

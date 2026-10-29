@@ -26,7 +26,7 @@ const svg = (k, s) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
 const GROUPS = [
   { n: 'Overview', icon: 'grid', h: 'Dashboard', lead: 'How Comrade Connect is doing right now.', tabs: ['dashboard'] },
   { n: 'Users', icon: 'users', h: 'Users', lead: 'Find anyone and control their account.', tabs: ['users', 'phones', 'grant'] },
-  { n: 'Review', icon: 'inbox', h: 'Waiting for you', lead: 'Everything that needs a decision from you.', tabs: ['listings', 'confirm', 'withdrawals', 'verifications', 'disputes', 'reports', 'payments', 'support'] },
+  { n: 'Review', icon: 'inbox', h: 'Waiting for you', lead: 'Everything that needs a decision from you.', tabs: ['listings', 'withdrawals', 'verifications', 'disputes', 'reports', 'payments', 'support'] },
   { n: 'Market', icon: 'bag', h: 'Market and campus', lead: 'Items, events, notices, sponsors and the club shop.', tabs: ['live', 'videos', 'events', 'notices', 'sponsors', 'club'] },
   { n: 'Kura', icon: 'star', h: 'Kura', lead: 'Contestants, votes and the season.', tabs: ['kura'] },
   { n: 'Money', icon: 'wallet', h: 'Money', lead: 'Earnings, fees and payouts.', tabs: ['txns', 'settings', 'payouts'] },
@@ -132,7 +132,7 @@ const NICE = { login: 'Signed in', 'site.update': 'Edited the site', 'settings.u
 SECTIONS.dashboard = () => {
   const s = D.stats;
   if (!s) return ['<div class="card"><h3>Dashboard</h3><p class="sub">The numbers could not load. Check that the server is running the newest code, then tap Refresh.</p></div>'];
-  const c = Q.counts, todo = c.listings + c.withdrawals + c.disputes + c.verifications + c.reports + c.confirm + c.underpaid, u = s.users, o = s.orders, e = D.earn;
+  const c = Q.counts, todo = c.listings + c.withdrawals + c.disputes + c.verifications + c.reports + c.underpaid, u = s.users, o = s.orders, e = D.earn;
   const last7 = s.signups.slice(23).reduce((t, x) => t + x.n, 0), prev7 = s.signups.slice(16, 23).reduce((t, x) => t + x.n, 0);
   const trend = prev7 ? (last7 >= prev7 ? '<em class="up">up ' : '<em class="dn">down ') + Math.abs(Math.round(((last7 - prev7) * 100) / prev7)) + '% on last week</em>' : '<em>' + num(u.last30d) + ' in 30 days</em>';
   const tile = (label, val, sub, extra) => '<div class="card kpi g' + (extra || '') + '"><small>' + label + '</small><b' + (typeof val === 'number' ? ' data-n="' + val + '">0' : ' class="m">' + val) + '</b>' + (sub.indexOf('<em') === 0 ? sub : '<em>' + sub + '</em>') + '</div>';
@@ -148,7 +148,7 @@ SECTIONS.dashboard = () => {
     '<div class="card kpi g' + (todo ? ' hot' : '') + '" data-tab="listings"><small>To do</small><b data-n="' + todo + '">0</b><em>' + (todo ? 'waiting for you. Tap to review' : 'all clear') + '</em></div>',
   ].join('') + '</div>';
   const chartCard = '<div class="card" style="margin-top:14px"><div class="ch"><h3>New users, last 30 days</h3><span class="sub">' + num(u.last30d) + ' joined</span></div>' + chart(s.signups) + '</div>';
-  const att = [['listings', 'Items to approve', c.listings], ['confirm', 'M-Pesa to confirm', c.confirm], ['withdrawals', 'Withdrawals to send', c.withdrawals], ['verifications', 'ID checks', c.verifications], ['disputes', 'Disputes', c.disputes], ['reports', 'Reports', c.reports], ['payments', 'Underpaid payments', c.underpaid]].filter((x) => x[2] > 0);
+  const att = [['listings', 'Items to approve', c.listings], ['withdrawals', 'Withdrawals to send', c.withdrawals], ['verifications', 'ID checks', c.verifications], ['disputes', 'Disputes', c.disputes], ['reports', 'Reports', c.reports], ['payments', 'Underpaid payments', c.underpaid]].filter((x) => x[2] > 0);
   const attention = '<div class="card"><h3>Needs your attention</h3>' + (att.length ? att.map((x) => '<button class="li" data-tab="' + x[0] + '"><span class="nm">' + x[1] + '</span><span class="go"><span class="chip ink" style="margin:0">' + x[2] + '</span>' + svg('arrow', 16) + '</span></button>').join('') : '<p class="sub" style="margin-top:8px">Nothing is waiting. Enjoy the quiet.</p>') + '</div>';
   const who = '<div class="card"><h3>How people sign in</h3>' + bars(u.types, TYPE) + '<h3 style="margin-top:20px">Roles</h3>' + bars(u.roles, ROLE) + '</div>';
   const recent = '<div class="card"><div class="ch"><h3>Newest users</h3><button class="chip" style="background:none;cursor:pointer;color:var(--fg)" data-tab="users">See all</button></div>' + (s.recent.length ? s.recent.map(userRow).join('') : '<p class="sub" style="margin-top:8px">Nobody yet.</p>') + '</div>';
@@ -176,7 +176,7 @@ function decorate() {
   const h = app.querySelector('h1'); if (h) h.textContent = g.h; const l = app.querySelector('p.lead'); if (l) l.textContent = g.lead;
   let bar = $('.gbar');
   if (!bar) { bar = document.createElement('nav'); bar.className = 'gbar g'; bar.setAttribute('aria-label', 'Sections'); document.body.appendChild(bar); }
-  const c = Q.counts, review = c.listings + c.withdrawals + c.disputes + c.verifications + c.reports + c.confirm + c.underpaid;
+  const c = Q.counts, review = c.listings + c.withdrawals + c.disputes + c.verifications + c.reports + c.underpaid;
   bar.innerHTML = GROUPS.map((x, i) => '<button data-tab="' + x.tabs[0] + '" class="' + (i === gi ? 'on' : '') + '" aria-label="' + x.n + '">' + svg(x.icon, 20) + x.n + (x.n === 'Review' && review ? '<span class="b">' + review + '</span>' : '') + '</button>').join('');
 }
 const _render = render;

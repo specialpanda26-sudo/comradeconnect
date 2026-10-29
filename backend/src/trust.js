@@ -3,7 +3,6 @@
 // disagree with what the server really does. Also: optional student-email verification (domain-checked, kept anonymous).
 import { json, err, sb, rows, post, patch, enc, int, ahead, throttle, tooMany, user, tsEqual, H } from './lib.js';
 import { getSettings, feeOf, withdrawFee, boostPlans } from './settings.js';
-import { payMode, tinyKeys, manualMode } from './pay.js';
 import { autoPayout } from './payouts.js';
 import { mailReady, sendMail, codeEmail } from './mail.js';
 
@@ -41,14 +40,8 @@ export async function markUsed(env, table, aid) {
 export const USED_MSG = 'This code has already been used. If you need to, ask for a new one.';
 const maskEmail = (e) => { const [l, d] = e.split('@'); return (l.length > 2 ? l.slice(0, 2) : l.slice(0, 1)) + '***@' + d; };
 
-const GATEWAYS = {
-  manual: { name: 'M-Pesa sent directly to the operator', automatic: false },
-  intasend: { name: 'IntaSend', automatic: true },
-  tinypesa: { name: 'TinyPesa', automatic: true },
-};
-
 export async function trustInfo(env, amount = 1000) {
-  const S = await getSettings(env), mode = payMode(env), tinyOk = tinyKeys(env).length > 0 && !!env.TINYPESA_USERNAME;
+  const S = await getSettings(env);
   const fee = feeOf(amount, S.platform_fee_percent), sellerGets = amount - fee, wFee = withdrawFee(sellerGets, S);
   return {
     updated: TRUST_UPDATED,
@@ -57,11 +50,9 @@ export async function trustInfo(env, amount = 1000) {
       address: String(env.OPERATOR_ADDRESS || 'Kerugoya, Kirinyaga, Kenya'), email: String(env.SUPPORT_EMAIL || 'support@comradeconnect.co.ke'), phone: String(env.SUPPORT_PHONE || ''),
     },
     payments: {
-      mode, currency: 'KES', max_payment: 150000,
-      gateway: { ...GATEWAYS[mode], fallback: mode === 'intasend' && tinyOk ? GATEWAYS.tinypesa.name : null },
-      pay_type: manualMode(env) ? (['till', 'paybill'].includes(env.MPESA_PAY_TYPE) ? env.MPESA_PAY_TYPE : 'send') : null,
-      pay_to_name: manualMode(env) ? String(env.MPESA_PAY_NAME || '') || null : null,
-      unconfirmed_expiry_minutes: Number(env.PENDING_MINUTES || (manualMode(env) ? 90 : 30)),
+      mode: 'payhero', currency: 'KES', max_payment: 150000,
+      gateway: { name: 'PayHero', automatic: true },
+      unconfirmed_expiry_minutes: Number(env.PENDING_MINUTES || 30),
     },
     fees: {
       platform_fee_percent: S.platform_fee_percent, buyer_fee_percent: 0,

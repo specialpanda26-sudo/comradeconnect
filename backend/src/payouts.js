@@ -1,22 +1,17 @@
-// Automatic seller payouts through IntaSend "Send Money" (M-Pesa B2C). ON by default as soon as INTASEND_SECRET_KEY is set
-// (set PAYOUT_MODE=manual to switch it off). No admin is involved: anything IntaSend refuses, or that is under the minimum or over the
-// daily limit, is rejected on the spot and the money goes straight back to the wallet. Only an UNCLEAR answer (no reply from IntaSend)
-// is held as "sending" and checked later, so nothing is ever sent twice.
-// Lifecycle: requested -> sending (claimed by ONE conditional update, so it can never be sent twice) -> paid | rejected (money returned).
-import { sb, rows, patch, enc, ago } from './lib.js';
-import { credit, intaKey, intaBase, intaHead } from './pay.js';
-import { notify } from './notifications.js';   // cc-fix1
+// Wallet withdrawals via FinoQ B2C. Wallet is debited at request time; webhook decides paid or refund.
+import { sb, rows, patch, enc, ago, UUID } from './lib.js';
+import { credit } from './pay.js';
+import { finoqReady, finoqPayout, wdlRef } from './finoq.js';
+import { notify } from './notifications.js';
 
-export const autoPayout = (env) => String(env.PAYOUT_MODE || 'intasend').trim().toLowerCase() !== 'manual' && !!intaKey(env);   // paying OUT needs the secret key; the publishable key cannot send money
+export const autoPayout = (env) => String(env.PAYHERO_PAYOUTS_ENABLED ?? '1') !== '0' && finoqReady(env);
 const num = (v, d) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : d; };
 
-// Reject a request on the spot and return the money (one conditional update, so it can only happen once).
 async function giveBack(env, w, note) {
   const [x] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&status=in.(requested,sending)`, { status: 'rejected', decided_by: 'auto', decided_at: new Date().toISOString() }));
   if (x) await credit(env, x.aid, x.amount, 'adjustment', 'wdrej:' + x.id, note);
 }
-// Called right after a withdrawal request is saved and the wallet debited.
-// Returns 'sending' | 'manual' (automatic payouts are off) | 'toosmall' | 'limit' | 'refused' (the last three: money already returned).
+
 export async function trySendNow(env, w) {
   if (!autoPayout(env)) return 'manual';
   const net = w.net ?? w.amount;
@@ -25,49 +20,42 @@ export async function trySendNow(env, w) {
   if (today.reduce((s, x) => s + x.amount, 0) + w.amount > num(env.PAYOUT_AUTO_DAILY_MAX, 150000)) { await giveBack(env, w, 'Daily withdrawal limit reached, money returned'); return 'limit'; }
   const [claimed] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&status=eq.requested`, { status: 'sending' }));
   if (!claimed) return 'manual';
-  const r = await fetch(`${intaBase(env)}/api/v1/send-money/initiate/`, {
-    method: 'POST', headers: intaHead(env),
-    body: JSON.stringify({ currency: 'KES', provider: 'MPESA-B2C', requires_approval: 'NO', transactions: [{ name: 'Comrade Connect seller', account: w.phone, amount: net, narrative: 'Wallet withdrawal' }] }),
-  }).catch((e) => { console.error('payout: request failed', e && e.message); return null; });
-  const t = r ? await r.json().catch(() => ({})) : {};
-  if (r && r.ok && t.tracking_id) { await patch(env, `withdrawals?id=eq.${w.id}`, { payout_tracking: String(t.tracking_id) }); return 'sending'; }
-  console.error('payout: IntaSend did not accept', w.id, r ? r.status : 'no response', JSON.stringify(t).slice(0, 200));
-  // A clear refusal (4xx: no funds, not enabled...) means nothing was sent: the money goes straight back to the wallet.
-  // No answer or a 5xx is unclear: it stays "sending" and the checker below decides, so it is never sent twice.
+  const ref = wdlRef(w.id);
+  const r = await finoqPayout(env, { amount: net, phone: w.phone, ref, narration: 'Comrade Connect Withdrawal' });
+  if (r && r.ok) { await patch(env, `withdrawals?id=eq.${w.id}`, { payout_tracking: r.tx || ref }); return 'sending'; }
+  console.error('payout: FinoQ did not accept', w.id, r && r.status, r && r.error);
   if (r && r.status >= 400 && r.status < 500) { await giveBack(env, w, 'Payout could not be sent, money returned'); return 'refused'; }
   return 'sending';
 }
 
-// Ask IntaSend what happened to one "sending" withdrawal. Safe to call any number of times.
-export async function settlePayout(env, w) {
-  if (w.status !== 'sending') return 'ignored';
-  if (!w.payout_tracking) {                                                       // we never learned a tracking id: do not guess, hand it to a human
-    if (Date.parse(w.created_at) < Date.now() - 15 * 60e3) { await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending&payout_tracking=is.null`, { status: 'requested' }); return 'manual'; }
-    return 'waiting';
+// Matches 'sending' AND 'requested', so a late webhook can't lead to a second manual payout.
+export async function settleWithdrawal(env, cb) {
+  let w = null;
+  if (cb.ref) [w] = await rows(await sb(env, `withdrawals?payout_tracking=eq.${enc(cb.ref)}&limit=1`));
+  if (!w && cb.ref) { const id = String(cb.ref).replace(/^CC-WDL-/i, ''); if (UUID.test(id)) [w] = await rows(await sb(env, `withdrawals?id=eq.${id}&limit=1`)); }
+  if (!w) { console.log('finoq webhook: no withdrawal matches', cb.ref || '(no ref)'); return 'unknown'; }
+  const OPEN = 'status=in.(sending,requested)';
+  if (cb.success) {
+    const [x] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&${OPEN}`, { status: 'paid', payout_ref: cb.receipt || w.payout_tracking || null, decided_by: 'finoq', decided_at: new Date().toISOString() }));
+    if (x) await notify(env, w.aid, 'payout', 'Withdrawal sent', 'KSh ' + (w.net || w.amount) + ' was sent to your M-Pesa.', 'withdrawal', w.id);
+    return x ? 'paid' : 'duplicate';
   }
-  const r = await fetch(`${intaBase(env)}/api/v1/send-money/status/`, { method: 'POST', headers: intaHead(env), body: JSON.stringify({ tracking_id: w.payout_tracking }) })
-    .catch((e) => { console.error('payout: status request failed', e && e.message); return null; });
-  const t = r && r.ok ? await r.json().catch(() => null) : null;
-  const tx = t && Array.isArray(t.transactions) ? t.transactions[0] : null;
-  const st = String(tx?.status || '').toLowerCase();
-  if (st === 'successful' || st === 'complete' || st === 'completed') {
-    const ref = String(tx.provider_reference || 'IS-' + w.payout_tracking).toUpperCase();
-    let res = await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending`, { status: 'paid', payout_ref: ref, decided_by: 'auto', decided_at: new Date().toISOString() });
-    if (res.status === 409) res = await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending`, { status: 'paid', payout_ref: 'IS-' + w.payout_tracking, decided_by: 'auto', decided_at: new Date().toISOString() });
-    if (res.ok) await notify(env, w.aid, 'payout', 'Withdrawal sent', 'KSh ' + (w.net || w.amount) + ' was sent to your M-Pesa.', 'withdrawal', w.id);   // cc-fix1
-    return 'paid';
-  }
-  if (st === 'failed') {
-    const [x] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending`, { status: 'rejected', decided_by: 'auto', decided_at: new Date().toISOString() }));
-    if (x) await credit(env, x.aid, x.amount, 'adjustment', 'wdrej:' + x.id, 'Payout failed, money returned');
-    if (x) await notify(env, x.aid, 'payout', 'Withdrawal failed', 'KSh ' + x.amount + ' was returned to your wallet.', 'withdrawal', x.id);   // cc-fix1
-    return 'failed';
+  if (cb.failed) {
+    const [x] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&${OPEN}`, { status: 'rejected', decided_by: 'finoq', decided_at: new Date().toISOString() }));
+    if (x) { await credit(env, x.aid, x.amount, 'adjustment', 'wdrej:' + x.id, 'Payout failed, money returned'); await notify(env, x.aid, 'payout', 'Withdrawal failed', 'KSh ' + x.amount + ' was returned to your wallet.', 'withdrawal', x.id); }
+    return x ? 'failed' : 'duplicate';
   }
   return 'waiting';
 }
+
+export async function settlePayout(env, w) {
+  if (w.status !== 'sending') return 'ignored';
+  if (Date.parse(w.created_at) > Date.now() - 30 * 60e3) return 'waiting';
+  const [x] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending`, { status: 'requested' }));
+  return x ? 'manual' : 'ignored';
+}
 export async function reconcilePayouts(env, aid) {
-  if (!autoPayout(env)) return 0;
   const list = await rows(await sb(env, `withdrawals?select=*&status=eq.sending${aid ? `&aid=eq.${enc(aid)}` : ''}&order=created_at.asc&limit=25`));
-  let n = 0; for (const w of list) if (['paid', 'failed', 'manual'].includes(await settlePayout(env, w))) n++;
+  let n = 0; for (const w of list) if ((await settlePayout(env, w)) === 'manual') n++;
   return n;
 }

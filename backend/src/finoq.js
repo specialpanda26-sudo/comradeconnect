@@ -12,7 +12,8 @@ export const wdlRef = (id) => 'CC-WDL-' + String(id).replace(/[^0-9a-f-]/gi, '')
 async function call(env, path, body, label) {
   const r = await fetch(finoqBase(env) + path, { method: 'POST', headers: finoqHead(env), body: JSON.stringify(body) })
     .catch((e) => { console.error('finoq: ' + label + ' failed to send', e && e.message); return null; });
-  const t = r ? await r.json().catch(() => ({})) : {};
+  const raw = r ? await r.text().catch(() => '') : '';
+  let t = {}; try { t = raw ? JSON.parse(raw) : {}; } catch (e) { t = { raw: raw.slice(0, 300) }; }
   if (!r || !r.ok) { console.error('finoq: ' + label + ' refused', r ? r.status : 'no response', JSON.stringify(t).slice(0, 300)); return { error: (t && (t.message || t.error)) || 'refused', status: r ? r.status : 0, data: t }; }
   return { ok: true, data: t };
 }
@@ -28,7 +29,7 @@ export async function finoqStkPush(env, { amount, phone, ref }) {
 export async function finoqPayout(env, { amount, phone, ref, narration }) {
   const body = { amount: Math.floor(Number(amount)), phone_number: phone, network_code: '63902', channel: 'mobile', payment_service: 'b2c', external_reference: ref, narration: String(narration || 'Comrade Connect Withdrawal').slice(0, 120) };
   // Payouts send a channel_id only if PAYHERO_PAYOUT_CHANNEL_ID is set (the STK channel is a Till, not a payout wallet).
-  const pch = Number(String(env.PAYHERO_PAYOUT_CHANNEL_ID || '').trim()); if (Number.isFinite(pch) && pch > 0) body.channel_id = pch;
+  const pch = Number(String(env.PAYHERO_PAYOUT_CHANNEL_ID || '').trim()); body.channel_id = (Number.isFinite(pch) && pch > 0) ? pch : finoqChannel(env);
   const cb = finoqCallback(env); if (cb) body.callback_url = cb;
   const r = await call(env, '/api/v2/withdraw', body, 'payout');
   if (!r.ok) return r;

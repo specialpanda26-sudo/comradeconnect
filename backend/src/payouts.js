@@ -1,7 +1,7 @@
 // Wallet withdrawals via FinoQ B2C. Wallet is debited at request time; webhook decides paid or refund.
 import { sb, rows, patch, enc, ago, UUID } from './lib.js';
 import { credit } from './pay.js';
-import { finoqReady, finoqPayout, wdlRef } from './finoq.js';
+import { finoqReady, finoqPayout, finoqStatus, wdlRef } from './finoq.js';
 import { notify } from './notifications.js';
 
 export const autoPayout = (env) => String(env.PAYHERO_PAYOUTS_ENABLED ?? '1') !== '0' && finoqReady(env);
@@ -52,8 +52,61 @@ export async function settleWithdrawal(env, cb) {
 export async function settlePayout(env, w) {
   if (w.status !== 'sending') return 'ignored';
   if (Date.parse(w.created_at) > Date.now() - 30 * 60e3) return 'waiting';
-  const [x] = await rows(await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending`, { status: 'requested' }));
-  return x ? 'manual' : 'ignored';
+
+  const ref = String(w.payout_tracking || '').trim();
+  if (!ref) {
+    console.error('payout: old sending withdrawal has no tracking reference; leaving it sending', w.id);
+    return 'waiting';
+  }
+
+  const status = await finoqStatus(env, ref);
+  if (!status.ok) {
+    console.error('payout: PayHero status could not be verified; leaving it sending', w.id);
+    return 'waiting';
+  }
+
+  if (status.success) {
+    const [x] = await rows(await patch(
+      env,
+      `withdrawals?id=eq.${w.id}&status=eq.sending`,
+      {
+        status: 'paid',
+        payout_ref: ref,
+        decided_by: 'finoq_status',
+        decided_at: new Date().toISOString()
+      }
+    ));
+    if (x) {
+      await notify(env, x.aid, 'payout', 'Withdrawal sent',
+        'KSh ' + (x.net || x.amount) + ' was confirmed by M-Pesa.',
+        'withdrawal', x.id);
+    }
+    return x ? 'paid' : 'ignored';
+  }
+
+  if (status.failed) {
+    const [x] = await rows(await patch(
+      env,
+      `withdrawals?id=eq.${w.id}&status=eq.sending`,
+      {
+        status: 'rejected',
+        decided_by: 'finoq_status',
+        decided_at: new Date().toISOString()
+      }
+    ));
+    if (x) {
+      await credit(env, x.aid, x.amount, 'adjustment', 'wdrej:' + x.id,
+        'PayHero confirmed payout failure; money returned');
+      await notify(env, x.aid, 'payout', 'Withdrawal failed',
+        'KSh ' + x.amount + ' was returned to your wallet.',
+        'withdrawal', x.id);
+    }
+    return x ? 'failed' : 'ignored';
+  }
+
+  console.error('payout: PayHero reports an unresolved status; leaving withdrawal sending',
+    w.id, status.status || '(empty status)');
+  return 'waiting';
 }
 export async function reconcilePayouts(env, aid) {
   const list = await rows(await sb(env, `withdrawals?select=*&status=eq.sending${aid ? `&aid=eq.${enc(aid)}` : ''}&order=created_at.asc&limit=25`));

@@ -34,6 +34,32 @@ export async function finoqPayout(env, { amount, phone, ref, narration }) {
   return { ok: true, tx: String(d.merchant_reference || d.reference || d.checkout_request_id || d.transaction_id || d.transactionId || d.id || ref), data: t };
 }
 
+
+// Query PayHero before recovering an old withdrawal. Unknown status is never treated as failure.
+export async function finoqStatus(env, reference) {
+  if (!String(reference || '').trim()) {
+    return { ok: false, status: '', success: false, failed: false, data: {} };
+  }
+  let r;
+  try {
+    const url = finoqBase(env) + '/api/v2/transaction-status?reference=' + encodeURIComponent(String(reference));
+    r = await fetch(url, {
+      method: 'GET',
+      headers: { Authorization: finoqAuth(env), Accept: 'application/json' }
+    });
+  } catch (e) {
+    console.error('finoq: transaction-status request failed', e && e.message);
+    return { ok: false, status: '', success: false, failed: false, data: {} };
+  }
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    console.error('finoq: transaction-status refused', r.status, JSON.stringify(data).slice(0, 300));
+    return { ok: false, status: '', success: false, failed: false, data };
+  }
+  const parsed = parseFinoqWebhook(data);
+  return { ok: true, status: parsed.status, success: parsed.success, failed: parsed.failed, data };
+}
+
 // Reads PayHero's nested {response:{ExternalReference,Status,...}} AND flat snake_case formats.
 export function parseFinoqWebhook(body) {
   const b = body && typeof body === 'object' ? body : {};

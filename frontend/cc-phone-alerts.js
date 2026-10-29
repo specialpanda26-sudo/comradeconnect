@@ -60,13 +60,6 @@
         var t = KIND[x.kind]; if (!t || !(Number(x.amount) > 0)) { if (first) mark(k); return; }
         if (first) { mark(k); return; } batch.push([k, t, kes(x.amount) + (x.note ? '. ' + x.note : '') + ' Your wallet balance is updated.', { view: 'rewards' }]);
       });
-      ((w && w.withdrawals) || []).forEach(function (x) {
-        if (x.status !== 'paid' && x.status !== 'rejected' && x.status !== 'approved') return;
-        var k = 'wd' + x.id + x.status; if (first) { mark(k); return; }
-        if (x.status === 'paid') batch.push([k, 'Withdrawal paid', kes(x.net == null ? x.amount : x.net) + ' was sent to your M-Pesa' + (x.payout_ref ? '. Ref ' + x.payout_ref : '') + '.', { view: 'orders' }]);
-        else if (x.status === 'approved') batch.push([k, 'Withdrawal approved', 'An admin approved your ' + kes(x.amount) + ' withdrawal. It is being sent.', { view: 'orders' }]);
-        else batch.push([k, 'Withdrawal rejected', kes(x.amount) + ' is back in your wallet.', { view: 'orders' }]);
-      });
       ((o && o.orders) || []).forEach(function (x) {
         var k = 'or' + x.id + x.status; if (first) { mark(k); return; }
         var m = { paid: 'Payment confirmed', released: x.role === 'seller' ? 'Order completed, money released' : 'Order completed', cancelled: 'Order cancelled', refunded: 'Order refunded', shipped: 'Order on the way' }[x.status];

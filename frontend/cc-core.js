@@ -487,16 +487,7 @@ async function loadOrders(quiet) {
     S.orders = o.orders || []; S.wallet = w;
     const k = ckey('orders');                                  // the 6-digit handover code is never saved; it shows after the refresh
     if (k) cset(k, { orders: S.orders.map((x) => Object.assign({}, x, { code: x.code ? '...' : '' })), wallet: w });
-    try {                                                      // tell the seller once when a withdrawal is paid or rejected
-      const done = (w.withdrawals || []).filter((x) => x.status === 'paid' || x.status === 'rejected'), first = ST.get('cc_wd_seen', null) === null, seen = ST.get('cc_wd_seen', []) || [];
-      done.filter((x) => !seen.includes(x.id)).forEach((x) => {
-        seen.push(x.id);
-        if (first) return;                                     // first run on this phone: remember old ones, do not announce them
-        const msg = x.status === 'paid' ? 'Withdrawal paid. ' + kes(x.net == null ? x.amount : x.net) + ' was sent to your M-Pesa' + (x.payout_ref ? '. Ref ' + x.payout_ref : '') + '.' : 'Withdrawal rejected. ' + kes(x.amount) + ' is back in your wallet.';
-        toast(msg); try { notify(x.status === 'paid' ? 'Withdrawal paid' : 'Withdrawal rejected', msg); } catch (e) {}
-      });
-      ST.set('cc_wd_seen', seen.slice(-100));
-    } catch (e) { /* notifications are a bonus */ }
+    // withdrawal paid/rejected alerts now come from the server push only (no duplicates)
     S.orders.filter((x) => x.role === 'seller' && x.status === 'released').forEach((x) => {   // award the sale points once
       const seen = ST.get('cc_rel_seen', []);
       if (!seen.includes(x.id)) { seen.push(x.id); ST.set('cc_rel_seen', seen.slice(-100)); try { earn(10, 'Sale completed', 1); } catch (e) {} }

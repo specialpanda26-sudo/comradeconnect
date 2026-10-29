@@ -4,6 +4,7 @@ import { json, err, sb, rows, patch, enc, user, normPhone, DAY } from './lib.js'
 import { initPayment, credit } from './pay.js';
 import { getSettings } from './settings.js';
 import { balance } from './account.js';
+import { notify } from './notifications.js';
 
 export const isWholesaler = (p) => !!(p && p.wholesaler_until && Date.parse(p.wholesaler_until) > Date.now());
 
@@ -15,6 +16,7 @@ export async function extendWholesale(env, aid) {
   const until = new Date(start + S.wholesale_days * DAY).toISOString();
   const res = await patch(env, `profiles?aid=eq.${enc(aid)}`, { wholesaler_until: until });
   if (!res.ok) { console.error('wholesale: could not save the membership for', aid); return null; }
+  await notify(env, aid, 'wholesale', 'Wholesaler membership active', 'You can upload unlimited photos until ' + String(until).slice(0, 10) + '.', 'wallet', null);
   return until;
 }
 export async function activeListings(env, aid) {

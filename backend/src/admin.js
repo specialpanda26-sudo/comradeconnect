@@ -93,7 +93,7 @@ export async function adminRoutes(req, env, url, ip) {
     const [p] = await rows(await patch(env, `payments?id=eq.${mm[1]}&status=eq.submitted`, act === 'approve' ? { status: 'paid', paid_at: new Date().toISOString() } : { status: 'failed' }));
     if (!p) return err(env, 'This payment is not waiting for a decision', 409);
     if (act === 'approve') await hooks.onPaid(env, p); else await hooks.onFailed(env, p);
-    if (p.aid) await notify(env, p.aid, 'payment', act === 'approve' ? 'Payment confirmed' : 'Payment not confirmed', act === 'approve' ? 'KSh ' + p.amount + ' was received. Thank you.' : 'We could not find your M-Pesa payment of KSh ' + p.amount + '. Check the code and try again.', 'payment', p.id);
+    if (p.aid && act === 'approve' && !['topup', 'boost', 'spillfee'].includes(p.purpose)) await notify(env, p.aid, 'payment', 'Payment confirmed', 'KSh ' + p.amount + ' was received. Thank you.', 'payment', p.id);   // reject: onFailed tells them
     await A('payment.' + act, 'payment', p.id, { amount: p.amount, purpose: p.purpose, receipt: p.receipt });
     return json(env, { ok: true });
   }
@@ -345,6 +345,7 @@ export async function adminRoutes(req, env, url, ip) {
     if (p.banned) return err(env, 'That account is suspended', 403);
     const key = str(b.key, 40).replace(/[^A-Za-z0-9_-]/g, '') || crypto.randomUUID();
     if (!(await credit(env, p.aid, amount, 'adjustment', 'grant:' + key, note))) return err(env, 'This grant was already sent', 409);
+    await notify(env, p.aid, 'reward', 'Comrade Connect added KSh ' + amount + ' to your wallet', note, 'wallet', null);
     await A('wallet.grant', 'profile', p.aid, `KSh ${amount}: ${note}`);
     return json(env, { ok: true, aid: p.aid, handle: p.handle || null, amount });
   }

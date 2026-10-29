@@ -262,6 +262,7 @@ export async function accountRoutes(req, env, url, ip) {
     if (how === 'toosmall') return err(env, 'That is below the smallest amount M-Pesa can send. Your money is still in your wallet.');
     if (how === 'limit') return err(env, 'You have reached the daily withdrawal limit. Your money is still in your wallet. Try again tomorrow.');
     if (how === 'refused') return err(env, 'We could not send to M-Pesa right now. Your money is still in your wallet. Please try again in a few minutes.', 502);
+    await notify(env, u.aid, 'payout', how === 'sending' ? 'Withdrawal on its way' : 'Withdrawal requested', 'KSh ' + (amount - fee) + ' to ' + norm.replace(/^254/, '0') + (how === 'sending' ? ' is being sent to your M-Pesa.' : ' was requested. We will send it by M-Pesa soon.'), 'withdrawal', w.id);
     return json(env, { id: w.id, status: how === 'sending' ? 'sending' : 'requested', fee, net: amount - fee }, 201);
   }
   // The seller can take back a request the admin has not paid yet. One conditional UPDATE, so cancel and "paid" can never both win.
@@ -271,6 +272,7 @@ export async function accountRoutes(req, env, url, ip) {
     const [w] = await rows(await patch(env, `withdrawals?id=eq.${wc[1]}&aid=eq.${enc(u.aid)}&status=eq.requested`, { status: 'rejected', decided_by: 'user', decided_at: new Date().toISOString() }));
     if (!w) return err(env, 'This request was already handled', 409);
     await credit(env, w.aid, w.amount, 'adjustment', 'wdrej:' + w.id, 'Withdrawal cancelled, money returned');
+    await notify(env, w.aid, 'payout', 'Withdrawal cancelled', 'KSh ' + w.amount + ' is back in your wallet.', 'withdrawal', w.id);
     return json(env, { ok: true });
   }
 

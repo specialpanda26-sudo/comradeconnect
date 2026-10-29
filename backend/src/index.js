@@ -42,7 +42,7 @@ import { lostFoundRoutes } from './lostfound.js';
 import { paperRoutes } from './papers.js';
 import { serviceWorkRoutes } from './serviceworks.js';
 import { pointsRoutes } from './points.js';
-import { notificationRoutes } from './notifications.js';
+import { notificationRoutes, notify } from './notifications.js';
 import { engageRoutes } from './engage.js';
 import { reconcilePayouts } from './payouts.js';
 import { postRuleRoutes, dropUnpaidDrafts } from './postrules.js';
@@ -60,11 +60,13 @@ hooks.onPaid = async (env, p) => {
   else if (p.purpose === 'ticket') await ticketPaid(env, p);
   else if (p.purpose === 'boost') await boostPost(env, p);
   else if (p.purpose === 'spillfee') await patch(env, `posts?id=eq.${p.ref_id}&fee_pending=gt.0`, { hidden: false, fee_pending: 0, created_at: new Date().toISOString() });   // paid: the spill goes live
-  else if (p.purpose === 'topup') await credit(env, p.aid, p.amount, 'topup', 'pay:' + p.id, 'Wallet deposit');
+  else if (p.purpose === 'topup') { if (await credit(env, p.aid, p.amount, 'topup', 'pay:' + p.id, 'Wallet deposit')) await notify(env, p.aid, 'wallet', 'Deposit received', 'KSh ' + p.amount + ' was added to your wallet.', 'wallet', p.id); }
   else if (p.purpose === 'wholesale') await extendWholesale(env, p.aid);
   else if (p.purpose === 'caretaker') await caretakerPaid(env, p);
   else if (p.purpose === 'kura') await kuraPaid(env, p);
   else if (p.purpose === 'gift') await giftPaid(env, p);
+  if (p.aid && p.purpose === 'boost') await notify(env, p.aid, 'payment', 'Your post is boosted', 'KSh ' + p.amount + ' was received. More people will see your post.', 'post', p.ref_id);
+  if (p.aid && p.purpose === 'spillfee') await notify(env, p.aid, 'payment', 'Your spill is live', 'KSh ' + p.amount + ' was received and your post is now public.', 'post', p.ref_id);
 };
 // A boost adds time on top of any boost still running.
 async function boostPost(env, p) {
@@ -77,6 +79,7 @@ hooks.onFailed = async (env, p) => {
   if (p.purpose === 'kura') await kuraFailed(env, p);
   if (p.purpose === 'gift') await giftFailed(env, p);
   if (p.credit_ksh > 0) await giveBack(env, p.aid, 'pay:' + p.id);   // a failed payment returns the points
+  if (p.aid && !String(p.aid).startsWith('gift:')) await notify(env, p.aid, 'payment', 'Payment not completed', 'Your payment of KSh ' + p.amount + ' was not completed. If you paid by M-Pesa, check the code and try again.', 'payment', p.id);
 };
 
 const ROUTES = [supportRoutes, pulseRoutes, campusRoutes, zoneSuggestRoutes, lostFoundRoutes, paperRoutes, serviceWorkRoutes, engageRoutes, storyRoutes, notificationRoutes, pushRoutes, settingsRoutes, trustRoutes, resetRoutes, recoveryRoutes, giftRoutes, siteContentRoutes, siteMediaRoutes, feedRoutes, payRoutes, passkeyRoutes, deviceAdminRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, mbogiRoutes, liveRoutes, voiceRoutes, mediaRoutes, clubRoutes, myEventRoutes, kuraRoutes, adminUserRoutes, adminJoinRoutes, adminCleanRoutes, adminServiceRoutes, adminPushRoutes, postRuleRoutes, sqlRoutes, adminRoutes];

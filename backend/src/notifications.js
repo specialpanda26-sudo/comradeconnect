@@ -5,7 +5,7 @@ import { sendPush, catOfKind, cleanPrefs } from './push.js';
 
 const snip = (t, n = 90) => { const s = String(t || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
 
-const VIEW_OF = { order: 'orders', post: 'post', story: 'post', clip: 'clip', thread: 'message', listing: 'listing', referral: 'rewards', verification: 'me', payment: 'orders', club: 'bell' };   // cc-fix6
+const VIEW_OF = { order: 'orders', post: 'post', story: 'post', clip: 'clip', thread: 'message', listing: 'listing', referral: 'rewards', verification: 'me', payment: 'orders', club: 'bell', wallet: 'me', gift: 'me', withdrawal: 'me' };   // cc-fix6
 // Best effort: a failed notification must never break the action that caused it.
 export async function notify(env, aid, kind, title, body, refType, refId) {
   try {

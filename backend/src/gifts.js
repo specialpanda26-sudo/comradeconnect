@@ -24,7 +24,7 @@ export async function giftPaid(env, p) {
   const S = await getSettings(env), fee = feeOf(p.amount, S.gift_fee_percent), net = p.amount - fee;
   await credit(env, g.creator_aid, net, 'gift', 'gift:' + g.id, 'Gift' + (g.supporter_name ? ' from ' + g.supporter_name : ''));
   await patch(env, `gifts?id=eq.${g.id}&status=eq.pending`, { status: 'paid', gross: p.amount, fee, net, paid_at: new Date().toISOString(), receipt_email: null });
-  try { await notify(env, g.creator_aid, 'gift', 'You received a gift', `KSh ${net} was added to your wallet.`, 'gift', g.id); } catch (e) {}
+  try { const who = String(g.supporter_name || '').trim(), item = g.item && g.item !== 'custom' ? g.item[0].toUpperCase() + g.item.slice(1) + ': ' : ''; await notify(env, g.creator_aid, 'gift', who ? who + ' sent you a gift' : 'Someone sent you a gift', item + 'KSh ' + net + ' was added to your wallet.' + (g.message ? ' \u201c' + String(g.message).slice(0, 70) + '\u201d' : ''), 'gift', g.id); } catch (e) {}
   if (g.receipt_email && mailReady(env)) {
     const [l] = await rows(await sb(env, `gift_links?select=title&id=eq.${g.link_id}`));
     await sendMail(env, { to: g.receipt_email, subject: 'Your Comrade Connect gift receipt', text: `Thank you. Your gift of KSh ${p.amount} to ${l ? l.title : 'a creator'} was received.\nM-Pesa receipt: ${p.receipt || 'n/a'}\nGifts are voluntary support and do not purchase goods, services or access.` }).catch(() => false);

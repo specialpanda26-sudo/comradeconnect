@@ -121,7 +121,7 @@ export async function pushTest(env, aid) {
 
 // ---- What each person wants to hear about (Me > Notifications, or the Alerts button in the bell). Everything is on until they switch it off. ----
 export const PUSH_CATS = ['comments', 'live', 'events', 'orders', 'wallet', 'messages', 'updates'];
-const KIND_CAT = { comment: 'comments', reel_comment: 'comments', clip_comment: 'comments', like_milestone: 'comments', live_comment: 'comments', withdraw_request: 'wallet', story_view: 'comments', order: 'orders', listing: 'orders', payout: 'wallet', /* cc-fix1 */ gift: 'wallet', reward: 'wallet', referral: 'wallet', message: 'messages', payment: 'wallet', club: 'orders' };
+const KIND_CAT = { comment: 'comments', reel_comment: 'comments', clip_comment: 'comments', like_milestone: 'comments', live_comment: 'comments', withdraw_request: 'wallet', story_view: 'comments', order: 'orders', listing: 'orders', payout: 'wallet', /* cc-fix1 */ gift: 'wallet', reward: 'wallet', referral: 'wallet', message: 'messages', payment: 'wallet', club: 'orders', wallet: 'wallet', wholesale: 'wallet' };
 export const catOfKind = (k) => KIND_CAT[k] || 'updates';
 export const cleanPrefs = (src) => { const o = {}; PUSH_CATS.forEach((c) => { o[c] = !(src && typeof src === 'object' && src[c] === false); }); return o; };
 async function prefsOf(env, aid) {

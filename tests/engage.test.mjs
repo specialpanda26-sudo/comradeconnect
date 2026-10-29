@@ -27,7 +27,7 @@ test('streak endpoint: counts past 8 days, shows the last 14, points at the next
 test('market top: ranks sellers by finished sales, hides banned sellers, names nobody', async (t) => {
   const w = await fresh(t);
   const s1 = await w.user('s1'), s2 = await w.user('s2'), buyer = await w.user('b');
-  for (const [seller, n] of [[s1, 3], [s2, 1]]) for (let i = 0; i < n; i++) { const lid = await w.approvedListing(seller, 500 + i, 'Item ' + i); const { order } = await w.buy(buyer, lid); order.status = 'released'; }
+  for (const [seller, n] of [[s1, 3], [s2, 1]]) for (let i = 0; i < n; i++) { const lid = await w.approvedListing(seller, 500 + i, 'Item ' + i); const { order } = await w.buy(buyer, lid); order.status = 'released'; order.hide_top = false; }
   const lid2 = await w.approvedListing(s2, 900, 'Still held'); await w.buy(buyer, lid2);                 // held, not counted
   const r = (await w.call('GET', '/api/market/top', { as: s2 })).data;
   assert.deepEqual(r.sellers.map((x) => x.sales), [3, 1]);

@@ -291,9 +291,9 @@ export async function payRoutes(req, env, url, ip) {
     if (!p && receipt && amount > 0) {
       // The money moved but we had already expired this payment (callback arrived late). Do not lose it:
       // park it in the admin "Confirm M-Pesa" queue (status submitted) so a person can approve it.
-      let [late] = checkout ? await rows(await sb(env, `payments?status=eq.expired&request_id=eq.${enc(checkout)}&limit=1`)) : [];
-      if (!late && phone) [late] = await rows(await sb(env, `payments?status=eq.expired&phone=eq.${phone}&amount=eq.${amount}&created_at=gte.${ago(24 * 3600e3)}&order=created_at.desc&limit=1`));
-      if (late && amount >= late.amount) await patch(env, `payments?id=eq.${late.id}&status=eq.expired`, { status: 'submitted', receipt, checkout_id: checkout });
+      let [late] = checkout ? await rows(await sb(env, `payments?status=in.(expired,failed)&request_id=eq.${enc(checkout)}&limit=1`)) : [];
+      if (!late && phone) [late] = await rows(await sb(env, `payments?status=in.(expired,failed)&phone=eq.${phone}&amount=eq.${amount}&created_at=gte.${ago(24 * 3600e3)}&order=created_at.desc&limit=1`));
+      if (late && amount >= late.amount) await patch(env, `payments?id=eq.${late.id}&status=eq.${late.status}`, { status: 'submitted', receipt, checkout_id: checkout });
     }
     if (!p && !receipt) console.log('tinypesa callback: no pending payment matched');
     if (p) {

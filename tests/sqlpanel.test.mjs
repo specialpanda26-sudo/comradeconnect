@@ -1,12 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { world } from './helpers.mjs';
 import { split, objects } from '../backend/src/sqlpanel.js';
 import FILES from '../backend/src/sqltext.js';
 
 test('sqltext.js matches the supabase/*.sql files (run: python3 build-sql.py)', () => {
   for (const f of Object.keys(FILES)) assert.equal(FILES[f], readFileSync('supabase/' + f, 'utf8'), f + ' changed, rebuild with build-sql.py');
+});
+test('every supabase/*.sql file is packed into sqltext.js', () => {
+  const disk = readdirSync('supabase').filter((f) => f.endsWith('.sql'));
+  assert.deepEqual(disk.filter((f) => !(f in FILES)), [], 'run: python3 build-sql.py');
 });
 test('every SQL file is cut into sections that together contain every statement', () => {
   for (const [f, t] of Object.entries(FILES)) {

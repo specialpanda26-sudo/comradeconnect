@@ -13,7 +13,8 @@ export async function extendWholesale(env, aid) {
   const [p] = await rows(await sb(env, `profiles?select=wholesaler_until&aid=eq.${enc(aid)}`));
   const start = Math.max(Date.now(), p && p.wholesaler_until ? Date.parse(p.wholesaler_until) : 0);
   const until = new Date(start + S.wholesale_days * DAY).toISOString();
-  await patch(env, `profiles?aid=eq.${enc(aid)}`, { wholesaler_until: until });
+  const res = await patch(env, `profiles?aid=eq.${enc(aid)}`, { wholesaler_until: until });
+  if (!res.ok) { console.error('wholesale: could not save the membership for', aid); return null; }
   return until;
 }
 export async function activeListings(env, aid) {
@@ -34,12 +35,12 @@ export async function wholesaleRoutes(req, env, url, ip) {
     if (b.method === 'wallet') {
       if ((await balance(env, u.aid)) < S.wholesale_fee) return err(env, 'Not enough wallet balance. Deposit first or pay with M-Pesa.', 402);
       const ref = 'ws:' + crypto.randomUUID();
-      await credit(env, u.aid, -S.wholesale_fee, 'wholesale_fee', ref, 'Wholesaler membership');
-      if ((await balance(env, u.aid)) < 0) {
-        await patch(env, `wallet_ledger?kind=eq.wholesale_fee&ref=eq.${enc(ref)}`, { status: 'void' });
-        return err(env, 'Not enough wallet balance', 402);
-      }
-      return json(env, { active: true, until: await extendWholesale(env, u.aid) });
+      const undo = () => patch(env, `wallet_ledger?kind=eq.wholesale_fee&ref=eq.${enc(ref)}`, { status: 'void' });
+      if (!(await credit(env, u.aid, -S.wholesale_fee, 'wholesale_fee', ref, 'Wholesaler membership'))) return err(env, 'Wallet payment is not ready yet. Nothing was charged.', 503);
+      if ((await balance(env, u.aid)) < 0) { await undo(); return err(env, 'Not enough wallet balance', 402); }
+      const until = await extendWholesale(env, u.aid).catch(() => null);
+      if (!until) { await undo(); return err(env, 'Something went wrong. Nothing was charged.', 500); }
+      return json(env, { active: true, until });
     }
     if (b.method !== 'card' && !normPhone(b.phone)) return err(env, 'Enter a Safaricom or Airtel number like 0712345678');
     const r = await initPayment(env, ip, { aid: u.aid, purpose: 'wholesale', amount: S.wholesale_fee, phone: b.phone, method: b.method, email: b.email });

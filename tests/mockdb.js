@@ -40,6 +40,7 @@ SCHEMA.email_verifications = T(['aid']);
 SCHEMA.password_resets = T(['aid']);
 SCHEMA.recovery_email_codes = T(['aid']);
 SCHEMA.profiles.defaults.student_verified = false;
+SCHEMA.orders.defaults.hide_top = false;
 SCHEMA.profiles.uniques.push(nn('student_email_hash'));
 
 // Kura (campus voting)

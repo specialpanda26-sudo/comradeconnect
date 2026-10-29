@@ -110,5 +110,5 @@ test('payout: uses /api/v2/withdraw with b2c body and callback_url; refused payo
   const r = await finoqPayout(ENV, { amount: 100, phone: '254712345678', ref: 'CC-WDL-1' });
   assert.equal(r.ok, true); assert.equal(r.tx, 'W5ZBQ');
   const b = seen[0].body; assert.ok(seen[0].u.endsWith('/api/v2/withdraw'));
-  assert.deepEqual([b.channel, b.payment_service, b.network_code, b.channel_id, b.callback_url], ['mobile', 'b2c', '63902', 777, ENV.CALLBACK_URL]);
+  assert.deepEqual([b.channel, b.payment_service, b.network_code, b.channel_id, b.callback_url], ['mobile', 'b2c', '63902', undefined, ENV.CALLBACK_URL]);
 });

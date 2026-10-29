@@ -26,7 +26,9 @@ export async function finoqStkPush(env, { amount, phone, ref }) {
 
 // PayHero "Withdraw To Mobile": POST /api/v2/withdraw, channel 'mobile', payment_service 'b2c', network_code 63902 = M-Pesa.
 export async function finoqPayout(env, { amount, phone, ref, narration }) {
-  const body = { amount: Math.floor(Number(amount)), phone_number: phone, network_code: '63902', channel: 'mobile', payment_service: 'b2c', channel_id: finoqChannel(env), external_reference: ref, narration: String(narration || 'Comrade Connect Withdrawal').slice(0, 120) };
+  const body = { amount: Math.floor(Number(amount)), phone_number: phone, network_code: '63902', channel: 'mobile', payment_service: 'b2c', external_reference: ref, narration: String(narration || 'Comrade Connect Withdrawal').slice(0, 120) };
+  // Payouts send a channel_id only if PAYHERO_PAYOUT_CHANNEL_ID is set (the STK channel is a Till, not a payout wallet).
+  const pch = Number(String(env.PAYHERO_PAYOUT_CHANNEL_ID || '').trim()); if (Number.isFinite(pch) && pch > 0) body.channel_id = pch;
   const cb = finoqCallback(env); if (cb) body.callback_url = cb;
   const r = await call(env, '/api/v2/withdraw', body, 'payout');
   if (!r.ok) return r;

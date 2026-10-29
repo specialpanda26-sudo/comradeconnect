@@ -24,7 +24,7 @@ export async function trySendNow(env, w) {
   const r = await finoqPayout(env, { amount: net, phone: w.phone, ref, narration: 'Comrade Connect Withdrawal' });
   if (r && r.ok) { await patch(env, `withdrawals?id=eq.${w.id}`, { payout_tracking: r.tx || ref }); return 'sending'; }
   console.error('payout: FinoQ did not accept', w.id, r && r.status, r && r.error);
-  if (r && r.status >= 400 && r.status < 500) { await giveBack(env, w, 'Payout could not be sent, money returned'); return 'refused'; }
+  if (r && r.status >= 400 && r.status < 500) { await patch(env, `withdrawals?id=eq.${w.id}&status=eq.sending`, { status: 'requested' }); return 'manual'; }   // refused by the provider: keep the money reserved and let an admin pay it
   return 'sending';
 }
 

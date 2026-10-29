@@ -121,9 +121,10 @@ async function aiRoute(req, env, ip) {
 // Cron (every 15 min): auto-release, referral unlocks, expire stale payments/stock, purge ID images, end old streams, tidy counters.
 export async function runCron(env) {
   const out = {};
-  out.released = await autoReleaseOrders(env);
-  out.referrals = await unlockReferrals(env);
-  out.clubExpired = await expireClubOrders(env);
+  const step = (name, p) => p.catch((e) => { console.error('cron step failed:', name, e && e.message); return -1; });   // one failing step must not stop the rest
+  out.released = await step('release', autoReleaseOrders(env));
+  out.referrals = await step('referrals', unlockReferrals(env));
+  out.clubExpired = await step('club', expireClubOrders(env));
   out.unpaidDrafts = await dropUnpaidDrafts(env).catch(() => -1);
   out.payouts = await reconcilePayouts(env).catch((e) => { console.error('payout reconcile error', e && e.message); return -1; });
   out.intasendChecked = await reconcileIntasend(env).catch((e) => { console.error('intasend reconcile error', e && e.message); return -1; });   // before expiring, so a paid prompt is never expired by mistake

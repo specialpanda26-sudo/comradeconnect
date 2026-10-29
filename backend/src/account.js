@@ -248,7 +248,10 @@ export async function accountRoutes(req, env, url, ip) {
     const fee = withdrawFee(amount, S);
     const w = await one(await post(env, 'withdrawals', { aid: u.aid, amount, phone: norm, fee, net: amount - fee }));
     if (!w) return err(env, 'Could not save the request', 500);
-    await credit(env, u.aid, -amount, 'withdrawal', w.id, 'Withdrawal request');
+    if (!(await credit(env, u.aid, -amount, 'withdrawal', w.id, 'Withdrawal request'))) {   // debit not saved: never send money out for it
+      await patch(env, `withdrawals?id=eq.${w.id}`, { status: 'rejected' });
+      return err(env, 'We could not process that right now. Nothing was taken from your wallet. Please try again.', 503);
+    }
     if ((await balance(env, u.aid)) < 0) {                      // two requests raced: undo this one
       await patch(env, `wallet_ledger?kind=eq.withdrawal&ref=eq.${w.id}`, { status: 'void' });
       await patch(env, `withdrawals?id=eq.${w.id}`, { status: 'rejected' });

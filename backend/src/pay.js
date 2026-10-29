@@ -163,8 +163,15 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
 
 // Credit a wallet (idempotent per kind+ref). Returns true if a new row was written.
 export async function credit(env, aid, delta, kind, ref, note, status = 'available') {
-  const r = await rows(await post(env, 'wallet_ledger', { aid, delta, kind, ref, note, status }, 'resolution=ignore-duplicates,return=representation'));
-  return r.length > 0;
+  const row = { aid, delta, kind, ref, note, status };
+  for (let i = 0; i < 3; i++) {
+    let res = null;
+    try { res = await post(env, 'wallet_ledger', row, 'resolution=ignore-duplicates,return=representation'); } catch (e) { res = null; }
+    if (res && res.ok) { const r = await rows(res); return r.length > 0 || i > 0; }   // empty on a retry = our first try landed
+    if (res && res.status < 500) return false;                                          // refused for good, retrying cannot help
+    await new Promise((ok) => setTimeout(ok, 250 * (i + 1)));                           // database blip: wait, try again
+  }
+  return false;
 }
 
 // Pay for anything from the in-app wallet instead of an M-Pesa prompt. The app can say pay_with:'wallet' or method:'wallet'.

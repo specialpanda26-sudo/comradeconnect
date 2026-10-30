@@ -3,7 +3,7 @@
    Loaded before admin-dash.js. Uses api, load, render, SECTIONS, LABEL, esc, kv, kes, when, act, ask, toast, X, Q from admin.html. */
 (function () {
 'use strict';
-const D = { items: [], bill: null, ready: true, view: 'pending', month: new Date().toISOString().slice(0, 7), loaded: false, msg: '', open: null, res: null, form: false };
+const D = { items: [], bill: null, ready: true, view: 'pending', month: new Date().toISOString().slice(0, 7), loaded: false, msg: '', open: null, res: null, form: false, campuses: [] };
 const get = async (p) => { try { return await api(p); } catch (e) { return { __err: e.message }; } };
 async function loadSurveys() {
   const d = await get('/api/admin/surveys?status=' + D.view);
@@ -11,6 +11,7 @@ async function loadSurveys() {
   const b = await get('/api/admin/surveys/billing?month=' + D.month);
   D.bill = b && !b.__err ? b : null;
   if (D.ready) { const p = await get('/api/admin/surveys?status=pending'); if (p && !p.__err && typeof Q !== 'undefined' && Q) { Q.counts = Q.counts || {}; Q.counts.surveys = (p.surveys || []).length; } }
+  if (!D.campuses.length) { const c = await get('/api/campuses'); D.campuses = (c && !c.__err && c.campuses) || []; }
   D.loaded = true;
 }
 const _load = load;
@@ -23,11 +24,11 @@ const card = (x) => {
     + (x.intro ? '<p class="sub" style="overflow-wrap:anywhere">' + esc(x.intro) + '</p>' : '')
     + '<p class="sub" style="margin:6px 0">' + (x.questions || []).map((q, i) => (i + 1) + '. ' + esc(q.text) + ' <i>(' + q.type + (q.options ? ': ' + q.options.map(esc).join(', ') : '') + ')</i>').join('<br>') + '</p>'
     + kv([['Maker', x.funding === 'offline' ? 'Admin (sponsor paid offline)' : x.aid], ['Campus', x.campus], ['Places', x.answers + ' of ' + x.wanted + ' answered'], ['Reward each', kes(x.reward)], ['Budget', kes(x.budget)], ['Fee', x.funding === 'offline' ? 'none' : kes(x.fee)], ['Paid in', kes(x.paid)], ['Returned', x.refunded ? kes(x.refunded) : ''], ['Open until', x.endsOn], ['Flagged answers', x.flagged ? String(x.flagged) : ''], ['Ended because', x.endReason], ['Reject note', x.note], ['Made', when(x.createdAt)]])
-    + '<div class="row"><select data-svsp aria-label="Presented by"><option value="">No sponsor line</option>' + sps.map((s) => '<option value="' + esc(s.id) + '"' + (x.sponsorId === s.id ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') + '</select><button data-sv="sponsor">Save sponsor</button></div>'
-    + '<div class="row">' + (x.status === 'pending' ? '<button class="ok" data-sv="approve">Approve</button><button class="bad" data-sv="reject">Reject and refund</button>' : '')
-    + (x.status === 'live' || x.status === 'pending' ? '<button class="bad" data-sv="stop">Stop and refund unused</button>' : '')
-    + (x.status === 'live' ? '<button data-sv="' + (x.hidden ? 'show' : 'hide') + '">' + (x.hidden ? 'Show again' : 'Hide') + '</button>' : '')
-    + (x.status !== 'unpaid' && x.status !== 'rejected' ? '<button data-sv="results">' + (D.open === x.id ? 'Hide answers' : 'Answers') + '</button>' : '') + '</div>'
+    + '<div class="row"><select data-svsp aria-label="Presented by"><option value="">No sponsor line</option>' + sps.map((s) => '<option value="' + esc(s.id) + '"' + (x.sponsorId === s.id ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') + '</select><button data-svk="sponsor">Save sponsor</button></div>'
+    + '<div class="row">' + (x.status === 'pending' ? '<button class="ok" data-svk="approve">Approve</button><button class="bad" data-svk="reject">Reject and refund</button>' : '')
+    + (x.status === 'live' || x.status === 'pending' ? '<button class="bad" data-svk="stop">Stop and refund unused</button>' : '')
+    + (x.status === 'live' ? '<button data-svk="' + (x.hidden ? 'show' : 'hide') + '">' + (x.hidden ? 'Show again' : 'Hide') + '</button>' : '')
+    + (x.status !== 'unpaid' && x.status !== 'rejected' ? '<button data-svk="results">' + (D.open === x.id ? 'Hide answers' : 'Answers') + '</button>' : '') + '</div>'
     + (D.open === x.id ? answers() : '') + '</div>';
 };
 const answers = () => {
@@ -41,9 +42,9 @@ const form = () => '<div class="card"><h3>Make a survey a sponsor paid for</h3><
   + '<textarea id="sv_q" rows="5" placeholder="Where do you buy lunch? | single | Cafeteria; Kiosk; Cook&#10;What do you want cheaper? | multi | Food; Data; Rent&#10;Any idea for campus? | text" aria-label="Questions"></textarea>'
   + '<div class="row"><input id="sv_w" type="number" placeholder="Responses wanted" min="1" aria-label="Responses wanted"><input id="sv_r" type="number" placeholder="KSh each" min="1" aria-label="Reward each"><input id="sv_d" type="date" aria-label="Last day"></div>'
   + '<div class="row"><select id="sv_s" aria-label="Presented by"><option value="">No sponsor line</option>' + ((typeof X !== 'undefined' && X.sponsors) || []).map((s) => '<option value="' + esc(s.id) + '">' + esc(s.name) + '</option>').join('') + '</select>'
-  + '<select id="sv_c" aria-label="Campus"><option value="all">All campuses</option>' + ((window.CAMPUSES || []).map((c) => '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>').join('')) + '</select></div>'
+  + '<select id="sv_c" aria-label="Campus"><option value="all">All campuses</option>' + (D.campuses.map((c) => '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>').join('')) + '</select></div>'
   + '<label class="sub" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input id="sv_ok" type="checkbox"> I confirm the sponsor has already paid me the full reward budget.</label>'
-  + '<div class="row"><button class="p" data-sv="create">Publish survey</button><button data-sv="cancel">Cancel</button></div></div>';
+  + '<div class="row"><button class="p" data-svk="create">Publish survey</button><button data-svk="cancel">Cancel</button></div></div>';
 const parseQs = (t) => t.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => { const p = l.split('|').map((s) => s.trim()); const ty = (p[1] || 'text').toLowerCase(); return { text: p[0], type: ty, options: ty === 'text' ? undefined : (p[2] || '').split(';').map((s) => s.trim()).filter(Boolean) }; });
 const billing = () => {
   const b = D.bill; if (!b) return '';
@@ -56,7 +57,7 @@ const billing = () => {
 SECTIONS.surveys = () => {
   if (!D.loaded) loadSurveys().then(render);
   const head = '<div class="card"><h3>Paid surveys</h3><p class="sub">Surveys that comrades paid for. Approve the real ones, reject anything misleading or unsafe: rejected surveys refund the maker in full. The fee percent is in Money > Settings.</p>'
-    + '<div class="row">' + [['pending', 'Waiting' + (typeof Q !== 'undefined' && Q && Q.counts && Q.counts.surveys ? ' (' + Q.counts.surveys + ')' : '')], ['live', 'Live'], ['ended', 'Ended'], ['rejected', 'Rejected'], ['unpaid', 'Not paid'], ['all', 'All']].map((v) => '<button data-svv="' + v[0] + '" class="' + (D.view === v[0] ? 'p' : '') + '">' + v[1] + '</button>').join('') + '<button data-sv="new">Make a sponsor survey</button></div></div>';
+    + '<div class="row">' + [['pending', 'Waiting' + (typeof Q !== 'undefined' && Q && Q.counts && Q.counts.surveys ? ' (' + Q.counts.surveys + ')' : '')], ['live', 'Live'], ['ended', 'Ended'], ['rejected', 'Rejected'], ['unpaid', 'Not paid'], ['all', 'All']].map((v) => '<button data-svv="' + v[0] + '" class="' + (D.view === v[0] ? 'p' : '') + '">' + v[1] + '</button>').join('') + '<button data-svk="new">Make a sponsor survey</button></div></div>';
   if (!D.ready) return [head, '<div class="card"><h3>Not switched on yet</h3><p class="sub">' + esc(D.msg || 'Run surveys.sql in Supabase (Site > SQL), then tap Refresh.') + '</p></div>'];
   return [head].concat(D.form ? [form()] : []).concat(D.items.length ? D.items.map(card) : ['<div class="card"><p class="sub" style="text-align:center;padding:20px 0">' + (D.loaded ? 'No surveys here yet.' : 'Loading...') + '</p></div>']).concat([billing()]);
 };
@@ -71,8 +72,8 @@ document.addEventListener('click', async (e) => {
     if (a === 'junk' && !confirm('Mark this answer as junk? No reward is paid and the money goes back to the maker.')) return;
     return act(r, () => api('/api/admin/surveys/responses/' + row.dataset.rid, { action: a }), 'Saved');
   }
-  const b = e.target.closest('[data-sv]'); if (!b) return;
-  const a = b.dataset.sv;
+  const b = e.target.closest('[data-svk]'); if (!b) return;
+  const a = b.dataset.svk;
   if (a === 'new') { D.form = true; return render(); }
   if (a === 'cancel') { D.form = false; return render(); }
   if (a === 'create') {

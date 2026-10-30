@@ -7,7 +7,7 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 2. DONE: Online lobby `frontend/ludo-online.html`: same redesign, custom KES stake input (min/max from `/api/ludo/config`), live pot/fee preview, no emoji.
 3. TODO: Online board screen + backend review `backend/src/ludo.js` (stake validation, refunds, payout idempotency, timeouts/away handling).
 4. TODO: Withdrawal panel: find the withdraw UI (see `cc-gifts-withdraw.js`, `supabase/points-and-1-bob-withdrawals.sql`, backend withdraw route) and read the real rules (minimum, fee, step).
-5. TODO: Explainable withdrawals: if balance can't be withdrawn exactly (e.g. KSh 500), show why and how much more to add (or the max withdrawable), with the fee breakdown.
+5. DONE: Explainable withdrawals: if balance can't be withdrawn exactly (e.g. KSh 500), show why and how much more to add (or the max withdrawable), with the fee breakdown.
 6. TODO: Final QA: light/dark theme, small phones, service worker cache bump (`sw.js`), `cc-ludo.js` entry card style, README/API notes.
 
 ## Phase 1 notes
@@ -56,3 +56,10 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 - Wallet debits at request time; a failed or refused payout returns the money.
 - Change made: `/api/config` and `/api/wallet` now also send `payout_net_min`, `payout_daily_max`, `withdraw_requires_id`; the withdraw sheet shows a "Withdrawal rules" block from these numbers (the 10 is no longer hard-coded) and an empty wallet now says so instead of doing nothing.
 - NEXT: Phase 5 (explain why a balance such as KSh 500 cannot be withdrawn and exactly how much to add, with the fee breakdown). Then Phase 6 QA.
+
+## Phase 5 notes (DONE): explainable withdrawals
+- Withdraw sheet (`frontend/cc-core.js`, `#wd`) now has a `#ccw-why` box: either "You cannot withdraw this balance yet" with the reason and `Add KSh X more`, or "The 24 hour limit is used up" with hours to wait, or "You can withdraw now" with the range and fee breakdown. Request button and inputs are disabled while blocked.
+- 24 hour usage is worked out from `S.wallet.withdrawals` (status sending/paid, last 24 h), same rule as `backend/src/payouts.js`.
+- Server `POST /api/wallet/withdraw` (`backend/src/account.js`) now rejects before any debit with exact reasons: lowest amount (fee-aware), highest, shortfall; the daily-limit message shows the real limit.
+- `cc-core.js?v=` bumped in `index.html` and `sw.js` BUILD restamped.
+- NEXT: Phase 6 (light/dark QA, small phones, README/API notes).

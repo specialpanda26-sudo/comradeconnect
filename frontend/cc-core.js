@@ -936,6 +936,39 @@ $('#wd').onclick = async () => {
   m.querySelector('#ccwp').value = '';
   { const rr = m.querySelector('#ccw-r'), need = Math.max(CFG.min, wNeedFor(PAYOUT_NET_MIN));
     rr.innerHTML = '<b>Withdrawal rules</b><br>Whole shillings only. Lowest you can withdraw: ' + kes(need) + (need > CFG.min ? ' (so that you receive at least ' + kes(PAYOUT_NET_MIN) + ' after the fee)' : '') + '. Highest: ' + kes(Math.min(CFG.max, PAYOUT_DAY_MAX)) + ' per withdrawal, and ' + kes(PAYOUT_DAY_MAX) + ' in any 24 hours.' + (WD_NEEDS_ID ? ' Your ID must be verified.' : ''); }
+  /* cc-phase5: say plainly whether this wallet can be withdrawn right now, why not, and exactly how much to add */
+  { const need = Math.max(CFG.min, wNeedFor(PAYOUT_NET_MIN)), cut = Date.now() - 864e5;
+    const recent = (S.wallet && S.wallet.withdrawals || []).filter((x) => (x.status === 'sending' || x.status === 'paid') && Date.parse(x.created_at) >= cut);
+    const used = recent.reduce((t, x) => t + (x.amount || 0), 0), dayLeft = Math.max(0, PAYOUT_DAY_MAX - used);
+    const top = Math.min(bal, CFG.max, dayLeft), why = [];
+    let blocked = false;
+    if (bal < need) {
+      blocked = true; const nf = wFee(need);
+      why.push('<b>You cannot withdraw this balance yet.</b>');
+      why.push('Your wallet has ' + kes(bal) + ', but the lowest withdrawal is ' + kes(need) + '.');
+      why.push(need > CFG.min ? 'Reason: after the fee M-Pesa must be able to send at least ' + kes(PAYOUT_NET_MIN) + '. On ' + kes(need) + ' the fee is ' + kes(nf) + ' and you would receive ' + kes(need - nf) + '.' : 'That is the smallest amount allowed. On ' + kes(need) + ' the fee is ' + kes(nf) + ' and you would receive ' + kes(need - nf) + '.');
+      why.push('<b>Add ' + kes(need - bal) + ' more</b> to your wallet, then you can withdraw.');
+    } else if (dayLeft < need) {
+      blocked = true;
+      const oldest = Math.min.apply(null, recent.map((x) => Date.parse(x.created_at))), hrs = Math.max(1, Math.ceil((oldest + 864e5 - Date.now()) / 36e5));
+      why.push('<b>The 24 hour limit is used up.</b>');
+      why.push('You have already withdrawn ' + kes(used) + ' of ' + kes(PAYOUT_DAY_MAX) + ' in the last 24 hours, so only ' + kes(dayLeft) + ' is left, which is below the lowest withdrawal of ' + kes(need) + '.');
+      why.push('Try again in about ' + hrs + (hrs === 1 ? ' hour' : ' hours') + '. Your money stays safe in your wallet.');
+    } else {
+      const f = wFee(top);
+      why.push('<b>You can withdraw now.</b> Between ' + kes(need) + ' and ' + kes(top) + '.');
+      why.push('Full ' + kes(top) + ': fee ' + kes(f) + ', you receive ' + kes(top - f) + '.');
+      if (top < bal) why.push(bal > CFG.max ? 'The largest single withdrawal is ' + kes(CFG.max) + ', so withdraw the rest in another request.' : 'Only ' + kes(dayLeft) + ' of your 24 hour limit is left, so ' + kes(bal - top) + ' has to wait.');
+    }
+    const ex = document.createElement('p'); ex.className = 'sub'; ex.id = 'ccw-why';
+    ex.style.cssText = 'margin:10px 0 0;padding:10px 12px;border-radius:12px;border:1px solid var(--bd,rgba(127,127,127,.35));line-height:1.5';
+    ex.innerHTML = why.join('<br>');
+    m.querySelector('#ccw-r').insertAdjacentElement('afterend', ex);
+    if (blocked) {
+      m.querySelector('#ccw-go').disabled = true; m.querySelector('#ccw-go').textContent = 'Not available yet';
+      ['#ccwa', '#ccwr'].forEach((q) => { const i = m.querySelector(q); if (i) i.disabled = true; });
+    }
+  }
   const wa = m.querySelector('#ccwa'), wr = m.querySelector('#ccwr'), wb = m.querySelector('#ccw-b');
   const wShow = () => {
     const a = Math.floor(+wa.value) || 0; if (!(a > 0)) { wb.textContent = ''; return; }
@@ -949,7 +982,9 @@ $('#wd').onclick = async () => {
   call('/api/me/phone').then((d) => { const i = m.querySelector('#ccwp'); if (d && d.phone && i && !i.value) i.value = d.phone; }).catch(() => {});
   m.querySelector('#ccw-go').onclick = async () => {
     const amount = Math.floor(+m.querySelector('#ccwa').value), phone = m.querySelector('#ccwp').value.replace(/\s/g, ''), er = m.querySelector('#ccw-e');
-    if (!(amount >= CFG.min && amount <= Math.min(bal, CFG.max))) return (er.textContent = 'Enter an amount from ' + kes(CFG.min) + ' up to ' + kes(Math.min(bal, CFG.max)));
+    if (amount > bal) return (er.textContent = 'Your wallet has ' + kes(bal) + ', which is ' + kes(amount - bal) + ' short. Withdraw ' + kes(bal) + ' or less.');
+    if (amount > CFG.max) return (er.textContent = 'The most you can withdraw at once is ' + kes(CFG.max) + '.');
+    if (!(amount >= CFG.min)) return (er.textContent = 'The lowest withdrawal is ' + kes(Math.max(CFG.min, wNeedFor(PAYOUT_NET_MIN))) + '.');
     if (amount - wFee(amount) < PAYOUT_NET_MIN) return (er.textContent = 'After the fee you would receive ' + kes(Math.max(amount - wFee(amount), 0)) + '. Withdraw at least ' + kes(wNeedFor(PAYOUT_NET_MIN)) + '.');
     if (!/^(07|01)\d{8}$/.test(phone)) return (er.textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
     const g = m.querySelector('#ccw-go'); g.disabled = true;

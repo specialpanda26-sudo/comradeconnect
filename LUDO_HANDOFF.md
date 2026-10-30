@@ -14,3 +14,7 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 - Theme comes from `/cc-theme.js` (`data-theme` light/dark). Board colours are CSS variables.
 - Offline points balance is in localStorage `ludo_pts`. Offline stake: min 10, max 100000, must be <= balance.
 - Offline pot = stake x seats; only the human host's stake is deducted. Fee 7% (matches `LUDO_FEE_PERCENT`).
+
+## Phase 2 part 1 notes
+- `frontend/ludo-loader.js`: loading screen with two 3D tumbling dice. Include with `<script src="/ludo-loader.js"></script>` in head. Add `data-hold` to keep it up until the page calls `LudoLoader.hide()`. Min 1.5s, failsafe 9s. Follows theme vars.
+- Hooked into `ludo.html` (auto hides on load).

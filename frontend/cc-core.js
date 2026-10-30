@@ -5,6 +5,9 @@
 'use strict';
 let FEE = 7;                                             // percent; replaced by the server's value (admin > Money and fees) as soon as it loads
 const CFG = { ppk: 10, min: 1, max: 150000, wfp: 0, wff: 0, pmin: 1, pmax: 150000 };
+const PAYOUT_NET_MIN = 10;   // M-Pesa will not send less than this after the fee
+const wFee = (a) => Math.ceil((a * CFG.wfp) / 100 - 1e-9) + CFG.wff;   // same formula as the server
+const wNeedFor = (net) => { const top = net + Math.ceil((net * CFG.wfp) / 100) + CFG.wff + 5; for (let a = Math.max(net, 1); a <= top; a++) if (a - wFee(a) >= net) return a; return net; };   // smallest amount to enter so that you receive `net`
 const kes = (n) => 'KSh ' + Number(n).toLocaleString('en-KE');
 const net = (p) => p - Math.floor((p * FEE) / 100);      // same rounding as the Worker
 const connected = () => typeof CC_API === 'string' && CC_API.indexOf('YOUR-SUBDOMAIN') < 0;
@@ -923,13 +926,27 @@ $('#wd').onclick = async () => {
   const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. The money is sent straight to your M-Pesa, usually within a minute. Smallest withdrawal: ' + kes(CFG.min) + '. Largest: ' + kes(CFG.max) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
     + '<div class="fld" style="margin-top:10px"><input id="ccwp" inputmode="numeric" maxlength="12" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'
     + '<div class="fld"><input id="ccwa" type="number" inputmode="numeric" value="' + Math.min(bal, CFG.max) + '" aria-label="Amount in KSh"></div>'
+    + '<p class="sub" style="margin:2px 0 6px">Amount to withdraw from your wallet</p>'
+    + '<div class="fld"><input id="ccwr" type="number" inputmode="numeric" placeholder="Or type the amount you want to receive" aria-label="Amount you want to receive"></div>'
+    + '<p class="sub" id="ccw-b" style="min-height:18px"></p>'
     + '<p class="sub" id="ccw-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
   m.querySelector('#ccw-x').onclick = () => m.close();
   m.querySelector('#ccwp').value = '';
+  const wa = m.querySelector('#ccwa'), wr = m.querySelector('#ccwr'), wb = m.querySelector('#ccw-b');
+  const wShow = () => {
+    const a = Math.floor(+wa.value) || 0; if (!(a > 0)) { wb.textContent = ''; return; }
+    const f = wFee(a), n = a - f, low = n < PAYOUT_NET_MIN;
+    wb.style.color = low || a > bal ? 'var(--bad,#c0392b)' : '';
+    wb.textContent = (low ? 'After the fee (' + kes(f) + ') you would receive ' + kes(Math.max(n, 0)) + '. M-Pesa sends at least ' + kes(PAYOUT_NET_MIN) + ', so withdraw at least ' + kes(wNeedFor(PAYOUT_NET_MIN)) + '.' : 'You withdraw ' + kes(a) + ', fee ' + kes(f) + ', you receive ' + kes(n) + ' on M-Pesa.') + (a > bal ? ' Your wallet only has ' + kes(bal) + '.' : '');
+  };
+  wa.addEventListener('input', () => { wr.value = ''; wShow(); });
+  wr.addEventListener('input', () => { const r = Math.floor(+wr.value); if (r > 0) wa.value = wNeedFor(r); wShow(); });
+  wShow();
   call('/api/me/phone').then((d) => { const i = m.querySelector('#ccwp'); if (d && d.phone && i && !i.value) i.value = d.phone; }).catch(() => {});
   m.querySelector('#ccw-go').onclick = async () => {
     const amount = Math.floor(+m.querySelector('#ccwa').value), phone = m.querySelector('#ccwp').value.replace(/\s/g, ''), er = m.querySelector('#ccw-e');
     if (!(amount >= CFG.min && amount <= Math.min(bal, CFG.max))) return (er.textContent = 'Enter an amount from ' + kes(CFG.min) + ' up to ' + kes(Math.min(bal, CFG.max)));
+    if (amount - wFee(amount) < PAYOUT_NET_MIN) return (er.textContent = 'After the fee you would receive ' + kes(Math.max(amount - wFee(amount), 0)) + '. Withdraw at least ' + kes(wNeedFor(PAYOUT_NET_MIN)) + '.');
     if (!/^(07|01)\d{8}$/.test(phone)) return (er.textContent = 'Enter a Safaricom or Airtel number like 0712345678.');
     const g = m.querySelector('#ccw-go'); g.disabled = true;
     const box = m.firstChild; box.innerHTML = '<div id="ccw-prog"></div><button class="btn p" id="ccw-ok" style="width:100%;margin-top:14px" hidden>Done</button>';

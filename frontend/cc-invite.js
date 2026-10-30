@@ -53,6 +53,8 @@ function draw() {
     }); card.appendChild(fn);
     card.appendChild(el('h4', '', 'Earnings'));
     card.appendChild(row('In your wallet', null, 'Rewards already paid', kes(e.earned)));
+    if (e.earned > 0) { var co = el('button', 'iv-re', 'Cash out my reward to M-Pesa'); co.type = 'button'; co.style.margin = '4px 0 10px';
+      co.onclick = function () { try { if (typeof go === 'function') go('wallet'); } catch (x) {} setTimeout(function () { var w = document.getElementById('wd'); if (w) w.click(); }, 450); }; card.appendChild(co); }
     card.appendChild(row('On the way', null, 'Friends who bought. Paid after the refund window.', kes(e.coming)));
     card.appendChild(row('Still possible', null, e.possible ? 'If every friend who has not bought yet does. We would expect about ' + kes(e.expected) + '.' : 'Everyone you invited has bought.', kes(e.possible)));
     if (e.conversion !== null) card.appendChild(el('p', 'iv-sub', e.conversion + '% of the friends you invited have bought something.'));

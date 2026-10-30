@@ -189,7 +189,7 @@ html{-webkit-text-size-adjust:100%}body{overflow-x:hidden}
 <div class="dock"><div class="die off" id="die" role="button" tabindex="0" aria-label="Roll the dice"><span class="sh"></span><div class="tilt"><div class="cube" id="cube"></div></div></div><div class="hint" id="hint"></div></div>
 </div>
 
-<div id="win"><div class="bx"><div class="tr" id="wtr"></div><h2 id="wt"></h2><p id="wp"></p><button class="btn" id="again">Back to lobby</button></div></div>
+<div id="win"><div class="bx"><div class="tr" id="wtr"></div><h2 id="wt"></h2><p id="wp"></p><button class="btn" id="wshare" style="display:none;margin-bottom:10px">Share my win</button><button class="btn" id="again">Back to lobby</button></div></div>
 
 <script>
 "use strict";
@@ -334,7 +334,7 @@ function drawGame(r){$('wait').classList.add('hide');$('game').classList.remove(
  if(r.status==='done'){clearInterval(poll);clearInterval(tick);const me=r.seats.find(s=>s.me),won=me&&r.winner===me.handle,wc=r.seats.find(s=>s.handle===r.winner);
   const tr=$('wtr');tr.style.background=wc?col(wc.color):'var(--fg)';tr.style.color='#fff';tr.innerHTML=TROPHY;
   $('wt').textContent=won?'You win':`${r.winner||'Someone'} wins`;
-  $('wp').textContent=won?`Prize: ${r.mode==='kes'?'KSh ':''}${n0(r.prize)}${r.mode==='kes'?', added to your wallet.':' points.'}`:'Better luck next time.';$('win').style.display='grid';buzz([60,40,60])}}
+  $('wp').textContent=won?`Prize: ${r.mode==='kes'?'KSh ':''}${n0(r.prize)}${r.mode==='kes'?', added to your wallet.':' points.'}`:'Better luck next time.';$('win').style.display='grid';buzz([60,40,60]);const sb=$('wshare');if(sb){sb.style.display=won&&window.ccShareCard?'':'none';sb.onclick=()=>window.ccShareCard({tag:'Ludo · Comrade Connect',title:'I just won at Ludo!',line:'Prize: '+(r.mode==='kes'?'KSh ':'')+n0(r.prize)+(r.mode==='kes'?'':' points'),cta:'Think you can beat me? Play Ludo',filename:'comrade-ludo-win',share:'I won at Ludo on Comrade Connect!'})}}}
 
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&room){backFlag=true;refresh()}});
 window.addEventListener('online',()=>{if(room){backFlag=true;refresh()}});
@@ -349,4 +349,5 @@ window.addEventListener('online',()=>{if(room){backFlag=true;refresh()}});
   const c=new URLSearchParams(location.search).get('c');if(c)$('jc').value=c.toUpperCase().slice(0,5);
  }finally{if(window.LudoLoader)window.LudoLoader.hide()}
 })();
-</script></body></html>
+</script><script src="cc-sharecard.js?v=1"></script>
+</body></html>

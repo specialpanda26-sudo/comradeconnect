@@ -37,6 +37,12 @@ jobs:
         run: npx --yes tailwindcss@3.4.17 -c tailwind.config.cjs -i tailwind/input.css -o frontend/tw.css --minify
       - name: Merge the stylesheets into cc-all.css
         run: python3 scripts/merge-css.py
+      - name: Make the link-preview picture (only if missing)
+        run: |
+          if [ ! -f frontend/comrade-connect-all-universities.png ]; then
+            pip install --quiet pillow
+            python3 scripts/make-share-image.py
+          fi
       - name: Save the new files if anything changed
         run: |
           git add -A frontend

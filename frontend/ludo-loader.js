@@ -6,7 +6,7 @@
   'use strict';
   if (window.LudoLoader) return;
   var hold = !!(document.currentScript && document.currentScript.hasAttribute('data-hold'));
-  var MIN_MS = 1500, t0 = Date.now(), gone = false, el = null;
+  var MIN_MS = 3000, t0 = Date.now(), gone = false, el = null;
   var PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
   var css = [
     '#ll{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;background:var(--bg,#000);color:var(--fg,#fff);font-family:Poppins,system-ui,sans-serif;transition:opacity .45s ease,transform .45s ease}',

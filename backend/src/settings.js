@@ -26,6 +26,7 @@ export const DEFS = {
   sponsor_price_month: { env: 'SPONSOR_PRICE_MONTH', def: 1500, min: 0, max: 300000, unit: 'KSh', label: 'Sponsor card, 1 month', help: 'Shown to advertisers on the Advertise with us form.' },
   sponsor_price_post: { env: 'SPONSOR_PRICE_POST', def: 300, min: 0, max: 100000, unit: 'KSh', label: 'Sponsored post', help: 'Shown to advertisers on the Advertise with us form.' },
   hostel_reg_fee: { env: 'HOSTEL_REG_FEE', def: 100, min: 0, max: 50000, unit: 'KSh', label: 'Hostel caretaker registration fee', help: 'Paid once by a caretaker before they can post hostel vacancies. 0 = free. Caretakers who already paid keep their access.' },
+  deal_fee_per_redeem: { env: 'DEAL_FEE_PER_REDEEM', def: 5, min: 0, max: 500, unit: 'KSh', label: 'Local deals fee per redemption', help: 'What a business owes each time it confirms a comrade\'s deal code. 0 = free. Shown to businesses when they post a deal; see Admin > Deals for the monthly bill.' },
   gift_fee_percent: { env: 'GIFT_FEE_PERCENT', def: 10, min: 0, max: 50, dec: true, unit: '%', label: 'Gift link fee (percent)', help: 'Share of every gift that the website keeps. The creator gets the rest in their wallet.' },
   gift_min: { env: 'GIFT_MIN', def: 20, min: 1, max: 5000, unit: 'KSh', label: 'Smallest custom gift', help: 'Least a supporter can send with Custom gift.' },
   gift_max: { env: 'GIFT_MAX', def: 20000, min: 50, max: 150000, unit: 'KSh', label: 'Largest custom gift', help: 'Most a supporter can send in one gift.' },
@@ -102,7 +103,7 @@ export async function saveSettings(env, input) {
   const next = { ...cur }; for (const k of Object.keys(changed)) next[k] = changed[k][1];
   if (next.listing_price_min > next.listing_price_max) return { error: 'Lowest item price cannot be higher than the highest item price.' };
   if (next.withdraw_min > next.withdraw_max) return { error: 'Smallest withdrawal cannot be higher than the largest withdrawal.' };
-  if (withdrawFee(next.withdraw_min, next) >= next.withdraw_min) return { error: 'That withdrawal fee would swallow the smallest withdrawal. Lower the fee or raise the minimum.' };
+  if (['withdraw_min', 'withdraw_fee_percent', 'withdraw_fee_flat'].some((k) => k in changed) && withdrawFee(next.withdraw_min, next) >= next.withdraw_min) return { error: 'That withdrawal fee would swallow the smallest withdrawal. Lower the fee or raise the minimum.' };
   for (const [k, [, n]] of Object.entries(changed)) {
     const res = await post(env, 'settings', { key: k, value: n, updated_at: new Date().toISOString() }, 'resolution=merge-duplicates,return=representation');
     if (!res.ok) {

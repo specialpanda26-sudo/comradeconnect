@@ -45,8 +45,8 @@ export const HIDE = { room: ['rooms', { hidden: true }, { hidden: false }], grou
   hearts: ['hearts_posts', { hidden: true }, { hidden: false }], wifi: ['wifi', { hidden: true }, { hidden: false }], hostel: ['hostels', { hidden: true }, { hidden: false }],
   service: ['services', { hidden: true }, { hidden: false }], spot: ['spots', { hidden: true }, { hidden: false }], tip: ['study_tips', { hidden: true }, { hidden: false }], clip: ['media', { status: 'hidden' }, { status: 'ready' }],
   listing: ['listings', { status: 'removed' }, { status: 'approved' }], event: ['events', { hidden: true }, { hidden: false }],
-  lostfound: ['lost_found', { hidden: true }, { hidden: false }], paper: ['papers', { hidden: true }, { hidden: false }] };
-const AUTOHIDE = new Set(['room', 'group', 'poll', 'hearts', 'wifi', 'hostel', 'service', 'tip', 'clip', 'spot', 'lostfound', 'paper']);   // listings and users wait for an admin
+  deal: ['deals', { hidden: true }, { hidden: false }], lostfound: ['lost_found', { hidden: true }, { hidden: false }], paper: ['papers', { hidden: true }, { hidden: false }] };
+const AUTOHIDE = new Set(['room', 'group', 'poll', 'hearts', 'wifi', 'hostel', 'service', 'tip', 'clip', 'spot', 'lostfound', 'paper', 'deal']);   // listings and users wait for an admin
 
 const pub = (r, me) => { const { aid, ip, hidden, ...rest } = r; return { ...rest, createdAt: Date.parse(r.created_at), mine: !!me && me.aid === aid }; };
 

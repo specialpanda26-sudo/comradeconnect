@@ -1668,11 +1668,15 @@ const get=(k,d)=>ST.get(k,d),set=(k,v)=>ST.set(k,v);
 const okUrl=u=>/^https:\/\/[^\s]+\.[^\s]+$/i.test(u);
 const A=u=>'href="'+esc(u)+'" target="_blank" rel="noopener noreferrer"';
 if(!get(K.s,null))set(K.s,[]);
-const seen={};
-function pick(){const a=get(K.s,[]).filter(s=>s.on);if(!a.length)return null;const s=a[Math.floor(Math.random()*a.length)];if(!seen[s.id]){seen[s.id]=1;const all=get(K.s,[]),x=all.find(i=>i.id===s.id);if(x){x.imp++;set(K.s,all)}}return s}
-function ad(){const s=pick();if(!s)return '';return `<div class="box g spx" style="margin:12px 0"><span class="badge">Sponsored</span><h3 style="margin-top:8px">${esc(s.brand)}</h3><p class="sub" style="margin:4px 0 10px">${esc(s.head)}</p><a class="btn g" style="display:block;text-align:center" data-sp="${s.id}" ${A(s.url)}>Learn more</a></div>`}
+const seen={};let SP=null,spAt=0;const spU=()=>CC_API.replace(/\/$/,'');
+function spLoad(){if(SP&&Date.now()-spAt<3e5)return;spAt=Date.now();fetch(spU()+'/api/sponsors').then(r=>r.json()).then(d=>{SP=(d.sponsors||[]).filter(s=>s.link&&okUrl(s.link));placeAds()}).catch(()=>{})}
+function hit(id,kind){try{fetch(spU()+'/api/sponsors/hit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,kind:kind}),keepalive:true}).catch(()=>{})}catch(e){}}
+function pick(){spLoad();if(!SP||!SP.length)return null;const s=SP[Math.floor(Math.random()*SP.length)];if(!seen[s.id]){seen[s.id]=1;hit(s.id,'view')}return s}
+function ad(){const s=pick();if(!s)return '';return `<div class="box g spx" style="margin:12px 0"><span class="badge">Sponsored</span><h3 style="margin-top:8px">${esc(s.name)}</h3><p class="sub" style="margin:4px 0 10px">${esc(s.blurb||s.name)}</p><a class="btn g" style="display:block;text-align:center" data-sp="${s.id}" ${A(s.link)}>Learn more</a></div>`}
 function placeAds(){$$('.spx').forEach(e=>e.remove());const f=$('#v-feed'),m=$('#v-market .ph');const h=ad();if(f&&h)f.insertAdjacentHTML('afterbegin',h);if(m&&h)m.insertAdjacentHTML('afterend',ad())}
-document.addEventListener('click',e=>{const a=e.target.closest('[data-sp]');if(!a)return;const all=get(K.s,[]),x=all.find(i=>i.id===a.dataset.sp);if(x){x.clk++;set(K.s,all)}});
+document.addEventListener('click',e=>{const a=e.target.closest('[data-sp]');if(a)hit(a.dataset.sp,'tap')});
+let PK=[];function applyPk(){const k=$('#eqk');if(!k||k.dataset.pk||!PK.length)return false;k.dataset.pk=1;PK.forEach(p=>{const o=[...k.options].find(x=>x.text===p.id);if(o){o.value=p.id;o.text=p.id+(p.price?' · KSh '+p.price:'')}});return true}
+fetch(spU()+'/api/sponsor-packages').then(r=>r.json()).then(d=>{PK=d.packages||[];if(!applyPk()){const ob=new MutationObserver(()=>{if(applyPk())ob.disconnect()});ob.observe(document.body,{childList:true,subtree:true})}}).catch(()=>{});
 /* public: Me tab */
 function meBoxes(){const r=$('#rcode');if(!r||$('#ccpub'))return;const anchor=r.closest('.box');
 const L=get(K.l,[]);

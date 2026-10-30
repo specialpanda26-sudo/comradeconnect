@@ -61,6 +61,8 @@ SCHEMA.papers = T(['id'], { defaults: { hidden: false, likes: 0, campus: 'kiriny
 SCHEMA.lost_found = T(['id'], { defaults: { hidden: false, status: 'open', campus: 'kirinyaga' } });
 SCHEMA.deals = T(['id'], { defaults: { hidden: false, status: 'pending', campus: 'kirinyaga' } });
 SCHEMA.deal_claims = T(['id'], { defaults: { status: 'claimed', fee: 0 }, uniques: [(r) => r.deal_id + '|' + r.aid] });
+SCHEMA.surveys = T(['id'], { defaults: { status: 'unpaid', hidden: false, paid: 0, refunded: 0, fee: 0, settled: false, funding: 'app', campus: 'all', sponsor_id: null, reject_note: null, end_reason: null } });
+SCHEMA.survey_responses = T(['id'], { defaults: { status: 'started', reward: 0, answers: null, flag_note: null, submitted_at: null }, uniques: [(r) => r.survey_id + '|' + r.aid] });
 SCHEMA.spot_likes = T(['spot_id', 'aid']);
 SCHEMA.gift_links = T(['id'], { defaults: { active: true, blurb: '' }, uniques: [nn('aid'), (r) => (r.slug ? String(r.slug).toLowerCase() : null)] });
 SCHEMA.gifts = T(['id'], { defaults: { status: 'pending', fee: 0, net: 0 }, uniques: [nn('payment_id')] });

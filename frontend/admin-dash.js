@@ -26,7 +26,7 @@ const svg = (k, s) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
 const GROUPS = [
   { n: 'Overview', icon: 'grid', h: 'Dashboard', lead: 'How Comrade Connect is doing right now.', tabs: ['dashboard'] },
   { n: 'Users', icon: 'users', h: 'Users', lead: 'Find anyone and control their account.', tabs: ['users', 'phones', 'grant'] },
-  { n: 'Review', icon: 'inbox', h: 'Waiting for you', lead: 'Everything that needs a decision from you.', tabs: ['listings', 'withdrawals', 'verifications', 'disputes', 'reports', 'payments', 'support'] },
+  { n: 'Review', icon: 'inbox', h: 'Waiting for you', lead: 'Everything that needs a decision from you.', tabs: ['listings', 'withdrawals', 'verifications', 'disputes', 'reports', 'payments', 'support', 'adverts'] },
   { n: 'Market', icon: 'bag', h: 'Market and campus', lead: 'Items, events, notices, sponsors and the club shop.', tabs: ['live', 'videos', 'events', 'notices', 'sponsors', 'club'] },
   { n: 'Kura', icon: 'star', h: 'Kura', lead: 'Contestants, votes and the season.', tabs: ['kura'] },
   { n: 'Money', icon: 'wallet', h: 'Money', lead: 'Earnings, fees and payouts.', tabs: ['txns', 'settings', 'payouts'] },

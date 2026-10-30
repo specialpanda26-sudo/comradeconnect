@@ -283,7 +283,8 @@ function drawWait(r){$('wait').classList.remove('hide');$('game').classList.add(
  $('wplayers').innerHTML=r.seats.map(s=>`<div class="row"><b>${esc(s.handle)}${s.me?' (you)':''}</b><span>${s.host?'Host':''}</span></div>`).join('');
  $('startb').classList.toggle('hide',!(r.host&&r.seats.length>=2));
  $('leave').textContent=r.host?'Cancel room':'Leave room'}
-$('share').onclick=()=>{const t=`Join my Ludo room on Comrade Connect. Code: ${room.code}\n${location.origin}/ludo-online.html?c=${room.code}`;navigator.share?navigator.share({text:t}).catch(()=>{}):navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>{$('share').textContent='Invite copied';setTimeout(()=>$('share').textContent='Share invite',1500)})};
+const SITE=()=>{const h=location.hostname;return(/^(localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)$/.test(h)&&location.protocol==='https:'&&!location.port)||/^(capacitor|ionic|file):/.test(location.protocol)?'https://comradeconnect.co.ke':location.origin};
+$('share').onclick=()=>{const t=`Join my Ludo room on Comrade Connect. Code: ${room.code}\n${SITE()}/ludo-online.html?c=${room.code}`;navigator.share?navigator.share({text:t}).catch(()=>{}):navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>{$('share').textContent='Invite copied';setTimeout(()=>$('share').textContent='Share invite',1500)})};
 $('startb').onclick=async()=>{try{show(await api('start',{code:room.code}))}catch(e){alert(e.message)}};
 $('leave').onclick=async()=>{try{await api('leave',{code:room.code});stop();toLobby()}catch(e){alert(e.message)}};
 function stop(){clearInterval(poll);clearInterval(tick);room=null;built=false}

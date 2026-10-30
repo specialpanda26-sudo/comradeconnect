@@ -1245,6 +1245,7 @@ const LV=[['Fresher',0],['Comrade',100],['Senior',300],['Legend',700]];
 const SHOP=[];   // points are spent on Market items at checkout (server-side), not here
 /* Inside the Android app the page address is https://localhost. Shared links must always use the real website. */
 window.ccOrigin=()=>{const h=location.hostname;return /^(localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)$/.test(h)&&location.protocol==='https:'&&!location.port||/^(capacitor|ionic|file):/.test(location.protocol)?'https://comradeconnect.co.ke':location.origin};
+window.ccShareUrl=()=>window.ccOrigin()+(location.pathname||'/').replace(/\/index\.html$/,'/')+location.search+location.hash;
 const rlink=()=>{const c=window.ccRef&&window.ccRef.code;return c?window.ccOrigin()+'/?ref='+c:''};
 async function syncPts(){try{const r=await window.ccCall('/api/points');ME.pts=r.points;ME.streak=r.streak;ME.last=r.checked_in?dk():'';ME.val=r.value_ksh;ME.per=r.per_ksh;drawRewards()}catch(e){}}
 function drawRewards(){if(!window.__ps){window.__ps=1;setTimeout(()=>{window.__ps=0},4000);syncPts()}let i=0;LV.forEach((l,j)=>{if(ME.pts>=l[1])i=j});const nx=LV[i+1];
@@ -1633,7 +1634,7 @@ async function shareCard(p){
  const MAX=13;if(lines.length>MAX){lines.length=MAX;lines[MAX-1]=lines[MAX-1].replace(/\s*\S*$/,'')+'...'}
  lines.forEach((l,i)=>x.fillText(l,80,480+i*80));
  x.fillStyle='#fff';x.font='600 40px '+F;x.fillText('Spill yours. Nobody will know it was you.',80,1740);
- x.fillStyle='var(--mut)';x.font='300 28px '+F;x.fillText(location.host+location.pathname,80,1800,920);
+ x.fillStyle='var(--mut)';x.font='300 28px '+F;x.fillText(window.ccOrigin().replace(/^https?:\/\//,''),80,1800,920);
  c.toBlob(async b=>{const f=new File([b],'comradespill.png',{type:'image/png'}),t='Spilled on Comrade Connect: '+window.ccOrigin()+'/';
   try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:t});return}}catch(e){if(e.name==='AbortError')return}
   $('#pvi').src=c.toDataURL('image/png');$('#pv').classList.add('on')},'image/png')}
@@ -1912,7 +1913,7 @@ else if(a==='add'){$('#rlad').classList.add('on');return}
 else if(a==='fol'){const h=hd(v);fl.has(h)?fl.delete(h):fl.add(h);ST.set('cc_follow',[...fl]);if(window.ccRefresh)ccRefresh()}
 else if(a==='del'){if(window.ccDeleteClip)window.ccDeleteClip(v.id);return}
 else if(a==='cmt'){cur=v.id;cmt();$('#rlcm').classList.add('on');return}
-else if(a==='shr'){const t='Watch on Comrade Connect: '+v.cap;if(navigator.share)navigator.share({text:t,url:location.href}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(t+' '+location.href),'_blank','noopener');return}
+else if(a==='shr'){const t='Watch on Comrade Connect: '+v.cap;if(navigator.share)navigator.share({text:t,url:window.ccShareUrl()}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(t+' '+window.ccShareUrl()),'_blank','noopener');return}
 const y=$('#rls').scrollTop;render();$('#rls').scrollTop=y;return}
 if(sec&&!b&&!e.target.closest('.rlsh')){const n=Date.now();if(n-tt<300){clearTimeout(tap);const v=vid(sec.dataset.id);if(!lk.has(v.id)){lk.add(v.id);v.likes++;const y=$('#rls').scrollTop;render();$('#rls').scrollTop=y}tt=0;return}tt=n;tap=setTimeout(()=>{const m=sec.querySelector('video');if(m){m.muted=!m.muted;toast(m.muted?'Sound off':'Sound on')}},300)}});
 function cmt(){const l=cm[cur]||[];$('#rlcl').innerHTML=l.length?l.map(t=>'<p>'+esc(t)+'</p>').join(''):'<p style="opacity:.6">No comments yet. Start the conversation.</p>'}
@@ -1965,7 +1966,7 @@ $('#ccgr').innerHTML=mine.length?grid(mine):'<p class="sub" style="grid-column:1
 document.addEventListener('click',e=>{const t=e.target,b=t.closest('button');if(!b)return;
 if(b.id==='cced'){$('#cced2').hidden=!$('#cced2').hidden;$('#ccbi').value=bio()}
 else if(b.id==='ccbs'){ST.set('cc_bio',$('#ccbi').value.trim().slice(0,100));$('#cced2').hidden=true;refresh();toast('Bio saved')}
-else if(b.id==='ccsp'||b.dataset.sp){const h=b.dataset.sp||ME.handle,x='Follow @'+h+' on Comrade Connect';if(navigator.share)navigator.share({text:x,url:location.href}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(x+' '+location.href),'_blank','noopener')}
+else if(b.id==='ccsp'||b.dataset.sp){const h=b.dataset.sp||ME.handle,x='Follow @'+h+' on Comrade Connect';if(navigator.share)navigator.share({text:x,url:window.ccShareUrl()}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(x+' '+window.ccShareUrl()),'_blank','noopener')}
 else if(b.dataset.g){go('videos')}});
 try{const d=drawMe;drawMe=function(){d.apply(this,arguments);refresh()}}catch(e){}
 try{const g=go;go=function(v){const r=g.apply(this,arguments);if(v==='me')refresh();const s=$('#rlpf');if(s)s.classList.remove('on');return r}}catch(e){}
@@ -1981,7 +1982,7 @@ const b=e.target.closest('#rlpf button');if(!b)return;e.stopPropagation();
 if(b.id==='rlpx')S.classList.remove('on');
 else if(b.id==='rlpe'){S.classList.remove('on');go('me')}
 else if(b.id==='rlpfol'){const s=R.querySelector('.rl[data-id="'+cid+'"] [data-a="fol"]');if(s){s.click();open(cid)}}
-else if(b.dataset.sp){const x='Follow @'+b.dataset.sp+' on Comrade Connect';if(navigator.share)navigator.share({text:x,url:location.href}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(x+' '+location.href),'_blank','noopener')}},true)}
+else if(b.dataset.sp){const x='Follow @'+b.dataset.sp+' on Comrade Connect';if(navigator.share)navigator.share({text:x,url:window.ccShareUrl()}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(x+' '+window.ccShareUrl()),'_blank','noopener')}},true)}
 refresh();
 })();
 </script>

@@ -69,3 +69,9 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 - `cc-ludo.js` entry card: both buttons share one row.
 - `API.md` and `README.md` document the withdrawal rules, new config fields and Ludo env names. `sw.js` BUILD restamped.
 - All six phases are done. Still worth doing on a real phone: one KSh 1 online game between two phones and one KSh 1 withdrawal.
+
+## Ludo redesign Phase 2 (DONE): reference board colours, board box only
+- `frontend/ludo.html` and `frontend/ludo-online.html`: board uses the LudoPesa palette (blue top-left, green top-right, yellow bottom-right, red bottom-left), white cells, grey star cells, globe start cells, crown tokens with a gold ring, crown in the centre, brown frame.
+- Colours are scoped to `#bw` / `#bd` and the helpers `bcol`, `bdk`, `tkc`. The rest of the page keeps the site theme (`col()`, `--r --gr --y --b`).
+- Seat 0 is now named Blue, seat 3 is Red (by board position). The server only uses seat numbers, so no backend change.
+- Patch script is idempotent (marker `cc-ludopesa-board`).

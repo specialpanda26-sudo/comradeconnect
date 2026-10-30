@@ -128,6 +128,19 @@ html{-webkit-text-size-adjust:100%}body{overflow-x:hidden}
 .seg button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .tg button:disabled{opacity:.35}
 .ok{color:var(--ok)}
+/* cc-ludopesa-board: colours live inside the board box only */
+#bw{background:linear-gradient(145deg,#8a3d12,#5a2204);border:1px solid #3a1503;box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.22);backdrop-filter:none;-webkit-backdrop-filter:none;padding:2.4%}
+#bd{background:#fff;border-radius:8px}
+#bd .c{background:#fff;border:.5px solid #c9ccd3}
+#bd .c svg.ic{width:64%;height:64%;fill:none;stroke:#6b6f7a;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:1}
+#bd .c.gl svg.ic{width:68%;height:68%;stroke:rgba(20,20,30,.5)}
+#bd .yard .in{border:0;border-radius:20%}
+#bd .slot i{border:0;background:rgba(255,255,255,.3);opacity:1;width:78%;height:78%}
+#bd .tk i{border:2.5px solid #f5b300;display:grid;place-items:center;box-shadow:0 2px 4px #0005,inset 0 -3px 4px #0002}
+#bd .tk i::after{display:none}
+#bd .tk i svg{width:62%;height:62%;fill:#fff;display:block}
+#bd .tk.m i{box-shadow:0 0 0 3px #fff,0 0 0 5px #111a,0 6px 12px #0006}
+#bd .tk.lm i{box-shadow:0 0 0 2px #fff,0 3px 6px #0005}
 </style></head><body>
 
 <div id="lobby">
@@ -193,8 +206,15 @@ const n0=x=>Number(x||0).toLocaleString();
 
 // ---------- board geometry (same as ludo.html) ----------
 const T=[[6,1],[6,2],[6,3],[6,4],[6,5],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],[0,8],[1,8],[2,8],[3,8],[4,8],[5,8],[6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],[8,14],[8,13],[8,12],[8,11],[8,10],[8,9],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,5],[8,4],[8,3],[8,2],[8,1],[8,0],[7,0],[6,0]];
-const COL=[{n:'Red',v:'--r',s:0,hc:[[7,1],[7,2],[7,3],[7,4],[7,5]],fin:[7,6],yr:0,yc:0},{n:'Green',v:'--gr',s:13,hc:[[1,7],[2,7],[3,7],[4,7],[5,7]],fin:[6,7],yr:0,yc:9},{n:'Yellow',v:'--y',s:26,hc:[[7,13],[7,12],[7,11],[7,10],[7,9]],fin:[7,8],yr:9,yc:9},{n:'Blue',v:'--b',s:39,hc:[[13,7],[12,7],[11,7],[10,7],[9,7]],fin:[8,7],yr:9,yc:0}];
+const COL=[{n:'Blue',v:'--b',s:0,hc:[[7,1],[7,2],[7,3],[7,4],[7,5]],fin:[7,6],yr:0,yc:0},{n:'Green',v:'--gr',s:13,hc:[[1,7],[2,7],[3,7],[4,7],[5,7]],fin:[6,7],yr:0,yc:9},{n:'Yellow',v:'--y',s:26,hc:[[7,13],[7,12],[7,11],[7,10],[7,9]],fin:[7,8],yr:9,yc:9},{n:'Red',v:'--r',s:39,hc:[[13,7],[12,7],[11,7],[10,7],[9,7]],fin:[8,7],yr:9,yc:0}];
 const col=p=>`var(${COL[p].v})`;
+
+/* cc-ludopesa-board: reference board colours, used inside the board box only */
+const BCOL=['#94acd2','#00c651','#ead9a4','#ff2d3a'], BDK=['#7f97bd','#00a043','#cfc08c','#c8212d'], TKC=['#6f8fc9','#00b84a','#e3cd82','#ff2d3a'];
+const bcol=p=>BCOL[p], bdk=p=>BDK[p], tkc=p=>TKC[p];
+const STAR2='<svg class="ic" viewBox="0 0 24 24"><path d="M12 3l2.7 5.7 6.2.8-4.6 4.3 1.2 6.2L12 17l-5.5 3 1.2-6.2L3.1 9.5l6.2-.8z"/></svg>';
+const GLOBE='<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><ellipse cx="12" cy="12" rx="3.6" ry="8.5"/><path d="M3.5 12h17M5 7.5h14M5 16.5h14"/></svg>';
+const CROWN='<svg viewBox="0 0 24 24"><path d="M3 17h18l1.4-10-5 4L12 4.5 7 11 1.6 7z"/><rect x="4" y="18.5" width="16" height="2.2" rx="1.1"/></svg>';
 const SAFE=[0,13,26,39,8,21,34,47],U=100/15;
 const STAR='<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
 const ARR=['M5 12h13M13 6l6 6-6 6','M12 5v13M6 13l6 6 6-6','M19 12H6M11 6l-6 6 6 6','M12 19V6M6 11l6-6 6 6'];
@@ -286,14 +306,13 @@ async function pick(t){if(busy||!room||!room.movable.includes(t))return;busy=tru
 // ---------- board ----------
 function build(r){const bd=$('bd');bd.innerHTML='';
  const add=(rr,c,bg,html,cls)=>{const d=document.createElement('div');d.className='c'+(cls?' '+cls:'');d.style.cssText=`top:${rr*U}%;left:${c*U}%`;if(bg)d.style.background=bg;if(html)d.innerHTML=html;bd.appendChild(d);return d};
- COL.forEach((c,p)=>{const y=document.createElement('div');y.className='yard';y.style.cssText=`top:${c.yr*U}%;left:${c.yc*U}%;width:${U*6}%;height:${U*6}%;background:${col(p)}`;y.innerHTML='<div class="in"></div>';bd.appendChild(y);
+ COL.forEach((c,p)=>{const y=document.createElement('div');y.className='yard';y.style.cssText=`top:${c.yr*U}%;left:${c.yc*U}%;width:${U*6}%;height:${U*6}%;background:${bcol(p)}`;y.innerHTML=`<div class="in" style="background:${bdk(p)}"></div>`;bd.appendChild(y);
   yardSlots(p).forEach(([a,b])=>{const s=document.createElement('div');s.className='slot';s.style.cssText=`top:${a*U}%;left:${b*U}%;color:${col(p)}`;s.innerHTML='<i></i>';bd.appendChild(s)})});
- T.forEach(([a,b],i)=>{const own=COL.findIndex(k=>k.s===i);const d=add(a,b,own>=0?col(own):'',own<0&&SAFE.includes(i)?STAR:'');
-  if(own>=0){d.style.color='#fff';d.classList.add('arr');d.innerHTML=`<svg viewBox="0 0 24 24"><path d="${ARR[own]}"/></svg>`}});
- COL.forEach((c,p)=>c.hc.forEach(([a,b])=>add(a,b,col(p))));
- const ctr=document.createElement('div');ctr.className='c';ctr.style.cssText=`top:${6*U}%;left:${6*U}%;width:${3*U}%;height:${3*U}%;background:var(--bd);padding:0;overflow:hidden`;
- ctr.innerHTML=`<svg viewBox="0 0 30 30" style="width:100%;height:100%;fill:none;opacity:1"><polygon points="0,0 15,15 0,30" fill="${col(0)}"/><polygon points="0,0 30,0 15,15" fill="${col(1)}"/><polygon points="30,0 30,30 15,15" fill="${col(2)}"/><polygon points="0,30 15,15 30,30" fill="${col(3)}"/></svg>`;bd.appendChild(ctr);
- els={};r.state.order.forEach(p=>els[p]=[0,1,2,3].map(t=>{const e=document.createElement('div');e.className='tk';e.innerHTML=`<i style="background:${col(p)}"></i>`;e.onclick=()=>pick(t);bd.appendChild(e);return e}));
+ T.forEach(([a,b],i)=>{const own=COL.findIndex(k=>k.s===i),sf=own<0&&SAFE.includes(i);const d=add(a,b,own>=0?bcol(own):(sf?'#d9dbe0':''),own>=0?GLOBE:(sf?STAR2:''));if(own>=0)d.classList.add('gl')});
+ COL.forEach((c,p)=>c.hc.forEach(([a,b])=>add(a,b,bcol(p))));
+ const ctr=document.createElement('div');ctr.className='c';ctr.style.cssText=`top:${6*U}%;left:${6*U}%;width:${3*U}%;height:${3*U}%;background:#fff;padding:0;overflow:hidden`;
+ ctr.innerHTML=`<svg viewBox="0 0 30 30" style="width:100%;height:100%;fill:none;opacity:1"><polygon points="0,0 15,15 0,30" fill="${bcol(0)}"/><polygon points="0,0 30,0 15,15" fill="${bcol(1)}"/><polygon points="30,0 30,30 15,15" fill="${bcol(2)}"/><polygon points="0,30 15,15 30,30" fill="${bcol(3)}"/><g fill="#fff" stroke="none" transform="translate(9 8.6) scale(.5)"><path d="M3 17h18l1.4-10-5 4L12 4.5 7 11 1.6 7z"/><rect x="4" y="18.5" width="16" height="2.2" rx="1.1"/></g></svg>`;bd.appendChild(ctr);
+ els={};r.state.order.forEach(p=>els[p]=[0,1,2,3].map(t=>{const e=document.createElement('div');e.className='tk';e.innerHTML=`<i style="background:${tkc(p)}">${CROWN}</i>`;e.onclick=()=>pick(t);bd.appendChild(e);return e}));
  buildDie();built=true}
 function xy(p,t,q){if(q<0)return yardSlots(p)[t];if(q<=50)return T[(COL[p].s+q)%52];if(q<=55)return COL[p].hc[q-51];return COL[p].fin}
 const TROPHY='<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/></svg>';

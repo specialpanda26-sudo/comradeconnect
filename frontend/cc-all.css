@@ -1,0 +1,1801 @@
+/* Comrade Connect: all page styles in one file. Made by scripts/merge-css.py. Do not edit by hand. */
+/* ---- cc-aqua.css ---- */
+/* Comrade Connect: Aqua foundation (Section 1)
+   Palette, strictly: #A8DCE7 aqua, #101422 night, #FFFFFF white, #272B3B slate.
+   Loads last, overrides page styles. */
+:root{
+  --aq:#A8DCE7;--nt:#101422;--wh:#FFFFFF;--sl:#272B3B;
+  --bg:#101422;--fg:#FFFFFF;--mut:rgba(255,255,255,.62);
+  --g:#272B3B;--gb:rgba(255,255,255,.07);--gh:transparent;
+  --sh:0 18px 40px rgba(16,20,34,.45);--line:rgba(255,255,255,.1);
+  --ink:#A8DCE7;--inkfg:#101422;--bad:#FFFFFF;--ok:#A8DCE7;
+  --card:#272B3B;--soft:rgba(255,255,255,.06);--r:28px;
+  --disp:Unbounded,Poppins,system-ui,sans-serif;
+}
+:root[data-theme="light"]{
+  --bg:#FFFFFF;--fg:#101422;--mut:rgba(16,20,34,.62);
+  --g:color-mix(in srgb,#A8DCE7 16%,#FFFFFF);--gb:rgba(16,20,34,.07);--gh:transparent;
+  --sh:0 14px 34px rgba(16,20,34,.1);--line:rgba(16,20,34,.1);
+  --ink:#101422;--inkfg:#FFFFFF;--bad:#101422;--ok:#101422;
+  --card:#FFFFFF;--soft:rgba(16,20,34,.05);
+}
+html{accent-color:#A8DCE7;color-scheme:dark}
+html[data-theme="light"]{color-scheme:light;accent-color:#101422}
+::selection{background:#A8DCE7;color:#101422}
+body{background:var(--bg);color:var(--fg)}
+
+/* ---- background: flat, one soft aqua glow like the reference ---- */
+.bg{background:var(--bg)}
+.bg i,.bg svg,.bg .bw,.bg::before{display:none!important}
+.bg::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 52% at 50% -8%,rgba(168,220,231,.2),transparent 62%)}
+:root[data-theme="light"] .bg::after{background:linear-gradient(180deg,#A8DCE7 0,rgba(168,220,231,.35) 220px,rgba(255,255,255,0) 420px)}
+
+/* ---- surfaces: solid, no glass ---- */
+.g,.card,.stat,.pcard,.kcard,.ecard,.mecard,.box,.bx,.mtrust,.mc,.act,.btn:not(.p),.seg,.tab:not(.on),.vt button:not(.on){
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-image:none!important}
+html .g,html .card,html .stat,html .pcard,html .kcard,html .ecard,html .mecard,html .box.g,html .mc{
+  background-color:var(--g);border:1px solid var(--gb);box-shadow:none;border-radius:var(--r)}
+html[data-theme="light"] .g,html[data-theme="light"] .card,html[data-theme="light"] .pcard,html[data-theme="light"] .box.g,html[data-theme="light"] .mc{
+  box-shadow:0 6px 20px rgba(16,20,34,.05)}
+html .card,html .pcard,html .kcard,html .ecard,html .mecard,html .box.g{padding:20px}
+html #feed.grid>.card{border-radius:24px;padding:14px}
+html .card.in:hover,html .pcard:hover,html .kcard:hover,html .ecard:hover,html .stat:hover,html .mc:hover{
+  transform:translateY(-2px);border-color:rgba(168,220,231,.5)}
+html .card img,html .pcard img,html .kcard img,html .ecard img{border-radius:20px}
+.card{filter:none!important;transition:opacity .5s,transform .5s,border-color .25s}
+.card .bar{background:var(--soft);border:0;border-radius:999px;padding:5px;-webkit-backdrop-filter:none;backdrop-filter:none}
+
+/* ---- type: wide display headings like the reference ---- */
+.ph,.hero h1,.big,#md h2,.box h3,.pcard h3{font-family:var(--disp);letter-spacing:-.01em}
+.ph{font-size:22px;font-weight:700;margin:0 0 4px}
+.sub{color:var(--mut)}
+.hero h1{background:none!important;-webkit-background-clip:border-box;background-clip:border-box;color:var(--fg)!important;font-weight:700;font-size:clamp(28px,8vw,44px);line-height:1.15}
+.hero h3::after{background:var(--aq)}
+:root[data-theme="light"] .hero h3::after{background:var(--nt)}
+.mq div{color:color-mix(in srgb,var(--fg) 8%,transparent)}
+
+/* ---- top bar: floating slate pill ---- */
+html nav.g{background:var(--sl);border:0;border-radius:30px;box-shadow:0 10px 28px rgba(16,20,34,.35)}
+html[data-theme="light"] nav.g{background:var(--wh);border:1px solid var(--line);box-shadow:0 10px 28px rgba(16,20,34,.1)}
+nav b,nav .wm{color:var(--fg)}
+.ib{border-radius:50%;background:var(--soft)}
+.ib:hover{background:color-mix(in srgb,var(--aq) 25%,transparent)}
+
+/* ---- bottom bar: floating dark pill, active item in aqua ---- */
+html #tb{background:var(--sl);border:0;border-radius:36px;box-shadow:0 18px 40px rgba(16,20,34,.5);-webkit-backdrop-filter:none;backdrop-filter:none}
+html[data-theme="light"] #tb{background:var(--nt)}
+html #tb button{border-radius:30px;color:rgba(255,255,255,.7)}
+html #tb button.on{background:var(--aq);color:var(--nt);box-shadow:none}
+html #tb button.on .b,html nav.tabs button.on .b{background:var(--nt);color:var(--aq)}
+.b{background:var(--aq);color:var(--nt)}
+
+/* ---- buttons ---- */
+.btn{border-radius:999px;font-weight:600}
+.btn.p,html .btn.p{background:var(--ink)!important;color:var(--inkfg)!important;border:0;box-shadow:none}
+html .btn:not(.p){background:var(--g);color:var(--fg);border:1px solid var(--gb)}
+.btn:hover{transform:translateY(-2px)}
+#fab{background:var(--aq)!important;color:var(--nt)!important;box-shadow:0 14px 30px rgba(16,20,34,.45)}
+:root[data-theme="light"] #fab{background:var(--nt)!important;color:var(--wh)!important}
+
+/* ---- tabs, chips, segmented controls ---- */
+.tab,.vt button{background:var(--g);border:1px solid var(--gb);color:var(--mut)}
+.tab.on,.vt button.on{background:var(--ink)!important;color:var(--inkfg)!important;border-color:var(--ink)!important}
+.tab::after{display:none}
+html .seg{background:var(--g);border:1px solid var(--gb);padding:5px;box-shadow:none}
+.seg button{color:var(--mut)}
+.seg button.on{background:var(--ink);color:var(--inkfg);font-weight:600}
+.badge{background:color-mix(in srgb,var(--aq) 18%,transparent);border:0;color:var(--fg)}
+:root[data-theme="light"] .badge{background:var(--aq);color:var(--nt)}
+.act{background:var(--soft);border:0;color:var(--mut)}
+.act:hover{color:var(--fg);background:color-mix(in srgb,var(--aq) 22%,transparent)}
+html .act.liked{background:var(--ink);color:var(--inkfg)}
+html .act.wa{color:var(--fg);background:color-mix(in srgb,var(--aq) 22%,transparent)}
+
+/* ---- inputs: filled, rounded ---- */
+input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{
+  background:var(--soft);border:1px solid transparent;border-radius:18px;padding:13px 16px;color:var(--fg)}
+input:focus,textarea:focus,select:focus{border-color:var(--aq);outline:0;background:var(--soft)}
+:root[data-theme="light"] input:focus,:root[data-theme="light"] textarea:focus,:root[data-theme="light"] select:focus{border-color:var(--nt)}
+.fld::before,.fld::after{display:none}
+::placeholder{color:var(--mut)}
+
+/* ---- modals ---- */
+#md,#dm,#pv,#lk,#dcm{background:rgba(16,20,34,.72)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+.bx,#md .bx{background:var(--card)!important;border:1px solid var(--gb);border-radius:30px;box-shadow:var(--sh)}
+#toast{background:var(--aq);color:var(--nt);border:0;box-shadow:0 12px 30px rgba(16,20,34,.4)}
+:root[data-theme="light"] #toast{background:var(--nt);color:var(--wh)}
+
+/* ---- loader ---- */
+#loader{background:var(--bg)}
+#loader .ln i{background:var(--aq)!important;box-shadow:none!important}
+:root[data-theme="light"] #loader .ln i{background:var(--nt)!important}
+
+/* ---- progress bars, rows ---- */
+.pb{background:var(--soft);border-radius:99px}.pb i{background:var(--aq);border-radius:99px}
+:root[data-theme="light"] .pb i{background:var(--nt)}
+.rw{border-bottom:1px solid var(--line)}
+.stat.hot::after{background:var(--aq)}
+:focus-visible{outline:2px solid var(--aq)!important;outline-offset:3px}
+:root[data-theme="light"] :focus-visible{outline-color:var(--nt)!important}
+
+/* ---- Kura prize card (palette only) ---- */
+.kpa{position:relative;border-radius:24px;overflow:hidden;aspect-ratio:16/10;margin-bottom:14px}
+.kpa img{width:100%;height:100%;object-fit:cover;display:block}
+.kpa::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 45%,rgba(16,20,34,.6))}
+.kpq{display:grid;place-content:center;justify-items:center;gap:6px;background:var(--aq);color:var(--nt)}
+.kpq>*{position:relative;z-index:1}
+.kpq b{font:800 64px var(--disp);color:var(--nt);animation:kpq 2.6s ease-in-out infinite}
+.kpq span{font:600 11px Poppins,sans-serif;letter-spacing:.22em;color:var(--nt)}
+.kpq small{padding:5px 12px;border-radius:99px;background:var(--nt);color:var(--aq);font:500 11px Poppins,sans-serif}
+@keyframes kpq{50%{transform:scale(1.06)}}
+
+/* ---- cc-home.css ---- */
+/* Comrade Connect: Home page layout (Section 2). Palette only: #A8DCE7 #101422 #FFFFFF #272B3B */
+.mq{display:none}
+.hero{max-width:680px;padding:112px 6vw 18px}
+.hero .gr{font:500 13px Poppins,sans-serif;color:var(--mut);margin-bottom:8px}
+.hero h1{font-size:clamp(26px,7.4vw,40px);max-width:15ch}
+.hero h3{font:600 15px Poppins,sans-serif;color:var(--mut);margin:12px 0 10px}
+.hero p{max-width:46ch;font-weight:400;line-height:1.7}
+.hero>div[style*="margin-top:28px"]{display:grid;grid-template-columns:1fr;gap:10px;margin-top:22px!important}
+.hero .btn{width:100%;margin:0!important;padding:16px 22px;font-size:14px}
+.chips{gap:8px;margin-top:18px}
+.chip{background:var(--g);border:1px solid var(--gb);color:var(--mut);padding:9px 15px}
+.chip b{color:var(--fg)}
+
+/* tab strip */
+.tabs{max-width:680px;padding:6px 6vw;gap:8px}
+html .tab{padding:10px 20px;font-size:12.5px}
+
+/* pulse cards: first one is the aqua feature card */
+.pulse{padding:10px 6vw 8px;gap:14px}
+html .pulse .pcard h3{font-size:14px;font-weight:700}
+html .pulse .pcard:first-child{background-color:var(--aq);border-color:var(--aq);color:var(--nt);
+  --fg:#101422;--mut:rgba(16,20,34,.68);--line:rgba(16,20,34,.14);--soft:rgba(16,20,34,.08)}
+html .pulse .pcard:first-child h3{font-size:19px;line-height:1.25}
+html .pulse .pcard:first-child .badge{background:var(--nt);color:var(--aq)}
+html .pulse .pcard:first-child .act{background:var(--nt);color:var(--aq)}
+html .pulse .pcard:first-child .act.wa{background:var(--nt);color:var(--aq)}
+html .pulse .pcard:first-child p{color:var(--nt)}
+.pcard .n{color:var(--mut)}
+
+/* feed */
+#feed{padding:12px 5vw 150px;gap:14px}
+html #feed.grid>.card{margin-bottom:12px}
+.card p.t{font-size:14.5px;line-height:1.65;margin:12px 0 14px}
+.card time{color:var(--mut);font-weight:400}
+.views{color:var(--mut)}
+.cm li{background:var(--soft);border-radius:18px}
+.vt{padding:6px 5vw 0}
+.empty{background:var(--g);border-radius:var(--r);margin:0 5vw}
+footer{padding-bottom:160px}
+.ccft .ft-sec{background:var(--g);border:1px solid var(--gb);border-radius:var(--r)}
+
+/* ---- cc-market.css ---- */
+/* Comrade Connect: Marketplace (Section 3). Palette only: #A8DCE7 #101422 #FFFFFF #272B3B */
+#v-market .ph{margin-top:2px}
+
+/* trust banner: compact, one row of pills */
+#v-market .mtrust{padding:16px;margin:12px 0 14px}
+.mt-h{gap:14px}
+.mt-h svg{width:44px;height:44px;padding:11px;border-radius:50%;background:var(--aq);stroke:var(--nt);flex-shrink:0}
+.mt-h b{font-size:14px}
+.mt-h small{font-size:12px}
+.mtb{display:flex;gap:6px;overflow-x:auto;margin-top:14px;padding-bottom:2px;scrollbar-width:none}
+.mtb::-webkit-scrollbar{display:none}
+.mtb .badge{flex:none;font-size:11px;font-weight:500;background:var(--soft);color:var(--mut)}
+
+/* controls */
+#mseg{margin:2px 0 4px}
+#mkq{padding-left:46px;border-radius:999px;
+  background:var(--soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A8DCE7' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") no-repeat 16px 50%/20px}
+:root[data-theme="light"] #mkq{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23101422' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")}
+
+/* product grid */
+.mgrid{gap:12px}
+html .mc{position:relative;padding:8px;border-radius:28px;text-align:left;display:block;transition:transform .25s,border-color .25s}
+.mc .mm{border-radius:22px;aspect-ratio:1;background:var(--sl)}
+.mc .mm.poster{place-items:center;background:var(--sl);color:var(--mut);font-weight:500;letter-spacing:.04em}
+:root[data-theme="light"] .mc .mm.poster{background:var(--soft)}
+.mc .mb{padding:12px 8px 8px;display:grid;gap:3px}
+.mc .mb b{font:600 13px Poppins,sans-serif;line-height:1.35;color:var(--fg);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* price sits on the photo as an aqua pill */
+.mc .mb em{position:absolute;top:16px;left:16px;font:700 12px var(--disp);font-style:normal;padding:7px 12px;border-radius:999px;background:var(--aq);color:var(--nt)}
+.mc .mb small{font-size:11px;color:var(--mut);font-weight:400}
+/* the escrow line repeats the banner, hide it on cards */
+.mc .mb small:nth-of-type(2){display:none}
+.mc .mb small.mtl{margin-top:2px;color:var(--mut)}
+.mc .mb small.mtl svg{stroke:var(--aq)}
+:root[data-theme="light"] .mc .mb small.mtl svg{stroke:var(--nt)}
+
+/* my listings and orders */
+.mst{background:var(--aq);color:var(--nt);border:0;font-weight:600}
+#mmine>.btn.p{margin-bottom:4px;padding:16px}
+#mmine .box.g,#olist .box.g{margin-top:12px}
+#mmine .box h3,#olist .box h3{font:600 15px Poppins,sans-serif}
+
+/* wallet: aqua feature card */
+#mord>.box.g:first-child{background-color:var(--aq);border-color:var(--aq);
+  --fg:#101422;--mut:rgba(16,20,34,.68);--soft:rgba(16,20,34,.08)}
+#mord>.box.g:first-child .big{font-size:34px;color:var(--nt)}
+#mord>.box.g:first-child .sub{color:rgba(16,20,34,.68)}
+#mord>.box.g:first-child .btn{background:var(--nt)!important;color:var(--aq)!important;border:0}
+
+/* order progress */
+.tl4 span{background:var(--soft);color:var(--mut);border-radius:999px;font-size:10px;padding:8px 2px}
+.tl4 span.on{background:var(--ink);color:var(--inkfg)}
+.dmo{border:1px dashed var(--line);background:transparent;border-radius:20px}
+
+/* desktop */
+html[data-lay="desktop"] .mgrid,html[data-lay="desktop"] #mgrid{gap:16px}
+
+/* ---- cc-lockglass.css ---- */
+/* cc-lockglass.css v2: the lock / sign-in screen (#lk), rebuilt in the warm look: cream, orange, ink.
+   Palette tokens: --cco #ff8a3d, --ccr #c4727a, --ccs #a9b8a2, --ccp #ffd9b8, ink #16130f. Light and dark.
+   Every selector is doubled (.lkg.lkg) so it wins over the older aqua / redesign rules without touching them. */
+#lk.lkg.lkg{--lk-o:#ff8a3d;--lk-r:#c4727a;--lk-s:#a9b8a2;--lk-p:#ffd9b8;--lk-ink:#16130f;
+  --lk-txt:#16130f;--lk-mut:rgba(22,19,15,.6);--lk-glass:rgba(255,252,249,.66);--lk-edge:rgba(255,255,255,.9);
+  --lk-field:rgba(255,255,255,.78);--lk-line:rgba(22,19,15,.1);--lk-card-sh:0 34px 60px -24px rgba(196,114,122,.45),0 6px 18px rgba(22,19,15,.08);
+  --lk-bg:#f6efe9;--lk-glow:1}
+:root[data-theme="dark"] #lk.lkg.lkg{--lk-txt:#f6efe9;--lk-mut:rgba(246,239,233,.64);--lk-glass:rgba(40,31,25,.66);--lk-edge:rgba(255,217,184,.2);
+  --lk-field:rgba(255,255,255,.07);--lk-line:rgba(255,255,255,.12);--lk-card-sh:0 34px 60px -24px rgba(0,0,0,.7),0 6px 18px rgba(0,0,0,.35);
+  --lk-bg:#16130f;--lk-glow:.55}
+
+html body #lk.lkg.lkg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;overflow-y:auto;padding:0!important;isolation:isolate;
+  background:var(--lk-bg)!important;background-image:none!important;color:var(--lk-txt)!important;font-family:Manrope,system-ui,sans-serif!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body #lk.lkg.lkg.on{display:flex!important}
+html body #lk.lkg.lkg::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:var(--lk-glow);filter:blur(34px);
+  background:radial-gradient(55% 38% at 90% 16%,rgba(255,138,61,.7),transparent 72%),radial-gradient(60% 42% at 6% 40%,rgba(196,114,122,.5),transparent 72%),
+  radial-gradient(52% 38% at 74% 88%,rgba(169,184,162,.5),transparent 72%),radial-gradient(42% 28% at 28% 6%,rgba(255,217,184,.95),transparent 72%)}
+html body #lk.lkg.lkg .lkhero,html body #lk.lkg.lkg .lkpill{display:none!important}
+
+/* the card */
+html body #lk.lkg.lkg .bx.lkcard{position:relative;width:min(440px,calc(100% - 32px))!important;max-width:440px!important;box-sizing:border-box;
+  margin:calc(28px + env(safe-area-inset-top,0px)) auto calc(28px + env(safe-area-inset-bottom,0px))!important;padding:32px 24px 24px!important;
+  border-radius:34px!important;text-align:center;color:var(--lk-txt)!important;
+  background:var(--lk-glass)!important;background-image:linear-gradient(160deg,rgba(255,255,255,.35),rgba(255,255,255,0) 55%)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(170%)!important;backdrop-filter:blur(30px) saturate(170%)!important;
+  border:1px solid var(--lk-edge)!important;box-shadow:var(--lk-card-sh)!important}
+html body #lk.lkg.lkg .bx.lkcard::before{display:none}
+html body #lk.lkg.lkg .lkcard>*{position:relative}
+html body #lk.lkg.lkg .lkcard h2{margin:0;font:800 clamp(27px,7.6vw,32px)/1.1 Manrope,sans-serif!important;letter-spacing:-.04em!important;color:var(--lk-txt)!important}
+html body #lk.lkg.lkg .lkcard h2 b,html body #lk.lkg.lkg #lkhi b{font-weight:800;color:var(--lk-o)!important;background:linear-gradient(95deg,var(--lk-o),var(--lk-r));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+html body #lk.lkg.lkg .lkwel{margin:6px 0 18px;font-size:16px;color:var(--lk-mut)!important}
+html body #lk.lkg.lkg .lkh{margin:0;font-size:15px;font-weight:800;color:var(--lk-txt)!important}
+html body #lk.lkg.lkg .note{margin:4px 0 0;font-size:13px;color:var(--lk-mut)!important}
+
+/* the fingerprint button: warm disc, ink fingerprint, soft pulse */
+html body #lk.lkg.lkg .lkfp{position:relative;width:112px;height:112px;margin:20px auto 18px;padding:0;display:grid;place-items:center;border:0!important;border-radius:50%!important;
+  color:var(--lk-ink)!important;cursor:pointer;-webkit-tap-highlight-color:transparent;overflow:visible;
+  background:radial-gradient(120% 120% at 28% 20%,#ffd9b8 0,#ff8a3d 58%,#c4727a 130%)!important;
+  box-shadow:0 18px 34px -12px rgba(255,138,61,.65),inset 0 2px 0 rgba(255,255,255,.55),inset 0 -6px 14px rgba(196,114,122,.25)!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;transition:transform .18s}
+html body #lk.lkg.lkg .lkfp:active{transform:scale(.94)}
+html body #lk.lkg.lkg .lkfp svg{width:62px;height:62px;position:relative;z-index:1;stroke-width:1.5}
+html body #lk.lkg.lkg .lkfp:before{border:2px solid var(--lk-o)!important}
+html body #lk.lkg.lkg .lkfp:after{background:linear-gradient(90deg,transparent,rgba(22,19,15,.55),transparent)!important;height:2px;left:22%;right:22%}
+html body #lk.lkg.lkg .lkfp.ok{color:#2f6b3a!important}
+html body #lk.lkg.lkg .lkrow{display:flex;justify-content:center;gap:26px;margin:16px auto 20px}
+html body #lk.lkg.lkg .lkrow .lkb{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--lk-txt)}
+html body #lk.lkg.lkg .lkrow .lkfp{width:84px;height:84px;margin:0}
+html body #lk.lkg.lkg .lkrow .lkfp svg{width:46px;height:46px}
+html body #lk.lkg.lkg .lkfp.lkface{border-radius:30px!important}
+
+/* secondary pills: password, Google */
+html body #lk.lkg.lkg .lkpw,html body #lk.lkg.lkg .lkgo,html body #lk.lkg.lkg .lkcard .btn.g{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:54px;margin:8px 0 0;padding:0 18px;
+  border:1px solid var(--lk-line)!important;border-radius:999px!important;background:var(--lk-field)!important;color:var(--lk-txt)!important;
+  font:800 15px Manrope,sans-serif!important;box-shadow:0 8px 20px -12px rgba(22,19,15,.35)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body #lk.lkg.lkg .lkpw:active,html body #lk.lkg.lkg .lkgo:active{transform:scale(.98)}
+
+/* password view */
+html body #lk.lkg.lkg .lkrec{max-width:none!important;margin:6px auto 0!important;text-align:left}
+html body #lk.lkg.lkg.rec .lkrec{display:block!important}
+html body #lk.lkg.lkg.rec .lkh,html body #lk.lkg.lkg.rec .note,html body #lk.lkg.lkg.rec .lkrow,html body #lk.lkg.lkg.rec #lku,html body #lk.lkg.lkg.rec .lkpw,html body #lk.lkg.lkg.rec .lkgo{display:none!important}
+html body #lk.lkg.lkg .lklab{display:block;margin:8px 4px 8px;font-size:14px;font-weight:700;color:var(--lk-txt)}
+html body #lk.lkg.lkg .lkrec .fld{position:relative;display:block;margin:0;border-radius:999px!important;background:var(--lk-field)!important;border:1px solid var(--lk-line)!important;
+  box-shadow:inset 0 2px 6px rgba(22,19,15,.06)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body #lk.lkg.lkg .lkrec .fld:before,html body #lk.lkg.lkg .lkrec .fld:after{display:none!important}
+html body #lk.lkg.lkg .lkrec input{width:100%;height:56px;box-sizing:border-box;padding:0 54px 0 22px!important;border:0!important;outline:0;background:transparent!important;border-radius:999px;
+  color:var(--lk-txt)!important;font:600 15px Manrope,system-ui,sans-serif}
+html body #lk.lkg.lkg .lkrec input::placeholder{color:var(--lk-mut)!important;-webkit-text-fill-color:var(--lk-mut)!important}
+html body #lk.lkg.lkg .lkrec .fld:focus-within{border-color:var(--lk-o)!important;box-shadow:0 0 0 4px rgba(255,138,61,.22)!important}
+html body #lk.lkg.lkg .lkeye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:var(--lk-mut);cursor:pointer}
+html body #lk.lkg.lkg .lkeye svg{width:22px;height:22px}
+html body #lk.lkg.lkg .lkforgot{display:block;text-align:right;margin:12px 6px 18px;font-size:13.5px;font-weight:700;color:var(--lk-txt)!important;text-decoration:underline;text-underline-offset:3px}
+html body #lk.lkg.lkg .lkact{display:flex;gap:12px;align-items:center}
+html body #lk.lkg.lkg #lkr{flex:1;width:auto!important;height:56px;margin:0!important;padding:0 18px;border:0!important;border-radius:999px!important;color:var(--lk-ink)!important;
+  font:800 16px Manrope,sans-serif!important;background:linear-gradient(135deg,#ffb27a,#ff8a3d 60%,#e8795a)!important;box-shadow:0 14px 26px -12px rgba(255,138,61,.8),inset 0 1.5px 0 rgba(255,255,255,.5)!important}
+html body #lk.lkg.lkg #lkr:disabled{color:var(--lk-mut)!important;background:var(--lk-field)!important;border:1px solid var(--lk-line)!important;box-shadow:none!important;cursor:not-allowed}
+html body #lk.lkg.lkg .lkfp2{flex:none;width:56px;height:56px;display:grid;place-items:center;padding:0;border:1px solid var(--lk-edge);border-radius:50%;color:var(--lk-ink);cursor:pointer;
+  background:linear-gradient(150deg,#fff,#fbf3ec);box-shadow:0 12px 24px -10px rgba(22,19,15,.4)}
+:root[data-theme="dark"] html body #lk.lkg.lkg .lkfp2,:root[data-theme="dark"] #lk.lkg.lkg .lkfp2{background:linear-gradient(150deg,#3a2f27,#2a211b);color:var(--lk-p);border-color:var(--lk-edge)}
+html body #lk.lkg.lkg .lkfp2 svg{width:30px;height:30px}
+html body #lk.lkg.lkg .lkfp2:active{transform:scale(.93)}
+html body #lk.lkg.lkg .lklinks{margin:20px 0 0;font-size:14px}
+html body #lk.lkg.lkg .lklinks a{color:var(--lk-txt)!important;font-weight:800;text-decoration:underline;text-underline-offset:3px}
+html body #lk.lkg.lkg .lklinks span{color:var(--lk-mut)}
+@media (prefers-reduced-motion:reduce){html body #lk.lkg.lkg .lkfp:before,html body #lk.lkg.lkg .lkfp:after{animation:none!important}}
+
+/* ---- cc-theme.css ---- */
+/* Comrade Connect: Section 1 finishing layer. Palette only */
+.stat b,.big,.pcard .n,.kcard .n{font-family:var(--disp);letter-spacing:-.02em}
+.mit.out,#cc-staff-e,#acso{color:var(--fg)!important;opacity:.8}
+.mu-heart.on,.rlr .on svg{color:var(--ink);fill:var(--ink);stroke:var(--ink)}
+#v-market .mu-ban{background:var(--aq)!important;color:var(--nt)}
+input[type=range]{accent-color:var(--aq)}
+:root[data-theme="light"] input[type=range]{accent-color:var(--nt)}
+meter,progress{accent-color:var(--aq)}
+
+/* Section 3: cookie card X in the top right of the card */
+#ck{padding-right:58px}
+#ck .ckx{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:1px solid var(--gb);background:var(--soft);color:var(--fg);display:grid;place-items:center;padding:0;cursor:pointer}
+#ck .ckx:active{opacity:.6}
+
+/* ---- cc-glass.css ---- */
+/* cc-glass.css v2 */
+:root{--gl-a:rgba(255,255,255,.13);--gl-b:rgba(255,255,255,.03);--gl-br:rgba(255,255,255,.30);--gl-hi:rgba(255,255,255,.6);--gl-lo:rgba(255,255,255,.08);--gl-blur:28px}
+:root[data-theme="light"]{--gl-a:rgba(255,255,255,.72);--gl-b:rgba(255,255,255,.34);--gl-br:rgba(255,255,255,.9);--gl-hi:#fff;--gl-lo:rgba(255,255,255,.4)}
+.g,.box,.card,.bx,.dsheet,.savebar,#tb,#tkb,.ccwb,.toast,#toast{
+  background:linear-gradient(135deg,var(--gl-a),var(--gl-b)) !important;
+  -webkit-backdrop-filter:blur(var(--gl-blur)) saturate(190%) !important;backdrop-filter:blur(var(--gl-blur)) saturate(190%) !important;
+  border:1px solid var(--gl-br) !important;
+  box-shadow:0 18px 38px -14px color-mix(in srgb,var(--tint,#A8DCE7) 55%,transparent),0 3px 10px color-mix(in srgb,var(--tint,#A8DCE7) 16%,transparent),
+    inset 0 1px 0 var(--gl-hi),inset 1px 0 0 var(--gl-lo),inset 0 -1px 0 var(--gl-lo),inset 0 0 26px color-mix(in srgb,var(--tint,#A8DCE7) 9%,transparent) !important}
+.card:hover,.box:hover{box-shadow:0 22px 44px -12px color-mix(in srgb,var(--tint,#A8DCE7) 66%,transparent),0 4px 12px color-mix(in srgb,var(--tint,#A8DCE7) 22%,transparent),inset 0 1px 0 var(--gl-hi),inset 0 0 30px color-mix(in srgb,var(--tint,#A8DCE7) 12%,transparent) !important}
+.btn:not(.p):not([data-gs]),html.cc-adm button:not(.p):not(.on):not([data-gs]),.ib:not(.on):not([data-gs]):not(.ccx-b){
+  background:linear-gradient(135deg,var(--gl-a),var(--gl-b)) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(180%) !important;backdrop-filter:blur(14px) saturate(180%) !important;
+  border:1px solid var(--gl-br) !important;
+  box-shadow:0 8px 20px -8px color-mix(in srgb,var(--tint,#A8DCE7) 55%,transparent),inset 0 1px 0 var(--gl-hi),inset 0 -1px 0 var(--gl-lo) !important}
+.btn:not(.p):hover,html.cc-adm button:not(.p):not(.on):hover{box-shadow:0 12px 26px -8px color-mix(in srgb,var(--tint,#A8DCE7) 70%,transparent),inset 0 1px 0 var(--gl-hi) !important}
+.btn.p,button.p,.btnp.p,#fab,.ib.on,html.cc-adm button.on,#tb button.on,[data-gs]{
+  background-color:color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 70%,transparent) !important;
+  background-image:linear-gradient(180deg,rgba(255,255,255,.38),rgba(255,255,255,0) 55%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(190%) !important;backdrop-filter:blur(16px) saturate(190%) !important;
+  border:1px solid color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 50%,rgba(255,255,255,.7)) !important;
+  box-shadow:0 12px 28px -8px color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 75%,transparent),0 2px 6px color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 30%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 8px color-mix(in srgb,var(--tint,var(--ink,#A8DCE7)) 35%,transparent) !important}
+.btn.p:active,button.p:active,#fab:active{transform:scale(.97)}
+:is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]){
+  background:linear-gradient(135deg,rgba(255,255,255,.11),rgba(255,255,255,.03)) !important;
+  border:1px solid var(--gl-br) !important;border-radius:14px !important;padding:12px 14px !important;
+  -webkit-backdrop-filter:blur(10px) !important;backdrop-filter:blur(10px) !important;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.22),0 8px 18px -10px color-mix(in srgb,var(--tint,#A8DCE7) 45%,transparent) !important}
+:is(input,textarea,select):focus{border-color:var(--tint,#A8DCE7) !important;box-shadow:inset 0 2px 7px rgba(0,0,0,.18),0 0 0 3px color-mix(in srgb,var(--tint,#A8DCE7) 30%,transparent),0 10px 24px -8px color-mix(in srgb,var(--tint,#A8DCE7) 60%,transparent) !important}
+#ccbgi{z-index:0}
+@supports not (backdrop-filter:blur(1px)){.g,.box,.card,.bx,.savebar,#tb{background:color-mix(in srgb,var(--bg,#101422) 88%,transparent) !important}}
+/* lock screen glass v3 */
+#lk.lkg.on .bx.lkcard{box-shadow:0 30px 70px -22px rgba(168,220,231,.5),0 4px 14px rgba(168,220,231,.18),inset 0 1.5px 0 var(--lg-hi),inset 0 -1px 0 rgba(255,255,255,.14),inset 0 0 40px rgba(168,220,231,.08)!important}
+#lk.lkg.on .lkfp,#lk.lkg.on .lkfp2{box-shadow:0 14px 32px -10px rgba(168,220,231,.6),inset 0 1.5px 0 var(--lg-hi)!important}
+#lk.lkg.on .lkpw,#lk.lkg.on .lkgo{box-shadow:0 12px 28px -10px rgba(168,220,231,.5),inset 0 1.5px 0 var(--lg-hi)!important}
+#lk.lkg.on .lkrec .fld{box-shadow:0 10px 24px -12px rgba(168,220,231,.5),inset 0 1.5px 0 var(--lg-hi)!important}
+
+/* cc-noballs-css */
+.cc-orbs,.cc-orbs *{display:none!important}
+
+/* ---- cc-ui1.css ---- */
+/* cc-ui1.css v1: Section 1 UI pass. Loads LAST, after cc-glass.css.
+   1. Glass without glow: cards, buttons and bars are frosted glass (opacity runs from high to low across the surface),
+      with a black drop shadow underneath and the soft shading INSIDE the surface. Nothing glows outwards any more.
+   2. Top bar: the icons sit bare on the bar again (no circles, no borders), with even spacing.
+   3. Location chip sits under the top bar instead of behind it.
+   4. Light and dark mode: bottom bar labels, Kura button and toast are readable in both.
+   5. The robot (Tech) keeps floating and blinking even when the phone has "Remove animations" on. */
+
+/* ---------- tokens (dark first, light below) ---------- */
+:root{
+  --u-ga:rgba(255,255,255,.17);--u-gb:rgba(255,255,255,.04);--u-br:rgba(255,255,255,.22);
+  --u-sh:0 14px 28px -10px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.3);
+  --u-sh-sm:0 7px 14px -6px rgba(0,0,0,.55),0 1px 3px rgba(0,0,0,.3);
+  --u-hi:inset 0 1px 0 rgba(255,255,255,.32);
+  --u-lo:inset 0 -14px 20px -14px rgba(0,0,0,.42);
+  --u-pa:94%;--u-pb:60%;
+  --u-bar-fg:rgba(255,255,255,.82);
+}
+:root[data-theme="light"]{
+  --u-ga:rgba(255,255,255,.88);--u-gb:rgba(255,255,255,.44);--u-br:rgba(255,255,255,.95);
+  --u-sh:0 14px 28px -10px rgba(16,20,34,.32),0 2px 6px rgba(16,20,34,.12);
+  --u-sh-sm:0 7px 14px -6px rgba(16,20,34,.34),0 1px 3px rgba(16,20,34,.14);
+  --u-hi:inset 0 1px 0 rgba(255,255,255,1);
+  --u-lo:inset 0 -14px 20px -14px rgba(16,20,34,.16);
+  --u-pa:97%;--u-pb:78%;
+  --u-bar-fg:rgba(16,20,34,.78);
+}
+
+/* ---------- 1. cards, sheets, bars: frosted glass, black shadow, shading inside ---------- */
+.g,.box,.card,.bx,.dsheet,.savebar,#tb,#tkb,#tkr,.ccwb,.toast,#toast,nav.g{
+  background:linear-gradient(145deg,var(--u-ga),var(--u-gb)) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(165%) !important;backdrop-filter:blur(22px) saturate(165%) !important;
+  border:1px solid var(--u-br) !important;
+  box-shadow:var(--u-sh),var(--u-hi),var(--u-lo) !important}
+.card:hover,.box:hover{box-shadow:var(--u-sh),var(--u-hi),var(--u-lo) !important}
+#toast,.toast{color:var(--fg) !important}
+
+/* secondary buttons */
+.btn:not(.p):not([data-gs]):not(.kgo),html.cc-adm button:not(.p):not(.on):not([data-gs]),.ib:not(.on):not([data-gs]):not(.ccx-b){
+  background:linear-gradient(145deg,var(--u-ga),var(--u-gb)) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(165%) !important;backdrop-filter:blur(14px) saturate(165%) !important;
+  border:1px solid var(--u-br) !important;
+  box-shadow:var(--u-sh-sm),var(--u-hi),var(--u-lo) !important}
+.btn:not(.p):hover,html.cc-adm button:not(.p):not(.on):hover{box-shadow:var(--u-sh-sm),var(--u-hi),var(--u-lo) !important}
+
+/* tinted small things (chips, badges, tags) */
+[data-gs]{
+  --c:var(--tint,var(--ink,#A8DCE7));
+  background-color:transparent !important;
+  background-image:linear-gradient(160deg,color-mix(in srgb,var(--c) var(--u-pa),transparent),color-mix(in srgb,var(--c) var(--u-pb),transparent)) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(165%) !important;backdrop-filter:blur(12px) saturate(165%) !important;
+  border:1px solid color-mix(in srgb,var(--c) 40%,rgba(255,255,255,.55)) !important;
+  box-shadow:0 3px 8px -3px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -6px 10px -6px rgba(0,0,0,.3) !important}
+
+/* primary buttons: tinted glass, strong at the top, lighter at the bottom */
+.btn.p,button.p,.btnp.p,#fab,.ib.on,html.cc-adm button.on,#tb button.on,html .btn.kgo:not(.p){
+  --c:var(--ink,#A8DCE7);
+  background-color:transparent !important;
+  background-image:linear-gradient(160deg,color-mix(in srgb,var(--c) var(--u-pa),transparent),color-mix(in srgb,var(--c) var(--u-pb),transparent)) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(165%) !important;backdrop-filter:blur(14px) saturate(165%) !important;
+  border:1px solid color-mix(in srgb,var(--c) 45%,rgba(255,255,255,.55)) !important;
+  box-shadow:var(--u-sh-sm),inset 0 1px 0 rgba(255,255,255,.45),inset 0 -12px 18px -12px rgba(0,0,0,.4) !important}
+html .btn.kgo:not(.p){color:var(--inkfg) !important}
+.btn.p:active,button.p:active,#fab:active{transform:scale(.97)}
+.btn.p:hover{transform:none}
+
+
+/* inputs: sunken glass, plain focus ring (no glow) */
+:is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]){
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.28) !important}
+:root[data-theme="light"] :is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]){
+  box-shadow:inset 0 2px 5px rgba(16,20,34,.12) !important}
+:is(input,textarea,select):focus{
+  border-color:color-mix(in srgb,var(--fg) 55%,transparent) !important;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.2),0 0 0 2px color-mix(in srgb,var(--fg) 22%,transparent) !important}
+
+/* light mode inputs: a faint grey glass so the field can be seen on white, readable placeholder */
+:root[data-theme="light"] :is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]){
+  background:linear-gradient(145deg,rgba(16,20,34,.06),rgba(16,20,34,.02)) !important;border-color:rgba(16,20,34,.16) !important}
+::placeholder,input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--fg) 55%,transparent) !important;-webkit-text-fill-color:color-mix(in srgb,var(--fg) 55%,transparent) !important;opacity:1}
+
+/* the big coloured background orbs no longer glow */
+.cc-orbs i{box-shadow:none !important}
+
+/* ---------- 2. top bar: bare icons, no circles ---------- */
+nav.g{padding:0 6px 0 16px !important;gap:6px}
+nav.g .nb{flex:1 1 auto;min-width:0;gap:7px !important}
+nav.g .nb .wm{font-size:12px !important;letter-spacing:0 !important;white-space:nowrap;overflow:visible !important;text-overflow:clip !important;line-height:1.1}
+@media(max-width:430px){nav.g .nb .wm{white-space:normal;max-width:76px;line-height:1.08;word-spacing:0;font-size:11.5px !important}}
+@media(min-width:431px){nav.g .nb .wm{font-size:13px !important}}
+nav.g>div{flex:none;display:flex;align-items:center;gap:0 !important}
+nav.g .ib,nav.g .ib:not(.on):not([data-gs]),nav.g .ib.on,nav.g .ib.ccb{
+  width:34px !important;height:38px !important;border-radius:0 !important;
+  background:none !important;background-image:none !important;border:0 !important;box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  color:var(--fg) !important;position:relative;display:grid;place-items:center;padding:0 !important;flex:none}
+nav.g .ib:hover{background:none !important}
+nav.g .ib:active{opacity:.6}
+nav.g .ib.on{color:var(--fg) !important;opacity:1}
+nav.g .ib svg{width:21px;height:21px}
+nav.g .ib.ccb i{top:4px;right:3px}
+nav.g .ccn-b{top:3px;right:0;box-shadow:none}
+@media(max-width:340px){nav.g .ib,nav.g .ib:not(.on):not([data-gs]),nav.g .ib.on,nav.g .ib.ccb{width:30px !important}nav.g .ib svg{width:19px;height:19px}}
+
+/* ---------- 3. location chip: below the top bar, never behind it ---------- */
+#v-feed .cc-chipwrap{padding-top:calc(env(safe-area-inset-top,0px) + 76px) !important}
+#v-feed .cc-chipwrap .ccc-chip{margin-bottom:0}
+#v-feed .cc-chipwrap+#ccs-tray{padding-top:18px !important}
+#v-explore .ccc-chip{margin-top:6px}
+.ccc-chip{
+  background:linear-gradient(145deg,var(--u-ga),var(--u-gb)) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(165%);backdrop-filter:blur(14px) saturate(165%);
+  border:1px solid var(--u-br) !important;box-shadow:var(--u-sh-sm),var(--u-hi),var(--u-lo) !important;color:var(--fg)}
+
+/* ---------- 4. light and dark: bottom bar labels ---------- */
+html #tb button{color:var(--u-bar-fg) !important;background:none;box-shadow:none}
+html #tb button.on{color:var(--inkfg) !important}
+html #tb button:not(.on){background:none !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+html #tb button.on{box-shadow:var(--u-sh-sm),inset 0 1px 0 rgba(255,255,255,.45),inset 0 -12px 18px -12px rgba(0,0,0,.4) !important}
+
+/* ---------- 5. robot: keeps moving with "Remove animations" on ---------- */
+@media(prefers-reduced-motion:reduce){
+  #tkr{animation:tkf 3s ease-in-out infinite !important}
+}
+#tkr .tke{animation:none !important}
+#tkr{box-shadow:var(--u-sh-sm),var(--u-hi),var(--u-lo) !important}
+
+/* ---- cc-ui2.css ---- */
+/* cc-ui2.css v1: Section 2. Lock screen and fingerprint screen: glass with a black shadow and shading inside, no glow. Light and dark. */
+#lk.lkg{--lg-o:#A8DCE7}
+:root[data-theme="light"] #lk.lkg{--lg-o:#101422}
+
+#lk.lkg.on .bx.lkcard,#lk.lkg .bx.lkcard{
+  box-shadow:0 26px 50px -18px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.3),inset 0 1.5px 0 var(--lg-hi),inset 0 -16px 26px -16px rgba(0,0,0,.35)!important}
+:root[data-theme="light"] #lk.lkg.on .bx.lkcard{box-shadow:0 26px 50px -18px rgba(16,20,34,.4),0 2px 8px rgba(16,20,34,.15),inset 0 1.5px 0 var(--lg-hi),inset 0 -16px 26px -16px rgba(16,20,34,.12)!important}
+#lk.lkg .bx.lkcard:before{display:none}
+#lk.lkg.on .lkfp,#lk.lkg.on .lkfp2,#lk.lkg .lkfp,#lk.lkg .lkfp2{
+  box-shadow:0 10px 18px -8px rgba(0,0,0,.55),inset 0 1.5px 0 var(--lg-hi),inset 0 -10px 16px -10px rgba(0,0,0,.35)!important}
+#lk.lkg.on .lkpw,#lk.lkg.on .lkgo,#lk.lkg .lkpw,#lk.lkg .lkgo{
+  box-shadow:0 10px 18px -8px rgba(0,0,0,.5),inset 0 1.5px 0 var(--lg-hi),inset 0 -10px 16px -10px rgba(0,0,0,.3)!important}
+#lk.lkg.on .lkrec .fld,#lk.lkg .lkrec .fld{box-shadow:inset 0 2px 6px rgba(0,0,0,.3),inset 0 1.5px 0 var(--lg-hi)!important}
+#lk.lkg .lkrec .fld:focus-within{border-color:var(--lg-txt);box-shadow:inset 0 2px 6px rgba(0,0,0,.25),0 0 0 2px color-mix(in srgb,var(--lg-txt) 25%,transparent)!important}
+#lk.lkg #lkr{background:linear-gradient(150deg,color-mix(in srgb,var(--lg-o) 96%,transparent),color-mix(in srgb,var(--lg-o) 62%,transparent))!important;
+  border:1px solid rgba(255,255,255,.55);color:#101422;box-shadow:0 10px 18px -8px rgba(0,0,0,.55),inset 0 1.5px 0 rgba(255,255,255,.55),inset 0 -10px 16px -10px rgba(0,0,0,.35)!important}
+:root[data-theme="light"] #lk.lkg #lkr{color:#fff}
+#lk.lkg #lkr:disabled{color:var(--lg-mut);background:linear-gradient(150deg,rgba(255,255,255,.16),rgba(255,255,255,.05))!important;border-color:var(--lg-edge);box-shadow:inset 0 1.5px 0 var(--lg-hi)!important}
+:root[data-theme="light"] #lk.lkg #lkr:disabled{background:linear-gradient(150deg,rgba(16,20,34,.08),rgba(16,20,34,.03))!important}
+
+/* the animated "Hi, NAME / Welcome back" screen */
+#ccfp .fpx-b.p{box-shadow:0 10px 18px -8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.5),inset 0 -10px 16px -10px rgba(0,0,0,.35)}
+:root[data-theme="light"] #ccfp{--fpa:#101422}
+:root[data-theme="light"] #ccfp .fpx-tab[aria-selected=true],:root[data-theme="light"] #ccfp .fpx-b.p{color:#fff}
+#ccfp .fpx-disc{box-shadow:0 12px 22px -10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.25),inset 0 -12px 18px -12px rgba(0,0,0,.3)}
+:root[data-theme="light"] #lk.lkg #lkr:disabled{color:rgba(16,20,34,.55)}
+:root[data-theme="light"] #lk.lkg .lkrec input::placeholder{color:rgba(16,20,34,.6)!important;-webkit-text-fill-color:rgba(16,20,34,.6)!important}
+
+/* ---- cc-ui3.css ---- */
+/* cc-ui3.css v1: pop-up sheets and dialogs are NEARLY SOLID glass, so the page behind never shows through the text.
+   Also: placeholders are a little smaller so "Password or recovery code" is not cut off. */
+:root{--u-sheet-a:rgba(44,50,72,.97);--u-sheet-b:rgba(26,30,48,.97)}
+:root[data-theme="light"]{--u-sheet-a:rgba(255,255,255,.98);--u-sheet-b:rgba(240,246,249,.97)}
+.bx,.dsheet,#md .bx,#dm .bx,#cchp .bx,.ccn .bx,body>div[style*="position:fixed"]>.box.g,body>div[style*="position: fixed"]>.box.g{
+  background:linear-gradient(145deg,var(--u-sheet-a),var(--u-sheet-b)) !important}
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]){font-size:15px !important;padding-left:13px !important;padding-right:13px !important}
+input::placeholder,textarea::placeholder{font-size:14px !important}
+
+/* ---- cc-ui4.css ---- */
+/* cc-ui4.css v1: the unlock flow in the Android app.
+   - The old lock "page" (photo + card with Fingerprint / Face ID buttons, Google button) is never shown. Only the scan screen and the password panel.
+   - Scan screen: just the fingerprint (or face) picture. No circle, no box, no rings, no sweeping line, nothing moving.
+     It fills in (dim to full) while the phone is scanning. If the scan fails it shakes, on both fingerprint and face. */
+html.cc-in-app #lk.lkg.on:not(.rec):not(.cc-show)>*{visibility:hidden !important}
+html.cc-in-app #lk.lkg.on:not(.rec):not(.cc-show){background:#101422 !important}
+
+#ccfp .fpx-disc{background:none !important;border:0 !important;box-shadow:none !important;border-radius:0 !important;overflow:visible !important;width:120px !important;height:120px !important;animation:none !important}
+#ccfp[data-k=face] .fpx-disc{border-radius:0 !important}
+#ccfp .fpx-r,#ccfp .fpx-ln{display:none !important}
+#ccfp .fpx-ic{width:96px !important;height:96px !important;animation:none !important;color:var(--fpa);transition:opacity .35s}
+#ccfp[data-k=fingerprint] .fpx-fpi,#ccfp[data-k=face] .fpx-fci{opacity:.5 !important;transform:none !important}
+#ccfp.scanning[data-k=fingerprint] .fpx-fpi,#ccfp.scanning[data-k=face] .fpx-fci{opacity:1 !important}
+#ccfp[data-k=face] .fpx-fci .fb,#ccfp[data-k=face] .fpx-fci .ff{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+#ccfp.ok .fpx-ic{opacity:0 !important}
+#ccfp.bad .fpx-stage{animation:fpx-shake .4s !important}
+#ccfp.bad[data-k=fingerprint] .fpx-fpi,#ccfp.bad[data-k=face] .fpx-fci{opacity:1 !important}
+/* the tab that is not selected stays flat (the glass tint script must not paint it) */
+#ccfp .fpx-tab:not([aria-selected=true]){background:none !important;background-image:none !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;color:var(--mut) !important}
+
+/* ---- cc-ui5.css ---- */
+/* cc-ui5.css v1
+   1. Tech robot and its menu: always tappable.
+   2. "Sign in again" sheet spacing and 3. clean Google button (added in section 2). */
+#tkr{touch-action:manipulation;-webkit-tap-highlight-color:transparent;pointer-events:auto}
+#tkb{pointer-events:auto}
+#tkb .btn{touch-action:manipulation}
+
+/* ---------- 2. Sign in again sheet ---------- */
+#ccrst > .box{max-width:400px;width:100%;padding:24px 22px 22px;box-sizing:border-box}
+#ccrst h3{margin:0 0 4px;font-size:19px;letter-spacing:-.02em}
+#ccrst .sub{margin:0}
+#ccrst #ccrg{margin:16px auto 12px !important}
+#ccrst #ccrg + .sub{margin:0 0 14px;text-align:center}
+#ccrst .fld{margin:0 0 12px}
+#ccrst .fld input{display:block;width:100%;box-sizing:border-box;min-height:48px;padding:12px 16px;font-size:16px;text-overflow:ellipsis}
+#ccrst .fld input::placeholder{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+#ccrst #ccrst-e{min-height:0;margin:0}
+#ccrst #ccrst-e:not(:empty){margin:0 0 12px}
+#ccrst .two{display:flex;gap:12px;margin-top:6px}
+#ccrst .two>.btn{flex:1;min-height:48px;padding:12px 16px}
+
+/* ---------- 3. Google button: clean, no white box ---------- */
+iframe[src*="accounts.google.com"]{color-scheme:light !important;background:transparent !important;border:0 !important}
+#ccrg,#ccg,div:has(> div > iframe[src*="accounts.google.com/gsi/button"]){border-radius:999px;overflow:hidden;background:transparent !important}
+#ccrg,#ccg{width:fit-content;max-width:100%;margin-left:auto;margin-right:auto}
+#ccrg > div,#ccg > div{background:transparent !important}
+
+/* ---------- Market page: clear the top banner ----------
+   cc-market-ui.js set #v-market padding to 4px 0, which removed the 124px the page needs under the fixed banner,
+   so the location pin and the bell sat behind it and the cards touched the screen edges. */
+#v-market{padding:124px 6vw 170px !important;margin-top:0 !important;box-sizing:border-box}
+html[data-lay="desktop"] #v-market{padding:124px 22px 60px !important}
+
+/* ---------- Sign in again panel (#ccrst): no more navy. Same warm look and ink buttons as the Forgot password page. ---------- */
+html body #ccrst{background:rgba(251,241,237,.7)!important;-webkit-backdrop-filter:blur(12px)!important;backdrop-filter:blur(12px)!important}
+:root[data-theme="dark"] body #ccrst{background:rgba(23,19,15,.78)!important}
+html body #ccrst>.box.g{background:linear-gradient(180deg,#ffdcc2 0,#fbe9df 120px,#fbf1ed 100%)!important;border:1px solid rgba(22,19,15,.08)!important;border-radius:28px!important;box-shadow:0 24px 60px -24px rgba(22,19,15,.45)!important;color:#16130f!important}
+:root[data-theme="dark"] body #ccrst>.box.g{background:linear-gradient(180deg,#3b2415 0,#241a13 140px,#17130f 100%)!important;border-color:rgba(255,255,255,.1)!important;color:#f6efe9!important}
+html body #ccrst h3,html body #ccrst .sub,html body #ccrst a{color:inherit}
+html body #ccrst h3{font:800 20px/1.2 Unbounded,Poppins,system-ui,sans-serif;letter-spacing:-.02em}
+html body #ccrst .sub{font-family:Poppins,system-ui,sans-serif;font-size:13.5px;opacity:.78}
+html body #ccrst #ccrst-e{color:#b3261e!important;opacity:1}
+html body #ccrst a{font-weight:600;text-decoration:underline;text-underline-offset:3px;opacity:1}
+html body #ccrst .fld input{background:rgba(255,255,255,.62)!important;border:1px solid rgba(22,19,15,.14)!important;border-radius:16px!important;color:#16130f!important}
+html body #ccrst .fld input:focus{border-color:#e8744f!important;background:#fff!important;outline:0}
+:root[data-theme="dark"] body #ccrst .fld input{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.16)!important;color:#f6efe9!important}
+html body #ccrst .btn.p{background:linear-gradient(120deg,#16130f,#4a423b)!important;color:#fff!important;border:0!important;border-radius:999px!important;font:600 15px Poppins,system-ui,sans-serif;box-shadow:0 10px 22px -8px rgba(22,19,15,.55)}
+html body #ccrst .btn.g{background:rgba(22,19,15,.06)!important;color:inherit!important;border:1px solid rgba(22,19,15,.14)!important;border-radius:999px!important;font:600 15px Poppins,system-ui,sans-serif}
+:root[data-theme="dark"] body #ccrst .btn.g{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.16)!important}
+
+/* Sign in again: every button is a curved pill, same as the rest of the site */
+html body #ccrst .btn.btn.btn,html body #ccrst button.ccpk-in.ccpk-in,html body #ccrst .two>.btn.btn{border-radius:999px!important;min-height:52px}
+
+/* ---------- Sign in again: one box per field, show-password eye ---------- */
+html body #ccrst .fld{background:none!important;box-shadow:none!important;padding:0!important;border-radius:0!important;border:0!important;position:relative}
+html body #ccrst .fld input{border-radius:999px!important;padding-left:20px!important}
+html body #ccrst .fld input#ccrst-c{padding-right:56px!important}
+html body #ccrst .ccpk-in{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px}
+html body #ccrst .ccrst-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:grid;place-items:center;border:0!important;border-radius:50%!important;background:none!important;box-shadow:none!important;color:rgba(22,19,15,.6);padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+html body #ccrst .ccrst-eye svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+:root[data-theme="dark"] body #ccrst .ccrst-eye{color:rgba(246,239,233,.7)}
+
+/* ---- cc-tiles.css ---- */
+/* cc-tiles.css v3: category tags as wide photo banners with the name on the picture (no circles, no round tiles).
+   Markup is unchanged (cc-tiles.js): button.cct > span.cct-i > img, then span.cct-l. */
+.cct-row{display:flex !important;flex-wrap:nowrap;gap:10px !important;align-items:stretch;overflow-x:auto;padding:4px 2px 10px !important;scrollbar-width:none}
+.cct-row::-webkit-scrollbar{display:none}
+html body button.cct.cct{all:unset;box-sizing:border-box;flex:none;position:relative;width:112px;height:66px;display:block !important;cursor:pointer;
+  background:none !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;padding:0 !important;border-radius:12px !important;
+  -webkit-tap-highlight-color:transparent;overflow:hidden !important;isolation:isolate}
+html body button.cct.cct::before,html body button.cct.cct::after{display:none !important}
+.cct .cct-i{position:absolute;inset:0;display:block;width:100%;height:100%;border-radius:0;overflow:hidden;background:var(--t,linear-gradient(145deg,#cfe9ee,#e9f4f6));border:0;transition:transform .25s}
+.cct .cct-i img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;border:0;outline:0;padding:0}
+.cct .cct-i::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(10,14,26,.78) 0%,rgba(10,14,26,.25) 55%,rgba(10,14,26,0) 100%)}
+.cct .cct-i.ic{background:#eef4f8}
+.cct .cct-i.ic::after{display:none}
+.cct .cct-i.ic img{object-fit:contain;padding:8px 8px 22px;box-sizing:border-box}
+.cct .cct-l{position:absolute;z-index:2;left:9px;right:8px;bottom:6px;max-width:none;text-align:left;font:600 12px/1.2 Poppins,system-ui,sans-serif;color:#fff;opacity:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.cct .cct-i.ic ~ .cct-l{color:#101422;text-shadow:none}
+.cct:active .cct-i{transform:scale(1.04)}
+.cct.on{box-shadow:inset 0 0 0 2.5px var(--ink,#A8DCE7) !important}
+.cct.on::after{display:block !important;content:"";position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 0 0 2.5px var(--ink,#A8DCE7);z-index:3}
+.cct.on .cct-l{font-weight:700}
+.cct:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+
+/* v4: drawn-icon tiles are taller so the picture sits on top and the name below */
+html body button.cct.cct:has(.cct-i.ic){width:92px;height:100px;border-radius:16px !important}
+.cct .cct-i.ic img{padding:6px 6px 26px}
+.cct .cct-i.ic ~ .cct-l{left:4px;right:4px;bottom:7px;text-align:center}
+
+/* ---- cc-pages.css ---- */
+/* cc-pages.css v1: Reset password is a full page (not a small card), and the sign-in cards are tidy compact squares.
+   Same night / aqua look as the rest of the site, light and dark. */
+
+/* ---------- Reset password: full page, uses the site's own colours (cream page, warm dark button, orange accent) and follows light / dark like the main page ---------- */
+#ccfgt{position:fixed;inset:0;z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg,#fbf1ed);color:var(--fg,#16130f);font-family:Manrope,Poppins,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+#ccfgt *{font-family:inherit}
+#ccfgt::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(85% 38% at 88% -6%,rgba(255,138,61,.22),transparent 68%),radial-gradient(70% 34% at 0% 104%,rgba(196,114,122,.16),transparent 70%)}
+#ccfgt .fp-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px}
+#ccfgt .fp-ic{width:42px;height:42px;display:grid;place-items:center;border:1.5px solid var(--line,rgba(22,19,15,.09));border-radius:50%;background:var(--g,rgba(255,255,255,.86));box-shadow:none;color:var(--fg,#16130f);padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#ccfgt .fp-ic:active{transform:scale(.94)}
+#ccfgt .fp-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#ccfgt .fp-brand{display:flex;align-items:center;gap:9px;font:700 12.5px Manrope,Poppins,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--fg,#16130f);white-space:nowrap}
+#ccfgt .fp-brand img{display:block;height:24px;width:auto;max-width:none;border-radius:0;object-fit:contain;filter:brightness(0)}
+:root[data-theme="dark"] #ccfgt .fp-brand img{filter:none}
+#ccfgt .fp-body{position:relative;z-index:1;width:100%;max-width:440px;margin:0 auto;padding:18px 22px calc(40px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
+#ccfgt .fp-bar{display:flex;gap:6px;margin:0 0 20px}
+#ccfgt .fp-bar i{flex:1;height:4px;border-radius:4px;background:var(--line,rgba(22,19,15,.09));transition:background .3s}
+#ccfgt .fp-bar i.on{background:#ff8a3d}
+#ccfgt .fp-step{display:inline-block;margin:0 0 14px;padding:6px 12px;border-radius:999px;background:rgba(255,138,61,.16);font:700 11px Manrope,Poppins,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--fg,#16130f)}
+#ccfgt h1{margin:0 0 10px;font:800 28px/1.12 Manrope,Poppins,system-ui,sans-serif;letter-spacing:-.03em;color:var(--fg,#16130f)}
+#ccfgt .fp-sub{margin:0 0 22px;font-size:14px;line-height:1.65;color:var(--mut,#6a625a)}
+#ccfgt .fp-sub b{color:var(--fg,#16130f);font-weight:700}
+#ccfgt .fp-f{margin:0 0 16px}
+#ccfgt .fp-f>label{display:block;margin:0 0 7px 2px;font:700 12.5px Manrope,Poppins,system-ui,sans-serif;color:var(--fg,#16130f)}
+#ccfgt .fp-pw{position:relative}
+#ccfgt input{display:block;width:100%;box-sizing:border-box;min-height:54px;margin:0;padding:12px 16px;border-radius:16px;border:1.5px solid var(--line,rgba(22,19,15,.09));background:var(--g,rgba(255,255,255,.86));color:var(--fg,#16130f);font:500 16px Manrope,Poppins,system-ui,sans-serif;outline:0;-webkit-appearance:none;appearance:none;box-shadow:none;transition:border-color .2s}
+#ccfgt input::placeholder{color:var(--mut,#6a625a);opacity:.7;font-size:14px}
+#ccfgt input:focus{border-color:var(--fg,#16130f);box-shadow:none}
+#ccfgt .fp-pw input{padding-right:54px!important}
+#ccfgt #ccfg-c{letter-spacing:.5em;font:800 22px Manrope,Poppins,system-ui,sans-serif;text-align:center;padding-left:calc(16px + .5em)}
+#ccfgt #ccfg-c::placeholder{letter-spacing:.5em;font-weight:500;font-size:22px;opacity:.4}
+#ccfgt .fp-eye{position:absolute;right:5px;top:5px;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:12px;background:none;box-shadow:none;color:var(--mut,#6a625a);padding:0;cursor:pointer}
+#ccfgt .fp-eye svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#ccfgt .fp-msg{margin:0 0 14px;min-height:0;font-size:13px;line-height:1.55;color:var(--mut,#6a625a)}
+#ccfgt .fp-msg:empty{display:none}
+#ccfgt .fp-msg.bad{padding:11px 14px;border-radius:14px;border:1.5px solid var(--line,rgba(22,19,15,.09));background:var(--g,rgba(255,255,255,.86));color:var(--fg,#16130f);font-weight:600}
+#ccfgt .fp-go{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;margin:6px 0 14px;border:0;border-radius:999px;background:var(--ink,#16130f);color:var(--inkfg,#fff);font:700 15.5px Manrope,Poppins,system-ui,sans-serif;box-shadow:var(--sh,0 10px 28px rgba(140,80,50,.18));cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+#ccfgt .fp-go:active{transform:scale(.98)}
+#ccfgt .fp-go:disabled{opacity:.55;box-shadow:none}
+#ccfgt #ccfg-f1 .fp-go{background:var(--g,rgba(255,255,255,.86));color:var(--fg,#16130f);box-shadow:none;border:1.5px solid var(--line,rgba(22,19,15,.09))}
+#ccfgt .fp-link{display:block;width:100%;margin:0;padding:12px 8px;border:0;background:none;box-shadow:none;color:var(--fg,#16130f);font:700 13.5px Manrope,Poppins,system-ui,sans-serif;text-align:center;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+#ccfgt .fp-link:disabled{opacity:.5;text-decoration:none}
+#ccfgt .fp-sub .fp-link{display:inline-block;width:auto;padding:4px 2px}
+#ccfgt .ccpw-m{margin:8px 4px 0}
+#ccfgt [hidden]{display:none!important}
+@media(min-width:701px){#ccfgt .fp-body{padding-top:36px}}
+
+/* ---------- Sign-in and account cards: one compact, squarish card at every screen size ---------- */
+.ccp-sheet.ccp-ov{padding:20px!important;align-items:center!important;justify-content:center!important;place-items:center!important;background:rgba(16,20,34,.8)!important;-webkit-backdrop-filter:blur(10px)!important;backdrop-filter:blur(10px)!important}
+.ccp-sheet.ccp-ov>.ccp-card,.ccp-sheet>.ccp-card{width:100%!important;max-width:360px!important;height:auto!important;min-height:0!important;max-height:92vh!important;margin:0!important;padding:26px 22px 20px!important;border-radius:28px!important;border:1px solid var(--line,rgba(255,255,255,.14))!important;box-sizing:border-box}
+.ccp-sheet h3{margin:0 0 6px;font-size:20px;letter-spacing:-.02em}
+.ccp-sheet .sub{margin:0 0 14px;font-size:13px;line-height:1.5}
+.ccp-sheet .fld{margin:0 0 12px}
+.ccp-sheet .fld input{display:block;width:100%;box-sizing:border-box;min-height:50px;padding:12px 16px;font-size:16px;text-overflow:ellipsis}
+.ccp-sheet .fld input::placeholder{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.ccp-sheet input[type=checkbox]{width:18px!important;height:18px!important;min-height:0!important;padding:0!important;margin:0!important;flex:none;accent-color:var(--aq,#A8DCE7)}
+.ccp-sheet label.sub{display:flex!important;gap:10px;align-items:center;margin:0 0 14px!important;cursor:pointer}
+.ccp-sheet .two{display:flex;gap:12px;margin-top:4px}
+.ccp-sheet .two>.btn{flex:1;min-height:48px;padding:12px 16px}
+.ccp-sheet #ccp-e{min-height:0;margin:0}
+.ccp-sheet #ccp-e:not(:empty){margin:0 0 12px}
+
+/* ---------- Every popup backdrop is the same navy glass (no pure black). The photo viewer and the lock screen keep their own. ---------- */
+#md,#dm,#ccp,#dcm,#cchp,#ccuniv,#ccgate{background:rgba(16,20,34,.8)!important;-webkit-backdrop-filter:blur(10px)!important;backdrop-filter:blur(10px)!important}
+:root[data-theme="light"] #md,:root[data-theme="light"] #dm,:root[data-theme="light"] #ccp,:root[data-theme="light"] #dcm,:root[data-theme="light"] #cchp,:root[data-theme="light"] #ccuniv,:root[data-theme="light"] #ccgate{background:rgba(16,20,34,.5)!important}
+
+/* ---- cc-lockpw.css ---- */
+/* cc-lockpw.css v1: the "Sign in with Password" view of the lock screen (#lk.rec), recreated in the site's warm glass look.
+   Only touches the password view. The fingerprint view is left exactly as it is. Palette: orange FE813C, rose BC656A, sage 727E6E, ink 0E0F0B. */
+#lk.lkg.lkg{--pw-o:#fe813c;--pw-r:#bc656a;--pw-s:#727e6e;--pw-ink:#0e0f0b;--pw-txt:#0e0f0b;--pw-mut:rgba(14,15,11,.62);
+  --pw-card:linear-gradient(165deg,rgba(255,255,255,.88),rgba(255,243,234,.64) 58%,rgba(255,225,214,.52));--pw-edge:rgba(255,255,255,.95);
+  --pw-fld:rgba(255,255,255,.92);--pw-line:rgba(14,15,11,.12);--pw-ico:rgba(14,15,11,.5);--pw-warn:#bc4b52;
+  --pw-sh:0 40px 70px -28px rgba(188,101,106,.55),0 12px 26px -16px rgba(254,129,60,.45)}
+:root[data-theme="dark"] #lk.lkg.lkg{--pw-txt:#f7f0ea;--pw-mut:rgba(247,240,234,.66);
+  --pw-card:linear-gradient(165deg,rgba(52,40,33,.84),rgba(30,23,19,.74));--pw-edge:rgba(255,217,184,.2);
+  --pw-fld:rgba(255,255,255,.07);--pw-line:rgba(255,255,255,.14);--pw-ico:rgba(247,240,234,.55);--pw-warn:#ff8f95;
+  --pw-sh:0 40px 70px -28px rgba(0,0,0,.8),0 10px 24px -16px rgba(254,129,60,.35)}
+
+/* card */
+html body #lk.lkg.lkg.rec .bx.lkcard{padding:30px 22px 22px!important;border-radius:32px!important;background:var(--pw-card)!important;background-image:var(--pw-card)!important;
+  border:1px solid var(--pw-edge)!important;box-shadow:var(--pw-sh),inset 0 1.5px 0 var(--pw-edge)!important;font-family:Poppins,system-ui,sans-serif!important}
+html body #lk.lkg.lkg.rec .lkcard h2{font:700 clamp(24px,7vw,28px)/1.15 Poppins,sans-serif!important;letter-spacing:-.03em!important;margin:0}
+html body #lk.lkg.lkg.rec .lkwel{margin:6px 0 20px;font:400 14.5px/1.4 Poppins,sans-serif!important;color:var(--pw-mut)!important}
+
+/* avatar chip (added by cc-lockpw.js) */
+html body #lk.lkg.lkg .lkav{display:none}
+html body #lk.lkg.lkg.rec .lkav{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 14px;border-radius:50%;color:#fff;font:700 26px Poppins,sans-serif;
+  background:linear-gradient(145deg,#ffb27a,#fe813c 55%,#bc656a);box-shadow:0 14px 26px -10px rgba(254,129,60,.7),inset 0 2px 0 rgba(255,255,255,.55),0 0 0 5px rgba(255,255,255,.35)}
+:root[data-theme="dark"] html body #lk.lkg.lkg.rec .lkav,:root[data-theme="dark"] #lk.lkg.lkg.rec .lkav{box-shadow:0 14px 26px -10px rgba(254,129,60,.55),inset 0 2px 0 rgba(255,255,255,.35),0 0 0 5px rgba(255,255,255,.07)}
+
+/* field: ONE clean pill (the old input drew a second pill inside the first) */
+html body #lk.lkg.lkg.rec .lklab{margin:0 6px 8px;font:600 13px Poppins,sans-serif;color:var(--pw-txt);letter-spacing:.01em}
+html body #lk.lkg.lkg.rec .lkrec .fld{position:relative;display:block;margin:0;padding:0!important;height:58px;border-radius:999px!important;background:var(--pw-fld)!important;border:1.5px solid var(--pw-line)!important;
+  box-shadow:0 10px 22px -16px rgba(14,15,11,.5),inset 0 2px 5px rgba(14,15,11,.04)!important;transition:border-color .2s,box-shadow .2s}
+html body #lk.lkg.lkg.rec .lkrec .fld:focus-within{border-color:var(--pw-o)!important;box-shadow:0 0 0 4px rgba(254,129,60,.22),0 10px 22px -16px rgba(254,129,60,.6)!important}
+html body #lk.lkg.lkg.rec .lkrec .fld input,html body #lk.lkg.lkg.rec .lkrec .fld input:focus{width:100%;height:100%;box-sizing:border-box;margin:0;padding:0 52px 0 50px!important;
+  border:0!important;outline:0!important;border-radius:999px!important;background:transparent!important;background-image:none!important;box-shadow:none!important;-webkit-appearance:none;appearance:none;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;filter:none!important;
+  color:var(--pw-txt)!important;-webkit-text-fill-color:var(--pw-txt)!important;font:500 15px Poppins,system-ui,sans-serif!important;letter-spacing:.01em}
+html body #lk.lkg.lkg.rec .lkrec .fld input::placeholder{color:var(--pw-mut)!important;-webkit-text-fill-color:var(--pw-mut)!important;font-weight:400;opacity:1}
+html body #lk.lkg.lkg.rec .lkico{position:absolute;left:18px;top:50%;transform:translateY(-50%);width:22px;height:22px;color:var(--pw-ico);pointer-events:none;display:grid;place-items:center}
+html body #lk.lkg.lkg.rec .lkico{background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body #lk.lkg.lkg.rec .lkico svg{width:20px;height:20px}
+html body #lk.lkg.lkg.rec .lkeye{right:7px;width:44px;height:44px;color:var(--pw-ico);transition:color .2s,background .2s}
+html body #lk.lkg.lkg.rec .lkeye:active{background:rgba(254,129,60,.14);color:var(--pw-o)}
+html body #lk.lkg.lkg.rec .lkeye svg{width:22px;height:22px}
+
+/* wrong password: field shakes and turns rose for a moment */
+html body #lk.lkg.lkg.rec .lkrec .fld.lkbad{border-color:var(--pw-warn)!important;box-shadow:0 0 0 4px rgba(188,75,82,.18)!important;animation:lkshk .45s}
+@keyframes lkshk{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+html body #lk.lkg.lkg.rec .lkcaps{margin:8px 8px 0;font:500 12.5px Poppins,sans-serif;color:var(--pw-warn)}
+html body #lk.lkg.lkg.rec .lkcaps[hidden]{display:none}
+
+/* forgot + actions */
+html body #lk.lkg.lkg.rec .lkforgot{margin:12px 8px 18px;font:600 13px Poppins,sans-serif;color:var(--pw-txt)!important;text-decoration:none;
+  background:linear-gradient(95deg,var(--pw-o),var(--pw-r));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-underline-offset:3px}
+html body #lk.lkg.lkg.rec .lkact{gap:12px}
+html body #lk.lkg.lkg.rec #lkr{position:relative;height:58px;font:700 16px Poppins,sans-serif!important;letter-spacing:.01em;color:var(--pw-ink)!important;
+  background:linear-gradient(135deg,#ffb783,#fe813c 58%,#e8725a)!important;box-shadow:0 16px 28px -14px rgba(254,129,60,.9),inset 0 1.5px 0 rgba(255,255,255,.55)!important;transition:transform .15s,filter .2s}
+html body #lk.lkg.lkg.rec #lkr:active:not(:disabled){transform:scale(.97)}
+html body #lk.lkg.lkg.rec #lkr:disabled{color:var(--pw-mut)!important;background:var(--pw-fld)!important;border:1.5px solid var(--pw-line)!important;box-shadow:none!important}
+/* exactly one spinner while the password is being checked */
+html body #lk.lkg.lkg.rec #lkr.busy{color:transparent!important;opacity:1;pointer-events:none;background:linear-gradient(135deg,#ffb783,#fe813c 58%,#e8725a)!important;border:0!important}
+html body #lk.lkg.lkg.rec #lkr.busy:after{content:"";position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;border:2.5px solid rgba(14,15,11,.25);border-top-color:var(--pw-ink);animation:lkspn .7s linear infinite}
+@keyframes lkspn{to{transform:rotate(360deg)}}
+html body #lk.lkg.lkg.rec .lkfp2{width:58px;height:58px;border:1.5px solid var(--pw-edge);background:linear-gradient(150deg,#fff,#fdf1e8);color:var(--pw-ink);box-shadow:0 14px 24px -12px rgba(14,15,11,.5)}
+:root[data-theme="dark"] #lk.lkg.lkg.rec .lkfp2{background:linear-gradient(150deg,#4a392f,#2c211b);color:#ffd9b8}
+html body #lk.lkg.lkg.rec .lklinks{margin:20px 0 0;font:500 13.5px Poppins,sans-serif}
+html body #lk.lkg.lkg.rec .lklinks a{color:var(--pw-txt)!important;font-weight:600;text-decoration:none;border-bottom:1.5px solid rgba(254,129,60,.6);padding-bottom:1px}
+@media (prefers-reduced-motion:reduce){html body #lk.lkg.lkg.rec .lkfld,#lk .lkbad,#lkr.busy:after{animation-duration:0s!important}}
+
+/* no-waves v1 */
+html body #lk.lkg.lkg .lkfp:before,html body #lk.lkg.lkg .lkfp:after{content:none!important;display:none!important;animation:none!important}
+html body #lk.lkg.lkg .lkfp svg path{animation:lkd 1s ease forwards!important}
+html body #lk.lkg.lkg .lkface svg path{animation:none!important;stroke-dasharray:none!important;stroke-dashoffset:0!important}
+html body #lk.lkg.lkg .lkface svg .fb{animation:none!important}
+
+/* pw-tweaks v1: black name, no orange field border, black Forgot link, profile picture in the circle */
+html body #lk.lkg.lkg.rec .lkcard h2 b,html body #lk.lkg.lkg.rec #lkhi b{background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;-webkit-text-fill-color:var(--pw-txt)!important;color:var(--pw-txt)!important;font-weight:700}
+html body #lk.lkg.lkg.rec .lkrec .fld:focus-within{border-color:rgba(14,15,11,.3)!important;box-shadow:0 10px 22px -16px rgba(14,15,11,.5)!important}
+:root[data-theme="dark"] html body #lk.lkg.lkg.rec .lkrec .fld:focus-within,:root[data-theme="dark"] #lk.lkg.lkg.rec .lkrec .fld:focus-within{border-color:rgba(255,255,255,.34)!important}
+html body #lk.lkg.lkg.rec .lkeye:active{background:rgba(14,15,11,.08);color:var(--pw-txt)}
+html body #lk.lkg.lkg.rec .lkforgot{background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;-webkit-text-fill-color:var(--pw-txt)!important;color:var(--pw-txt)!important;text-decoration:underline;text-underline-offset:3px}
+html body #lk.lkg.lkg.rec .lkav{overflow:hidden}
+html body #lk.lkg.lkg.rec .lkav.lkpic{background:none}
+html body #lk.lkg.lkg.rec .lkav img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+
+/* plain-fingerprint v1: the fingerprint view as a simple page (no card, no disc, no waves) */
+#lk.lkg.lkg{--pw-flat:#faf1ed}
+:root[data-theme="dark"] #lk.lkg.lkg{--pw-flat:#16130f}
+html body #lk.lkg.lkg:not(.rec){background:var(--pw-flat)!important}
+html body #lk.lkg.lkg:not(.rec)::before{display:none!important}
+html body #lk.lkg.lkg:not(.rec) .bx.lkcard{background:none!important;background-image:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:8px 24px!important}
+html body #lk.lkg.lkg:not(.rec) .lkcard h2{font:600 clamp(26px,7.4vw,32px)/1.15 Poppins,sans-serif!important;letter-spacing:-.03em!important;color:var(--pw-txt)!important}
+html body #lk.lkg.lkg:not(.rec) .lkcard h2 b,html body #lk.lkg.lkg:not(.rec) #lkhi b{background:none!important;-webkit-text-fill-color:var(--pw-txt)!important;color:var(--pw-txt)!important;font-weight:600}
+html body #lk.lkg.lkg:not(.rec) .lkwel{font:400 17px Poppins,sans-serif!important;color:var(--pw-txt)!important;margin:6px 0 34px}
+html body #lk.lkg.lkg:not(.rec) .lkh{font:600 17px Poppins,sans-serif!important}
+html body #lk.lkg.lkg:not(.rec) .note{font:400 16px Poppins,sans-serif!important;color:var(--pw-mut)!important}
+html body #lk.lkg.lkg:not(.rec) .lkcard #lku.lkfp,html body #lk.lkg.lkg:not(.rec) .lkcard .lkfp,html body #lk.lkg.lkg:not(.rec) .lkcard #lkf{width:150px;height:150px;margin:56px auto 52px;background:none!important;background-image:none!important;box-shadow:none!important;border:0!important;color:var(--pw-txt)!important}
+html body #lk.lkg.lkg:not(.rec) .lkcard .lkfp svg{width:128px;height:128px;stroke-width:.95}
+html body #lk.lkg.lkg:not(.rec) .lkpw{height:58px;border:1px solid rgba(255,255,255,.18)!important;color:#fff!important;font:600 16px Poppins,sans-serif!important;
+  background:linear-gradient(135deg,#1f1b17,#463f39)!important;box-shadow:0 14px 26px -14px rgba(14,15,11,.7)!important}
+:root[data-theme="dark"] html body #lk.lkg.lkg:not(.rec) .lkpw,:root[data-theme="dark"] #lk.lkg.lkg:not(.rec) .lkpw{background:linear-gradient(135deg,#f7f0ea,#e4d8cf)!important;color:#16130f!important}
+html body #lk.lkg.lkg:not(.rec) .lklinks a{color:var(--pw-txt)!important;font-weight:600}
+html body #lk.lkg.lkg .lkcard .lkfp::before,html body #lk.lkg.lkg .lkcard .lkfp::after,html body #lk.lkg.lkg .lkcard #lku.lkfp::before,html body #lk.lkg.lkg .lkcard #lku.lkfp::after{content:none!important;display:none!important;animation:none!important}
+html body #lk.lkg.lkg .lkcard .lkfp svg path,html body #lk.lkg.lkg .lkcard #lku.lkfp svg path{animation:none!important;stroke-dasharray:none!important;stroke-dashoffset:0!important;opacity:1!important}
+
+/* plain-scan v1: the scanning screen (#ccfp) as a simple page: no disc, no rings, no sweep bar; the ridges light up one after another, then a tick */
+#ccfp{--pw-txt:#0e0f0b;--pw-mut:rgba(14,15,11,.62);--pw-flat:#faf1ed;--pw-okc:#2f9e5a}
+:root[data-theme="dark"] #ccfp{--pw-txt:#f7f0ea;--pw-mut:rgba(247,240,234,.66);--pw-flat:#16130f;--pw-okc:#4cc27f}
+html body #ccfp{background:var(--pw-flat)!important;color:var(--pw-txt)!important;font-family:Poppins,system-ui,sans-serif!important}
+html body #ccfp::before{display:none!important}
+html body #ccfp .fpx-hi{font:600 clamp(26px,7.4vw,32px)/1.15 Poppins,sans-serif!important;letter-spacing:-.03em!important;color:var(--pw-txt)!important}
+html body #ccfp .fpx-hi b{background:none!important;-webkit-text-fill-color:var(--pw-txt)!important;color:var(--pw-txt)!important;font-weight:600!important}
+html body #ccfp .fpx-wb{font:400 17px Poppins,sans-serif!important;color:var(--pw-txt)!important;margin-top:6px}
+html body #ccfp .fpx-ct{font:600 17px Poppins,sans-serif!important;color:var(--pw-txt)!important}
+html body #ccfp .fpx-st{font:400 16px Poppins,sans-serif!important;color:var(--pw-mut)!important}
+html body #ccfp .fpx-sub{color:var(--pw-mut)!important;font-family:Poppins,sans-serif!important}
+html body #ccfp .fpx-r,html body #ccfp .fpx-ln{display:none!important;animation:none!important}
+html body #ccfp button.fpx-stage{width:170px;height:170px;margin:34px 0 26px}
+html body #ccfp .fpx-disc,html body #ccfp[data-k] .fpx-disc{width:150px;height:150px;background:none!important;border:0!important;box-shadow:none!important;overflow:visible;transition:background .3s}
+html body #ccfp .fpx-ic{color:var(--pw-txt)!important;stroke-width:.95!important;width:128px;height:128px;animation:none!important}
+html body #ccfp .fpx-fci{width:112px;height:112px;stroke-width:1.9!important}
+/* scanning: the ridges light up one after another, again and again */
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path{animation:fpx-feel 1.8s ease-in-out infinite both!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(2){animation-delay:.14s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(3){animation-delay:.28s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(4){animation-delay:.42s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(5){animation-delay:.56s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(6){animation-delay:.70s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(7){animation-delay:.84s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(8){animation-delay:.98s!important}
+html body #ccfp:not(.ok):not(.bad) .fpx-fpi path:nth-child(9){animation-delay:1.12s!important}
+@keyframes fpx-feel{0%,100%{opacity:.16}30%,55%{opacity:1}}
+/* done: a soft green circle and a tick that draws itself */
+html body #ccfp.ok .fpx-disc{background:rgba(76,194,127,.16)!important;border-radius:50%!important}
+html body #ccfp .fpx-ck{width:72px;height:72px}
+html body #ccfp .fpx-ck path{stroke-dasharray:26;stroke-dashoffset:26}
+html body #ccfp.ok .fpx-ck{color:var(--pw-okc)!important}
+html body #ccfp.ok .fpx-ck path{animation:fpx-tick .45s ease .12s forwards}
+@keyframes fpx-tick{to{stroke-dashoffset:0}}
+html body #ccfp.bad .fpx-ic{color:#bc4b52!important}
+html body #ccfp .fpx-tab[aria-selected=true]{background:var(--pw-txt)!important;color:var(--pw-flat)!important}
+html body #ccfp .fpx-b.p{height:58px;background:linear-gradient(135deg,#1f1b17,#463f39)!important;border:1px solid rgba(255,255,255,.18)!important;color:#fff!important;font:600 16px Poppins,sans-serif!important;box-shadow:0 14px 26px -14px rgba(14,15,11,.7)}
+:root[data-theme="dark"] html body #ccfp .fpx-b.p,:root[data-theme="dark"] #ccfp .fpx-b.p{background:linear-gradient(135deg,#f7f0ea,#e4d8cf)!important;color:#16130f!important}
+html body #ccfp .fpx-b.t{color:var(--pw-mut)!important}
+html body #ccfp .fpx-ln2 a{color:var(--pw-txt)!important;font-weight:600}
+html body #ccfp #fpx-h{min-height:52px}
+
+/* ---- cc-edge.css ---- */
+/* cc-edge.css v1: pictures run edge to edge inside their cards. No white frame or padding around any photo.
+   The card clips the picture to its own rounded corners; the text below keeps its own padding. */
+html .mc{padding:0 !important;overflow:hidden;border-radius:22px}
+html .mc .mm,html .mc img.mm,html .mc .mm.poster{border-radius:0 !important;width:100%;display:block;aspect-ratio:1;object-fit:cover}
+html .mc .mb{padding:12px 14px 14px !important}
+html .mc .mb em{top:10px !important;left:10px !important}
+html .kcard.kt3{padding:0 !important;overflow:hidden}
+html .kt3 .ph,html .kt3 .ph img{border-radius:0 !important}
+html .ecard,html .pcard,html .mecard{overflow:hidden}
+html .ecard>img:first-child,html .pcard>img:first-child,html .mecard>img:first-child,
+html .ecard>.ph,html .pcard>.ph{display:block;width:calc(100% + 40px);max-width:none;margin:-20px -20px 14px;border-radius:0 !important}
+html .card>img:first-child,html .card>.mm:first-child{display:block;width:calc(100% + 28px);max-width:none;margin:-14px -14px 12px;border-radius:0 !important}
+html .hsph img,html .hsp img{border-radius:0}
+
+/* ---- cc-blend.css ---- */
+/* cc-blend.css v1: a marketplace card takes on the colour of its product photo.
+   cc-blend.js adds the class "cb" and sets --pc (r,g,b), --pad (tint strength, dark theme) and --pal (light theme).
+   The photo fades into the tint at its bottom edge, like the progressive-blur cards in the reference. */
+html .mc.cb{
+  --pa:var(--pad,.34);
+  background-image:linear-gradient(180deg,rgba(var(--pc),var(--pa)) 0%,rgba(var(--pc),calc(var(--pa)*.92)) 58%,rgba(var(--pc),calc(var(--pa)*.85)) 100%)!important;
+  border-color:rgba(var(--pc),.4);
+  box-shadow:0 14px 30px -18px rgba(var(--pc),.8);
+}
+html[data-theme="light"] .mc.cb{--pa:var(--pal,.3)}
+html .mc.cb img.mm{
+  -webkit-mask-image:linear-gradient(180deg,#000 0,#000 64%,rgba(0,0,0,.5) 82%,transparent 100%);
+  mask-image:linear-gradient(180deg,#000 0,#000 64%,rgba(0,0,0,.5) 82%,transparent 100%);
+}
+/* the text sits on the tint, so pull it up under the faded edge */
+html .mc.cb .mb{margin-top:-26px}
+@media (prefers-reduced-motion:no-preference){html .mc{transition:transform .25s,border-color .35s,box-shadow .35s}}
+
+/* ---- cc-guide.css ---- */
+/* cc-guide.css v2 (solid card so the page behind never shows through): tidy layout for the "Need a hand?" guide popup (bot, bottom-left).
+   Header (bot + title + one close X), text, then neat buttons in a grid. */
+html body #tkb{box-sizing:border-box;left:12px;right:auto;width:min(320px,calc(100vw - 24px));padding:16px 16px 14px;border-radius:22px;overflow:visible;text-align:left;background:var(--card,var(--bg)) !important;background-image:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;border:1px solid var(--gb)}
+html body #tkb::after{content:"";position:absolute;left:24px;bottom:-7px;width:14px;height:14px;background:var(--card,var(--bg));border-right:1px solid var(--gb);border-bottom:1px solid var(--gb);transform:rotate(45deg);border-bottom-right-radius:4px}
+html[data-lay="desktop"] body #tkb::after{display:none}
+#tkb .ccx-b,#tkb .ccx-plain{display:none !important}
+#tkb .tk-h{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+#tkb .tk-av{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--g);border:1px solid var(--gb);color:var(--fg)}
+#tkb .tk-av svg{width:24px;height:24px}
+#tkb b.tk-t{flex:1;min-width:0;margin:0;font:700 15px/1.3 Poppins,system-ui,sans-serif;color:var(--fg);overflow-wrap:anywhere}
+#tkb .tk-x{all:unset;box-sizing:border-box;flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--fg);opacity:.75;-webkit-tap-highlight-color:transparent}
+#tkb .tk-x:hover,#tkb .tk-x:focus-visible{opacity:1;background:var(--g)}
+#tkb .tk-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+#tkb .tk-p{margin:0;font-size:13px;line-height:1.6;color:var(--mut)}
+html body #tkb .tr{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+html body #tkb .tr .btn{width:100%;min-height:40px;padding:9px 10px;font-size:12.5px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap}
+html body #tkb .tr .btn.p:first-child{grid-column:1/-1}
+html body #tkb .tr.s{display:flex}
+html body #tkb .tr.s .btn{flex:1 1 0;width:auto}
+html body #tkb .tr:not(.s) .btn:last-child:nth-child(odd){grid-column:1/-1}
+
+/* ---- cc-otp.css ---- */
+/* cc-otp.css v2: glass OTP boxes. Blue light runs round the card while checking, then a plain tick (right) or a red shake (wrong). */
+@property --cco-ang{syntax:'<angle>';inherits:false;initial-value:0deg}
+.cco{--a:#A8DCE7;--rc:#4da3ff;--g:#2ee59d;--bad:#ff5a5f;--fg:#fff;--mut:rgba(255,255,255,.66);--edge:rgba(255,255,255,.22);--hi:rgba(255,255,255,.5);--bf1:rgba(255,255,255,.14);--bf2:rgba(255,255,255,.03);
+  position:relative;margin:14px 0;padding:20px 14px 16px;border-radius:26px;text-align:center;overflow:hidden;isolation:isolate;color:var(--fg);font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:linear-gradient(155deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 50%,rgba(255,255,255,.09));
+  -webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);
+  border:1px solid var(--edge);box-shadow:0 24px 54px rgba(0,0,0,.4),inset 0 1.5px 0 var(--hi),inset 0 0 36px rgba(255,255,255,.04);transition:box-shadow .5s,border-color .4s}
+:root[data-theme="light"] .cco{--a:#101422;--rc:#101422;--g:#101422;--bad:#101422;--fg:#101422;--mut:rgba(16,20,34,.66);--edge:rgba(16,20,34,.16);--hi:rgba(255,255,255,.9);--bf1:rgba(255,255,255,.95);--bf2:rgba(255,255,255,.55);box-shadow:0 18px 40px rgba(16,20,34,.14),inset 0 1.5px 0 var(--hi)}
+:root:not([data-theme="dark"]):not([data-theme="light"]) .cco{--a:#101422;--rc:#101422;--g:#101422;--bad:#101422;--fg:#101422;--mut:rgba(16,20,34,.66);--edge:rgba(16,20,34,.16);--hi:rgba(255,255,255,.9);--bf1:rgba(255,255,255,.95);--bf2:rgba(255,255,255,.55);box-shadow:0 18px 40px rgba(16,20,34,.14),inset 0 1.5px 0 var(--hi)}
+.cco:before{content:"";position:absolute;left:-30%;top:-55%;width:90%;height:100%;background:radial-gradient(closest-side,rgba(168,220,231,.3),transparent);transform:rotate(-18deg);z-index:-1;pointer-events:none}
+/* the border light: a bright blue arc that runs round the edge of the card */
+.cco:after{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:3px;pointer-events:none;z-index:3;opacity:0;transition:opacity .35s;filter:drop-shadow(0 0 5px var(--rc));
+  background:conic-gradient(from var(--cco-ang),transparent 0%,transparent 45%,var(--rc) 85%,#fff 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask-composite:exclude}
+.cco.cco-busy{box-shadow:0 24px 54px rgba(0,0,0,.4),0 0 30px rgba(77,163,255,.28),inset 0 1.5px 0 var(--hi)}
+.cco.cco-busy:after{opacity:1;animation:cco-run 1.1s linear infinite}
+.cco.cco-ok:after,.cco.cco-err:after{opacity:1;background:var(--rc);animation:none}
+.cco.cco-ok{--rc:var(--g);box-shadow:0 24px 54px rgba(0,0,0,.35),0 0 26px rgba(46,229,157,.2),inset 0 1.5px 0 var(--hi)}
+.cco.cco-err{--rc:var(--bad);box-shadow:0 24px 54px rgba(0,0,0,.35),0 0 26px rgba(255,90,95,.25),inset 0 1.5px 0 var(--hi);animation:cco-shake .5s}
+.cco-ic{width:36px;height:36px;margin:0 auto 8px;border-radius:12px;display:grid;place-items:center;color:var(--a);background:rgba(168,220,231,.12);border:1px solid rgba(168,220,231,.38);transition:color .4s,background .4s,border-color .4s}
+.cco-busy .cco-ic{color:var(--rc);border-color:rgba(77,163,255,.55)}
+.cco-ok .cco-ic{color:var(--g);background:rgba(46,229,157,.12);border-color:rgba(46,229,157,.5)}
+.cco-t{font-size:18px;font-weight:700;line-height:1.2;margin:0;color:var(--fg)}
+.cco-t b{color:var(--a);font-weight:800;transition:color .4s}.cco-busy .cco-t b{color:var(--rc)}.cco-ok .cco-t b{color:var(--g)}.cco-err .cco-t b{color:var(--bad)}
+.cco-s{font-size:12.5px;line-height:1.4;color:var(--mut);margin:5px 0 16px}
+.cco-stage{position:relative;height:56px;display:flex;align-items:center;justify-content:center}
+.cco-row{display:flex;gap:6px;justify-content:center;width:100%;max-width:300px;transition:opacity .3s,transform .3s}
+.cco-ok .cco-row{opacity:0;transform:scale(.96);pointer-events:none}
+.cco input.cco-b{flex:1 1 0!important;width:auto!important;min-width:0!important;max-width:44px!important;height:52px!important;padding:0!important;margin:0!important;box-sizing:border-box!important;text-align:center!important;
+  font:700 22px/1 Poppins,system-ui,sans-serif!important;color:var(--fg)!important;caret-color:var(--a);letter-spacing:0!important;
+  background:linear-gradient(150deg,var(--bf1),var(--bf2))!important;border:1px solid var(--edge)!important;border-radius:14px!important;
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.35),0 6px 16px rgba(0,0,0,.25)!important;outline:0!important;-webkit-appearance:none;appearance:none;
+  transition:transform .25s,opacity .3s,border-color .25s,box-shadow .25s}
+.cco input.cco-b.cco-f{border-color:rgba(168,220,231,.55)!important}
+.cco input.cco-b:focus{border-color:var(--a)!important;transform:translateY(-2px);box-shadow:0 0 0 3px rgba(168,220,231,.22),0 0 18px rgba(168,220,231,.38),inset 0 1.5px 0 rgba(255,255,255,.4)!important}
+.cco.cco-busy input.cco-b{border-color:rgba(77,163,255,.6)!important;opacity:.75;pointer-events:none;transform:none}
+.cco.cco-err input.cco-b{border-color:var(--bad)!important;color:var(--bad)!important;box-shadow:0 0 14px rgba(255,90,95,.4)!important;transform:none}
+/* plain tick, no circle, no box */
+.cco-final{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;display:grid;place-items:center;color:var(--g);opacity:0;transform:scale(.7);pointer-events:none;transition:transform .4s cubic-bezier(.2,1.4,.4,1),opacity .25s}
+.cco-ok .cco-final{opacity:1;transform:scale(1)}
+.cco-final path{stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset .4s .15s}.cco-ok .cco-final path{stroke-dashoffset:0}
+.cco input.cco-real,input.cco-real{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;left:-9999px!important}
+button.cco-bspin,button.cco-bok{opacity:1!important}
+button.cco-bspin::before{content:"";display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:cco-sp .7s linear infinite}
+button.cco-bok{background:linear-gradient(135deg,#34d399,#101422)!important;color:#04170d!important;border-color:transparent!important;box-shadow:0 10px 26px rgba(34,197,94,.38)!important}
+.cco.cco-nt,.cco.cco-nt *{transition:none!important}
+@keyframes cco-run{to{--cco-ang:360deg}}
+@keyframes cco-shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-9px)}35%{transform:translateX(8px)}55%{transform:translateX(-6px)}75%{transform:translateX(4px)}}
+@keyframes cco-sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.cco *,.cco{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+/* ---- cc-redesign.css ---- */
+/* cc-redesign.css v1 (section 1 of 2): the Comrade Connect redesign look on every page after login.
+   Loaded last. Manrope, cream page, white cards, peach/rose/sage blobs, dark pill buttons, pill nav. */
+
+:root,:root[data-theme="light"]{--bg:#fbf1ed;--fg:#16130f;--mut:#6a625a;--g:rgba(255,255,255,.86);--gb:rgba(22,19,15,.06);--gh:rgba(255,255,255,.95);--sh:0 10px 28px rgba(140,80,50,.11);--line:rgba(22,19,15,.09);--ink:#16130f;--inkfg:#fff;--cco:#ff8a3d;--cco2:#e8744f;--ccr:#c4727a;--ccs:#a9b8a2;--ccp:#ffd9b8}
+:root[data-theme="dark"]{--bg:#17130f;--fg:#f6efe9;--mut:#b6aca2;--g:rgba(44,37,32,.86);--gb:rgba(255,255,255,.08);--gh:rgba(255,255,255,.2);--sh:0 10px 28px rgba(0,0,0,.35);--line:rgba(255,255,255,.1);--ink:#f6efe9;--inkfg:#17130f}
+html body,html body button,html body input,html body select,html body textarea,html body .btn,html body .tab{font-family:Manrope,system-ui,-apple-system,'Segoe UI',sans-serif}
+html body{background:linear-gradient(180deg,var(--bg),#f3efe9) fixed;color:var(--fg);-webkit-font-smoothing:antialiased}
+:root[data-theme="dark"] body{background:linear-gradient(180deg,#17130f,#100d0a) fixed}
+html body #bg,html body .orb,html body .orbs{display:none!important}
+/* cards */
+html body .g{background:var(--g);border:0;box-shadow:var(--sh);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+html body .box.g,html body .pcard.g,html body .mecard{border-radius:28px;padding:18px}
+html body .ph{font-size:34px;font-weight:800;letter-spacing:-.035em;line-height:1.05}
+html body .sub{color:var(--mut);font-size:13px}
+html body h3{font-weight:800;letter-spacing:-.01em}
+/* buttons */
+html body .btn{height:54px;border-radius:999px;font-weight:800;font-size:15px;padding:0 22px;border:0;box-shadow:none}
+html body .btn.p{background:var(--ink);color:var(--inkfg)}
+html body .btn.g{background:var(--g);color:var(--fg);box-shadow:var(--sh)}
+html body .btn.o,html body #fab{background:linear-gradient(135deg,#ffa05a,#ee7a4f);color:#1d0f06;box-shadow:0 10px 24px rgba(238,122,79,.35)}
+html body #fab{height:48px;border-radius:999px;border:0;font-weight:800;bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+html body .ib{width:44px;height:44px;border-radius:50%;background:var(--g);box-shadow:var(--sh);border:0;display:grid;place-items:center;color:var(--fg)}
+html body .tab,html body .vt button{border-radius:999px;background:var(--g);box-shadow:var(--sh);border:0;color:var(--fg);font-weight:700;padding:10px 18px}
+html body .tab.on,html body .vt button.on{background:var(--ink);color:var(--inkfg)}
+html body .fld{background:var(--g);border-radius:18px;box-shadow:var(--sh);padding:0 16px;border:0}
+html body .fld input,html body .fld textarea,html body .fld select,html body input.crd-in{border:0;background:none;color:var(--fg)}
+html body .mstats>div{background:rgba(255,255,255,.7);border-radius:20px;box-shadow:var(--sh)}
+html body .badge,html body .mpill{background:rgba(255,138,61,.13);color:var(--fg);border:0;border-radius:999px;font-weight:800}
+/* hero and blobs */
+html body .hero,html body .mecard,html body .box.g:first-of-type.crdblob{position:relative;overflow:hidden;isolation:isolate;background:#fff8f4;border-radius:36px;padding:22px;color:#16130f;box-shadow:var(--sh)}
+html body .hero::before,html body .mecard::before,.crdblob::before{content:"";position:absolute;inset:-25%;z-index:-1;filter:blur(30px);opacity:.95;background:radial-gradient(42% 52% at 24% 38%,#ff8a3d 0,transparent 72%),radial-gradient(44% 52% at 80% 60%,#c4727a 0,transparent 72%),radial-gradient(40% 40% at 45% 95%,#ffd9b8 0,transparent 72%)}
+html body .hero h1{font-size:44px;letter-spacing:-.045em;line-height:1;font-weight:800;color:#16130f}
+html body .hero p,html body .hero .gr{color:#16130f;font-weight:700}
+html body .hero .btn.p{width:100%}
+html body .mq{background:var(--ink);color:var(--inkfg);font-weight:800;letter-spacing:.12em}
+/* category tiles: gradient blobs instead of photos */
+html body .cct-i img{display:none!important}
+html body button.cct.cct.cct{position:relative;width:150px!important;height:120px!important;border-radius:28px!important;box-shadow:var(--sh)!important;background:#fff8f4!important}
+html body .cct.cct .cct-i{background:radial-gradient(45% 55% at 25% 30%,#ff8a3d,transparent 72%),radial-gradient(50% 50% at 80% 70%,#c4727a,transparent 72%),radial-gradient(40% 40% at 50% 95%,#ffd9b8,transparent 72%),#fff8f4}
+html body .cct-row .cct:nth-child(3n+2) .cct-i{background:radial-gradient(45% 50% at 20% 30%,#a9b8a2,transparent 72%),radial-gradient(45% 50% at 80% 75%,#c4727a,transparent 72%),radial-gradient(40% 40% at 70% 15%,#ffd9b8,transparent 72%),#fff8f4}
+html body .cct-row .cct:nth-child(3n) .cct-i{background:radial-gradient(48% 50% at 75% 25%,#ffd9b8,transparent 72%),radial-gradient(48% 50% at 30% 80%,#ff8a3d,transparent 72%),radial-gradient(40% 40% at 90% 90%,#a9b8a2,transparent 72%),#fff8f4}
+html body .cct.cct .cct-i::after{display:none}
+html body .cct.cct .cct-l{color:#16130f;font:800 15px/1.15 Manrope,sans-serif;left:14px;bottom:14px;white-space:normal}
+html body #v-explore .cct-row{display:grid!important;grid-template-columns:1fr 1fr;gap:14px!important;overflow:visible}
+html body #v-explore button.cct.cct.cct{width:100%!important;height:160px!important}
+html body #v-market button.cct.cct.cct{width:auto!important;height:44px!important;border-radius:999px!important;padding:0 16px!important;background:var(--g)!important}
+html body #v-market .cct .cct-i{display:none}
+html body #v-market .cct-l{position:static;display:block;line-height:44px;color:var(--fg)}
+/* bottom nav: round icon buttons, active one opens into an orange pill */
+html:not([data-lay="desktop"]) body #tb{display:flex;grid-template-columns:none;width:auto;max-width:96vw;height:auto;padding:0;gap:8px;background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+html:not([data-lay="desktop"]) body #tb button{width:50px;height:50px;border-radius:999px;background:var(--g);box-shadow:var(--sh);color:var(--fg);font-size:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:0;flex:none;transition:all .25s}
+html:not([data-lay="desktop"]) body #tb button.on,html:not([data-lay="desktop"]) body #tb button.on2{width:auto;padding:0 18px 0 14px;background:linear-gradient(135deg,#ffa05a,#ee7a4f);color:#1d0f06;font:800 13px Manrope,sans-serif}
+html:not([data-lay="desktop"]) body #tb button.on2{display:flex}
+html body #tb button[data-v="live"],html body #tb button[data-v="mbogi"],html body #tb button[data-v="rewards"],html body #tb #ccsettab{display:none!important}
+html body #tb button[data-v="live"].on,html body #tb button[data-v="mbogi"].on,html body #tb button[data-v="rewards"].on{display:none!important}
+/* top bar: search pill plus round buttons */
+html body nav.g:not(#tb){background:linear-gradient(180deg,var(--bg) 70%,transparent);border:0;box-shadow:none;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none;gap:10px;padding:8px 14px;width:min(430px,100vw)}
+html body nav.g:not(#tb) .nb{display:none}
+html body .crd-search{flex:1;height:48px;border-radius:999px;background:var(--g);box-shadow:var(--sh);display:flex;align-items:center;gap:10px;padding:0 18px;color:var(--mut);font-weight:600;font-size:14px;text-align:left;border:0}
+html body .crd-seg{display:flex;background:var(--g);border-radius:999px;padding:5px;box-shadow:var(--sh);margin:6px 0 16px}
+html body .crd-seg button{flex:1;height:40px;border-radius:999px;font-weight:800;font-size:13px;border:0;background:none;color:var(--fg)}
+html body .crd-seg button.on{background:var(--ink);color:var(--inkfg)}
+html body .crd-row{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 16px;background:var(--g);border-radius:22px;box-shadow:var(--sh);margin:0 0 14px;border:0;color:var(--fg)}
+html body .crd-row b{display:block;font-weight:800;font-size:15px}html body .crd-row small{color:var(--mut);font-size:12px}
+html body .crd-back{background:none;border:0;font-weight:800;font-size:13px;color:var(--fg);padding:6px 0;margin-bottom:6px}
+/* fixes: beat earlier !important nav and tile rules, redesign tab order */
+html body #tb button{background:var(--g)!important;color:var(--fg)!important;box-shadow:var(--sh)!important}
+html body #tb button.on,html body #tb button.on2{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f06!important;box-shadow:0 8px 20px rgba(238,122,79,.35)!important}
+html body #tb button.on svg,html body #tb button.on2 svg{color:#1d0f06}
+html body #tb button[data-v="feed"]{order:1}html body #tb button[data-v="explore"]{order:2}html body #tb button[data-v="market"]{order:3}html body #tb button[data-v="videos"]{order:4}html body #tb button[data-v="me"]{order:5}
+html body .cct .cct-l{text-shadow:none!important}html body .cct .cct-l::before,html body .cct .cct-l::after{display:none!important}
+html body .hero .btn.g{background:rgba(255,255,255,.85);color:#16130f}
+html body #fab,html body #fab.btn.p{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f06!important;box-shadow:0 10px 24px rgba(238,122,79,.35)!important}
+
+/* ---- cc-watch2.css ---- */
+/* cc-watch2.css v1: the new Watch page (Videos and Live). Layout and looks only; every button keeps its old id and handler. */
+html body #v-videos.w2>.sub,html body #v-live.w2>.sub{color:var(--mut);font-size:13px;line-height:1.55}
+
+/* ---- live banner on the Videos tab ---- */
+html body .w2-livebar{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%;margin:2px 0 14px;padding:12px 16px;border-radius:22px;background:linear-gradient(135deg,#d9334a,#ee7a4f);color:#fff;font:800 13px Manrope,Poppins,sans-serif;box-shadow:0 10px 24px rgba(217,51,74,.28)}
+html body .w2-livebar[hidden]{display:none}
+html body .w2-livebar i{width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 0 0 0 rgba(255,255,255,.7);animation:w2p 1.6s infinite;flex:none}
+html body .w2-livebar span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body .w2-livebar b{font-weight:800;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.22)}
+@keyframes w2p{70%{box-shadow:0 0 0 8px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+
+/* ---- create card ---- */
+html body .w2-create{position:relative;overflow:hidden;isolation:isolate;border-radius:30px;padding:18px;margin:4px 0 22px;background:#fff8f4;color:#16130f;box-shadow:var(--sh)}
+html body .w2-create::before{content:"";position:absolute;inset:-30%;z-index:-1;filter:blur(34px);opacity:.9;background:radial-gradient(42% 52% at 20% 25%,#ffb27a 0,transparent 72%),radial-gradient(44% 52% at 85% 70%,#e7a0a6 0,transparent 72%),radial-gradient(40% 40% at 50% 100%,#ffe7d2 0,transparent 72%)}
+html body .w2-create h3{margin:0;font:800 19px Manrope,Poppins,sans-serif;letter-spacing:-.02em;color:#16130f}
+html body .w2-create p{margin:4px 0 14px;font-size:12.5px;line-height:1.5;color:#3d352c}
+html body .w2-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+html body .w2-tiles>button,html body .w2-tiles>.btn{all:unset;box-sizing:border-box;cursor:pointer;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:7px;height:78px;border-radius:22px;background:rgba(255,255,255,.78);color:#16130f;font:800 12px Manrope,Poppins,sans-serif;text-align:center;-webkit-tap-highlight-color:transparent;box-shadow:0 4px 14px rgba(22,19,15,.08);transition:transform .15s}
+html body .w2-tiles>button:active{transform:scale(.95)}
+html body .w2-tiles>button:focus-visible{outline:2px solid #16130f;outline-offset:2px}
+html body .w2-tiles>button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+html body .w2-tiles>#vrec{background:#16130f;color:#fff}
+html body .w2-tiles>#w2-golive{background:linear-gradient(135deg,#ffa05a,#ee7a4f);color:#1d0f06}
+html body .w2-create .fld{margin-top:12px;background:rgba(255,255,255,.75);box-shadow:none}
+html body .w2-create .fld input{height:46px}
+
+/* ---- section title ---- */
+html body .w2-sec{display:flex;align-items:baseline;justify-content:space-between;margin:2px 4px 12px}
+html body .w2-sec h3{margin:0;font:800 18px Manrope,Poppins,sans-serif;letter-spacing:-.02em}
+html body .w2-sec span{font:700 12px Manrope,Poppins,sans-serif;color:var(--mut)}
+
+/* ---- clips: tall reel cards ---- */
+html body #v-videos.w2 #vl.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:0}
+html body #v-videos.w2 #vl .vcard{position:relative;display:block;aspect-ratio:3/4.3;padding:0!important;border-radius:26px;overflow:hidden;background:#16130f!important;box-shadow:var(--sh);border:0;isolation:isolate}
+html body #v-videos.w2 #vl .vcard::before{content:"";position:absolute;left:50%;top:44%;width:46px;height:46px;transform:translate(-50%,-50%);z-index:2;border-radius:50%;pointer-events:none;background:rgba(255,255,255,.28) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M9 6.5v11l9-5.5z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E") center/24px no-repeat;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+html body #v-videos.w2 #vl .vcard::after{content:"";display:block;position:absolute;inset:auto 0 0 0;height:62%;z-index:2;pointer-events:none;background:linear-gradient(transparent,rgba(22,19,15,.86))}
+html body #v-videos.w2 #vl .vcard>div:first-child{position:absolute;top:10px;left:10px;right:10px;z-index:4;display:flex;justify-content:space-between;align-items:center}
+html body #v-videos.w2 #vl .vcard>div:first-child .badge{background:rgba(255,255,255,.92);color:#16130f;font-size:10px;padding:4px 9px}
+html body #v-videos.w2 #vl .vcard>div:first-child time{color:#fff;font-size:11px;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+html body #v-videos.w2 #vl .vcard>div:nth-child(2){position:absolute;inset:0;margin:0!important;height:auto;z-index:1}
+html body #v-videos.w2 #vl .vcard video,html body #v-videos.w2 #vl .vcard .poster{position:absolute;inset:0;width:100%;height:100%;max-height:none;aspect-ratio:auto;border-radius:0;object-fit:cover;pointer-events:none;background-color:#2a241d}
+html body #v-videos.w2 #vl .vcard .poster{font-size:0;background-image:var(--crdp,none)}
+html body #v-videos.w2 #vl .vcard .poster::after{display:none}
+html body #v-videos.w2 #vl .vcard>p{position:absolute;left:12px;right:12px;bottom:54px;z-index:3;margin:0!important;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5);font-size:13px!important;font-weight:800;line-height:1.3!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+html body #v-videos.w2 #vl .vcard .bar{position:absolute;left:10px;right:10px;bottom:10px;z-index:4;display:flex;gap:6px;align-items:center;margin:0;padding:0;background:none;border:0;box-shadow:none}
+html body #v-videos.w2 #vl .vcard .bar .act{height:34px;min-width:34px;padding:0 11px;border-radius:999px;border:0;color:#fff;background:rgba(255,255,255,.2);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+html body #v-videos.w2 #vl .vcard .bar .vlk.liked{background:#fff;color:#d9334a}
+html body #v-videos.w2 #vl .vcard .bar .vlk svg{width:15px;height:15px}
+html body #v-videos.w2 #vl .vcard .bar .wa{display:none}
+html body #v-videos.w2 #vl .vcard .bar .vdl{color:#fff!important;background:rgba(217,51,74,.7)}
+html body #v-videos.w2 #vl #vmore{grid-column:1/3}
+
+/* ---- empty states ---- */
+html body #v-videos.w2 #vl>p.sub,html body .w2-empty{grid-column:1/3;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:34px 20px;border-radius:28px;background:var(--g);box-shadow:var(--sh);font-size:13px;line-height:1.5;color:var(--mut)}
+html body #v-videos.w2 #vl>p.sub::before,html body .w2-empty::before{content:"";width:54px;height:54px;border-radius:50%;margin-bottom:6px;background:linear-gradient(135deg,#ffa05a,#ee7a4f) center/26px no-repeat;background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M9 6.5v11l9-5.5z%27 fill=%27%23ffffff%27/%3E%3C/svg%3E"),linear-gradient(135deg,#ffa05a,#ee7a4f)}
+html body .w2-empty b{display:block;font:800 16px Manrope,Poppins,sans-serif;color:var(--fg)}
+html body .w2-empty .btn{margin-top:10px;min-width:160px}
+html body #v-videos.w2>.w2-foot{margin:18px 6px 0;font-size:12px;color:var(--mut);text-align:center}
+
+/* ---- Live tab ---- */
+html body #v-live.w2 #lvl article.box{border-radius:30px;padding:18px 18px 16px}
+html body .w2-host{display:flex;align-items:center;gap:10px;margin:12px 0 0}
+html body .w2-av{flex:none;width:38px;height:38px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.7);color:#16130f;font:800 15px Manrope,Poppins,sans-serif;box-shadow:0 0 0 2px #fff}
+html body .w2-av img{width:100%;height:100%;object-fit:cover;display:block}
+html body .w2-host b{font:800 13px Manrope,Poppins,sans-serif;color:#16130f;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body #v-live.w2 #lvl article.box h3{margin:10px 0 14px}
+html body #v-live.w2 #lvl>p.sub{display:none}
+html body #v-live.w2 #lvset{border-radius:30px;padding:20px}
+html body #v-live.w2 #lvset h3{font:800 19px Manrope,Poppins,sans-serif;letter-spacing:-.02em}
+
+@media (prefers-reduced-motion:reduce){html body .w2-livebar i{animation:none}}
+
+/* the card is the player: hide the browser's own video controls on the grid */
+html body #v-videos.w2 #vl .vcard video::-webkit-media-controls,html body #v-videos.w2 #vl .vcard video::-webkit-media-controls-enclosure,html body #v-videos.w2 #vl .vcard video::-webkit-media-controls-panel{display:none!important;-webkit-appearance:none}
+
+/* ---- cc-motion.css ---- */
+/* cc-motion.css v1 (section 1 of 2): motion for the Comrade Connect redesign.
+   Same vibe as the site: warm orange/peach/rose, soft springs, dark pill buttons. Calm, not decorative.
+   Everything lives inside prefers-reduced-motion:no-preference, so people who turn motion off get none of it.
+   Loaded after cc-redesign.css. Pairs with cc-motion.js (section 2). */
+:root{--cm-ease:cubic-bezier(.2,.9,.3,1);--cm-spring:cubic-bezier(.34,1.45,.5,1);--cm-o:#ff8a3d;--cm-o2:#e8744f;--cm-r:#c4727a}
+@media (prefers-reduced-motion:no-preference){
+
+/* 1. first impression: the page rises in, once */
+html.cm-boot body{animation:cm-boot .7s var(--cm-ease) both}
+@keyframes cm-boot{from{opacity:0}to{opacity:1}}
+html.cm-boot body #tb{animation:cm-dock .8s var(--cm-spring) .25s backwards}
+@keyframes cm-dock{from{opacity:0;transform:translateY(70px) scale(.94)}to{opacity:1;transform:none}}
+
+/* 2. screen changes: each view fades and lifts in (opacity+translate only, never leaves a transform behind) */
+html body .view.on{animation:cm-view .42s var(--cm-ease) backwards}
+@keyframes cm-view{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* 3. scroll reveal: cards float up as they enter, staggered by --cm-d (set by cc-motion.js) */
+.cm-rv:not(.cm-in){opacity:0;transform:translateY(18px) scale(.985)}
+.cm-rv.cm-in{animation:cm-rise .55s var(--cm-ease) var(--cm-d,0s) backwards}
+@keyframes cm-rise{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
+
+/* 4. touch feedback: everything tappable gives a little */
+html body button:not(:disabled),html body .btn,html body .crd-tile,html body .act,html body .pcard.g,html body .box.g{transition:transform .18s var(--cm-ease),box-shadow .25s,background-color .25s,opacity .25s}
+html body button:not(:disabled):active,html body .btn:active,html body .crd-tile:active,html body .act:active{transform:scale(.96)}
+html body .crd-tile:active,html body .box.g:active{box-shadow:0 4px 12px rgba(140,80,50,.14)}
+
+/* 5. bottom pill: the active tab glides open with a spring, its icon pops */
+html:not([data-lay="desktop"]) body #tb button{transition:width .45s var(--cm-spring),padding .35s var(--cm-ease),background .3s,transform .18s var(--cm-ease)}
+html:not([data-lay="desktop"]) body #tb button.on svg,html:not([data-lay="desktop"]) body #tb button.on2 svg{animation:cm-icon .5s var(--cm-spring)}
+@keyframes cm-icon{0%{transform:scale(.55) rotate(-14deg)}100%{transform:none}}
+
+/* 6. living gradient on hero and wallet cards: a slow drift, almost still */
+html body .crdblob{background-size:150% 150%;animation:cm-drift 16s ease-in-out infinite alternate}
+@keyframes cm-drift{from{background-position:0% 30%}to{background-position:100% 70%}}
+
+/* 7. sheets slide up with a soft spring, backdrop fades */
+html body #dm.on{animation:cm-fade .28s ease both}
+html body #dm .bx{animation:cm-sheet .5s var(--cm-spring) both}
+@keyframes cm-fade{from{opacity:0}to{opacity:1}}
+@keyframes cm-sheet{from{opacity:0;transform:translateY(60px) scale(.98)}to{opacity:1;transform:none}}
+
+/* 8. likes: the heart pops, particles fly (particles are made by cc-motion.js) */
+.cm-pop{animation:cm-heart .5s var(--cm-spring)!important}
+@keyframes cm-heart{0%{transform:scale(1)}35%{transform:scale(1.3)}100%{transform:scale(1)}}
+.cm-burst{position:fixed;width:0;height:0;pointer-events:none;z-index:99999}
+.cm-burst i{position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--cm-o);animation:cm-fly .65s var(--cm-ease) forwards}
+.cm-burst i:nth-child(even){background:var(--cm-r);width:5px;height:5px}
+@keyframes cm-fly{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
+
+/* 9. loading skeletons: warm shimmer, same peach as the cards */
+.cm-skel{position:relative;overflow:hidden;border-radius:22px;background:rgba(255,217,184,.35);min-height:84px}
+.cm-skel::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.7) 50%,transparent 80%);transform:translateX(-100%);animation:cm-shim 1.3s ease-in-out infinite}
+@keyframes cm-shim{to{transform:translateX(100%)}}
+
+/* 10. busy buttons (window.ccMotion.busy): pill tightens, label swaps, dots breathe, then a check */
+.cm-busy{position:relative;overflow:hidden;pointer-events:none}
+.cm-busy{display:inline-flex;align-items:center;justify-content:center}
+.cm-busy .cm-spin{width:1.1em;height:1.1em;margin-left:9px;box-sizing:border-box;border:2.5px solid currentColor;border-right-color:transparent;border-radius:50%;opacity:.9;animation:cm-sp .7s linear infinite;flex:none}
+@keyframes cm-sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.cm-busy .cm-spin{animation-duration:2s}}
+.cm-ok{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f08!important}
+.cm-ok svg{width:20px;height:20px;stroke:currentColor;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;animation:cm-draw .45s ease .05s forwards}
+@keyframes cm-draw{to{stroke-dashoffset:0}}
+
+/* 11. wrong password / failed request: the fields shake once */
+.cm-shake{animation:cm-shk .42s ease}
+@keyframes cm-shk{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+
+/* 12. upload card (videos, stories, photos): orange fill, glowing head, calm waiting shimmer, check pop */
+html body #ccu .b{border-radius:24px;background:var(--g,rgba(255,255,255,.9));color:var(--fg,#16130f);border:0;box-shadow:0 14px 40px rgba(140,80,50,.22)}
+html body #ccu .m{height:8px;background:rgba(22,19,15,.08)}
+html body #ccu .m i{position:relative;background:linear-gradient(90deg,#ffa05a,#ee7a4f 60%,#c4727a);transition:width .45s var(--cm-ease)}
+html body #ccu .m i::after{content:"";position:absolute;right:-2px;top:-3px;bottom:-3px;width:14px;border-radius:50%;background:#ffa05a;filter:blur(7px);opacity:.9}
+html body #ccu .m i[style*="width: 0"],#ccu .m i:not([style]){width:35%!important;animation:cm-wait 1.2s ease-in-out infinite alternate}
+@keyframes cm-wait{from{transform:translateX(0)}to{transform:translateX(185%)}}
+html body #ccu.fin .m i{background:linear-gradient(90deg,#ffa05a,#ee7a4f,#ffa05a);background-size:200% 100%}
+html body #ccu .sp{border-color:rgba(255,138,61,.25);border-top-color:#ff8a3d}
+html body #ccu.ok .sp{background:linear-gradient(135deg,#ffa05a,#ee7a4f);color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;animation:cm-heart .5s var(--cm-spring)}
+html body #ccu.ok .m i{background:linear-gradient(90deg,#ffa05a,#ee7a4f)}
+html body #ccu.ok .m i::after{display:none}
+html body #ccu .t span{animation:cm-fade .3s ease}
+html body #ccu.on .b{animation:cm-sheet .45s var(--cm-spring)}
+
+/* 13. numbers (points, streak, wallet): tabular so counting up does not jitter */
+html body #v-me .mecard b,html body #v-rewards b{font-variant-numeric:tabular-nums}
+
+/* 14. toasts and notices slide down/up instead of blinking */
+html body .toast,html body #toast,html body .say{animation:cm-toast .4s var(--cm-spring)}
+@keyframes cm-toast{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+
+/* 15. orders stepper: checks stamp in */
+html body .cs-l .cs-s.d .cs-i{animation:cm-heart .45s var(--cm-spring)}
+}
+
+/* ---- cc-flow.css ---- */
+/* cc-flow.css v1 (section 3 of 4): the verification-code boxes, the recovery-email panel and button waiting states,
+   all in the redesign look (Manrope, cream and white, orange, rose, sage, big soft corners). Loaded after cc-motion.css. */
+:root{--cf-o:#ff8a3d;--cf-o2:#e8744f;--cf-r:#c4727a;--cf-sage:#5f7a59;--cf-bad:#d8493e}
+
+/* ---------- 1. verification code (the 6 boxes) ---------- */
+:root:root:root:root .cco{--a:#e8744f;--rc:#ff8a3d;--g:#5f7a59;--bad:#d8493e;--fg:#16130f;--mut:#6a625a;--edge:rgba(22,19,15,.07);--hi:rgba(255,255,255,.9);--bf1:#fff;--bf2:#fff6f1;
+  font-family:Manrope,system-ui,-apple-system,Segoe UI,sans-serif;border-radius:28px;padding:22px 16px 18px;border:0;
+  background:linear-gradient(160deg,#fff 0%,#fff4ee 55%,#fbe6e3 100%);
+  box-shadow:0 14px 34px rgba(140,80,50,.14),inset 0 1px 0 #fff;-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-theme="dark"]:root:root:root .cco{--fg:#f6efe9;--mut:#b6aca2;--edge:rgba(255,255,255,.1);--bf1:rgba(255,255,255,.1);--bf2:rgba(255,255,255,.05);background:linear-gradient(160deg,#2c2520,#241d19);box-shadow:0 14px 34px rgba(0,0,0,.4)}
+:root:root:root:root .cco:before{background:radial-gradient(closest-side,rgba(255,160,90,.28),transparent)}
+:root:root:root:root .cco.cco-busy{box-shadow:0 14px 34px rgba(140,80,50,.14),0 0 28px rgba(255,138,61,.28)}
+:root:root:root:root .cco.cco-ok{--rc:var(--g);box-shadow:0 14px 34px rgba(140,80,50,.12),0 0 26px rgba(95,122,89,.25)}
+:root:root:root:root .cco.cco-err{--rc:var(--bad);box-shadow:0 14px 34px rgba(140,80,50,.12),0 0 26px rgba(216,73,62,.22)}
+:root:root:root:root .cco:after{background:conic-gradient(from var(--cco-ang),transparent 0%,transparent 45%,var(--rc) 85%,#ffd9b8 100%);filter:drop-shadow(0 0 5px var(--rc))}
+:root:root:root:root .cco .cco-ic{border-radius:16px;width:42px;height:42px;color:var(--a);background:rgba(255,138,61,.13);border:0}
+:root:root:root:root .cco-busy .cco-ic{color:var(--rc);background:rgba(255,138,61,.2)}
+:root:root:root:root .cco-ok .cco-ic{color:var(--g);background:rgba(95,122,89,.15)}
+:root:root:root:root .cco .cco-t{font-size:20px;font-weight:800;letter-spacing:-.02em}
+:root:root:root:root .cco .cco-s{font-size:13px;font-weight:500}
+:root:root:root:root .cco .cco-t b{color:var(--a)}
+:root:root:root:root .cco-busy .cco-t b{color:var(--rc)}:root:root:root:root .cco-ok .cco-t b{color:var(--g)}:root:root:root:root .cco-err .cco-t b{color:var(--bad)}
+:root:root:root:root .cco input.cco-b{font:800 22px/1 Manrope,system-ui,sans-serif!important;border:1.5px solid transparent!important;border-radius:16px!important;
+  background:var(--bf2)!important;box-shadow:inset 0 0 0 1px var(--edge)!important;max-width:46px!important;color:var(--fg)!important;caret-color:var(--cf-o2);transition:transform .25s cubic-bezier(.34,1.45,.5,1),border-color .25s,box-shadow .25s,background .25s}
+:root:root:root:root .cco input.cco-b.cco-f{border-color:rgba(255,138,61,.55)!important;background:#fff!important}
+:root[data-theme="dark"]:root:root:root .cco input.cco-b.cco-f{background:rgba(255,255,255,.14)!important}
+:root:root:root:root .cco input.cco-b:focus{border-color:var(--cf-o)!important;transform:translateY(-2px);box-shadow:0 0 0 4px rgba(255,138,61,.2),0 8px 18px rgba(232,116,79,.18)!important}
+:root:root:root:root .cco.cco-busy input.cco-b{border-color:rgba(255,138,61,.6)!important}
+:root:root:root:root .cco.cco-err input.cco-b{border-color:var(--bad)!important;color:var(--bad)!important;box-shadow:0 0 0 3px rgba(216,73,62,.14)!important}
+:root:root:root:root .cco .cco-final{color:var(--g)}
+@media (prefers-reduced-motion:no-preference){:root:root:root:root .cco input.cco-b.cco-f{animation:cf-key .28s cubic-bezier(.34,1.45,.5,1)}@keyframes cf-key{0%{transform:scale(.86)}100%{transform:none}}}
+:root:root:root:root button.cco-bok{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f08!important;box-shadow:0 10px 24px rgba(238,122,79,.35)!important}
+
+/* ---------- 2. the recovery-email panel (#ccea) ---------- */
+#ccea .bx{text-align:center}
+.cf-ea{display:flex;flex-direction:column;align-items:stretch;gap:0;font-family:Manrope,system-ui,sans-serif}
+.cf-ic{width:54px;height:54px;margin:2px auto 12px;border-radius:20px;display:grid;place-items:center;color:var(--cf-o2);background:linear-gradient(135deg,rgba(255,160,90,.26),rgba(196,114,122,.2))}
+.cf-ic svg{width:26px;height:26px}
+.cf-h{margin:0;font-size:22px;font-weight:800;letter-spacing:-.025em;color:var(--fg)}
+.cf-s{margin:8px 4px 16px;font-size:13px;line-height:1.55;color:var(--mut)}
+.cf-f input{width:100%;height:54px;border-radius:999px;border:1.5px solid transparent;background:rgba(255,255,255,.9);box-shadow:inset 0 0 0 1px rgba(22,19,15,.07);padding:0 20px;font:600 15px Manrope,system-ui,sans-serif;color:var(--fg);outline:0;text-align:center;transition:border-color .2s,box-shadow .25s}
+.cf-f input:focus{border-color:var(--cf-o);box-shadow:0 0 0 4px rgba(255,138,61,.18)}
+:root[data-theme="dark"] .cf-f input{background:rgba(255,255,255,.08);color:var(--fg)}
+.cf-m{min-height:20px;margin:10px 0 4px;font-size:12.5px;font-weight:600;color:var(--mut)}
+.cf-m.bad{color:var(--cf-bad)}
+.cf-go{width:100%;height:54px;border-radius:999px;margin-top:4px}
+.cf-go:disabled{opacity:.7}
+.cf-lnk{all:unset;cursor:pointer;margin:14px auto 0;font-size:13.5px;font-weight:700;color:var(--fg);text-decoration:underline;text-underline-offset:3px;padding:6px 10px}
+.cf-hint{margin:6px 0 0;font-size:12px;color:var(--mut)}
+.cf-done{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0 6px}
+.cf-done b{font-size:20px;font-weight:800}.cf-done span{font-size:13px;color:var(--mut)}
+.cf-dic{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#ffa05a,#ee7a4f);box-shadow:0 12px 28px rgba(238,122,79,.4)}
+.cf-dic svg{width:30px;height:30px;stroke-dasharray:26;stroke-dashoffset:26}
+.cf-ic svg,.cf-dic svg{display:block}
+@media (prefers-reduced-motion:no-preference){
+ .cf-ea>*{animation:cf-in .5s cubic-bezier(.2,.9,.3,1) backwards}
+ .cf-ea>*:nth-child(2){animation-delay:.05s}.cf-ea>*:nth-child(3){animation-delay:.1s}.cf-ea>*:nth-child(4){animation-delay:.15s}.cf-ea>*:nth-child(n+5){animation-delay:.2s}
+ .cf-ic{animation:cf-ic .6s cubic-bezier(.34,1.45,.5,1) backwards!important}
+ @keyframes cf-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+ @keyframes cf-ic{from{opacity:0;transform:scale(.5) rotate(-12deg)}to{opacity:1;transform:none}}
+ .cf-shake{animation:cf-shk .42s ease}
+ @keyframes cf-shk{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+ .cf-dic{animation:cm-heart .55s cubic-bezier(.34,1.45,.5,1)}
+ .cf-dic svg{animation:cm-draw .5s ease .15s forwards}
+}
+@media (prefers-reduced-motion:reduce){.cf-dic svg{stroke-dashoffset:0}}
+
+/* ---------- 3. buttons that are waiting for the server (cc-flow.js adds .cf-wait) ---------- */
+.cf-wait{position:relative;overflow:hidden;pointer-events:none}
+.cf-wait::before{content:"";display:inline-block;width:14px;height:14px;margin-right:9px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:cf-sp .7s linear infinite}
+@keyframes cf-sp{to{transform:rotate(360deg)}}
+.cf-fine{animation:cm-heart .5s cubic-bezier(.34,1.45,.5,1)}
+@media (prefers-reduced-motion:reduce){.cf-wait::before{animation-duration:2s}}
+
+/* ---------- 4. no more doubles ---------- */
+#ccrecnudge,.cf-hide,.cf-dupe{display:none!important}
+
+/* ---------- 5. panel polish: centred, white fields, and the code boxes sit flat inside it (the panel already has its own heading) ---------- */
+#ccea .cf-ea{text-align:center}
+#ccea .cf-f input{background:#fff;box-shadow:inset 0 0 0 1px rgba(22,19,15,.08)}
+#ccea .cf-f input::placeholder{color:rgba(22,19,15,.38);font-weight:500}
+:root[data-theme="dark"] #ccea .cf-f input{background:rgba(255,255,255,.08)}
+:root:root:root:root #ccea .cco{background:none;box-shadow:none;padding:4px 0 2px;margin:0}
+:root:root:root:root #ccea .cco:before{display:none}
+:root:root:root:root #ccea .cco .cco-ic,:root:root:root:root #ccea .cco .cco-t,:root:root:root:root #ccea .cco .cco-s{display:none}
+:root:root:root:root #ccea .cco-stage{height:60px}
+
+/* one loader per button: when the button has its own spinner/dots, the shared one stays off */
+.cf-wait:has(.ccspin,.cm-spin,.sn)::before,.cm-busy:has(.ccspin)::before{display:none!important}
+
+/* ---- cc-polish.css ---- */
+/* cc-polish.css v1: search fix, unboxed footer links, bottom nav that fits, smoother panels. Loaded last. */
+
+/* 1. Search: the heart-animation class .fh was hiding the search header (opacity 0). Undo it inside the search overlay. */
+html body #ccfind .fh{position:static!important;bottom:auto!important;width:auto!important;height:auto!important;opacity:1!important;animation:none!important;transform:none!important;color:inherit!important;display:flex!important}
+html body #ccfind{opacity:0;transition:opacity .22s ease}
+html body #ccfind.on{opacity:1}
+html body #ccfind .fw{animation:ccpUp .32s cubic-bezier(.22,1,.36,1) both}
+@keyframes ccpUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* 2. Footer: Legal and Company are plain links, not a card */
+html body .ccft .ft-sec[aria-label="Legal and company"]{background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:0!important;padding:8px 4px 0!important;margin-top:18px}
+html body .ccft .ft-cols{gap:6px 28px}
+html body .ccft .ft-col h4{margin:0 0 6px;font:800 11px Manrope,Poppins,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+html body .ccft .ft-cols a{border-bottom:0!important;padding:8px 0;font:800 15px/1.25 Manrope,Poppins,system-ui,sans-serif;color:var(--fg)}
+html body .ccft .cp{max-width:520px;margin:18px auto 0!important;padding:0 4px;text-align:left!important;font-size:13px;line-height:1.5;color:var(--mut)}
+html body .ccft .pw{display:flex!important;width:max-content;max-width:100%;margin:12px auto 0 max(4px,calc((100% - 520px)/2 + 4px))!important;padding:9px 16px;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(255,138,61,.16)!important;color:var(--mut);font-weight:800;font-size:12px}
+html body .ccft .pw b{color:var(--mut);font-weight:800}
+
+/* 3. Bottom nav: always fits the screen, equal spacing, expanded tab gets a clean gap and dot */
+html:not([data-lay="desktop"]) body #tb{width:calc(100vw - 24px)!important;max-width:420px!important;justify-content:space-between!important;align-items:center;gap:2px!important;padding:6px!important;border-radius:999px!important;background:var(--g)!important;box-shadow:var(--sh)!important;-webkit-backdrop-filter:blur(18px)!important;backdrop-filter:blur(18px)!important;box-sizing:border-box}
+html:not([data-lay="desktop"]) body #tb button{flex:1 1 0!important;min-width:0!important;width:auto!important;height:48px!important;background:none!important;box-shadow:none!important;padding:0!important}
+html:not([data-lay="desktop"]) body #tb button.on,html:not([data-lay="desktop"]) body #tb button.on2{flex:0 0 auto!important;gap:8px!important;padding:0 14px 0 14px!important;font-size:13px!important;white-space:nowrap;background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;box-shadow:0 8px 20px rgba(238,122,79,.35)!important}
+html:not([data-lay="desktop"]) body #tb button.on:not(.dot)::after,html:not([data-lay="desktop"]) body #tb button.on2:not(.dot)::after{content:"";width:5px;height:5px;border-radius:50%;background:#16130f;flex:none;margin-left:2px}
+@media(max-width:360px){html:not([data-lay="desktop"]) body #tb button.on,html:not([data-lay="desktop"]) body #tb button.on2{padding:0 10px!important;gap:6px!important;font-size:12px!important}}
+
+/* 4. Smoother panels */
+html{scroll-behavior:smooth}
+.dsheet,.sheet,[class*="sheet"],#ccfind,.ccwb{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.dsheet,.sheet{will-change:transform;backface-visibility:hidden;transition-timing-function:cubic-bezier(.22,1,.36,1)}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ---- cc-fix3.css ---- */
+/* cc-fix3.css: Live video buttons spread out, university picker in the new look */
+/* 1. Live: top-right keeps only sound / flip / close; minimize goes top-left; full screen and heart go bottom-right */
+html body #ccl-ctl{position:absolute!important;inset:0!important;display:block!important;pointer-events:none!important;gap:0!important}
+html body #ccl-mini #ccl-ctl{display:none!important}
+html body #ccl-ctl button{position:absolute!important;pointer-events:auto!important;width:40px!important;height:40px!important;margin:0!important;background:rgba(22,19,15,.5)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:none!important}
+html body #ccl-ctl button.ccl-plain{background:rgba(22,19,15,.5)!important;filter:none!important}
+html body #ccl-ctl button[data-k="x"]{top:10px!important;right:10px!important}
+html body #ccl-ctl button[data-k="snd"]{top:10px!important;right:58px!important}
+html body #ccl-ctl button[data-k="flip"]{top:10px!important;right:106px!important}
+html body #ccl-ctl button[data-k="min"]{top:10px!important;left:10px!important;right:auto!important}
+html body #ccl-ctl button[data-k="fs"]{bottom:10px!important;right:10px!important;top:auto!important}
+html body #ccl-ctl button[data-k="hrt"]{bottom:10px!important;right:58px!important;top:auto!important}
+html body #rmedia.ccl-fs #ccl-ctl button[data-k="x"],html body #rmedia.ccl-fs #ccl-ctl button[data-k="snd"],html body #rmedia.ccl-fs #ccl-ctl button[data-k="flip"],html body #rmedia.ccl-fs #ccl-ctl button[data-k="min"]{top:calc(10px + env(safe-area-inset-top,0px))!important}
+html body #rmedia.ccl-fs #ccl-ctl button[data-k="fs"],html body #rmedia.ccl-fs #ccl-ctl button[data-k="hrt"]{bottom:calc(14px + env(safe-area-inset-bottom,0px))!important}
+/* 2. University picker: same look as the rest of the app (soft cream card, round pills, orange selection) */
+html body #ccuniv{background:rgba(22,19,15,.38)!important;-webkit-backdrop-filter:blur(8px)!important;backdrop-filter:blur(8px)!important;align-items:flex-end!important;padding:0!important}
+html body #ccuniv .cd{max-width:480px!important;max-height:90vh!important;border-radius:32px 32px 0 0!important;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px))!important;background:radial-gradient(60% 40% at 15% 0,rgba(255,138,61,.28) 0,transparent 70%),radial-gradient(50% 40% at 95% 8%,rgba(196,114,122,.22) 0,transparent 70%),var(--bg,#fbf1ec)!important;border:0!important;box-shadow:0 -20px 60px rgba(22,19,15,.25)!important;color:var(--fg,#16130f)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;font-family:Manrope,Poppins,sans-serif!important}
+html body #ccuniv h2{font:800 22px/1.15 Manrope,sans-serif!important;letter-spacing:-.02em;color:var(--fg,#16130f)!important}
+html body #ccuniv p{color:var(--mut,#6b6259)!important;opacity:1!important}
+html body #ccuniv .x{width:40px!important;height:40px!important;top:14px!important;right:14px!important;border:0!important;background:var(--g,#fff)!important;color:var(--fg,#16130f)!important;box-shadow:var(--sh,0 6px 18px rgba(22,19,15,.12))!important}
+html body #ccuniv .loc{height:50px;border:0!important;border-radius:999px!important;background:var(--ink,#16130f)!important;color:var(--inkfg,#fff)!important;font:800 14px Manrope,sans-serif!important;box-shadow:var(--sh)!important}
+html body #ccuniv input{height:50px;padding:0 20px!important;border:0!important;border-radius:999px!important;background:var(--g,#fff)!important;color:var(--fg,#16130f)!important;font:600 14px Manrope,sans-serif!important;box-shadow:var(--sh)!important}
+html body #ccuniv input::placeholder{color:var(--mut,#8a8079)}
+html body #ccuniv .it{padding:15px 18px!important;border:0!important;border-radius:22px!important;background:var(--g,#fff)!important;color:var(--fg,#16130f)!important;font:700 14px Manrope,sans-serif!important;box-shadow:var(--sh)!important}
+html body #ccuniv .it small{color:var(--mut,#6b6259)!important;opacity:1!important;font-weight:700}
+html body #ccuniv .it.on{background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;color:#1d0f06!important}
+html body #ccuniv .it.on small{color:#1d0f06!important}
+html body #ccuniv .it.all{background:linear-gradient(135deg,rgba(255,160,90,.3),rgba(196,114,122,.25)),var(--g,#fff)!important}
+html body #ccuniv .it.all em{color:var(--mut,#6b6259)!important;opacity:1!important}
+html body #ccuniv .hd,html body #ccuniv .msg{color:var(--mut,#6b6259)!important;opacity:1!important;font-weight:700}
+html body .ccc-chip{border:0!important;background:var(--g,#fff)!important;color:var(--fg,#16130f)!important;box-shadow:var(--sh)!important;font:700 13px Manrope,sans-serif!important}
+
+/* ---- cc-fix1.css ---- */
+/* cc-fix1.css: clean bottom-nav pill, clean top bar, Watch tabs no longer black */
+/* 1. bottom nav: no stray dot on the active orange pill, tidy unread badge, even spacing */
+html body #tb button.on::after,html body #tb button.on2::after,
+html body #tb button.on.dot::after,html body #tb button.on.ccupd-dot::after,
+html body #tb button[data-v="me"].on::after{content:none!important;display:none!important;width:0!important;height:0!important;margin:0!important}
+html body #tb button.dot:not(.on)::after,html body #tb button.ccupd-dot:not(.on)::after{content:""!important;display:block!important;position:absolute!important;top:9px!important;right:calc(50% - 17px)!important;width:8px!important;height:8px!important;border-radius:50%!important;background:#ee7a4f!important;box-shadow:0 0 0 2px var(--bg)!important}
+html:not([data-lay="desktop"]) body #tb{justify-content:space-between!important;align-items:center!important;overflow:visible!important}
+html:not([data-lay="desktop"]) body #tb button{position:relative;display:flex!important;align-items:center;justify-content:center}
+html:not([data-lay="desktop"]) body #tb button.on,html:not([data-lay="desktop"]) body #tb button.on2{flex:0 0 auto!important;min-width:max-content!important;padding:0 18px!important;gap:8px!important}
+/* 2. top bar: one clean panel, round icon buttons spaced evenly, no hard edge or shadow */
+html body nav.g:not(#tb){background:linear-gradient(180deg,var(--bg) 80%,rgba(0,0,0,0))!important;border:0!important;box-shadow:none!important;border-radius:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:8px 12px!important;gap:6px!important;align-items:center!important}
+html body nav.g:not(#tb)>div{display:flex!important;align-items:center!important;gap:2px!important;flex:none!important}
+html body nav.g:not(#tb) .ib{width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;background:none!important;border:0!important;box-shadow:none!important}
+html body nav.g:not(#tb) .ib svg{width:22px;height:22px}
+html body .crd-search{min-width:0!important;margin-right:2px}
+/* 3. Watch tabs (Videos / Live / Mbogi Talk): light pill, only the open tab is dark */
+html body .crd-seg{background:var(--g)!important;border:0!important;padding:5px!important;gap:4px}
+html body .crd-seg button{background:transparent!important;background-image:none!important;color:var(--fg)!important;box-shadow:none!important;border:0!important;opacity:1!important;text-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;filter:none!important}
+html body .crd-seg button.on{background:var(--ink)!important;color:var(--inkfg)!important}
+
+/* ---- cc-fix7.css ---- */
+/* cc-fix7.css: loaded after cc-fix1.css so it wins. */
+/* 1. only Home, Explore, Market, Watch and Me in the bottom bar */
+html body #tb button[data-v="live"][data-v],
+html body #tb button[data-v="mbogi"][data-v],
+html body #tb button[data-v="rewards"][data-v],
+html body #tb #ccsettab[aria-label]{display:none!important}
+/* 2. the open tab is expanded with a small dot at the right of its name */
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on::after,
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2::after,
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on:not(.dot)::after,
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2:not(.dot)::after{content:""!important;display:block!important;position:static!important;width:6px!important;height:6px!important;margin:0 0 0 2px!important;border-radius:50%!important;background:#16130f!important;flex:none!important}
+/* 3. one search only */
+html body nav.g:not(#tb) #fnd[aria-label]{display:none!important}
+
+/* ---- cc-fix8.css ---- */
+/* cc-fix8.css: bottom bar. Round glass buttons; the open tab grows into an orange pill with a black dot on the right.
+   Every tab opens to the same size. Loaded after cc-fix7.css. */
+html:not([data-lay="desktop"]):not(.zz) body #tb{background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0 2px!important;gap:0!important;justify-content:space-between!important;align-items:center!important}
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v]{height:48px!important;padding:0!important;align-items:center!important;justify-content:center!important;transition:width .3s cubic-bezier(.2,.8,.2,1),flex-basis .3s cubic-bezier(.2,.8,.2,1),min-width .3s cubic-bezier(.2,.8,.2,1)}
+/* closed: round glass circle */
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v]:not(.on):not(.on2){flex:0 0 48px!important;width:48px!important;min-width:48px!important;border-radius:50%!important;background:var(--g)!important;border:1px solid var(--gb)!important;box-shadow:var(--sh)!important;-webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important}
+/* open: orange pill, same width for every tab */
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on,
+html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2{flex:0 0 124px!important;width:124px!important;min-width:124px!important;gap:8px!important;border-radius:999px!important;border:0!important;background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;box-shadow:0 8px 20px rgba(238,122,79,.35)!important;color:#1d0f06!important;font-size:13px!important;font-weight:700!important;white-space:nowrap}
+@media(max-width:360px){
+  html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v]:not(.on):not(.on2){flex-basis:44px!important;width:44px!important;min-width:44px!important}
+  html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on,html:not([data-lay="desktop"]):not(.zz) body #tb button[data-v].on2{flex-basis:112px!important;width:112px!important;min-width:112px!important;font-size:12px!important;gap:6px!important}
+}
+
+/* ---- cc-fix9.css ---- */
+/* cc-fix9.css: the bottom tab bar, one final and complete definition. Loaded after every other style, so it wins.
+   - Every tab is a 48px circle with its icon dead centre.
+   - The open tab grows into an orange pill and shrinks back. The corner radius never changes, so the shape stays a perfect circle or pill
+     at every moment of the animation (the old 50% radius turned into an oval half way).
+   - The orange fills in by fading, the label and the black dot fade and widen together, so nothing jumps.
+   Needs cc-tabfx.js (it wraps the labels in .tl and adds the .td dot). */
+:root{--cc-tab-ease:cubic-bezier(.32,.72,0,1)}
+
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb{background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0 2px!important;gap:0!important;justify-content:space-between!important;align-items:center!important;overflow:visible!important}
+
+/* every tab: a perfect circle, icon in the middle */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v]:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]){
+  position:relative!important;box-sizing:border-box!important;overflow:hidden!important;
+  flex:0 0 48px!important;width:48px!important;min-width:48px!important;height:48px!important;padding:0!important;margin:0!important;gap:0!important;
+  align-items:center!important;justify-content:center!important;
+  border:0!important;border-radius:999px!important;
+  background:var(--g)!important;color:var(--fg)!important;
+  box-shadow:var(--sh),inset 0 0 0 1px var(--gb)!important;
+  -webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important;
+  font:700 13px/1 Manrope,system-ui,sans-serif!important;white-space:nowrap!important;
+  transition:flex-basis .4s var(--cc-tab-ease),width .4s var(--cc-tab-ease),min-width .4s var(--cc-tab-ease),color .3s ease,box-shadow .35s ease!important;
+  -webkit-tap-highlight-color:transparent}
+
+/* the orange, faded in on top of the glass */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v]::before{content:""!important;position:absolute!important;inset:0!important;z-index:0!important;border-radius:inherit!important;background:linear-gradient(135deg,#ffa05a,#ee7a4f)!important;opacity:0!important;transition:opacity .3s ease!important;pointer-events:none!important}
+
+/* the open tab: pill */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]),
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]){
+  flex-basis:112px!important;width:112px!important;min-width:112px!important;color:#1d0f06!important;
+  box-shadow:0 8px 20px rgba(238,122,79,.35),inset 0 0 0 1px transparent!important}
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on::before,
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2::before{opacity:1!important}
+
+/* icon: fixed size, never shrinks, no margin, no spin */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v] svg{position:relative!important;z-index:1!important;display:block!important;flex:none!important;width:20px!important;height:20px!important;margin:0!important;animation:none!important;transform:none!important;color:inherit!important}
+
+/* label: closed = no width at all, so the icon is the only thing in the circle */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v] .tl{position:relative;z-index:1;display:block;flex:none;max-width:0;margin-left:0;overflow:hidden;opacity:0;font:700 13px/1 Manrope,system-ui,sans-serif;color:inherit;transition:max-width .4s var(--cc-tab-ease),margin-left .4s var(--cc-tab-ease),opacity .18s ease}
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on .tl,
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2 .tl{max-width:64px;margin-left:8px;opacity:1;transition:max-width .4s var(--cc-tab-ease),margin-left .4s var(--cc-tab-ease),opacity .3s ease .1s}
+
+/* black dot on the right of the open tab */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v] .td{position:relative;z-index:1;display:block;flex:none;width:0;height:6px;margin-left:0;border-radius:50%;background:#16130f;opacity:0;transition:width .4s var(--cc-tab-ease),margin-left .4s var(--cc-tab-ease),opacity .18s ease}
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on .td,
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2 .td{width:6px;margin-left:8px;opacity:1;transition:width .4s var(--cc-tab-ease),margin-left .4s var(--cc-tab-ease),opacity .3s ease .1s}
+
+/* the older "on" dot drawn with ::after is replaced by .td above (the small orange update dot on closed tabs is kept) */
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on::after,
+html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2::after{content:none!important;display:none!important}
+
+@media(max-width:360px){
+  html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v]:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]){flex-basis:44px!important;width:44px!important;min-width:44px!important;height:44px!important}
+  html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]),
+  html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v].on2:not([data-v="live"]):not([data-v="mbogi"]):not([data-v="rewards"]){flex-basis:104px!important;width:104px!important;min-width:104px!important}
+  html:not([data-lay="desktop"]):not(.zz) body #tb#tb button[data-v] .tl{font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){
+  html body #tb#tb button[data-v],html body #tb#tb button[data-v]::before,html body #tb#tb button[data-v] .tl,html body #tb#tb button[data-v] .td{transition-duration:.01s!important;transition-delay:0s!important}
+}
+
+/* ---- cc-verify.css ---- */
+/* cc-verify.css v1: the new code-verification look (summer orange page, black logo, envelope, dots then one tick, new-password screen).
+   Loaded after cc-flow.css and cc-polish.css. Only styles; the logic stays in cc-core.js, cc-otp.js and cc-emailask.js. */
+
+/* ---------- page: summer orange into cream, black logo ---------- */
+html body #ccfgt{background:linear-gradient(180deg,#ffc99c 0,#ffdcc2 190px,#fbe9df 340px,#fbf1ed 480px)!important;font-family:Poppins,Manrope,system-ui,sans-serif}
+html body #ccfgt::before{display:none!important}
+:root[data-theme="dark"] body #ccfgt{background:linear-gradient(180deg,#3b2415 0,#241a13 260px,#17130f 460px)!important}
+html body #ccfgt .fp-ic{background:none!important;border:0!important;box-shadow:none!important;color:#16130f}
+html body #ccfgt .fp-brand{font:600 14px/1 Poppins,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:#16130f}
+html body #ccfgt .fp-brand img{height:26px;filter:brightness(0)!important}
+:root[data-theme="dark"] body #ccfgt .fp-ic,:root[data-theme="dark"] body #ccfgt .fp-brand{color:#f6efe9}
+:root[data-theme="dark"] body #ccfgt .fp-brand img{filter:none!important}
+html body #ccfgt .fp-bar i{height:3px;background:rgba(22,19,15,.12)}
+html body #ccfgt .fp-bar i.on{background:#16130f}
+html body #ccfgt .fp-step{padding:0!important;background:none!important;margin:0 0 6px;font:600 10.5px Poppins,system-ui,sans-serif;letter-spacing:.09em;color:#6a625a}
+html body #ccfgt h1{font:800 24px/1.15 Unbounded,Poppins,system-ui,sans-serif!important;letter-spacing:-.02em}
+html body #ccfgt .fp-sub,html body #ccfgt .fp-msg{font-family:Poppins,system-ui,sans-serif;font-size:13.5px}
+html body #ccfgt .fp-f>label{font:600 12.5px Poppins,system-ui,sans-serif}
+html body #ccfgt input:not(.cco-b){background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(22,19,15,.12);font-family:Poppins,system-ui,sans-serif;transition:border-color .25s,background .25s}
+html body #ccfgt input:not(.cco-b):focus{border-color:#e8744f;background:#fff}
+html body #ccfgt .fp-go{background:linear-gradient(120deg,#16130f,#4a423b)!important;color:#fff!important;font:600 15px Poppins,system-ui,sans-serif;box-shadow:0 10px 22px -8px rgba(22,19,15,.55);transition:background .3s,color .3s,box-shadow .3s,transform .15s}
+html body #ccfgt .fp-go.ccv-off{background:rgba(22,19,15,.08)!important;color:rgba(22,19,15,.4)!important;box-shadow:none}
+html body #ccfgt .fp-link{font:600 12.5px Poppins,system-ui,sans-serif}
+
+/* ---------- steps 2 and 3: centred, with an illustration ---------- */
+#ccfgt[data-ccv="2"] :is(.fp-step,h1,.fp-sub,.fp-msg),#ccfgt[data-ccv="3"] :is(.fp-step,h1,.fp-sub,.fp-msg){text-align:center}
+.ccv-ill{display:none;position:relative;width:84px;height:84px;margin:4px auto 12px}
+#ccfgt[data-ccv="2"] .ccv-ill,#ccfgt[data-ccv="3"] .ccv-ill{display:block}
+.ccv-env,.ccv-lock{display:none;position:absolute;inset:0}
+#ccfgt[data-ccv="2"] .ccv-env,#ccfgt[data-ccv="3"] .ccv-lock{display:block}
+.ccv-ill .d{position:absolute;inset:6px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe6cf,#ffd9b8 55%,#ffbf93);transform:scale(.4);opacity:0;animation:ccvpop .6s cubic-bezier(.34,1.56,.64,1) .1s forwards}
+.ccv-ill .e{position:absolute;left:50%;top:50%;width:44px;height:32px;margin:-16px 0 0 -22px;border-radius:7px;background:#fff;border:2.5px solid #16130f;transform:scale(0);animation:ccvpop .5s cubic-bezier(.34,1.56,.64,1) .45s forwards}
+.ccv-ill .e svg{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:#16130f;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.ccv-ill .bb{position:absolute;right:-12px;top:2px;padding:5px 9px;border-radius:12px 12px 12px 3px;background:#fff;border:2.5px solid #16130f;font:700 12px/1 Poppins,sans-serif;letter-spacing:.12em;color:#e8744f;transform:scale(0) rotate(-8deg);transform-origin:0 100%;animation:ccvbub .55s cubic-bezier(.34,1.56,.64,1) .95s forwards}
+.ccv-ill .l{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;fill:none;stroke:#16130f;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;transform:scale(0);animation:ccvpop .5s cubic-bezier(.34,1.56,.64,1) .45s forwards}
+.ccv-ill .bd{fill:#fff}.ccv-ill .kh{fill:#16130f;stroke:none}
+.ccv-ill .sh{transform-box:fill-box;transform-origin:100% 100%;transition:transform .5s cubic-bezier(.34,1.56,.64,1)}
+#ccfgt.ccv-ok .ccv-ill .sh{transform:translateY(-5px) rotate(-22deg)}
+@keyframes ccvpop{to{transform:scale(1);opacity:1}}
+@keyframes ccvbub{to{transform:scale(1) rotate(0)}}
+
+/* ---------- the six code boxes: no card, dots while checking, then ONE tick ---------- */
+html body #ccfgt #ccfg-cb .fp-f>label{display:none}
+html body #ccfgt .cco{background:none!important;box-shadow:none!important;padding:4px 0 2px!important;margin:0!important}
+html body #ccfgt .cco:before,html body #ccfgt .cco:after{display:none!important}
+html body #ccfgt .cco .cco-ic,html body #ccfgt .cco .cco-t,html body #ccfgt .cco .cco-s,.cco .cco-final{display:none!important}
+html body #ccfgt .cco-stage{height:64px}
+.cco-busy .cco-row{opacity:0!important;pointer-events:none}
+.ccv-ov{position:absolute;inset:0;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .3s;z-index:5}
+.cco-busy .ccv-ov,.cco-ok .ccv-ov{opacity:1}
+.ccv-dots{display:flex;gap:9px;height:26px;align-items:flex-end}
+.cco-ok .ccv-dots{display:none}
+.ccv-dots i{width:11px;height:11px;border-radius:50%;animation:ccvwave 1.1s ease-in-out infinite}
+.ccv-dots i:nth-child(1){background:#ff8a3d}.ccv-dots i:nth-child(2){background:#c4727a;animation-delay:.1s}.ccv-dots i:nth-child(3){background:#a9b8a2;animation-delay:.2s}.ccv-dots i:nth-child(4){background:#16130f;animation-delay:.3s}.ccv-dots i:nth-child(5){background:#e8744f;animation-delay:.4s}
+@keyframes ccvwave{0%,60%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-12px) scale(1.12)}}
+.ccv-tk{display:none;position:relative;width:54px;height:54px;border-radius:50%;background:#5f7a59;place-items:center;transform:scale(0);box-shadow:0 12px 22px -10px rgba(95,122,89,.7)}
+.cco-ok .ccv-tk{display:grid;animation:ccvpop .55s cubic-bezier(.34,1.56,.64,1) forwards}
+.ccv-tk svg{width:30px;height:30px;fill:none;stroke:#fff;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:44;stroke-dashoffset:44}
+.cco-ok .ccv-tk svg{animation:ccvdraw .5s ease .35s forwards}
+.ccv-tk::before{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid #5f7a59;opacity:0}
+.cco-ok .ccv-tk::before{animation:ccvring .7s ease-out .3s}
+@keyframes ccvdraw{to{stroke-dashoffset:0}}
+@keyframes ccvring{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.55);opacity:0}}
+
+/* ---------- step 3: choose a new password (meter and rules) ---------- */
+.ccv-pw{margin:12px 2px 0}
+.ccv-meter{display:flex;gap:6px}
+.ccv-meter i{flex:1;height:5px;border-radius:5px;background:rgba(22,19,15,.1);transition:background .3s}
+.ccv-pw[data-lv="1"] .ccv-meter i:nth-child(-n+1){background:#d8493e}
+.ccv-pw[data-lv="2"] .ccv-meter i:nth-child(-n+2){background:#ff8a3d}
+.ccv-pw[data-lv="3"] .ccv-meter i:nth-child(-n+3){background:#7f9a78}
+.ccv-pw[data-lv="4"] .ccv-meter i:nth-child(-n+4){background:#5f7a59}
+.ccv-lvl{margin:8px 0 10px;font:600 12.5px Poppins,system-ui,sans-serif;color:#6a625a;transition:color .3s}
+.ccv-pw[data-lv="1"] .ccv-lvl{color:#d8493e}.ccv-pw[data-lv="2"] .ccv-lvl{color:#c4580f}.ccv-pw[data-lv="3"] .ccv-lvl,.ccv-pw[data-lv="4"] .ccv-lvl{color:#5f7a59}
+.ccv-rules{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.ccv-rules li{position:relative;padding-left:26px;font:500 12.5px/1.4 Poppins,system-ui,sans-serif;color:#6a625a;transition:color .25s}
+.ccv-rules li::before{content:"";position:absolute;left:0;top:1px;width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(22,19,15,.25);background:transparent;transition:background .25s,border-color .25s,transform .3s cubic-bezier(.34,1.56,.64,1)}
+.ccv-rules li.ok{color:#16130f}
+.ccv-rules li.ok::before{background:#5f7a59;border-color:#5f7a59;transform:scale(1.08)}
+.ccv-rules li.ok::after{content:"";position:absolute;left:5.5px;top:4px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ccv-note{margin:10px 0 0;font:500 11.5px Poppins,system-ui,sans-serif;color:#6a625a}
+:root[data-theme="dark"] .ccv-rules li.ok{color:#f6efe9}
+@media (prefers-reduced-motion:reduce){.ccv-ill *,.ccv-dots i,.ccv-tk,.ccv-tk *{animation-duration:.01s!important;animation-delay:0s!important}}
+
+/* recovery email page (same #ccfgt page as Forgot password) */
+#ccfgt.ccrem.mg .fp-bar{display:none}
+#ccfgt.ccrem.mg .fp-step{text-transform:uppercase}
+
+/* ---- cc-market-cart.css ---- */
+.mct-cart{display:none!important;position:relative}
+.mct-cart.on{display:inline-grid!important;place-items:center}
+.mct-n{position:absolute;top:-2px;right:-2px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#5c6d56;color:#fff;font:800 10px/17px Manrope,system-ui,sans-serif;text-align:center}
+.mct-n[hidden]{display:none}
+.mu-add.done{background:#16130f!important}
+.mct-ov{position:fixed;inset:0;z-index:10050;background:rgba(16,19,15,.45);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center}
+.mct-sh{width:100%;max-width:520px;max-height:92vh;overflow:auto;background:linear-gradient(180deg,#fdf1ec,#fcefe8);color:#16130f;border-radius:32px 32px 0 0;padding:10px 20px calc(22px + env(safe-area-inset-bottom,0px));animation:mct-up .28s ease-out;font-family:Manrope,system-ui,sans-serif}
+@keyframes mct-up{from{transform:translateY(100%)}}
+.mct-grab{display:block;width:44px;height:5px;border-radius:3px;background:rgba(22,19,15,.15);margin:0 auto 14px}
+.mct-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.mct-hd h3{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em;color:#16130f}
+.mct-x{all:unset;cursor:pointer;width:44px;height:44px;border-radius:50%;background:#fff;display:grid;place-items:center;color:#16130f;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.mct-row{display:flex;align-items:center;gap:12px;background:#fff;border-radius:22px;padding:10px 12px;margin-bottom:10px}
+.mct-th{width:56px;height:56px;border-radius:16px;object-fit:cover;flex:none;background:linear-gradient(160deg,#ffe3cc,#f4c2bf)}
+.mct-mid{flex:1;min-width:0}.mct-mid b{display:block;font-size:15px;color:#16130f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mct-mid small{color:#6b625a;font-size:12px}
+.mct-pr{font-size:14px;color:#16130f;white-space:nowrap}
+.mct-rm{all:unset;cursor:pointer;width:32px;height:32px;border-radius:50%;background:rgba(255,138,61,.15);display:grid;place-items:center;font-size:20px;color:#16130f}
+.mct-box{background:#fff;border-radius:24px;padding:16px 18px;margin:6px 0 14px}
+.mct-box p{margin:6px 0 0;font-size:12.5px;line-height:1.5;color:#6b625a}
+.mct-sub{display:flex;justify-content:space-between;font-size:16px;color:#16130f}
+.mct-cap{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;color:#6b625a}
+.mct-big{display:block;font-size:34px;font-weight:800;letter-spacing:-.03em;color:#16130f;margin-top:4px}
+.mct-em{text-align:center;color:#6b625a;padding:26px 0}
+.mct-b{all:unset;cursor:pointer;box-sizing:border-box;display:block;width:100%;text-align:center;height:54px;line-height:54px;border-radius:999px;background:#fff;color:#16130f;font:800 15px/54px Manrope,system-ui,sans-serif;margin-top:10px}
+.mct-b.dark{background:#16130f;color:#fff}
+.mct-b.grad{background:linear-gradient(90deg,#ff9f5a,#f07d52);color:#16130f}
+.mct-lb{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;color:#6b625a;margin:4px 6px 6px}
+.mct-in{box-sizing:border-box;width:100%;height:54px;border:0;border-radius:999px;background:#fff;padding:0 20px;font:700 16px Manrope,system-ui,sans-serif;color:#16130f;outline:0}
+.mct-pt{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border-radius:24px;padding:14px 16px;margin-top:12px}
+.mct-pt b{display:block;color:#16130f}.mct-pt small{color:#6b625a;font-size:12px}
+.mct-sw{position:relative;width:54px;height:32px;flex:none}.mct-sw input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.mct-sw i{position:absolute;inset:0;border-radius:16px;background:#d9d0c9;transition:.2s;pointer-events:none}
+.mct-sw i::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;transition:.2s}
+.mct-sw input:checked+i{background:#5c6d56}.mct-sw input:checked+i::after{left:25px}
+.mct-er{min-height:18px;margin:10px 6px 0;font-size:13px;color:#b3261e}
+.mct-nt{text-align:center;font-size:12px;color:#6b625a;margin:12px 0 0}
+.mct-ok{text-align:center;font-weight:700;line-height:1.5;color:#16130f}
+html body #v-market #mbrowse .mkv button{background:var(--g)!important;color:var(--fg)!important;box-shadow:var(--sh)!important;outline:0;-webkit-tap-highlight-color:transparent}
+html body #v-market #mbrowse .mkv button.on{background:var(--ink)!important;color:var(--inkfg)!important}
+html body #v-market #mbrowse #mgrid.rail .mc::after{background:linear-gradient(to top,rgba(10,12,20,.88) 0,rgba(10,12,20,.5) 40%,rgba(10,12,20,0) 66%)!important}
+html body #v-market #mbrowse #mgrid.rail .mc .mb{justify-content:flex-end!important;gap:6px}
+html body #v-market #mbrowse #mgrid.rail .mc .mb>*:not(b):not(em):not(small){display:none!important}
+html body #v-market #mbrowse #mgrid.rail .mc .mb small.mtl:last-of-type{display:none!important}
+html body #v-market #mbrowse #mgrid.rail .mc .mb small{order:4!important;background:rgba(10,12,20,.65)!important;font-size:11px!important;max-width:100%!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body #v-market #mbrowse #mgrid.rail .mc .mb small:first-of-type{order:1!important}
+html body #v-market #mbrowse #mgrid.rail .mc .mb b{order:2!important;margin:0!important;font-size:18px!important;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+html body #v-market #mbrowse #mgrid.rail .mc .mb em{order:3!important;margin:0!important;opacity:1!important;font-size:30px!important;color:#fff!important;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+
+/* ---- cc-market-polish.css ---- */
+/* cc-market-polish.css v1 */
+html body #v-market :is(#mseg button,.mu-cats .mu-cat,.mkv button){-webkit-tap-highlight-color:transparent;outline:0}
+html body #v-market :is(.mu-cats .mu-cat,.mkv button):not(.on):is(:hover,:focus,:active,:focus-visible){background:var(--g)!important;color:var(--fg)!important}
+html body #v-market #mseg button:not(.on):is(:hover,:focus,:active,:focus-visible){background:transparent!important;color:var(--fg)!important}
+html body #v-market :is(#mseg button,.mu-cats .mu-cat,.mkv button).on{background:var(--ink)!important;color:var(--inkfg)!important}
+html body #v-market #mbrowse #mgrid.rail .mc::after{background:linear-gradient(to top,rgba(10,12,20,.92) 0,rgba(10,12,20,.8) 45%,rgba(10,12,20,.62) 75%,rgba(10,12,20,.5) 100%)!important}
+html body #v-market #mbrowse #mgrid.rail .mc .mb small.ccrt{display:none!important}
+html body #v-market #mbrowse #mgrid:not(.rail) .mc .mb{padding-right:52px}
+
+/* ---- cc-calm.css ---- */
+/* cc-calm.css: no tap animations and no blue top gradient.
+   Loaded last, so it wins over the older files without editing them. */
+
+/* 1. nothing grows or shrinks while you press it */
+html body :is(button,.btn,.ib,.act,.chip,.pill,.tab,.pcard,.crd-tile,.box.g,.cct,.cct-i,.cls-ring,#fab,#tb button,a,[role="button"]):active{transform:none!important}
+html body .cct:active .cct-i{transform:none!important}
+
+/* 2. no flash or glow on tap (the phone's own tap highlight sits on top of the glass and looks like a mirror glare) */
+html,html body,html body *{-webkit-tap-highlight-color:transparent!important}
+html body :is(button,.btn,.ib,.act,.chip,.cct,.crd-tile,.pcard,a,[role="button"]):active{filter:none!important;outline:0!important}
+html body :is(button,.btn,.ib,a,[role="button"]):focus:not(:focus-visible){outline:0!important}
+
+/* 3. the blue glow at the top of the screen, light and dark theme */
+html body .bg::after,html[data-theme="light"] body .bg::after,:root[data-theme="light"] .bg::after{display:none!important;background:none!important;content:none!important}
+
+/* ---- cc-buttons.css ---- */
+/* cc-buttons.css v1 (section 1 of 2): no white or black filter on buttons.
+   The old tab spotlight lit a white patch (dark theme) or a black patch (light theme) under your finger.
+   Loaded after cc-calm.css, so it wins without editing the older files. Nothing is removed, only switched off. */
+
+/* 1. the white/black spotlight on tabs and its glare layer: off in both themes */
+html body .tab::after,
+html body .tab.lit::after,
+html[data-theme="light"] body .tab::after,
+:root[data-theme="light"] .tab::after{content:none!important;display:none!important;background:none!important;mix-blend-mode:normal!important;opacity:0!important}
+
+/* 2. one calm press feedback for every button: a small fade, no colour flash, no scale, no glow */
+html body :is(button,.btn,.ib,.act,.chip,.pill,.tab,.crd-tile,[role="button"]):not(:disabled){-webkit-tap-highlight-color:transparent!important;transition:opacity .15s ease,background-color .2s ease,border-color .2s ease,color .2s ease}
+html body :is(button,.btn,.ib,.act,.chip,.pill,.tab,.crd-tile,[role="button"]):not(:disabled):active{opacity:.82;filter:none!important;transform:none!important;box-shadow:none}
+
+/* 3. a button you let go of never stays tinted white or black (hover and focus leftovers on touch screens) */
+@media (hover:none){
+  html body :is(.tab,.vt button,.chip,.pill,.act,.ib):not(.on):not(.liked):is(:hover,:focus,:focus-visible){background-image:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+}
+
+/* 4. keyboard focus ring in the site's warm orange instead of a stark white or black outline */
+html body :is(.btn,.ib,.tab,.act,.chip,.pill,button):focus-visible{outline:2px solid rgba(255,138,61,.75)!important;outline-offset:3px}
+
+/* ---- cc-onetick.css ---- */
+/* cc-onetick.css v1: ONE tick everywhere + the plain code card.
+   The tick is the payment tick: sage halo, ink circle, tick that draws itself once (see ccTick in cc-core.js and cc-receipt.js).
+   The code card loses the blue light and the glass, and the green and shield ticks. Load after cc-verify.css and cc-dots.css. */
+
+/* ---- the tick itself, for pages that do not load cc-core.js (gift page) ---- */
+.cc-tick{width:88px;height:88px;margin:10px auto 2px;display:block;transform-origin:50% 50%;animation:cct-pop .5s cubic-bezier(.2,.9,.3,1.25) both}
+.cc-tick .h{fill:rgba(169,184,162,.38);stroke:none}.cc-tick .c{fill:var(--ink,#16130f);stroke:none}
+.cc-tick .k{fill:none;stroke:var(--inkfg,#fff);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:44;animation:cct-draw .35s ease-out .22s both}
+@keyframes cct-pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes cct-draw{from{stroke-dashoffset:44}to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.cc-tick,.cc-tick .k{animation:none}}
+
+/* ---- code card: no blue, no green, no glass ---- */
+html body .cco{--a:var(--fg,#16130f);--rc:var(--fg,#16130f);--g:var(--fg,#16130f);--edge:rgba(22,19,15,.12);
+  background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:4px 0 2px!important;margin:0!important;overflow:visible!important}
+html body .cco-stage{min-height:76px}
+html body .cco:before,html body .cco:after{display:none!important}
+html body .cco .cco-ic,html body .cco .cco-final{display:none!important}
+html body .cco input.cco-b{background:var(--g2,rgba(255,255,255,.86))!important;border:1.5px solid rgba(22,19,15,.1)!important;border-radius:12px!important;box-shadow:none!important;color:var(--fg,#16130f)!important;caret-color:var(--fg,#16130f)!important;transform:none!important}
+html body .cco input.cco-b.cco-f,html body .cco input.cco-b:focus{border-color:var(--fg,#16130f)!important;box-shadow:none!important}
+html body .cco.cco-err input.cco-b{border-color:var(--bad)!important;color:var(--bad)!important;box-shadow:none!important}
+:root[data-theme="dark"] body .cco input.cco-b{background:rgba(44,37,32,.86)!important;border-color:rgba(255,255,255,.12)!important}
+html body button.cco-bok{background:var(--ink,#16130f)!important;color:var(--inkfg,#fff)!important;box-shadow:none!important}
+
+/* ---- the tick after a right code: same look and timing as the payment tick ---- */
+html body .ccv-tk{width:66px;height:66px;background:var(--ink,#16130f)!important;box-shadow:0 0 0 5px rgba(169,184,162,.38)!important}
+html body .ccv-tk::before{display:none!important}
+html body .ccv-tk svg{width:34px;height:34px;stroke:var(--inkfg,#fff)!important;stroke-width:5.5}
+html body .cco-ok .ccv-tk{animation-duration:.5s!important;animation-timing-function:cubic-bezier(.2,.9,.3,1.25)!important}
+html body .cco-ok .ccv-tk svg{animation-duration:.35s!important;animation-delay:.22s!important;animation-timing-function:ease-out!important}
+html body .ccv-rules li.ok::before{background:var(--ink,#16130f)!important;border-color:var(--ink,#16130f)!important}
+html body .ccv-rules li.ok::after{border-color:var(--inkfg,#fff)!important}
+
+/* ---- the other ticks on the site follow the same colours ---- */
+.cm-ok{background:var(--ink,#16130f)!important;color:var(--inkfg,#fff)!important}
+.cf-dic{background:var(--ink,#16130f)!important;color:var(--inkfg,#fff)!important;box-shadow:0 0 0 6px rgba(169,184,162,.38)!important}
+html body #ccfp.ok .fpx-ck{color:var(--ink,#16130f)!important}
+.okc svg.cc-tick{width:88px;height:88px;stroke:none}
+
+/* ---- cc-dots.css ---- */
+/* cc-dots-otp-only: the five wave dots are used on the OTP code check and nowhere else.
+   Payment checks, buttons, uploads, the lock screen and the full-screen loader keep their plain ring and tick. */
+button.cco-bspin::before{
+  --d:6px;--p:10px;--y:6px;--c2:#c4727a;--c3:#a9b8a2;--c4:currentColor;--c5:#e8744f;
+  --p2:calc(var(--p)*2);--p3:calc(var(--p)*3);--p4:calc(var(--p)*4);
+  --y0:0px;--y1:calc(var(--y)*-.33);--y2:calc(var(--y)*-.67);--y3:calc(var(--y)*-1);
+  content:"";display:inline-block!important;vertical-align:middle!important;margin-right:calc(var(--p)*4 + 10px)!important;
+  box-sizing:content-box!important;width:var(--d)!important;height:var(--d)!important;min-width:0!important;
+  border:0!important;border-radius:50%!important;background:#ff8a3d!important;
+  box-shadow:var(--p) 0 0 var(--c2),var(--p2) 0 0 var(--c3),var(--p3) 0 0 var(--c4),var(--p4) 0 0 var(--c5)!important;
+  animation:ccdw 1.1s ease-in-out infinite!important;transform:none!important}
+@keyframes ccdw{0%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}10%{translate:0 var(--y1);box-shadow:var(--p) var(--y1) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}20%{translate:0 var(--y2);box-shadow:var(--p) var(--y2) 0 var(--c2),var(--p2) var(--y1) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}30%{translate:0 var(--y3);box-shadow:var(--p) var(--y3) 0 var(--c2),var(--p2) var(--y2) 0 var(--c3),var(--p3) var(--y1) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}40%{translate:0 var(--y2);box-shadow:var(--p) var(--y2) 0 var(--c2),var(--p2) var(--y3) 0 var(--c3),var(--p3) var(--y2) 0 var(--c4),var(--p4) var(--y1) 0 var(--c5)}50%{translate:0 var(--y1);box-shadow:var(--p) var(--y1) 0 var(--c2),var(--p2) var(--y2) 0 var(--c3),var(--p3) var(--y3) 0 var(--c4),var(--p4) var(--y2) 0 var(--c5)}60%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y1) 0 var(--c3),var(--p3) var(--y2) 0 var(--c4),var(--p4) var(--y3) 0 var(--c5)}70%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y1) 0 var(--c4),var(--p4) var(--y2) 0 var(--c5)}80%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y1) 0 var(--c5)}90%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}100%{translate:0 var(--y0);box-shadow:var(--p) var(--y0) 0 var(--c2),var(--p2) var(--y0) 0 var(--c3),var(--p3) var(--y0) 0 var(--c4),var(--p4) var(--y0) 0 var(--c5)}}
+@media (prefers-reduced-motion:reduce){button.cco-bspin::before{animation:none!important}}
+
+/* ---- cc-fix10.css ---- */
+/* cc-fix10.css: Alerts sheet no longer overlaps, payment steps show ticks. Load last. */
+html body div.ccn.ccn-pf .bx{overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:block!important}
+html body div.ccn.ccn-pf .bx>.hd,html body div.ccn.ccn-pf .bx>.pf-sub,html body div.ccn.ccn-pf .bx>.pf-st,html body div.ccn.ccn-pf .bx>.pc-wrap{flex:none}
+html body div.ccn.ccn-pf .ls{flex:none!important;height:auto!important;max-height:none!important;min-height:0;overflow:visible!important;display:flex;flex-direction:column;gap:10px}
+html body div.ccn.ccn-pf .ls>.pf-row{flex:none}
+html body div.ccn.ccn-pf .pc-wrap{position:relative;clear:both;margin:18px 2px 24px!important;padding-top:14px}
+html body div.ccn.ccn-pf .pc-wrap .btn{display:block;width:100%;position:relative}
+html body div.ccn.ccn-pf .pc-out{padding-bottom:12px}
+html body .cs-l .cs-s .cs-i::after{
+  content:""!important;display:block!important;box-sizing:content-box!important;width:5px!important;height:10px!important;
+  border:solid var(--gb,rgba(120,110,100,.5))!important;border-width:0 2.5px 2.5px 0!important;border-radius:0!important;
+  background:none!important;transform:rotate(45deg) translate(-1px,-1px)!important;animation:none!important;opacity:1;color:inherit;font-size:0}
+html body .cs-l .cs-s.a .cs-i{border-color:#ee7a4f!important;border-top-color:#ee7a4f!important;background:transparent!important;animation:cs-pulse 1.6s ease-out infinite}
+html body .cs-l .cs-s.a .cs-i::after{border-color:#ee7a4f!important;animation:cc10-tick 1.2s ease-in-out infinite!important}
+html body .cs-l .cs-s.d .cs-i{background:var(--ink,#16130f)!important;border-color:var(--ink,#16130f)!important}
+html body .cs-l .cs-s.d .cs-i::after{border-color:var(--inkfg,#fff)!important;animation:cc10-pop .35s ease-out both!important}
+html body .cs-l .cs-s.f .cs-i::after{content:"\00d7"!important;width:auto!important;height:auto!important;border:0!important;transform:none!important;color:var(--bad,#d8493e)!important;font-size:20px!important;line-height:1;font-weight:700}
+@keyframes cc10-tick{0%,100%{opacity:.25;transform:rotate(45deg) translate(-1px,-1px) scale(.7)}50%{opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1.05)}}
+@keyframes cc10-pop{from{opacity:0;transform:rotate(45deg) translate(-1px,-1px) scale(0)}to{opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1)}}
+@media (prefers-reduced-motion:reduce){html body .cs-l .cs-s.a .cs-i::after{animation:none!important;opacity:1}}
+
+/* ---- cc-fix12.css ---- */
+/* cc-fix12.css: the "Which university are you in?" search box keeps its full size (it was being squashed thin by the long list below it). Load last. */
+html body #ccuniv input{flex:none!important;height:52px!important;min-height:52px!important;box-sizing:border-box!important;font-size:16px!important;margin-bottom:12px!important;-webkit-appearance:none;appearance:none}
+html body #ccuniv .loc{flex:none!important;min-height:52px!important}
+html body #ccuniv .cd>h2,html body #ccuniv .cd>p{flex:none}
+
+/* ---- cc-fix11.css ---- */
+/* cc-fix11.css: Market switch (Browse, My listings, Orders) is always readable. The chosen one is dark with light text, the others are plain
+   with dark text. No other style sheet can turn them black. Load last. */
+html body #v-market #mseg{background:var(--g)!important;border:0!important;box-shadow:var(--sh)!important;gap:4px}
+html body #v-market #mseg button,
+html body #v-market #mseg button:hover,html body #v-market #mseg button:focus,html body #v-market #mseg button:active{background:transparent!important;background-image:none!important;color:var(--fg)!important;-webkit-text-fill-color:var(--fg)!important;opacity:1!important;box-shadow:none!important;border:0!important;text-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body #v-market #mseg button.on,
+html body #v-market #mseg button.on:hover,html body #v-market #mseg button.on:focus,html body #v-market #mseg button.on:active{background:var(--ink)!important;color:var(--inkfg)!important;-webkit-text-fill-color:var(--inkfg)!important}
+
+/* ---- cc-tapfix.css ---- */
+/* cc-tapfix.css: a tapped switch or tab goes back to its normal colour when you let go. Only the chosen one (.on) is dark.
+   Covers the Club switch (Shop, Tickets, Orders, Help) and every other segmented switch and tab strip. */
+html body .seg{background:var(--g)!important}
+html body .seg button:not(.on),html body .seg button:not(.on):hover,html body .seg button:not(.on):focus,html body .seg button:not(.on):active,html body .seg button:not(.on):focus-visible{background:transparent!important;background-image:none!important;color:var(--fg)!important;-webkit-text-fill-color:var(--fg)!important;opacity:1!important;box-shadow:none!important;border:0!important;text-shadow:none!important;outline:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body .seg button.on,html body .seg button.on:hover,html body .seg button.on:focus,html body .seg button.on:active{background:var(--ink)!important;color:var(--inkfg)!important;-webkit-text-fill-color:var(--inkfg)!important;opacity:1!important}
+html body .crd-seg button:not(.on),html body .crd-seg button:not(.on):hover,html body .crd-seg button:not(.on):focus,html body .crd-seg button:not(.on):active{background:transparent!important;color:var(--fg)!important;opacity:1!important}
+html body .tab:not(.on):hover,html body .tab:not(.on):focus,html body .tab:not(.on):active,html body .vt button:not(.on):hover,html body .vt button:not(.on):focus,html body .vt button:not(.on):active{background:var(--g)!important;color:var(--fg)!important;opacity:1!important}
+
+/* ---- cc-pickfix.css ---- */
+/* cc-pickfix.css: the X button no longer sits on top of the words in the university picker. */
+html body #ccuniv .cd>h2,html body #ccuniv .cd>h2+p{padding-right:58px!important;box-sizing:border-box}
+
+/* ---- cc-sharefix.css ---- */
+/* cc-sharefix.css: feed card action bar.
+   Before: the bar was a pill that wrapped, so "Share" dropped to a second row and stretched the grey pill into a blob.
+   Now: one tidy row. On phones Share is a round WhatsApp icon button; on wider screens it shows the word too. */
+html body .card .bar{display:flex;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:4px;padding:5px;box-sizing:border-box;max-width:100%;border-radius:999px;overflow:hidden}
+html body .card .bar>*{flex:0 0 auto;min-width:0}
+html body .card .bar .act{height:34px;padding:0 10px;gap:5px;white-space:nowrap;justify-content:center}
+html body .card .bar .act svg{width:16px;height:16px}
+html body .card .bar .views{padding:0 4px;gap:4px;white-space:nowrap}
+html body .card .bar .act.wa{margin-left:auto;width:34px;padding:0;gap:0;font-size:0;line-height:0}
+html body .card .bar .act.wa svg{width:18px;height:18px;margin:0}
+@media (min-width:520px){
+  html body .card .bar{gap:6px}
+  html body .card .bar .act{padding:0 13px}
+  html body .card .bar .act.wa{width:auto;padding:0 14px;gap:7px;font-size:12px;line-height:normal}
+}
+@media (max-width:340px){
+  html body .card .bar .act{padding:0 8px}
+  html body .card .bar .views{display:none}
+}

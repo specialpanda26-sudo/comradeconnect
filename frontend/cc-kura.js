@@ -244,7 +244,7 @@ function prizeCard(compact) {
 function paintCompete() {
   var s = season(), h = S.home || {}, st = h.stats || {}, b = $('kbody');
   var live = s.voting_open !== false;
-  b.innerHTML = '<div class="kcard khero"><span class="wm">' + I.starO + '</span><div class="keb">' + (live ? 'SEASON 1 · VOTING LIVE' : 'VOTING CLOSED') + '</div><div class="kh1">' + accent(s.title || 'Campus Star Awards') + '</div><p class="ksub" style="margin:0">' + esc(s.tagline || 'Back your favourite contestant or enter your own category.') + '</p>'
+  b.innerHTML = (window.ccPresented ? window.ccPresented('kura') : '') + '<div class="kcard khero"><span class="wm">' + I.starO + '</span><div class="keb">' + (live ? 'SEASON 1 · VOTING LIVE' : 'VOTING CLOSED') + '</div><div class="kh1">' + accent(s.title || 'Campus Star Awards') + '</div><p class="ksub" style="margin:0">' + esc(s.tagline || 'Back your favourite contestant or enter your own category.') + '</p>'
     + '<div class="krow"><button class="kb" data-k="tab" data-t="board">Vote now ' + I.arrow + '</button>' + (s.entries_open === false ? '' : '<button class="kb g" data-k="tab" data-t="apply">Enter the competition</button>') + '</div>'
     + '<p class="ksub" style="margin:14px 0 0;display:flex;align-items:center;gap:6px">' + I.heart + '<b style="color:var(--fg)">' + nf(st.votes || 0) + '</b> votes cast</p>' + countdown() + '</div>'
     + '<div class="kst"><div class="kcard"><b>' + (st.contestants || 0) + '</b><small>Contestants</small></div><div class="kcard"><b>' + (st.campuses || 0) + '</b><small>Campuses</small></div><div class="kcard"><b>' + nf(st.votes || 0) + '</b><small>Votes cast</small></div></div>'

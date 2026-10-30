@@ -1208,7 +1208,7 @@ const XP = {
       + xbar('<button class="act' + (g.joined ? ' liked' : '') + '" data-xa="join" data-id="' + esc(g.id) + '">' + (g.joined ? 'Joined. Tap to leave' : (g.members >= g.max_members ? 'Full' : 'Join')) + '</button>' + (g.mine ? '<span class="views">Your group</span>' : xmsg(g, 'organiser') + xrep(g))) + '</article>').join('') : xempty(s, 'No study groups yet. Start one.')) + xmore(s);
   },
   pl(s, L) {
-    return xadd('Create a poll') + (L.length ? L.map((p) => {
+    return (window.ccPresented ? window.ccPresented('polls') : '') + xadd('Create a poll') + (L.length ? L.map((p) => {
       const tot = (p.counts || []).reduce((a, b) => a + b, 0), show = p.voted !== null && p.voted !== undefined || p.closed;
       return '<article class="box g"><div class="flex items-center justify-between" style="gap:10px"><b style="font-size:15px;line-height:1.4;overflow-wrap:anywhere">' + esc(p.question) + '</b></div>'
         + p.options.map((o, i) => { const pc = tot ? Math.round(p.counts[i] / tot * 100) : 0; return '<button class="opt" data-xa="vote" data-id="' + esc(p.id) + '" data-i="' + i + '"' + (show ? ' disabled' : '') + '><i style="width:' + (show ? pc : 0) + '%"></i><span>' + esc(o) + (p.voted === i ? ' (your vote)' : '') + '</span>' + (show && tot ? '<span style="float:right">' + pc + '%</span>' : '') + '</button>'; }).join('')

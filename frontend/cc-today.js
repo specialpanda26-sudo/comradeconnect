@@ -29,11 +29,13 @@ function row(title, sub, label, fn, solid) {
   return r;
 }
 function goto(v) { try { if (typeof go === 'function') go(v); } catch (e) {} }
+document.addEventListener('cc-slots', function () { draw(); });
 function draw() {
   if (!card) return;
   var box = card.firstChild; box.textContent = '';
   box.appendChild(el('h3', '', 'Today on campus'));
   box.appendChild(el('p', 'td-d', new Date().toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long' })));
+  if (window.ccPresented) { var pb = document.createElement('div'); pb.innerHTML = window.ccPresented('today'); if (pb.firstChild) box.appendChild(pb.firstChild); }
   // poll
   var q = document.getElementById('pq'), votes = P && Array.isArray(P.counts) ? P.counts.reduce(function (a, c) { return a + c; }, 0) : 0, voted = P && P.mine !== null && P.mine !== undefined;
   box.appendChild(row(q && q.textContent ? q.textContent : "Today's question", voted ? 'You voted. ' + n(votes) + ' votes so far' : n(votes) + ' votes so far', voted ? 'See' : 'Vote', function () { var t = document.querySelector('#v-feed .pulse'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, !voted));

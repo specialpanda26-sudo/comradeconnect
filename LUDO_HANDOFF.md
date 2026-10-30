@@ -4,7 +4,7 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 
 ## Phases
 1. DONE: Offline game `frontend/ludo.html` rebuilt (site theme, 3D cube dice, SVG tokens/stars, custom stake input with validation, correct stake/pot/fee maths, bot and UI fixes).
-2. TODO: Online lobby `frontend/ludo-online.html`: same redesign, custom KES stake input (min/max from `/api/ludo/config`), live pot/fee preview, no emoji.
+2. DONE: Online lobby `frontend/ludo-online.html`: same redesign, custom KES stake input (min/max from `/api/ludo/config`), live pot/fee preview, no emoji.
 3. TODO: Online board screen + backend review `backend/src/ludo.js` (stake validation, refunds, payout idempotency, timeouts/away handling).
 4. TODO: Withdrawal panel: find the withdraw UI (see `cc-gifts-withdraw.js`, `supabase/points-and-1-bob-withdrawals.sql`, backend withdraw route) and read the real rules (minimum, fee, step).
 5. TODO: Explainable withdrawals: if balance can't be withdrawn exactly (e.g. KSh 500), show why and how much more to add (or the max withdrawable), with the fee breakdown.
@@ -18,3 +18,9 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 ## Phase 2 part 1 notes
 - `frontend/ludo-loader.js`: loading screen with two 3D tumbling dice. Include with `<script src="/ludo-loader.js"></script>` in head. Add `data-hold` to keep it up until the page calls `LudoLoader.hide()`. Min 1.5s, failsafe 9s. Follows theme vars.
 - Hooked into `ludo.html` (auto hides on load).
+
+## Phase 2 notes (online lobby, DONE)
+- `frontend/ludo-online.html` rebuilt: site theme, Poppins, no emoji, loader with `data-hold` (hides after config loads).
+- Stake input: points 0 to 1000 (0 = free, nothing deducted); KES min/max/balance from `/api/ludo/config`. Shortfall message says exactly how much to add. Live pot, fee and winner-gets preview (fee from config, floor maths same as server).
+- Online board restyled the same as offline (SVG stars/arrows, yards) and 3D cube dice with roll animation, so Phase 3 only needs board QA plus the backend review.
+- NEXT: Phase 3. Review `backend/src/ludo.js`: stake checks, refunds (leave/cancel/idle), payout idempotency, away players. Then Phase 4.

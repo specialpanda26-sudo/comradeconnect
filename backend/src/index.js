@@ -45,6 +45,7 @@ import { serviceWorkRoutes } from './serviceworks.js';
 import { pointsRoutes } from './points.js';
 import { notificationRoutes, notify } from './notifications.js';
 import { engageRoutes } from './engage.js';
+import { dailyNudge } from './today.js';
 import { ambassadorRoutes } from './ambassadors.js';
 import { reconcilePayouts } from './payouts.js';
 import { postRuleRoutes, dropUnpaidDrafts } from './postrules.js';
@@ -145,6 +146,7 @@ export async function runCron(env) {
   out.purged = purge.length;
   out.media = await pruneMedia(env);
   out.stories = await pruneStories(env).catch(() => -1);
+  out.todayNudge = await dailyNudge(env).catch((e) => { console.error('today nudge error', e && e.message); return -1; });
   await patch(env, `live_streams?status=eq.live&created_at=lte.${ago(8 * 3600e3)}`, { status: 'ended', ended_at: new Date().toISOString() });
   await sb(env, `live_viewers?seen_at=lt.${ago(3600e3)}`, { method: 'DELETE' });
   await sb(env, `live_comments?created_at=lt.${ago(3 * 86400e3)}`, { method: 'DELETE' });

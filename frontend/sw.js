@@ -3,7 +3,7 @@
    BUILD changes on every deploy (the push script stamps it), so each deploy gets a fresh cache and the old one is deleted.
    App files (html, js, css) are fetched fresh when online and only fall back to the saved copy when offline or very slow.
    v2: legal pages are saved too, a failing server (5xx) falls back to the saved page, clean links like /terms open terms.html offline. */
-const BUILD = '20261030232056';
+const BUILD = '20261030233416';
 const SHELL = 'cc-shell-' + BUILD, RUNTIME = 'cc-runtime-v1';
 const CDN = ['https://cdn.tailwindcss.com/3.4.17', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];
 const PAGES = ['/terms.html', '/privacy.html', '/legal.html', '/contact.html', '/about.html', '/safety.html', '/refunds.html', '/payments.html', '/cookies.html', '/trust.html', '/trust.css', '/get.html'];
@@ -65,7 +65,7 @@ self.addEventListener('fetch', (e) => {
   if (req.mode === 'navigate') {                                  // page: fresh when online, saved copy when not
     e.respondWith((async () => {
       try {
-        const r = await Promise.race([fetch(req), timeout(5000)]);
+        const r = await Promise.race([fetch(req), timeout(2500)]);
         if (r && r.status >= 500) throw new Error('server');
         if (r && r.ok && !r.redirected && (url.pathname === '/' || url.pathname === '/index.html')) caches.open(SHELL).then((c) => c.put('/index.html', r.clone()));
         return r;
@@ -74,7 +74,11 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   if (same && (APPFILE.test(url.pathname) || ['script', 'style'].includes(req.destination))) {   // app files: never an old build while online
-    e.respondWith(fresh(req, req.url, 4000));
+    e.respondWith((async () => {                                  // saved copy at once, refreshed quietly for next time
+      const hit = await caches.match(req);
+      if (hit) { e.waitUntil(fresh(req, req.url, 8000).catch(() => {})); return hit; }
+      return fresh(req, req.url, 4000);
+    })());
     return;
   }
   if (same) {                                                     // pictures, icons and other files: saved copy first, refreshed in the background

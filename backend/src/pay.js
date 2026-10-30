@@ -1,7 +1,7 @@
 // M-Pesa via FinoQ (PayHero) v2. Only the webhook marks payments paid/failed; all writes are conditional.
 import { getSettings } from './settings.js';
 import { json, err, sb, rows, one, post, patch, enc, normPhone, ago, tsEqual, user, UUID, bump } from './lib.js';
-import { finoqReady, finoqStkPush, depRef, parseFinoqWebhook } from './finoq.js';
+import { finoqReady, finoqStkPush, finoqStatus, depRef, parseFinoqWebhook } from './finoq.js';
 import { settleWithdrawal } from './payouts.js';
 
 export const hooks = { onPaid: async () => {}, onFailed: async () => {} };
@@ -29,6 +29,9 @@ export async function initPayment(env, ip, { aid, purpose, ref_id, amount, phone
   if (!row) { console.error('payments: could not save row', pr.status, JSON.stringify(pj).slice(0, 300)); return { res: err(env, 'Server could not save the payment', 500) }; }
   const r = await finoqStkPush(env, { amount, phone, ref });
   if (!r || r.error) { await markFailed(env, `payments?id=eq.${row.id}`, 'failed', 'not_sent', null); return { res: err(env, 'Could not send the M-Pesa prompt. Try again.', 502) }; }
+  // Keep PayHero's own reference: the status check (below) needs it if the webhook never arrives.
+  const d = r.data || {}, prov = String(d.reference || d.Reference || d.CheckoutRequestID || d.checkout_request_id || '').trim();
+  if (prov) await patch(env, `payments?id=eq.${row.id}&status=eq.pending`, { checkout_id: prov }).catch(() => {});
   return { id: row.id };
 }
 
@@ -105,6 +108,16 @@ async function settleDeposit(env, cb) {
 
 // Safety net (15-min cron): expire unanswered STK pushes AND run the failed cleanup (points back, stock back, notices).
 export async function reconcileDeposits(env) {
+  // First ask PayHero about deposits still open. A missed webhook must never leave a paid deposit uncredited.
+  try {
+    const open = await rows(await sb(env, `payments?select=*&status=in.(pending,expired)&checkout_id=not.is.null&phone=neq.wallet&created_at=gte.${ago(6 * 3600e3)}&created_at=lte.${ago(2 * 60e3)}&order=created_at.asc&limit=25`));
+    for (const p of open) {
+      const st = await finoqStatus(env, p.checkout_id);
+      if (!st.ok) continue;
+      if (st.success) await settleDeposit(env, { ref: p.request_id, success: true, amount: p.amount, phone: '', receipt: p.checkout_id, status: 'SUCCESS' }).catch((e) => console.error('deposit status settle failed', p.id, e && e.message));
+      else if (st.failed) await settleDeposit(env, { ref: p.request_id, failed: true, code: null, status: st.status }).catch(() => {});
+    }
+  } catch (e) { console.error('deposit status check failed', e && e.message); }
   const expired = await markFailed(env, `payments?status=eq.pending&created_at=lt.${ago(15 * 60e3)}`, 'expired', 'no_response', null);
   for (const p of expired) await hooks.onFailed(env, p);
   return expired.length;

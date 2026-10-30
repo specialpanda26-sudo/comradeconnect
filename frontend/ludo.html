@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" data-theme="light"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ludo | Comrade Connect</title>
+<title>Comrade Connect Ludo</title>
 <script src="/cc-theme.js"></script>
 <script src="/ludo-loader.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -111,11 +111,12 @@ html{-webkit-text-size-adjust:100%}body{overflow-x:hidden}
 @media (max-width:360px){body{padding-left:10px;padding-right:10px}h1{font-size:22px}.card{padding:12px;border-radius:18px}.top a,.top button{padding:7px 11px;font-size:12px}.die{--z:24px;width:80px;height:80px}.die .sh{width:44px;margin-left:-22px}.hint{max-width:100px;font-size:11px}}
 @media (max-height:640px){.top{margin:6px 0 8px}p.s{margin:2px 0 10px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style></head><body>
+</style><link rel="stylesheet" href="/ludo-skin.css"></head><body>
+<header class="lx-head"><div class="lx-brand"><i class="lx-logo" aria-hidden="true"></i><div class="lx-name">Comrade Connect <em>Ludo</em></div></div><div class="lx-chip" title="Practice points"><i></i><b id="balchip">0</b><small>pts</small></div></header>
 
 <div id="setup">
 <div class="top"><a href="/">&larr; Back</a><a href="/ludo-online.html">Play online</a></div>
-<h1>Ludo</h1><p class="s">Pass and play on this phone. Bring all 4 tokens home first and take the pot. Practice with points before you go online.</p>
+<h1>Offline match</h1><p class="s">Pass and play on this phone. Bring all 4 tokens home first and take the pot. Practice with points before you go online.</p>
 
 <div class="card"><h2>Players</h2><div id="seats"></div><div class="err" id="e1"></div></div>
 
@@ -178,6 +179,7 @@ function stakeError(){
  return '';
 }
 function drawSetup(){
+ $('balchip').textContent=bal.toLocaleString();
  $('seats').innerHTML=COL.map((c,i)=>`<div class="seat"><i class="dot" style="background:${col(i)}"></i><b>${c.n}</b><div class="tg" data-i="${i}">${['human','bot','off'].map(k=>`<button data-k="${k}" class="${seatsCfg[i]===k?'on':''}">${LAB[k]}</button>`).join('')}</div></div>`).join('');
  $('chips').innerHTML=CHIPS.map(s=>`<button data-s="${s}" class="${s===stake?'on':''}">${s>=1000?s/1000+'K':s}</button>`).join('')+`<button data-s="max">All in</button>`;
  if(document.activeElement!==$('sv'))$('sv').value=Number.isFinite(stake)&&stake>0?stake:'';
@@ -212,7 +214,7 @@ let G;
 function startGame(){
  const seats=[0,1,2,3].filter(i=>seatsCfg[i]!=='off');
  const pot=stake*seats.length;
- bal-=stake; ls.set('ludo_pts',bal);
+ bal-=stake; ls.set('ludo_pts',bal);$('balchip').textContent=bal.toLocaleString();
  G={seats,pos:{},turn:0,roll:0,sixes:0,over:false,busy:false,pot,stake,movable:[],log:[]};
  seats.forEach(p=>G.pos[p]=[-1,-1,-1,-1]);
  $('setup').style.display='none';$('game').style.display='block';
@@ -325,7 +327,7 @@ const TROPHY='<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke
 function finish(p){
  G.over=true;
  const prize=prizeOf(G.pot), humanWon=seatsCfg[p]==='human';
- if(humanWon){bal+=prize;ls.set('ludo_pts',bal)}
+ if(humanWon){bal+=prize;ls.set('ludo_pts',bal);$('balchip').textContent=bal.toLocaleString()}
  const tr=$('wtr');tr.style.background=col(p);tr.style.color='#fff';tr.innerHTML=TROPHY;
  $('wt').textContent=`${COL[p].n} wins`;
  $('wp').textContent=humanWon

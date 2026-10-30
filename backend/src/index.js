@@ -36,6 +36,7 @@ import { siteContentRoutes } from './sitecontent.js';
 import { siteMediaRoutes } from './sitemedia.js';
 import { trustRoutes } from './trust.js';
 import { resetRoutes } from './reset.js';
+import { ludoRoutes, ludoCleanup } from './ludo.js';
 import { giftRoutes, giftPaid, giftFailed } from './gifts.js';
 import { recoveryRoutes } from './recovery.js';
 import { lostFoundRoutes } from './lostfound.js';
@@ -85,7 +86,7 @@ hooks.onFailed = async (env, p) => {
   if (p.aid && !String(p.aid).startsWith('gift:')) await notify(env, p.aid, 'payment', 'Payment not completed', 'Your payment of KSh ' + p.amount + ' was not completed. If you paid by M-Pesa, check the code and try again.', 'payment', p.id);
 };
 
-const ROUTES = [supportRoutes, pulseRoutes, campusRoutes, zoneSuggestRoutes, lostFoundRoutes, paperRoutes, serviceWorkRoutes, engageRoutes, storyRoutes, notificationRoutes, pushRoutes, settingsRoutes, trustRoutes, resetRoutes, recoveryRoutes, giftRoutes, siteContentRoutes, siteMediaRoutes, feedRoutes, payRoutes, passkeyRoutes, deviceAdminRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, mbogiRoutes, liveRoutes, voiceRoutes, mediaRoutes, clubRoutes, myEventRoutes, kuraRoutes, adminUserRoutes, adminJoinRoutes, adminCleanRoutes, adminServiceRoutes, adminPushRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
+const ROUTES = [supportRoutes, pulseRoutes, campusRoutes, zoneSuggestRoutes, lostFoundRoutes, paperRoutes, serviceWorkRoutes, engageRoutes, storyRoutes, notificationRoutes, pushRoutes, settingsRoutes, trustRoutes, resetRoutes, recoveryRoutes, giftRoutes, ludoRoutes, siteContentRoutes, siteMediaRoutes, feedRoutes, payRoutes, passkeyRoutes, deviceAdminRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, mbogiRoutes, liveRoutes, voiceRoutes, mediaRoutes, clubRoutes, myEventRoutes, kuraRoutes, adminUserRoutes, adminJoinRoutes, adminCleanRoutes, adminServiceRoutes, adminPushRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);
@@ -129,6 +130,7 @@ export async function runCron(env) {
   const out = {};
   const step = (name, p) => p.catch((e) => { console.error('cron step failed:', name, e && e.message); return -1; });   // one failing step must not stop the rest
   out.released = await step('release', autoReleaseOrders(env));
+  out.ludo = await step('ludo', ludoCleanup(env));
   out.referrals = await step('referrals', unlockReferrals(env));
   out.clubExpired = await step('club', expireClubOrders(env));
   out.unpaidDrafts = await dropUnpaidDrafts(env).catch(() => -1);

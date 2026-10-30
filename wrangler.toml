@@ -27,6 +27,12 @@ MEDIA_BUCKET = "cc-media"       # public: clips and listing photos
 PRIVATE_BUCKET = "cc-private"   # private: ID photos
 # MEDIA_PUBLIC_URL = ""          # optional: only if you later put a CDN in front of the public bucket
 
+# Ludo online. KES rooms stay OFF until you hold the required BCLB licence: set LUDO_KES_ENABLED = "1" only then.
+LUDO_KES_ENABLED = "0"
+LUDO_FEE_PERCENT = "7"
+LUDO_MIN_STAKE = "10"
+LUDO_MAX_STAKE = "5000"
+
 BOOST_PRICE = "30"
 BOOST_PRICE_3D = "70"
 # Free Supabase Storage = 1 GB total, 50 MB max per file. Clips are capped at 25 MB; when all media passes MEDIA_BUDGET_MB the oldest clips are deleted automatically.

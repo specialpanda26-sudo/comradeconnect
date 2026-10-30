@@ -73,14 +73,29 @@ button{font-family:inherit}
 @keyframes hit{50%{transform:scale(1.5);opacity:.4}}
 #msg{text-align:center;min-height:22px;font-size:13px;font-weight:600;margin:12px 0 4px}
 .dock{display:flex;align-items:center;justify-content:center;gap:16px;margin:6px 0}
-.die{width:72px;height:72px;border-radius:20px;background:var(--die);border:1px solid var(--gb);box-shadow:var(--sh);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:11px;gap:2px;cursor:pointer;transition:transform .15s}
-.die i{width:100%;height:100%;border-radius:50%;background:var(--pip);transform:scale(0)}
-.die i.on{transform:scale(.78)}
-.die.go{box-shadow:0 0 0 3px var(--fg),var(--sh);animation:pulse 1.1s infinite}
-.die.roll{animation:tumble .45s}
-.die:disabled{cursor:default}
-@keyframes pulse{50%{transform:scale(1.07)}}
-@keyframes tumble{0%{transform:rotate(0)}50%{transform:rotate(200deg) scale(.85)}100%{transform:rotate(360deg)}}
+.die{--z:30px;position:relative;width:96px;height:96px;display:grid;place-items:center;cursor:pointer;perspective:520px;outline:none;-webkit-user-select:none;user-select:none}
+.die .sh{position:absolute;left:50%;bottom:6px;width:54px;height:12px;margin-left:-27px;border-radius:50%;background:radial-gradient(#0007,transparent 70%);transition:transform .2s,opacity .2s}
+.die .tilt{position:relative;width:calc(var(--z)*2);height:calc(var(--z)*2);transform-style:preserve-3d;transform:rotateX(-24deg) rotateY(-30deg)}
+.die .cube{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(0) rotateY(0);transition:transform .95s cubic-bezier(.18,.7,.25,1)}
+.die .f{position:absolute;inset:0;border-radius:11px;background:linear-gradient(145deg,var(--die),color-mix(in srgb,var(--die) 82%,#888));border:1px solid var(--gb);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:7px;gap:1px;backface-visibility:hidden;box-shadow:inset 0 0 10px #0002}
+.die .f i{width:100%;height:100%;border-radius:50%;background:transparent}
+.die .f i.on{background:radial-gradient(circle at 35% 30%,#555,var(--pip) 60%);transform:scale(.72);box-shadow:inset 0 1px 2px #000a}
+.die .f1{transform:translateZ(var(--z))}
+.die .f2{transform:rotateY(90deg) translateZ(var(--z))}
+.die .f3{transform:rotateX(90deg) translateZ(var(--z))}
+.die .f4{transform:rotateX(-90deg) translateZ(var(--z))}
+.die .f5{transform:rotateY(-90deg) translateZ(var(--z))}
+.die .f6{transform:rotateY(180deg) translateZ(var(--z))}
+.die .f1 i.on{background:radial-gradient(circle at 35% 30%,#ff7a85,var(--r) 65%);transform:scale(.95)}
+.die.go .tilt{animation:bob 1.1s ease-in-out infinite}
+.die.go::after{content:"";position:absolute;inset:8px;border-radius:24px;border:2px solid var(--fg);opacity:.35;animation:ring 1.1s ease-in-out infinite;pointer-events:none}
+.die.roll .tilt{animation:toss .95s cubic-bezier(.3,.6,.4,1)}
+.die.roll .sh{animation:shd .95s ease-out}
+.die.off{cursor:default}
+@keyframes bob{50%{transform:rotateX(-24deg) rotateY(-30deg) translateY(-5px)}}
+@keyframes ring{50%{transform:scale(1.08);opacity:.1}}
+@keyframes toss{0%{transform:rotateX(-24deg) rotateY(-30deg) translateY(0)}40%{transform:rotateX(-24deg) rotateY(-30deg) translateY(-34px) scale(1.12)}75%{transform:rotateX(-24deg) rotateY(-30deg) translateY(0) scale(1)}86%{transform:rotateX(-24deg) rotateY(-30deg) translateY(-8px)}100%{transform:rotateX(-24deg) rotateY(-30deg) translateY(0)}}
+@keyframes shd{40%{transform:scale(.55);opacity:.4}75%,100%{transform:scale(1);opacity:1}}
 .hint{font-size:12px;color:var(--mut);max-width:130px;line-height:1.4}
 .log{margin-top:10px;display:flex;flex-direction:column;gap:4px}
 .log div{font-size:11px;color:var(--mut);padding:5px 10px;border-radius:10px;background:var(--g)}
@@ -117,7 +132,7 @@ button{font-family:inherit}
 <div class="pls" id="top"></div>
 <div id="bw"><div id="bd"></div></div>
 <div id="msg"></div>
-<div class="dock"><button class="die" id="die" aria-label="Roll the dice"></button><div class="hint" id="hint"></div></div>
+<div class="dock"><div class="die off" id="die" role="button" tabindex="0" aria-label="Roll the dice"><span class="sh"></span><div class="tilt"><div class="cube" id="cube"></div></div></div><div class="hint" id="hint"></div></div>
 <div class="log" id="log"></div>
 </div>
 
@@ -199,8 +214,12 @@ function startGame(){
  $('potl').textContent=pot.toLocaleString()+' pts';$('log').innerHTML='';
  buildBoard();buildDie();render();beginTurn();
 }
-function buildDie(){$('die').innerHTML='<i></i>'.repeat(9);setDie(0)}
-function setDie(n){[...$('die').children].forEach((d,i)=>d.classList.toggle('on',(PIPS[n]||[]).includes(i)))}
+let dieK=0;
+const DXY={1:[0,0],2:[0,-90],3:[-90,0],4:[90,0],5:[0,90],6:[0,180]};
+function buildDie(){$('cube').innerHTML=[1,2,3,4,5,6].map(n=>`<div class="f f${n}">${'<i></i>'.repeat(9)}</div>`).join('');
+ [...$('cube').children].forEach((f,k)=>[...f.children].forEach((d,i)=>d.classList.toggle('on',PIPS[k+1].includes(i))));
+ const c=$('cube');c.style.transition='none';dieK=0;setDie(1);void c.offsetWidth;c.style.transition=''}
+function setDie(n,spin){const [x,y]=DXY[n||1];if(spin)dieK++;const k=dieK*720;$('cube').style.transform=`rotateX(${x+k}deg) rotateY(${y+k}deg)`}
 function buildBoard(){
  const bd=$('bd');bd.innerHTML='';
  const add=(r,c,bg,html,cls)=>{const d=document.createElement('div');d.className='c'+(cls?' '+cls:'');d.style.cssText=`top:${r*U}%;left:${c*U}%`;if(bg)d.style.background=bg;if(html)d.innerHTML=html;bd.appendChild(d);return d};
@@ -233,10 +252,11 @@ function render(){
  const cur=G.seats[G.turn];
  $('top').innerHTML=G.seats.map(p=>`<div class="pl ${cur===p&&!G.over?'turn':''}"><i class="dot" style="background:${col(p)}"></i><span class="n">${COL[p].n}${seatsCfg[p]==='bot'?' (bot)':''}</span><span class="h">${G.pos[p].filter(x=>x===56).length}/4</span></div>`).join('');
  const isH=seatsCfg[cur]==='human'&&!G.busy&&!G.roll&&!G.over;
- const d=$('die');d.className='die'+(isH?' go':'');d.disabled=!isH;
+ const d=$('die');d.classList.toggle('go',isH);d.classList.toggle('off',!isH);d.setAttribute('aria-disabled',!isH);
  $('hint').textContent=isH?'Tap the dice to roll':(G.movable.length>1&&seatsCfg[cur]==='human'?'Tap a lifted token':'');
- if(G.roll)setDie(G.roll);
+ if(G.roll&&!d.classList.contains('roll'))setDie(G.roll);
 }
+$('die').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('die').click()}};
 $('die').onclick=()=>{const cur=G.seats[G.turn];if(seatsCfg[cur]==='human'&&!G.busy&&!G.roll)doRoll()};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function say(t){$('msg').textContent=t}
@@ -249,11 +269,10 @@ async function beginTurn(){
 }
 async function doRoll(){
  if(G.busy||G.over)return;G.busy=true;render();
- const p=G.seats[G.turn],d=$('die');
- d.classList.add('roll');
- for(let i=0;i<5;i++){setDie(1+Math.floor(Math.random()*6));await sleep(80)}
- G.roll=1+Math.floor(Math.random()*6);setDie(G.roll);
- d.classList.remove('roll');G.busy=false;buzz(15);
+ const p=G.seats[G.turn],d=$('die'),r=1+Math.floor(Math.random()*6);
+ d.classList.add('roll');setDie(r,true);buzz([10,60,10]);
+ await sleep(1000);
+ G.roll=r;d.classList.remove('roll');G.busy=false;buzz(20);
  if(G.roll===6){G.sixes++;if(G.sixes===3){G.sixes=0;render();say('Three sixes in a row. Turn lost.');logit(`${COL[p].n}: three 6s, turn lost`);await sleep(1000);return next(false)}}
  G.movable=G.pos[p].map((q,t)=>({p,t,q})).filter(m=>canMove(m.q,G.roll));
  render();

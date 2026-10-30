@@ -39,6 +39,10 @@ jobs:
         with:
           node-version: 20
 
+      - name: Build tw.css for the app
+        shell: bash
+        run: npx --yes tailwindcss@3.4.17 -c tailwind.config.cjs -i tailwind/input.css -o frontend/tw.css --minify
+
       - name: Put the website inside the app (offline copy)
         shell: bash
         run: |

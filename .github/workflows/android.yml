@@ -11,6 +11,7 @@ on:
       - 'frontend/**'
       - 'android-wrapper/**'
       - '.github/workflows/android.yml'
+      - 'tailwind.config.cjs'
 
 concurrency:
   group: android-apk
@@ -58,6 +59,10 @@ jobs:
         run: |
           n=0; for v in "$KS_B64" "$KS_PASS" "$KS_ALIAS" "$KEY_PASS"; do [ -n "$v" ] && n=$((n+1)); done
           if [ "$n" -ne 0 ] && [ "$n" -ne 4 ]; then echo "Only $n of the 4 signing secrets are set. Set all 4 (see android-wrapper/README.md) or remove them."; exit 1; fi
+
+      - name: Build tw.css for the app
+        working-directory: .
+        run: npx --yes tailwindcss@3.4.17 -c tailwind.config.cjs -i tailwind/input.css -o frontend/tw.css --minify
 
       - name: Pack the website into the app
         env:

@@ -1,0 +1,43 @@
+name: Build Tailwind CSS
+
+# Builds frontend/tw.css (only the Tailwind classes the site really uses) and saves it in the repo.
+# Runs by itself when pages or scripts change. Manual run: GitHub > Actions > Build Tailwind CSS > Run workflow.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**/*.html'
+      - 'frontend/**/*.js'
+      - 'tailwind.config.cjs'
+      - 'tailwind/input.css'
+      - '.github/workflows/tailwind.yml'
+
+concurrency:
+  group: tailwind-css
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  css:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build tw.css
+        run: npx --yes tailwindcss@3.4.17 -c tailwind.config.cjs -i tailwind/input.css -o frontend/tw.css --minify
+      - name: Save tw.css if it changed
+        run: |
+          git add -N frontend/tw.css
+          if git diff --quiet -- frontend/tw.css; then echo "tw.css unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/tw.css
+          git commit -m "Rebuild tw.css [skip ci]"
+          git pull --rebase origin main
+          git push

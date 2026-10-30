@@ -64,6 +64,10 @@ jobs:
         working-directory: .
         run: npx --yes tailwindcss@3.4.17 -c tailwind.config.cjs -i tailwind/input.css -o frontend/tw.css --minify
 
+      - name: Merge the stylesheets for the app
+        working-directory: .
+        run: python3 scripts/merge-css.py
+
       - name: Pack the website into the app
         env:
           APP_ENTRY: ${{ vars.APP_ENTRY }}

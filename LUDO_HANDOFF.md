@@ -39,3 +39,9 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 - New `GET /api/ludo/mine` returns the caller's open room code. Create also blocks players already seated elsewhere.
 - State has `rn` (roll counter) and `rv` (last rolled value) so no-move rolls show on every phone.
 - Cron cancels and refunds playing rooms idle for 20 min (was 3 h).
+
+## Phase 3 part B notes (DONE): online board `frontend/ludo-online.html`
+- Dice follows `rn/rv` from the server, so every phone sees every roll, including rolls with no legal move. Own roll shows the real value, not a random face.
+- Reload or app restart resumes the open room through `/api/ludo/mine`, so a stake is never stranded.
+- Polls send `back=1` after returning to the tab, so an away seat is taken back from the bot. Offline notice added. Last-moved token has a ring.
+- NEXT: Phase 4 (withdrawal panel real rules: minimum, fee, step).

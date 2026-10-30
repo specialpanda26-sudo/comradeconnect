@@ -70,6 +70,8 @@ button{font-family:inherit}
 .tk.m{z-index:5;pointer-events:auto;cursor:pointer}
 .tk.m i{animation:hop .7s infinite;box-shadow:0 0 0 3px var(--fg),0 6px 12px #0006}
 .tk.hit i{animation:hit .4s}
+.tk.lm i{box-shadow:0 0 0 2px var(--fg),0 3px 6px #0005}
+.pl .dot.on{box-shadow:0 0 0 3px var(--bg),0 0 0 5px currentColor}
 @keyframes hop{50%{transform:translateY(-14%) scale(1.06)}}
 @keyframes hit{50%{transform:scale(1.5);opacity:.4}}
 #msg{text-align:center;min-height:22px;font-size:13px;font-weight:600;margin:12px 0 4px}
@@ -198,7 +200,7 @@ const yardSlots=p=>[[1.5,1.5],[1.5,4.5],[4.5,1.5],[4.5,4.5]].map(([a,b])=>[COL[p
 
 // ---------- state ----------
 const PTS_MAX=1000, CHIPS={pts:[0,10,50,100,500],kes:[10,50,100,500,1000]};
-let cfg={kes:false,fee:7,min:10,max:5000,balance:0},mode='pts',maxP=4,stake={pts:0,kes:50},room=null,poll=null,built=false,els={},busy=false,tick=null,leftAt=0,dieK=0,shown=0,rolling=false;
+let cfg={kes:false,fee:7,min:10,max:5000,balance:0},mode='pts',maxP=4,stake={pts:0,kes:50},room=null,poll=null,built=false,els={},busy=false,tick=null,leftAt=0,dieK=0,shown=0,rolling=false,seenRn=0,backFlag=true;
 const lim=()=>mode==='pts'?{min:0,max:PTS_MAX}:{min:cfg.min,max:cfg.max};
 const cur=()=>stake[mode];
 const prizeOf=pot=>Math.floor(pot*(100-cfg.fee)/100);
@@ -246,8 +248,8 @@ $('create').onclick=async()=>{say();const se=stakeError();if(se)return say(se);
  try{enter(await api('create',{mode,stake:cur(),max:maxP,confirm18:$('c18').checked}))}catch(e){say(e.message);drawLobby()}};
 
 // ---------- room flow ----------
-function enter(r){room=r;shown=0;$('lobby').classList.add('hide');clearInterval(poll);poll=setInterval(refresh,1200);show(r)}
-async function refresh(){if(busy||!room)return;try{const r=await api('room?code='+room.code);if(r.version!==room.version||r.status!==room.status||(r.state&&r.state.left>0)||JSON.stringify(r.state)!==JSON.stringify(room.state))show(r)}catch(e){say(e.message)}}
+function enter(r){room=r;shown=0;seenRn=r.state?r.state.rn:0;built=false;$('lobby').classList.add('hide');clearInterval(poll);poll=setInterval(refresh,1200);show(r)}
+async function refresh(){if(busy||!room)return;try{const r=await api('room?code='+room.code+(backFlag?'&back=1':''));backFlag=false;say('');if(r.version!==room.version||r.status!==room.status||(r.state&&r.state.left>0)||JSON.stringify(r.state)!==JSON.stringify(room.state))show(r)}catch(e){say(navigator.onLine?e.message:'Offline. Reconnecting...')}}
 function show(r){room=r;leftAt=Date.now()+(r.state?r.state.left:0);
  if(r.status==='waiting')return drawWait(r);
  if(r.status==='cancelled'){stop();alert('Room was cancelled. Any stake was returned.');return toLobby()}
@@ -273,7 +275,7 @@ async function tumble(n){rolling=true;const d=$('die');d.classList.add('roll');s
 $('die').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('die').click()}};
 $('die').onclick=async()=>{if(busy||!room||!$('die').classList.contains('go'))return;busy=true;
  const d=$('die');d.classList.add('roll');d.classList.remove('go');setDie(1+Math.floor(Math.random()*6),true);buzz([10,60,10]);rolling=true;
- try{const t0=Date.now(),r=await api('roll',{code:room.code});if(r.state&&r.state.roll)setDie(r.state.roll,true);await sleep(Math.max(0,950-(Date.now()-t0)));d.classList.remove('roll');rolling=false;shown=r.state?r.state.roll:0;busy=false;show(r)}
+ try{const t0=Date.now(),r=await api('roll',{code:room.code});if(r.state&&r.state.rv)setDie(r.state.rv,true);seenRn=r.state?r.state.rn:seenRn;await sleep(Math.max(0,950-(Date.now()-t0)));d.classList.remove('roll');rolling=false;busy=false;show(r)}
  catch(e){d.classList.remove('roll');rolling=false;busy=false;say(e.message);if(room)show(room)}};
 async function pick(t){if(busy||!room||!room.movable.includes(t))return;busy=true;try{const r=await api('move',{code:room.code,token:t});busy=false;show(r)}catch(e){busy=false;say(e.message)}}
 
@@ -296,11 +298,12 @@ function drawGame(r){$('wait').classList.add('hide');$('game').classList.remove(
  st.order.forEach(p=>[0,1,2,3].forEach(t=>{const [a,b]=xy(p,t,st.pos[p][t]);(cells[a+','+b]=cells[a+','+b]||[]).push([p,t,a,b])}));
  Object.values(cells).forEach(l=>l.forEach(([p,t,a,b],i)=>{const e=els[p][t],n=l.length,o=n>1?(i-(n-1)/2)*.3:0;e.style.top=(a+(n>1?o*.4:0))*U+'%';e.style.left=(b+o)*U+'%';e.style.transform=n>1?'scale(.72)':'';e.classList.toggle('m',p===r.mycolor&&r.movable.includes(t))}));
  const c=st.order[st.turn],mine=c===r.mycolor,playing=r.status==='playing';
+ st.order.forEach(p=>els[p].forEach((e,t)=>e.classList.toggle('lm',!!(st.last&&st.last.c===p&&st.last.t===t))));
  $('top').innerHTML=r.seats.map(s=>`<div class="pl ${s.color===c&&playing?'turn':''}"><i class="dot" style="background:${col(s.color)}"></i><span class="n">${esc(s.handle)}${s.me?' (you)':''}${s.auto?' · away':''}</span><span class="h">${st.pos[s.color].filter(x=>x===56).length}/4</span></div>`).join('');
  $('potl').textContent=(r.mode==='kes'?'KSh ':'')+n0(r.pot)+(r.mode==='kes'?'':' pts');
  const can=mine&&!st.roll&&playing&&!busy;const d=$('die');d.classList.toggle('go',can);d.classList.toggle('off',!can);d.setAttribute('aria-disabled',!can);
- if(st.roll&&!rolling&&shown!==st.roll){if(mine)setDie(st.roll);else tumble(st.roll);shown=st.roll}
- if(!st.roll)shown=0;
+ if(st.rn!==seenRn&&!rolling){seenRn=st.rn;tumble(st.rv)}
+ else if(!rolling&&st.rv)setDie(st.rv);
  $('hint').textContent=can?'Tap the dice to roll':(mine&&st.roll&&r.movable.length>1?'Tap a lifted token':'');
  $('msg').textContent=!playing?'':st.log||(mine?(st.roll?'Tap a lifted token':'Your turn. Roll the dice.'):`${COL[c].n}'s turn`);
  clearInterval(tick);tick=setInterval(()=>{const s=Math.max(0,Math.ceil((leftAt-Date.now())/1000));$('tmr').textContent=playing?s+'s':''},250);
@@ -309,12 +312,16 @@ function drawGame(r){$('wait').classList.add('hide');$('game').classList.remove(
   $('wt').textContent=won?'You win':`${r.winner||'Someone'} wins`;
   $('wp').textContent=won?`Prize: ${r.mode==='kes'?'KSh ':''}${n0(r.prize)}${r.mode==='kes'?', added to your wallet.':' points.'}`:'Better luck next time.';$('win').style.display='grid';buzz([60,40,60])}}
 
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&room){backFlag=true;refresh()}});
+window.addEventListener('online',()=>{if(room){backFlag=true;refresh()}});
+
 // ---------- start ----------
 (async()=>{
  try{
   if(!auth()){say('Sign in on Comrade Connect first, then come back.');$('create').disabled=$('join').disabled=true;drawLobby();return}
   try{cfg=await api('config')}catch(e){say(e.message)}
   stake.kes=Math.min(Math.max(cfg.min,50),cfg.max);drawLobby();loadOpen();
+  try{const m=await api('mine');if(m&&m.code){enter(await api('room?code='+m.code+'&back=1'));backFlag=false;return}}catch(e){}
   const c=new URLSearchParams(location.search).get('c');if(c)$('jc').value=c.toUpperCase().slice(0,5);
  }finally{if(window.LudoLoader)window.LudoLoader.hide()}
 })();

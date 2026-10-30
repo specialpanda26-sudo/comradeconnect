@@ -1,6 +1,7 @@
 // FinoQ (PayHero) v2 wrapper. Pure HTTP, no DB writes.
 export const finoqBase = (env) => String(env.PAYHERO_BASE_URL || 'https://api.finoq.africa').replace(/\/+$/, '');
 export const finoqChannel = (env) => { const n = Number(String(env.PAYHERO_CHANNEL_ID || '').trim()); return Number.isFinite(n) && n > 0 ? n : 0; };
+export const finoqProvider = (env) => { const v = String(env.PAYHERO_PROVIDER || '').trim().toLowerCase(); return v === 'sasapay' ? 'sasapay' : 'm-pesa'; };
 export const finoqAccount = (env) => { const n = Number(String(env.PAYHERO_ACCOUNT_ID || '').trim()); return Number.isFinite(n) && n > 0 ? n : 0; };
 export const finoqReady = (env) => !!(String(env.PAYHERO_API_KEY || '').trim() && String(env.PAYHERO_API_SECRET || '').trim() && finoqChannel(env));
 export const finoqAuth = (env) => 'Basic ' + btoa(String(env.PAYHERO_API_KEY || '').trim() + ':' + String(env.PAYHERO_API_SECRET || '').trim());
@@ -20,7 +21,8 @@ async function call(env, path, body, label) {
 }
 
 export async function finoqStkPush(env, { amount, phone, ref }) {
-  const body = { amount: Math.floor(Number(amount)), phone_number: localPhone(phone), channel_id: finoqChannel(env), provider: 'm-pesa', external_reference: ref };
+  const body = { amount: Math.floor(Number(amount)), phone_number: localPhone(phone), channel_id: finoqChannel(env), provider: finoqProvider(env), external_reference: ref };
+  if (body.provider === 'sasapay') body.network_code = '63902';
   const acc = finoqAccount(env); if (acc) body.account_id = acc;
   const cb = finoqCallback(env);
   if (cb) body.callback_url = cb;

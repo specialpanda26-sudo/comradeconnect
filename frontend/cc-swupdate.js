@@ -5,6 +5,19 @@
   'use strict';
   if (window.__ccSwUpd || !('serviceWorker' in navigator)) return; window.__ccSwUpd = 1;
   var had = !!navigator.serviceWorker.controller, shown = false;
+  // v3: the new version applies by itself, so nobody sees the old copy first.
+  // Right after opening (nothing tapped yet): reload at once. Later: when the app goes to the background.
+  var born = Date.now(), touched = false;
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function (n) { addEventListener(n, function () { touched = true; }, { capture: true, passive: true }); });
+  function go() {
+    try { var t = +sessionStorage.getItem('cc_swauto') || 0; if (Date.now() - t < 30000) return false; sessionStorage.setItem('cc_swauto', String(Date.now())); } catch (e) {}
+    location.reload(); return true;
+  }
+  function chk() { navigator.serviceWorker.getRegistration().then(function (r) { if (r) r.update(); }).catch(function () {}); }
+  chk();
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') chk(); else if (shown) go();
+  });
   function css() {
     if (document.getElementById('ccswupd-css')) return;
     var s = document.createElement('style'); s.id = 'ccswupd-css';
@@ -16,6 +29,7 @@
   }
   navigator.serviceWorker.addEventListener('controllerchange', function () {
     if (!had || shown) return; shown = true;
+    if (!touched && Date.now() - born < 30000 && go()) return;
     css();
     var b = document.createElement('div'); b.id = 'ccswupd'; b.setAttribute('role', 'status');
     var d = document.createElement('i');

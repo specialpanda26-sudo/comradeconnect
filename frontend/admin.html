@@ -570,7 +570,7 @@ const $ = (s, r) => (r || document).querySelector(s);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const kes = (n) => 'KSh ' + Number(n || 0).toLocaleString('en-KE');
 const when = (t) => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleString('en-KE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
-const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2800); };
+const toast = (m, k) => { if (window.ccToast) return window.ccToast(m, k); const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2800); };
 // The key lives in sessionStorage only: closing the tab signs you out.
 const store = { get: (k) => { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) {} }, del: (k) => { try { sessionStorage.removeItem(k); } catch (e) {} } };
 const base = () => (CC_API.indexOf('YOUR-SUBDOMAIN') < 0 ? CC_API : (localStorage.getItem('cc_admin_api') || '')).replace(/\/$/, '');
@@ -615,7 +615,7 @@ async function load() { Q = await api('/api/admin/queue'); await loadExtra(); re
 const kv = (a) => a.filter((x) => x[1] !== undefined && x[1] !== null && x[1] !== '').map((x) => '<div class="kv"><span class="sub">' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>').join('');
 async function act(btn, fn, okMsg) {
   btn.disabled = true;
-  try { await fn(); toast(okMsg); await load(); } catch (e) { toast(e.message); btn.disabled = false; }
+  try { await fn(); toast(okMsg, 'ok'); await load(); } catch (e) { toast(e.message || 'Something went wrong. Try again.', 'error'); btn.disabled = false; }
 }
 function ask(msg, def) { const v = prompt(msg, def || ''); return v == null ? null : v.trim(); }
 
@@ -794,5 +794,6 @@ window.addEventListener('pageshow', () => { if (store.get('k')) load().catch((e)
 <script src="admin-dash.js?v=5"></script>
 <script src="admin-pro.js?v=2"></script>
 <script src="admin-vibe.js?v=1"></script>
+<script src="cc-toast.js?v=1"></script>
 </body>
 </html>

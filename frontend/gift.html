@@ -140,4 +140,5 @@ $('cm').onchange=function(){$('cmb').classList.toggle('show',this.checked)};$('r
 $('wb').onclick=function(){busy=false;show('form');refresh()};$('again').onclick=function(){busy=false;sel=null;$('am').value='';$('ms').value='';draw();$('cu').classList.remove('show');show('form');refresh()};
 if(!slug){show('off')}else api('/api/gift/public?c='+encodeURIComponent(slug)).then(function(d){D=d;document.title='Send a gift to '+d.title+' | Comrade Connect';$('t').textContent='Show '+d.title+' some love';if(d.blurb){$('bl').textContent=d.blurb;$('bl').hidden=false}$('rcw').hidden=!d.receipts;draw();show('form');refresh()}).catch(function(){show('off')});
 })();
-</script><script src="cc-otp-full.js?v=2" defer></script></body></html>
+</script><script src="cc-otp-full.js?v=2" defer></script><script src="cc-toast.js?v=1"></script>
+</body></html>

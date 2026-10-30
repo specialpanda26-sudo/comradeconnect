@@ -30,7 +30,7 @@ const GROUPS = [
   { n: 'Review', icon: 'inbox', h: 'Waiting for you', lead: 'Everything that needs a decision from you.', tabs: ['listings', 'withdrawals', 'verifications', 'disputes', 'reports', 'payments', 'support'] },
   { n: 'Market', icon: 'bag', h: 'Market and campus', lead: 'Items, events, notices, sponsors and the club shop.', tabs: ['live', 'events', 'notices', 'sponsors', 'club', 'services', 'push'] },
   { n: 'Kura', icon: 'star', h: 'Kura', lead: 'Contestants, votes and the season.', tabs: ['kura'] },
-  { n: 'Joins', icon: 'link', h: 'Joins', lead: 'See who joined what, and remove a join when you need to.', tabs: ['joins'] },
+  { n: 'Joins', icon: 'link', h: 'Joins', lead: 'See who joined what, and remove a join when you need to.', tabs: ['joins', 'ambassadors'] },
   { n: 'Money', icon: 'wallet', h: 'Money', lead: 'Earnings, fees and payouts.', tabs: ['txns', 'settings', 'payouts'] },
   { n: 'Site', icon: 'sliders', h: 'Site', lead: 'Change the words and switches on the public site, and read the log.', tabs: ['site', 'landing', 'zones', 'postrules', 'audit', 'sql'] },
 ];

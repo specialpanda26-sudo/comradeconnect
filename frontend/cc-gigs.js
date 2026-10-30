@@ -69,6 +69,7 @@ function item(g, mine) {
     if (g.status === 'disputed') d.appendChild(el('p', '', 'The poster reported a problem. An admin will decide.'));
     if (g.status === 'released') d.appendChild(el('p', '', 'Paid to your wallet.'));
   }
+  if (g.status === 'open' && window.ccShareCard) r.appendChild(btn('Share', function () { window.ccShareCard({ tag: 'Gig · Money held safely', title: g.title, line: kes(g.price) + '   ' + g.category + (g.campus ? '   @' + g.campus : ''), cta: 'Find gigs on Comrade Connect', hash: '#gigs', filename: 'comrade-gig', share: 'Need a hand? ' + g.title + ' on Comrade Connect:' }); }, 'x'));
   if (r.childNodes.length) d.appendChild(r);
   return d;
 }
@@ -106,7 +107,7 @@ function draw() {
   } else in_.appendChild(postForm());
   ov.appendChild(in_);
 }
-function init() { mountCard(); }
+function init() { mountCard(); if (location.hash === '#gigs') setTimeout(function () { try { if (typeof go === 'function') go('market'); } catch (e) {} open(); }, 800); }
 new MutationObserver(function () { if (!document.getElementById('ccg-card')) mountCard(); }).observe(market, { childList: true });
 init();
 })();

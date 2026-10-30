@@ -30,3 +30,12 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 - Stake input: points 0 to 1000 (0 = free, nothing deducted); KES min/max/balance from `/api/ludo/config`. Shortfall message says exactly how much to add. Live pot, fee and winner-gets preview (fee from config, floor maths same as server).
 - Online board restyled the same as offline (SVG stars/arrows, yards) and 3D cube dice with roll animation, so Phase 3 only needs board QA plus the backend review.
 - NEXT: Phase 3. Review `backend/src/ludo.js`: stake checks, refunds (leave/cancel/idle), payout idempotency, away players. Then Phase 4.
+
+## Phase 3 part A notes (DONE): backend `backend/src/ludo.js`
+- Every seat has a unique `ref`: stake and refund ledger keys are per join, so leave then re-join works and refunds are never lost.
+- Pot and prize come from stake x seats, not a stored counter. If the host stake fails, the room closes and only the others are refunded.
+- Payout checks the ledger first, so an already-paid winner is not retried forever.
+- `GET /api/ludo/room?code=X&back=1` takes an away seat back from the bot. Non-members are rejected before any write.
+- New `GET /api/ludo/mine` returns the caller's open room code. Create also blocks players already seated elsewhere.
+- State has `rn` (roll counter) and `rv` (last rolled value) so no-move rolls show on every phone.
+- Cron cancels and refunds playing rooms idle for 20 min (was 3 h).

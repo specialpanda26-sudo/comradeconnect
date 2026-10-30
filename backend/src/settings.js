@@ -76,7 +76,9 @@ export async function getZones(env, campus) {
 export const feeOf = (amount, pct) => Math.floor((amount * pct) / 100 + 1e-9);
 export const withdrawFee = (amount, S) => Math.ceil((amount * S.withdraw_fee_percent) / 100 - 1e-9) + S.withdraw_fee_flat;
 export const boostPlans = (S) => [{ id: '1d', hours: 24, price: S.boost_price }, { id: '3d', hours: 72, price: S.boost_price_3d }];
-export const publicConfig = (S) => ({
+const envNum = (v, d) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : d; };
+export const publicConfig = (S, env = {}) => ({
+  payout_net_min: envNum(env.PAYOUT_AUTO_MIN, 10), payout_daily_max: envNum(env.PAYOUT_AUTO_DAILY_MAX, 150000), withdraw_requires_id: (env.WITHDRAW_REQUIRES_VERIFIED ?? '1') === '1',
   fee_percent: S.platform_fee_percent, boost_plans: boostPlans(S),
   price_min: S.listing_price_min, price_max: S.listing_price_max,
   points_per_ksh: S.points_per_ksh, withdraw_min: S.withdraw_min, withdraw_max: S.withdraw_max, withdraw_fee_percent: S.withdraw_fee_percent, withdraw_fee_flat: S.withdraw_fee_flat,
@@ -111,6 +113,6 @@ export async function saveSettings(env, input) {
 
 // Public: the app reads fees and prices from here so the screens never disagree with the server.
 export async function settingsRoutes(req, env, url) {
-  if (req.method === 'GET' && url.pathname === '/api/config') return json(env, { ...publicConfig(await getSettings(env)), zones: await getZones(env, campusOf(req) || (isAllCampuses(req) ? 'all' : DEFAULT_CAMPUS)) });
+  if (req.method === 'GET' && url.pathname === '/api/config') return json(env, { ...publicConfig(await getSettings(env), env), zones: await getZones(env, campusOf(req) || (isAllCampuses(req) ? 'all' : DEFAULT_CAMPUS)) });
   return null;
 }

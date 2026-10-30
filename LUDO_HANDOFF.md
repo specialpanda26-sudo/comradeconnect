@@ -45,3 +45,14 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 - Reload or app restart resumes the open room through `/api/ludo/mine`, so a stake is never stranded.
 - Polls send `back=1` after returning to the tab, so an away seat is taken back from the bot. Offline notice added. Last-moved token has a ring.
 - NEXT: Phase 4 (withdrawal panel real rules: minimum, fee, step).
+
+## Phase 4 notes (DONE): the real withdrawal rules
+- Panel: `#wd` button in `frontend/cc-core.js` ("wallet withdrawal" block). Server: `POST /api/wallet/withdraw` in `backend/src/account.js`, payout in `backend/src/payouts.js`, settings in `backend/src/settings.js`.
+- Amount: whole shillings (no step). Smallest = admin setting `withdraw_min` (default 1; the old SQL note says a saved 50 should be set back to 1). Largest = `withdraw_max` (default 150000).
+- Fee = ceil(amount x `withdraw_fee_percent` / 100) + `withdraw_fee_flat` (defaults 0). You receive amount minus fee.
+- After the fee the amount sent must be at least `PAYOUT_AUTO_MIN` (default 10), otherwise the money is returned ("below the M-Pesa minimum"). So the real smallest amount = the smallest amount whose net is >= 10.
+- Rolling 24 hour limit: `PAYOUT_AUTO_DAILY_MAX` (default 150000), counted on sending and paid withdrawals.
+- ID must be verified (`WITHDRAW_REQUIRES_VERIFIED`, default on). Phone must be 07.. or 01.. (or 254..).
+- Wallet debits at request time; a failed or refused payout returns the money.
+- Change made: `/api/config` and `/api/wallet` now also send `payout_net_min`, `payout_daily_max`, `withdraw_requires_id`; the withdraw sheet shows a "Withdrawal rules" block from these numbers (the 10 is no longer hard-coded) and an empty wallet now says so instead of doing nothing.
+- NEXT: Phase 5 (explain why a balance such as KSh 500 cannot be withdrawn and exactly how much to add, with the fee breakdown). Then Phase 6 QA.

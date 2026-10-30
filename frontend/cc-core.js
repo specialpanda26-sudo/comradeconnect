@@ -5,7 +5,7 @@
 'use strict';
 let FEE = 7;                                             // percent; replaced by the server's value (admin > Money and fees) as soon as it loads
 const CFG = { ppk: 10, min: 1, max: 150000, wfp: 0, wff: 0, pmin: 1, pmax: 150000 };
-const PAYOUT_NET_MIN = 10;   // M-Pesa will not send less than this after the fee
+let PAYOUT_NET_MIN = 10; let PAYOUT_DAY_MAX = 150000; let WD_NEEDS_ID = true;   // M-Pesa will not send less than this after the fee
 const wFee = (a) => Math.ceil((a * CFG.wfp) / 100 - 1e-9) + CFG.wff;   // same formula as the server
 const wNeedFor = (net) => { const top = net + Math.ceil((net * CFG.wfp) / 100) + CFG.wff + 5; for (let a = Math.max(net, 1); a <= top; a++) if (a - wFee(a) >= net) return a; return net; };   // smallest amount to enter so that you receive `net`
 const kes = (n) => 'KSh ' + Number(n).toLocaleString('en-KE');
@@ -21,6 +21,7 @@ async function loadConfig() {                              // fee %, boost price
     if (Array.isArray(d.zones) && d.zones.length) { try { localStorage.setItem('cc_zl:' + (cmp || 'kirinyaga'), JSON.stringify(d.zones.map(String))); } catch (e) {} ZONES.splice(0, ZONES.length, ...d.zones.map(String)); try { if (window.ccDrawZones) window.ccDrawZones(); } catch (e) {} }
     CFG.pmin = d.price_min || 1; CFG.pmax = d.price_max || 150000;
     { const mp = document.getElementById('mpr'); if (mp) mp.placeholder = 'Price in KSh (' + CFG.pmin.toLocaleString('en-US') + ' to ' + CFG.pmax.toLocaleString('en-US') + ')'; }
+    if (d.payout_net_min > 0) PAYOUT_NET_MIN = d.payout_net_min; if (d.payout_daily_max > 0) PAYOUT_DAY_MAX = d.payout_daily_max; if (typeof d.withdraw_requires_id === 'boolean') WD_NEEDS_ID = d.withdraw_requires_id;
     CFG.min = d.withdraw_min || 1; CFG.ppk = d.points_per_ksh || 10; CFG.max = d.withdraw_max || 150000; CFG.wfp = d.withdraw_fee_percent || 0; CFG.wff = d.withdraw_fee_flat || 0;
     const bs = [...document.querySelectorAll('#dm .pl .act')];
     (d.boost_plans || []).forEach((p, i) => { const b = bs[i]; if (!b) return; b.dataset.pr = p.price; b.dataset.du = p.hours === 24 ? '24 hours' : '3 days'; b.innerHTML = '<b>KSh ' + p.price + '</b>' + b.dataset.du; });
@@ -920,10 +921,11 @@ document.addEventListener('click', (e) => {
 
 /* ---------- wallet withdrawal ---------- */
 $('#wd').onclick = async () => {
-  const bal = S.wallet ? S.wallet.balance : 0; if (!bal) return;
+  const bal = S.wallet ? S.wallet.balance : 0; if (!bal) return toast('Your wallet is empty, so there is nothing to withdraw yet.');
   if (!idOK()) return needId();
   if (typeof bioGate === 'function' && !(await bioGate())) return toast('Fingerprint check failed');
   const m = sheet('<h3>Withdraw to M-Pesa</h3><p class="sub" style="margin-top:6px">Available: ' + kes(bal) + '. The money is sent straight to your M-Pesa, usually within a minute. Smallest withdrawal: ' + kes(CFG.min) + '. Largest: ' + kes(CFG.max) + '.' + (CFG.wfp || CFG.wff ? ' Withdrawal fee: ' + (CFG.wfp ? CFG.wfp + '%' : '') + (CFG.wfp && CFG.wff ? ' + ' : '') + (CFG.wff ? kes(CFG.wff) : '') + '.' : '') + '</p>'
+    + '<p class="sub" id="ccw-r" style="margin-top:8px"></p>'
     + '<div class="fld" style="margin-top:10px"><input id="ccwp" inputmode="numeric" maxlength="12" placeholder="M-Pesa number, e.g. 0712345678" aria-label="M-Pesa number"></div>'
     + '<div class="fld"><input id="ccwa" type="number" inputmode="numeric" value="' + Math.min(bal, CFG.max) + '" aria-label="Amount in KSh"></div>'
     + '<p class="sub" style="margin:2px 0 6px">Amount to withdraw from your wallet</p>'
@@ -932,6 +934,8 @@ $('#wd').onclick = async () => {
     + '<p class="sub" id="ccw-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
   m.querySelector('#ccw-x').onclick = () => m.close();
   m.querySelector('#ccwp').value = '';
+  { const rr = m.querySelector('#ccw-r'), need = Math.max(CFG.min, wNeedFor(PAYOUT_NET_MIN));
+    rr.innerHTML = '<b>Withdrawal rules</b><br>Whole shillings only. Lowest you can withdraw: ' + kes(need) + (need > CFG.min ? ' (so that you receive at least ' + kes(PAYOUT_NET_MIN) + ' after the fee)' : '') + '. Highest: ' + kes(Math.min(CFG.max, PAYOUT_DAY_MAX)) + ' per withdrawal, and ' + kes(PAYOUT_DAY_MAX) + ' in any 24 hours.' + (WD_NEEDS_ID ? ' Your ID must be verified.' : ''); }
   const wa = m.querySelector('#ccwa'), wr = m.querySelector('#ccwr'), wb = m.querySelector('#ccw-b');
   const wShow = () => {
     const a = Math.floor(+wa.value) || 0; if (!(a > 0)) { wb.textContent = ''; return; }

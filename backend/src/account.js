@@ -227,7 +227,7 @@ export async function accountRoutes(req, env, url, ip) {
     const wd = [...await rows(await sb(env, `withdrawals?select=${cols}&aid=eq.${a}&status=neq.rejected&order=created_at.desc&limit=20`)),
       ...await rows(await sb(env, `withdrawals?select=${cols}&aid=eq.${a}&status=eq.rejected&decided_at=gte.${ago(3 * DAY)}&order=created_at.desc&limit=5`))]
       .sort((x, y) => (x.created_at < y.created_at ? 1 : -1));
-    return json(env, { balance: await balance(env, u.aid), ledger, withdrawals: wd, rules: publicConfig(await getSettings(env)) });
+    return json(env, { balance: await balance(env, u.aid), ledger, withdrawals: wd, rules: publicConfig(await getSettings(env), env) });
   }
   if (path === '/api/wallet/stats' && m === 'GET') {
     const u = await user(req, env); if (u instanceof Response) return u;

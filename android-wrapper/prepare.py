@@ -118,6 +118,24 @@ def patch_deeplink():
     print('sign-in return link ready')
 
 
+def patch_applinks():
+    """Links tapped in WhatsApp (https://comradeconnect.co.ke/?ref=CODE) open the app, not the browser.
+    Android checks https://comradeconnect.co.ke/.well-known/assetlinks.json, which the build publishes."""
+    p = MAIN / 'AndroidManifest.xml'
+    s = p.read_text(encoding='utf-8')
+    if 'android:autoVerify' in s:
+        return
+    f = ('        <intent-filter android:autoVerify="true">\n            <action android:name="android.intent.action.VIEW" />\n'
+         '            <category android:name="android.intent.category.DEFAULT" />\n'
+         '            <category android:name="android.intent.category.BROWSABLE" />\n'
+         '            <data android:scheme="https" android:host="comradeconnect.co.ke" android:path="/" />\n'
+         '            <data android:scheme="https" android:host="www.comradeconnect.co.ke" android:path="/" />\n'
+         '        </intent-filter>\n')
+    if '</activity>' not in s: sys.exit('STOP: AndroidManifest.xml has no </activity>')
+    p.write_text(s.replace('</activity>', f + '    </activity>', 1), encoding='utf-8')
+    print('app links ready')
+
+
 PKG = 'ke.co.comradeconnect.app'
 KOTLIN_VERSION = '1.9.25'          # works with the Android Gradle Plugin that Capacitor 6 generates (8.2.x)
 CREDENTIALS_VERSION = '1.3.0'      # androidx.credentials + credentials-play-services-auth (needs compileSdk 34, which Capacitor 6 uses)
@@ -227,4 +245,4 @@ def patch_notif_native():
 
 if not (MAIN / 'AndroidManifest.xml').exists():
     sys.exit('STOP: run `npx cap add android` first (no android/ folder found)')
-patch_manifest(); patch_deeplink(); patch_version(); patch_google_signin(); patch_firebase(); patch_notif_icon(); patch_notif_native(); icons()
+patch_manifest(); patch_deeplink(); patch_applinks(); patch_version(); patch_google_signin(); patch_firebase(); patch_notif_icon(); patch_notif_native(); icons()

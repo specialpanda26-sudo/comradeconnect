@@ -213,9 +213,18 @@
     });
   };
   window.addEventListener('load', function () { setTimeout(resumeKept, 1500); });
+  // Links tapped in WhatsApp (https://comradeconnect.co.ke/?ref=CODE, ?live=ID, #kura) open the app. Carry them into the page,
+  // where the website's own code keeps the invite code and opens the live or Kura screen.
+  var openLink = function (u, launch) {
+    var m = /^https:\/\/(?:www\.)?comradeconnect\.co\.ke\/?(\?[^#]*)?(#.*)?$/i.exec(String(u || '')); if (!m) return;
+    var search = m[1] || '', hash = m[2] || ''; if (!search && !hash) return;
+    if (launch) { try { if (sessionStorage.getItem('cc_lastlink') === search + hash) return; sessionStorage.setItem('cc_lastlink', search + hash); } catch (e) {} }
+    if (search === location.search && hash === location.hash) return;
+    location.replace('/' + search + hash);
+  };
   if (P.App) {
-    P.App.addListener('appUrlOpen', function (ev) { handleReturn(ev && ev.url); });
-    if (P.App.getLaunchUrl) P.App.getLaunchUrl().then(function (r) { if (r && r.url) handleReturn(r.url); }, function () {});
+    P.App.addListener('appUrlOpen', function (ev) { handleReturn(ev && ev.url); openLink(ev && ev.url, false); });
+    if (P.App.getLaunchUrl) P.App.getLaunchUrl().then(function (r) { if (r && r.url) { handleReturn(r.url); openLink(r.url, true); } }, function () {});
   }
   // Backup way back. The callback page also hands the sign-in to our server (keyed by the secret "state" only this app knows). If Android blocked the
   // app link, closing the tab (or coming back to the app) picks the sign-in up from there. Same checks as the app link: state and nonce must match.

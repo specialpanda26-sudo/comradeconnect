@@ -121,6 +121,24 @@ jobs:
             echo "::warning::Phone alerts are OFF in this build (no GOOGLE_SERVICES_JSON_BASE64 secret)"
           fi
 
+      - name: Publish assetlinks.json (so invite links open the app)
+        if: env.KS_B64 != ''
+        working-directory: .
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          HEX=$("$BT/apksigner" verify --print-certs android-wrapper/comrade-connect.apk | grep -m1 'SHA-256 digest' | sed 's/.*: *//' | tr -d ' :' | tr 'a-f' 'A-F')
+          test "${#HEX}" -eq 64 || { echo "::warning::Could not read the signing fingerprint, assetlinks.json not updated"; exit 0; }
+          FP=$(echo "$HEX" | sed 's/../&:/g; s/:$//')
+          mkdir -p frontend/.well-known
+          printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"ke.co.comradeconnect.app","sha256_cert_fingerprints":["%s"]}}]\n' "$FP" > frontend/.well-known/assetlinks.json
+          git add frontend/.well-known/assetlinks.json
+          if git diff --cached --quiet; then echo "assetlinks.json unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Publish assetlinks.json [skip ci]"
+          git pull --rebase origin main
+          git push
+
       - uses: actions/upload-artifact@v4
         with:
           name: comrade-connect-apk

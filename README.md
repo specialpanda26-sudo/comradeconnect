@@ -24,6 +24,9 @@ Render (API and static site; Cloudflare Workers + Pages also supported), Supabas
 ## Secrets
 Never commit keys. Every secret is set with `npx wrangler secret put NAME`; the names are listed in `.env.example` (no values). For local runs copy it to `.dev.vars`, which `.gitignore` already excludes.
 
+## Ludo and withdrawals
+Pages: `frontend/ludo.html` (offline), `frontend/ludo-online.html` (rooms, KES stakes), `frontend/ludo-loader.js` (3D dice loader), entry card `frontend/cc-ludo.js`. Backend: `backend/src/ludo.js`. They follow the site theme (`cc-theme.js`, light and dark) and are laid out for phones from 320 px wide. The withdraw sheet in `frontend/cc-core.js` explains exactly why a balance cannot be withdrawn and how much to add. Details and env names are in `API.md` and `LUDO_HANDOFF.md`.
+
 ## Status
 `REMAINING.md` lists what is done, what is not, and every known limit. Nothing has been run against a real Supabase project, Worker or phone yet; the tests use fakes.
 

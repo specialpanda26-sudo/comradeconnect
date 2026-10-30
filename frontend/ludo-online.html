@@ -108,6 +108,10 @@ button{font-family:inherit}
 #win .tr{width:62px;height:62px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center}
 #win h2{font:800 22px Unbounded,Poppins,sans-serif;margin-bottom:8px}
 #win p{color:var(--mut);font-size:13px;line-height:1.6;margin-bottom:18px}
+/* cc-phase6: small phones (320 to 360 px wide) and short screens */
+html{-webkit-text-size-adjust:100%}body{overflow-x:hidden}
+@media (max-width:360px){body{padding-left:10px;padding-right:10px}h1{font-size:22px}.card{padding:12px;border-radius:18px}.top a,.top button{padding:7px 11px;font-size:12px}.die{--z:24px;width:80px;height:80px}.die .sh{width:44px;margin-left:-22px}.hint{max-width:100px;font-size:11px}}
+@media (max-height:640px){.top{margin:6px 0 8px}p.s{margin:2px 0 10px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .hide{display:none!important}
 .top a.on{background:var(--fg);color:var(--bg)}

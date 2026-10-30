@@ -181,3 +181,9 @@ These exist in the code and are not described above. The last column is the file
 | GET | `/api/wallet/stats` | `account.js` |
 | POST | `/api/wholesale/join` | `wholesale.js` |
 | GET | `/api/wholesale/me` | `wholesale.js` |
+
+## Withdrawals and Ludo (cc-phase6 notes)
+- `GET /api/config` and `GET /api/wallet` (`rules`) also send `payout_net_min` (M-Pesa will not send less than this after the fee), `payout_daily_max` (KSh per rolling 24 hours) and `withdraw_requires_id`.
+- `POST /api/wallet/withdraw {amount, phone}` refuses before any debit, with a plain-language reason: bad phone, lowest allowed (fee-aware, so net >= `payout_net_min`), above `withdraw_max`, or short of balance (says how much). If the payout step hits the 24 hour limit the money is returned and the message shows the real limit.
+- Smallest withdrawal = smallest amount a such that a - fee(a) >= `payout_net_min` and a >= `withdraw_min`. Fee = ceil(a x percent / 100) + flat.
+- Ludo: `/api/ludo/*` in `backend/src/ludo.js`. Env: `LUDO_FEE_PERCENT` (default 7), `LUDO_KES_ENABLED` (`1` to allow KES stakes), `LUDO_MIN_STAKE` (10), `LUDO_MAX_STAKE` (5000). Each seat has its own ledger ref, so refunds and payouts are idempotent. Playing rooms idle for 20 minutes are cancelled and refunded by cron. `GET /api/ludo/mine` returns the caller's open room code; `GET /api/ludo/room?code=X&back=1` takes an away seat back from the bot.

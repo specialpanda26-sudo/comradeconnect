@@ -8,7 +8,7 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 3. TODO: Online board screen + backend review `backend/src/ludo.js` (stake validation, refunds, payout idempotency, timeouts/away handling).
 4. TODO: Withdrawal panel: find the withdraw UI (see `cc-gifts-withdraw.js`, `supabase/points-and-1-bob-withdrawals.sql`, backend withdraw route) and read the real rules (minimum, fee, step).
 5. DONE: Explainable withdrawals: if balance can't be withdrawn exactly (e.g. KSh 500), show why and how much more to add (or the max withdrawable), with the fee breakdown.
-6. TODO: Final QA: light/dark theme, small phones, service worker cache bump (`sw.js`), `cc-ludo.js` entry card style, README/API notes.
+6. DONE: Final QA: light/dark theme, small phones, service worker cache bump (`sw.js`), `cc-ludo.js` entry card style, README/API notes.
 
 ## Phase 1 notes
 - Theme comes from `/cc-theme.js` (`data-theme` light/dark). Board colours are CSS variables.
@@ -63,3 +63,9 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 - Server `POST /api/wallet/withdraw` (`backend/src/account.js`) now rejects before any debit with exact reasons: lowest amount (fee-aware), highest, shortfall; the daily-limit message shows the real limit.
 - `cc-core.js?v=` bumped in `index.html` and `sw.js` BUILD restamped.
 - NEXT: Phase 6 (light/dark QA, small phones, README/API notes).
+
+## Phase 6 notes (DONE): final QA
+- Both Ludo pages: small-phone CSS (320 to 360 px: tighter padding, smaller dice, narrower hints), short-screen spacing, no sideways scroll. Light and dark come from CSS variables set by `cc-theme.js`; board and dice redraw on the `cc-theme` event.
+- `cc-ludo.js` entry card: both buttons share one row.
+- `API.md` and `README.md` document the withdrawal rules, new config fields and Ludo env names. `sw.js` BUILD restamped.
+- All six phases are done. Still worth doing on a real phone: one KSh 1 online game between two phones and one KSh 1 withdrawal.

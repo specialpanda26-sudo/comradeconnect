@@ -24,3 +24,9 @@ Goal: make Ludo match the site (monochrome glass, Poppins, no emoji, theme-aware
 - Stake input: points 0 to 1000 (0 = free, nothing deducted); KES min/max/balance from `/api/ludo/config`. Shortfall message says exactly how much to add. Live pot, fee and winner-gets preview (fee from config, floor maths same as server).
 - Online board restyled the same as offline (SVG stars/arrows, yards) and 3D cube dice with roll animation, so Phase 3 only needs board QA plus the backend review.
 - NEXT: Phase 3. Review `backend/src/ludo.js`: stake checks, refunds (leave/cancel/idle), payout idempotency, away players. Then Phase 4.
+
+## Phase 2 notes (online lobby, DONE)
+- `frontend/ludo-online.html` rebuilt: site theme, Poppins, no emoji, loader with `data-hold` (hides after config loads).
+- Stake input: points 0 to 1000 (0 = free, nothing deducted); KES min/max/balance from `/api/ludo/config`. Shortfall message says exactly how much to add. Live pot, fee and winner-gets preview (fee from config, floor maths same as server).
+- Online board restyled the same as offline (SVG stars/arrows, yards) and 3D cube dice with roll animation, so Phase 3 only needs board QA plus the backend review.
+- NEXT: Phase 3. Review `backend/src/ludo.js`: stake checks, refunds (leave/cancel/idle), payout idempotency, away players. Then Phase 4.

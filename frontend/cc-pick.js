@@ -2,7 +2,7 @@
 (function () {
   'use strict'; if (window.__ccPick) return; window.__ccPick = 1;
   var css = [
-    'select.cp-h,#kura .ccw{display:none!important}',   /* cc-pick-front */
+    'select.cp-h,#kura .ccw,.ccw.cp-w{display:none!important}',   /* cc-pick-front */
     '.cp-t{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-radius:18px;border:1px solid var(--gb);background:var(--g);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--fg);font:500 13px Poppins,sans-serif;text-align:left;cursor:pointer;margin-top:6px}',
     '.cp-t:active{transform:scale(.985)}.cp-t i{font-style:normal;color:#A8DCE7}.cp-t.ph span{color:var(--mut)}',
     '#ccpk{position:fixed;inset:0;z-index:2147483000;display:grid;align-items:end;background:rgba(16,20,34,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}',
@@ -25,7 +25,7 @@
     b.classList.toggle('ph', !o || !s.value);
   }
   function mk(s) {
-    if (s.__cp) return; s.__cp = 1; s.classList.add('cp-h');
+    if (s.__cp) return; s.__cp = 1; s.classList.add('cp-h'); s.dataset.ccsel = 1; var w0 = s.closest('.ccw'); if (w0) w0.classList.add('cp-w');
     var b = document.createElement('button'); b.type = 'button'; b.className = 'cp-t'; b.__s = s;
     b.innerHTML = '<span></span><i>\u25BE</i>'; var a = s.closest('.ccw') || s; a.parentNode.insertBefore(b, a.nextSibling); upd(b);
   }

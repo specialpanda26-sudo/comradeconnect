@@ -30,6 +30,7 @@ import { credit } from './pay.js';
 import { adminRoutes } from './admin.js';
 import { kuraRoutes, kuraPaid, kuraFailed } from './kura.js';
 import { adminUserRoutes } from './admin-users.js';
+import { promoRoutes } from './promo.js';
 import { adminJoinRoutes } from './admin-joins.js';
 import { adminCleanRoutes } from './admin-clean.js';
 import { adminServiceRoutes } from './admin-services.js';
@@ -95,7 +96,7 @@ hooks.onFailed = async (env, p) => {
   if (p.aid && !String(p.aid).startsWith('gift:')) await notify(env, p.aid, 'payment', 'Payment not completed', 'Your payment of KSh ' + p.amount + ' was not completed. If you paid by M-Pesa, check the code and try again.', 'payment', p.id);
 };
 
-const ROUTES = [supportRoutes, advertRoutes, sponsorRoutes, slotRoutes, pulseRoutes, campusRoutes, zoneSuggestRoutes, lostFoundRoutes, dealRoutes, surveyRoutes, paperRoutes, serviceWorkRoutes, engageRoutes, ambassadorRoutes, gigRoutes, storyRoutes, notificationRoutes, pushRoutes, settingsRoutes, trustRoutes, resetRoutes, recoveryRoutes, giftRoutes, ludoRoutes, siteContentRoutes, siteMediaRoutes, feedRoutes, payRoutes, passkeyRoutes, deviceAdminRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, mbogiRoutes, liveRoutes, voiceRoutes, mediaRoutes, clubRoutes, myEventRoutes, kuraRoutes, adminUserRoutes, adminJoinRoutes, adminCleanRoutes, adminServiceRoutes, adminPushRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
+const ROUTES = [supportRoutes, advertRoutes, sponsorRoutes, slotRoutes, pulseRoutes, campusRoutes, zoneSuggestRoutes, lostFoundRoutes, dealRoutes, surveyRoutes, paperRoutes, serviceWorkRoutes, engageRoutes, ambassadorRoutes, gigRoutes, storyRoutes, notificationRoutes, pushRoutes, settingsRoutes, trustRoutes, resetRoutes, recoveryRoutes, giftRoutes, ludoRoutes, siteContentRoutes, siteMediaRoutes, feedRoutes, payRoutes, passkeyRoutes, deviceAdminRoutes, accountRoutes, pointsRoutes, wholesaleRoutes, ratingRoutes, marketRoutes, messageRoutes, hostelRoutes, contentRoutes, nativeRoutes, mbogiRoutes, liveRoutes, voiceRoutes, mediaRoutes, clubRoutes, myEventRoutes, kuraRoutes, promoRoutes, adminUserRoutes, adminJoinRoutes, adminCleanRoutes, adminServiceRoutes, adminPushRoutes, postRuleRoutes, sqlRoutes, adminRoutes];
 
 async function handle(req, env) {
   const url = new URL(req.url);

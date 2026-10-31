@@ -37,6 +37,10 @@ services:
       - { key: DEVICE_LOCK, value: "1" }
       - { key: DEVICE_MAX_ACCOUNTS, value: "3" }
       - { key: PASSKEY_RP_ID, value: comradeconnect.co.ke }
+      - { key: AT_USERNAME, sync: false }         # Africa's Talking username (use sandbox to test without sending real texts)
+      - { key: AT_API_KEY, sync: false }          # Africa's Talking API key. Secret: server only
+      - { key: AT_SENDER_ID, sync: false }        # optional: your approved sender name, e.g. COMRADE. Empty = Africa's Talking default
+      - { key: APP_DOWNLOAD_URL, sync: false }    # optional: the link behind the email's Download button. Empty = newest APK on your releases repo
       - { key: FCM_SERVICE_ACCOUNT, sync: false } # Firebase service account JSON: phone alerts for the Android app
       - { key: SITE_URL, value: "https://comradeconnect.co.ke" }
       - { key: SUPPORT_EMAIL, value: "support@comradeconnect.co.ke" }

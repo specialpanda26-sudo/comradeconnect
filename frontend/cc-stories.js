@@ -213,7 +213,6 @@ function compose() {
     sh.appendChild(el('p', '', 'A photo or a short video. It disappears after 24 hours and shows under a made-up name, not yours. Please do not film people without their consent.'));
     function choice(icon, label, accept, cap) { var b = el('button', 'ccs-ch'); b.type = 'button'; b.appendChild(svg(icon, 22)); b.appendChild(document.createTextNode(label)); b.onclick = function () { pick(accept, cap, function (f) { shut(); preview(f); }); }; sh.appendChild(b); }
     var wrap = el('div'); wrap.style.marginTop = '8px'; sh.appendChild(wrap);
-    choice(I.cam, 'Take a photo or video', 'image/*,video/*', true);
     choice(I.img, 'Choose from your phone', 'image/*,video/mp4,video/webm', false);
     var c = el('button', 'btn g', 'Cancel'); c.type = 'button'; c.style.cssText = 'width:100%;margin-top:10px'; c.onclick = shut; sh.appendChild(c);
   });
@@ -231,7 +230,7 @@ function toJpeg(file) {
 }
 function preview(file) {
   var isVideo = /^video\//.test(file.type);
-  if (isVideo && !/^video\/(mp4|webm)$/.test(file.type)) return say('Please use an MP4 or WebM video. On iPhone, set Camera formats to Most Compatible.');
+  if (isVideo && !/^video\/(mp4|webm)$/.test(file.type)) return say('That video format is not supported. Use an MP4 or WebM video (on iPhone: Settings > Camera > Formats > Most Compatible).');
   if (isVideo && file.size > MAX_VIDEO) return say('That video is over 25 MB. Trim it and try again.');
   if (!isVideo && !/^image\//.test(file.type)) return say('Please choose a photo or a video.');
   var url = URL.createObjectURL(file);

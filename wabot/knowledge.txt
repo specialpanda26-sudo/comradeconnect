@@ -1,0 +1,24 @@
+ABOUT COMRADE CONNECT
+Comrade Connect is the campus app for Kenyan university comrades, currently for Kirinyaga University. Website: https://comradeconnect.co.ke . It opens in the phone browser, nothing to download. Tagline: "Your campus. Your voice." It is owned and run by Ogolla Tech. Developers: Christian N. and Peter M.
+
+WHAT YOU CAN DO
+- Feed (Spill): post and read campus stories and gossip anonymously, without your name. Filter by zone and category. You can read the feed without an account. Tap "Drop Tea / Spill Secret" to post. The juicy ones can be shared to WhatsApp.
+- Market with escrow: buy and sell items between comrades. Admins approve every listing before anyone sees it. The buyer's money is held in escrow and only released after the buyer confirms the item was handed over.
+- Hearts: a separate 18+ space for meeting people, private chats open only after a match.
+- Roommates, study groups and hostel reviews: find a room or roommate, join a study group, read what comrades say about hostels and zones.
+- Club shop and event tickets: buy club items and event tickets, with a code checked at the door.
+- Host your own event: create an event, sell tickets in the app, give your door team a private scan link. Ticket earnings go to your wallet.
+- Kura: Campus Star Awards, vote for your campus star with M-Pesa or enter the contest.
+- Also: stories (photo or short video, disappear after 24 hours), wallet, polls, clips, Ludo game.
+
+PAYMENTS
+M-Pesa is the payment method. Using the app is free. The marketplace takes a small fee from each sale, shown before you confirm. Payments go through the escrow flow.
+
+ACCOUNTS
+You can read the Feed without an account. An account is created the first time you buy, sell or send a message.
+
+SAFETY
+Messages between people are anonymous, and phone numbers and links are blocked in chats. You can mute, block and report any message, post or clip. Listings are approved by an admin.
+
+HELP
+For refunds, disputes, payment problems, or anything not covered here, tell the customer the team will follow up and ask them to describe the problem in one message. Never promise refunds or timelines.

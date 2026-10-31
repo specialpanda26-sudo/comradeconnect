@@ -31,10 +31,11 @@ const GROUPS = [
   { n: 'Market', icon: 'bag', h: 'Market and campus', lead: 'Items, events, notices, sponsors and the club shop.', tabs: ['live', 'videos', 'events', 'notices', 'sponsors', 'slots', 'club', 'services', 'push'] },
   { n: 'Kura', icon: 'star', h: 'Kura', lead: 'Contestants, votes and the season.', tabs: ['kura'] },
   { n: 'Joins', icon: 'link', h: 'Joins', lead: 'See who joined what, and remove a join when you need to.', tabs: ['joins', 'ambassadors'] },
+  { n: 'Bot', icon: 'link', h: 'WhatsApp bot', lead: 'Link a WhatsApp number, let Gemini answer customers, and message your groups.', tabs: ['wabot'] },
   { n: 'Money', icon: 'wallet', h: 'Money', lead: 'Earnings, fees and payouts.', tabs: ['txns', 'settings', 'payouts'] },
   { n: 'Site', icon: 'sliders', h: 'Site', lead: 'Change the words and switches on the public site, and read the log.', tabs: ['site', 'landing', 'zones', 'postrules', 'audit', 'sql'] },
 ];
-const EXTRA = { joins: 'Joins', services: 'Services', push: 'Phone alerts', landing: 'Landing and backgrounds', sql: 'SQL' };
+const EXTRA = { wabot: 'WhatsApp bot', joins: 'Joins', services: 'Services', push: 'Phone alerts', landing: 'Landing and backgrounds', sql: 'SQL' };
 Object.keys(EXTRA).forEach((k) => { if (!LABEL[k]) LABEL[k] = EXTRA[k]; });
 const has = (k) => typeof SECTIONS[k] === 'function';
 const groupOf = (t) => Math.max(0, GROUPS.findIndex((g) => g.tabs.indexOf(t) > -1));

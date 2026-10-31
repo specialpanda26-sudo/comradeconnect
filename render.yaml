@@ -6,9 +6,13 @@ services:
     runtime: node
     plan: starter            # free plan sleeps after 15 min idle and the first request waits ~50 s; starter ($7/mo) stays awake
     region: frankfurt
-    buildCommand: "echo no build step"
+    buildCommand: "npm install --omit=dev"
     startCommand: node server.js
     healthCheckPath: /healthz
+    disk:
+      name: wa-session
+      mountPath: /data
+      sizeGB: 1
     envVars:
       - { key: NODE_VERSION, value: "22" }
       - { key: ALLOWED_ORIGINS, value: "https://comradeconnect.co.ke,https://www.comradeconnect.co.ke,https://localhost" }

@@ -4,6 +4,7 @@
 //   3. adds CORS for your site(s),  4. runs the 15-minute cleanup job.
 import http from 'node:http';
 import worker, { runCron } from './backend/src/index.js';
+import { handleWa } from './wabot/routes.js';
 
 // Defaults for every non-secret setting. Anything you set in Render's Environment tab wins (an empty value counts as "not set").
 const DEFAULTS = {
@@ -71,6 +72,15 @@ const server = http.createServer(async (req, res) => {
       if (!env.CRON_SECRET || req.headers['x-cron-secret'] !== env.CRON_SECRET) return send(res, 403, { error: 'Forbidden' });
       return send(res, 200, await cron());
     }
+    // WhatsApp bot (admin only): pairing code / QR, Gemini replies, group messages. See wabot/.
+    if (url.pathname.startsWith('/api/admin/wa/')) {
+      const wh = Object.fromEntries(cors(new Headers(), reqOrigin));
+      if (req.method === 'OPTIONS') { res.writeHead(204, wh); return res.end(); }
+      let wb = {}; if (req.method === 'POST') { try { const raw = await readBody(req); wb = raw.length ? JSON.parse(raw.toString('utf8')) : {}; } catch (e) { wb = {}; } }
+      const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+      const wr = await handleWa(req.method, url.pathname, wb, String(req.headers['x-admin-key'] || ''), ip, env);
+      return send(res, wr.status, wr.data, wh);
+    }
     const headers = new Headers();
     for (const [k, v] of Object.entries(req.headers)) if (v !== undefined) headers.set(k, Array.isArray(v) ? v.join(', ') : v);
     if (!headers.get('cf-connecting-ip') && !headers.get('true-client-ip') && !headers.get('x-forwarded-for')) headers.set('cf-connecting-ip', req.socket.remoteAddress || 'unknown');
@@ -91,6 +101,7 @@ server.headersTimeout = 30000;
 
 const port = Number(process.env.PORT) || 10000;
 server.listen(port, '0.0.0.0', () => console.log('Comrade Connect API listening on ' + port));
+import('./wabot/manager.js').then((m) => m.autostart()).catch((e) => console.error('wabot', e && e.message));
 setInterval(cron, 15 * 60 * 1000).unref();
 setTimeout(cron, 60 * 1000).unref();
 process.on('unhandledRejection', (e) => console.error('unhandled rejection', e && e.message));

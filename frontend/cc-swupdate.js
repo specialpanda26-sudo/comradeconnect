@@ -29,7 +29,7 @@
   }
   navigator.serviceWorker.addEventListener('controllerchange', function () {
     if (!had || shown) return; shown = true;
-    if (!touched && Date.now() - born < 30000 && go()) return;
+    if (!touched && Date.now() - born < 30000) return;   // just opened: the files came fresh from the network, so no reload and no flash
     css();
     var b = document.createElement('div'); b.id = 'ccswupd'; b.setAttribute('role', 'status');
     var d = document.createElement('i');

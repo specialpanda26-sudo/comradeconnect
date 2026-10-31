@@ -79,11 +79,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   if (same && (APPFILE.test(url.pathname) || ['script', 'style'].includes(req.destination))) {   // app files: never an old build while online
-    e.respondWith((async () => {                                  // saved copy at once, refreshed quietly for next time
-      const hit = await caches.match(req);
-      if (hit) { e.waitUntil(fresh(req, req.url, 8000).catch(() => {})); return hit; }
-      return fresh(req, req.url, 4000);
-    })());
+    e.respondWith(fresh(req, req.url, 3500));                     // newest file first, so the new page and its scripts always match; the saved copy only when offline or very slow
     return;
   }
   if (same) {                                                     // pictures, icons and other files: saved copy first, refreshed in the background

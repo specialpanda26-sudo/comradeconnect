@@ -11,3 +11,12 @@ html body .card .bar a.act.wa{height:34px;min-width:34px;justify-content:center;
 html body .card .bar a.act.wa svg.wai{width:18px;height:18px}
 @media (max-width:380px){ html body .card .bar .views{display:none} html body .card .bar .act{padding-left:8px;padding-right:8px} }
 @media (max-width:519px){ html body .card .bar a.act.wa{width:34px;padding:0;gap:0;font-size:0;line-height:0} }
+
+/* Grid view: the action bar and voice player were built for full width. In the 2-column grid they were
+   forced onto one row and clipped, so Card, the "..." menu and WhatsApp disappeared. Let them wrap and fit. */
+html body #feed.grid>.card .bar{flex-wrap:wrap;row-gap:4px;border-radius:22px;overflow:visible}
+html body #feed.grid>.card .bar .views{display:inline-flex}
+html body #feed.grid>.card .bar a.act.wa{margin-left:auto}
+html body #feed.grid>.card .ccv-pl{display:flex;width:100%;max-width:100%;box-sizing:border-box;padding-right:12px}
+html body #feed.grid>.card .ccv-pl .ccv-bar{min-width:0}
+html body #feed.grid>.card .ccv-pl .ccv-t{min-width:0}

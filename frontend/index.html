@@ -327,7 +327,7 @@ function wordHit(t){const M={zero:0,sifuri:0,nought:0,naught:0,one:1,moja:1,two:
  return(s.match(/(?:\d[\s.\-_,()*\/|+]{0,3}){9,}/g)||[]).some(r=>/(?:254|0)[17]\d{8}/.test(r.replace(/\D/g,'')))}
 function modLog(kind,text){try{const L=JSON.parse(localStorage.getItem('cs_modlog')||'[]');L.push({at:Date.now(),kind,aid:(typeof ME!=='undefined'&&ME.aid)||'',why:'number-words',text:String(text).slice(0,200)});localStorage.setItem('cs_modlog',JSON.stringify(L.slice(-200)))}catch(e){}}
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="config.js?v=3"></script>
 <script>
 /* Comrade Connect payment client. CC_API and CC_GOOGLE_ID come from config.js. */

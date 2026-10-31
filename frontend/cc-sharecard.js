@@ -56,59 +56,75 @@ function wrap(x, text, maxW, maxLines) {
 function rr(x, a, b, w, h, r) { x.beginPath(); if (x.roundRect) x.roundRect(a, b, w, h, r); else x.rect(a, b, w, h); }
 
 async function draw(o, photo, url) {
-  try { await document.fonts.load('700 54px Poppins'); await document.fonts.load('800 52px Unbounded'); } catch (e) {}
+  try { await document.fonts.load('700 54px Manrope'); await document.fonts.load('600 40px Manrope'); await document.fonts.load('800 52px Unbounded'); } catch (e) {}
   var W = 1080, H = 1920, c = document.createElement('canvas'); c.width = W; c.height = H;
-  var x = c.getContext('2d'), F = 'Poppins,system-ui,sans-serif', U = 'Unbounded,' + F;
-  x.fillStyle = '#000'; x.fillRect(0, 0, W, H);
-  var g = x.createRadialGradient(220, 200, 0, 220, 200, 950); g.addColorStop(0, 'rgba(255,255,255,.2)'); g.addColorStop(1, 'rgba(255,255,255,0)');
-  x.fillStyle = g; x.fillRect(0, 0, W, H);
-  x.fillStyle = 'rgba(255,255,255,.07)'; x.beginPath();
+  var x = c.getContext('2d'), F = 'Manrope,Poppins,system-ui,sans-serif', U = 'Unbounded,' + F;
+  var INK = '#16130f', MUT = '#6a625a';
+  // warm cream background with soft orange, rose and peach glows, same as the website
+  var bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#fbf1ed'); bg.addColorStop(1, '#f3efe9');
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  function glow(cx, cy, r, rgb, a) { var g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(' + rgb + ',' + a + ')'); g.addColorStop(1, 'rgba(' + rgb + ',0)'); x.fillStyle = g; x.fillRect(0, 0, W, H); }
+  glow(960, 260, 640, '255,138,61', .5);
+  glow(80, 1300, 700, '196,114,122', .38);
+  glow(700, 1000, 500, '255,217,184', .55);
+  // soft sage hills
+  x.fillStyle = 'rgba(169,184,162,.38)'; x.beginPath();
   [[0, H], [0, 1580], [200, 1540], [400, 1430], [520, 1330], [560, 1290], [600, 1320], [640, 1260], [700, 1340], [820, 1420], [960, 1510], [W, 1540], [W, H]].forEach(function (q, i) { i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); });
   x.fill();
-  x.fillStyle = '#fff'; x.font = '800 44px ' + U; x.textAlign = 'left'; x.fillText('COMRADE CONNECT', 80, 150);
-  x.fillStyle = 'rgba(255,255,255,.6)'; x.font = '300 32px ' + F; x.fillText('Student community', 80, 206);
+  function panel(px, py, pw, ph, r) {
+    x.save(); x.shadowColor = 'rgba(140,80,50,.18)'; x.shadowBlur = 60; x.shadowOffsetY = 20;
+    x.fillStyle = 'rgba(255,255,255,.9)'; rr(x, px, py, pw, ph, r); x.fill(); x.restore();
+    x.strokeStyle = 'rgba(22,19,15,.06)'; x.lineWidth = 2; rr(x, px, py, pw, ph, r); x.stroke();
+  }
+  x.textAlign = 'left';
+  x.fillStyle = INK; x.font = '800 44px ' + U; x.fillText('COMRADE CONNECT', 80, 150);
+  x.fillStyle = MUT; x.font = '500 32px ' + F; x.fillText('Student community', 80, 206);
 
   var y = 300;
   if (o.tag) {
-    x.font = '600 30px ' + F; var tg = String(o.tag).toUpperCase(), tw = Math.min(x.measureText(tg).width, 880);
-    x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 2; rr(x, 80, y, tw + 56, 64, 32); x.stroke();
-    x.fillStyle = '#fff'; x.fillText(tg, 108, y + 43, 880); y += 120;
+    x.font = '800 30px ' + F; var tg = String(o.tag).toUpperCase(), tw = Math.min(x.measureText(tg).width, 880);
+    x.fillStyle = 'rgba(255,138,61,.18)'; rr(x, 80, y, tw + 56, 64, 32); x.fill();
+    x.fillStyle = INK; x.fillText(tg, 108, y + 43, 880); y += 120;
   }
 
   if (o.body) {
-    // a spill: big quote mark, text shrinks until it fits above the invite box
-    x.fillStyle = 'rgba(255,255,255,.16)'; x.font = '800 260px ' + U; x.fillText('\u201C', 64, y + 190);
-    var sizes = [[76, 108], [66, 94], [58, 84], [52, 76], [46, 68], [40, 60]], room = 1500 - (y + 150), lines = [], fs = 40, lh = 60;
+    var sizes = [[76, 108], [66, 94], [58, 84], [52, 76], [46, 68], [40, 60]], top = y + 170, room = 1400 - top, lines = [], fs = 40, lh = 60;
     for (var s = 0; s < sizes.length; s++) {
-      fs = sizes[s][0]; lh = sizes[s][1]; x.font = '500 ' + fs + 'px ' + F;
-      lines = wrapAll(x, o.body, 900);
+      fs = sizes[s][0]; lh = sizes[s][1]; x.font = '600 ' + fs + 'px ' + F;
+      lines = wrapAll(x, o.body, 860);
       if (lines.length * lh <= room) break;
     }
     var maxL = Math.floor(room / lh);
     if (lines.length > maxL) { lines.length = maxL; lines[maxL - 1] = lines[maxL - 1].replace(/\s*\S*$/, '') + '...'; }
-    var ty = y + 150; x.fillStyle = '#fff'; x.font = '500 ' + fs + 'px ' + F;
-    lines.forEach(function (l) { x.fillText(l, 90, ty); ty += lh; });
-    x.fillStyle = 'rgba(255,255,255,.55)'; x.font = '400 34px ' + F; x.fillText('Spilled anonymously by a comrade', 90, Math.min(ty + 30, 1500));
+    var ty = top + lines.length * lh, attrY = ty - lh + 90, pb = Math.min(attrY + 60, 1490);
+    panel(60, y, W - 120, pb - y, 56);
+    x.fillStyle = 'rgba(255,138,61,.35)'; x.font = '800 260px ' + U; x.fillText('\u201C', 90, y + 210);
+    x.fillStyle = INK; x.font = '600 ' + fs + 'px ' + F;
+    var ly = top; lines.forEach(function (l) { x.fillText(l, 110, ly); ly += lh; });
+    x.fillStyle = MUT; x.font = '500 32px ' + F; x.fillText('Spilled anonymously by a comrade', 110, attrY);
   } else {
     if (photo) {
       var S = 560, px = (W - S) / 2, k = Math.max(S / photo.width, S / photo.height), dw = photo.width * k, dh = photo.height * k;
+      x.save(); x.shadowColor = 'rgba(140,80,50,.25)'; x.shadowBlur = 50; x.shadowOffsetY = 18; x.fillStyle = '#fff'; rr(x, px, y, S, S, 48); x.fill(); x.restore();
       x.save(); rr(x, px, y, S, S, 48); x.clip(); x.drawImage(photo, px + (S - dw) / 2, y + (S - dh) / 2, dw, dh); x.restore();
-      x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = 3; rr(x, px, y, S, S, 48); x.stroke(); y += S + 80;
+      x.strokeStyle = 'rgba(22,19,15,.1)'; x.lineWidth = 3; rr(x, px, y, S, S, 48); x.stroke(); y += S + 80;
     } else y += 40;
-    x.fillStyle = '#fff'; x.font = '700 78px ' + F;
+    x.fillStyle = INK; x.font = '800 78px ' + F;
     wrap(x, o.title, 920, 3).forEach(function (l) { x.fillText(l, 80, y); y += 98; });
     if (o.line) {
-      y += 8; x.fillStyle = 'rgba(255,255,255,.72)'; x.font = '400 42px ' + F;
+      y += 8; x.fillStyle = MUT; x.font = '500 42px ' + F;
       wrap(x, o.line, 920, 3).forEach(function (l) { x.fillText(l, 80, y); y += 60; });
     }
   }
 
   // invite box, fixed near the bottom
-  var by = 1560; x.fillStyle = 'rgba(255,255,255,.1)'; rr(x, 60, by, W - 120, 270, 36); x.fill();
-  x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = 2; rr(x, 60, by, W - 120, 270, 36); x.stroke();
-  x.fillStyle = '#fff'; x.font = '600 40px ' + F; x.fillText(o.cta || 'Join me on Comrade Connect', 100, by + 78, 880);
-  x.fillStyle = 'rgba(255,255,255,.7)'; x.font = '300 30px ' + F; x.fillText('Tap my link. It opens in the app.', 100, by + 130, 880);
-  x.fillStyle = '#fff'; x.font = '600 34px ' + F; x.fillText(url.replace(/^https?:\/\//, ''), 100, by + 210, 880);
+  var by = 1560; panel(60, by, W - 120, 270, 44);
+  x.fillStyle = INK; x.font = '800 40px ' + F; x.fillText(o.cta || 'Join me on Comrade Connect', 100, by + 78, 880);
+  x.fillStyle = MUT; x.font = '500 30px ' + F; x.fillText('Tap my link. It opens in the app.', 100, by + 130, 880);
+  var ut = url.replace(/^https?:\/\//, ''); x.font = '800 34px ' + F; var uw = Math.min(x.measureText(ut).width, 800);
+  var og = x.createLinearGradient(100, 0, 100 + uw + 56, 0); og.addColorStop(0, '#ff8a3d'); og.addColorStop(1, '#e8744f');
+  x.fillStyle = og; rr(x, 100, by + 158, uw + 56, 68, 34); x.fill();
+  x.fillStyle = '#fff'; x.fillText(ut, 128, by + 204, 800);
   return c;
 }
 

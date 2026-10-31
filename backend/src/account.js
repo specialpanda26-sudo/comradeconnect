@@ -9,6 +9,15 @@ import { passwordProblem } from './passwords.js';
 import { deviceGate, deviceClaim, deviceBindIfFree } from './device.js';
 import { normAnyEmail } from './recovery.js';
 
+// Welcome bonus: credited once per account (the ref makes a second credit impossible). Never breaks signup.
+async function welcomeBonus(env, aid) {
+  try {
+    const n = Math.floor(Number((await getSettings(env)).signup_bonus) || 0);
+    if (n < 1) return;
+    if (await credit(env, aid, n, 'adjustment', 'welcome:' + aid, 'Welcome bonus')) await notify(env, aid, 'reward', 'Welcome to Comrade Connect', 'KSh ' + n + ' was added to your wallet.', 'wallet', null);
+  } catch (e) { console.error('welcome bonus failed', e && e.message); }
+}
+
 export async function balance(env, aid) {
   const r = await sb(env, 'rpc/wallet_balance', { method: 'POST', body: JSON.stringify({ p: aid }) });
   const n = await r.json().catch(() => 0);
@@ -88,12 +97,14 @@ export async function accountRoutes(req, env, url, ip) {
       if (res.status === 409) return err(env, 'That username is already taken', 409);
       if (!res.ok) return err(env, 'Could not create the account', 500);
       const dc = await deviceClaim(env, req, aid); if (dc) return dc;
+      await welcomeBonus(env, aid);
       return json(env, { aid, handle, token, referral_code: refcode }, 201);
     }
     const res = await post(env, 'profiles', { aid, token_hash: await H(env, 'tok:' + token), recovery_hash: await H(env, `rec:${aid}:${recovery}`), referral_code: refcode });
     if (res.status === 409) return err(env, 'This account already exists. Use your recovery code.', 409);
     if (!res.ok) return err(env, 'Could not create the account', 500);
     const dc2 = await deviceClaim(env, req, aid); if (dc2) return dc2;
+    await welcomeBonus(env, aid);
     return json(env, { aid, token, recovery_code: recovery, referral_code: refcode }, 201);
   }
   // Google sign-in relay for the Android app. The callback page drops the Google sign-in here, keyed by the secret "state" that only the app knows,
@@ -150,6 +161,7 @@ export async function accountRoutes(req, env, url, ip) {
     const res = await post(env, 'profiles', { aid, token_hash: tokHash, google_sub: g.sub, referral_code: refcode });
     if (!res.ok) return err(env, 'Could not create the account', 500);
     const dc3 = await deviceClaim(env, req, aid); if (dc3) return dc3;
+    await welcomeBonus(env, aid);
     await saveGoogleRecoveryEmail(env, aid, g);
     return json(env, { aid, token, referral_code: refcode, created: true }, 201);
   }

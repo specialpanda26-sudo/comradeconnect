@@ -320,6 +320,32 @@ export async function adminRoutes(req, env, url, ip) {
     await A('wallet.grant', 'profile', p.aid, `KSh ${amount}: ${note}`);
     return json(env, { ok: true, aid: p.aid, handle: p.handle || null, amount });
   }
+  // ---- send the same amount to EVERY account (not suspended). dry:true only counts. The key makes a double tap harmless: nobody is paid twice. ----
+  if (path === '/api/admin/wallet/grant-all' && m === 'POST') {
+    const b = await body(), amount = int(b.amount, 1, 1000), note = str(b.note, 80) || 'Gift from Comrade Connect';
+    if (!amount) return err(env, 'Amount: KSh 1 to 1,000 each');
+    const aids = []; let last = '';
+    for (let i = 0; i < 200; i++) {
+      const page = await rows(await sb(env, `profiles?select=aid&banned=eq.false&order=aid.asc&limit=1000${last ? '&aid=gt.' + enc(last) : ''}`));
+      if (!page.length) break;
+      page.forEach((p) => aids.push(p.aid)); last = page[page.length - 1].aid;
+      if (page.length < 1000) break;
+    }
+    if (b.dry) return json(env, { ok: true, count: aids.length, total: aids.length * amount });
+    if (aids.length * amount > 500000) return err(env, `That would be KSh ${aids.length * amount}. The limit for one send is KSh 500,000. Use a smaller amount.`);
+    const key = str(b.key, 40).replace(/[^A-Za-z0-9_-]/g, '');
+    if (key.length < 8) return err(env, 'Missing send key. Reload the page and try again.');
+    let sent = 0;
+    for (let i = 0; i < aids.length; i += 400) {
+      const chunk = aids.slice(i, i + 400);
+      const res = await post(env, 'wallet_ledger', chunk.map((aid) => ({ aid, delta: amount, kind: 'adjustment', ref: 'all:' + key + ':' + aid, status: 'available', note })), 'resolution=ignore-duplicates,return=representation');
+      if (!res.ok) return err(env, `Stopped after ${sent} accounts. Tap send again to finish: nobody is paid twice.`, 500);
+      const done = await rows(res); sent += done.length;
+      if (done.length) await post(env, 'notifications', done.map((r) => ({ aid: r.aid, kind: 'reward', title: 'Comrade Connect added KSh ' + amount + ' to your wallet', body: note, ref_type: 'wallet', ref_id: null }))).catch(() => null);
+    }
+    await A('wallet.grant_all', 'profile', 'all', `KSh ${amount} x ${sent} accounts: ${note}`);
+    return json(env, { ok: true, sent, of: aids.length, amount });
+  }
   if (path === '/api/admin/payouts' && m === 'GET') {
     const st = ['paid', 'rejected', 'requested'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'paid';
     return json(env, { payouts: await rows(await sb(env, `withdrawals?status=eq.${st}&order=created_at.desc&limit=100`)) });

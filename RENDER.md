@@ -15,7 +15,7 @@ Your static site stays a Render **Static Site**. You will have two Render servic
 
 ## 2. Create the web service
 Render > New > Web Service > connect the GitHub repo.
-- Runtime: Node. Build command: `echo no build`. Start command: `node server.js`.
+- Runtime: Node. Build command: `npm install --omit=dev`. Start command: `node server.js`.
 - Health check path: `/healthz`. Region: Frankfurt (closest to Kenya).
 - Plan: the free plan sleeps after 15 minutes and the first request then waits about 50 seconds. For real users use Starter ($7/month).
 - Or use the Blueprint: New > Blueprint > pick the repo (`render.yaml` is included), then fill the secret values.

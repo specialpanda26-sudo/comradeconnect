@@ -27,9 +27,8 @@ async function start() {
   try {
     const L = await loadLibs(); ensureDir();
     const { state, saveCreds } = await L.multi(AUTH);
-    let version; try { version = (await L.version()).version; } catch (e) {}
     if (my !== gen) return;
-    const s = L.make({ auth: state, version, logger: L.pino({ level: 'silent' }), browser: L.Browsers.ubuntu('Chrome'), printQRInTerminal: false, markOnlineOnConnect: false, syncFullHistory: false });
+    const s = L.make({ auth: state, logger: L.pino({ level: 'silent' }), browser: L.Browsers.macOS('Safari'), printQRInTerminal: false, markOnlineOnConnect: false, syncFullHistory: false });
     sock = s;
     s.ev.on('creds.update', saveCreds);
     attachAi(s); attachSpill(s);
@@ -53,6 +52,7 @@ async function start() {
         S.status = 'connected'; S.number = String((s.user && s.user.id) || '').split('@')[0].split(':')[0]; reset(); S.error = ''; tries = 0;
       }
       if (connection === 'close') {
+        console.error('wabot closed', lastDisconnect && lastDisconnect.error && (lastDisconnect.error.message || lastDisconnect.error));
         const c = lastDisconnect && lastDisconnect.error && lastDisconnect.error.output && lastDisconnect.error.output.statusCode;
         if (c === L.Reason.loggedOut) { wipe(); sock = null; S.status = 'idle'; S.number = ''; reset(); S.error = 'WhatsApp logged this device out. Link again.'; return; }
         const linked = !!s.authState.creds.me;

@@ -14,6 +14,7 @@ async function start(number, wantCode) {
   socks[number] = sock;
   sock.ev.on('creds.update', saveCreds);
   spill(sock, { owners: number });
+  require('./spillai')(sock, { owners: number });
   sock.ev.on('connection.update', u => {
     if (u.connection === 'open') console.log('[pair] connected', number);
     if (u.connection === 'close') {

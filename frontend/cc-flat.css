@@ -1,0 +1,6 @@
+html body :is(.btn,button,.ib,.chip,.pill,.tag,.badge,[data-gs],.card,.box,.g,.bx,#fab,#tkr):not(#cc-flat):not(#tb):not(.dsheet):not(.sheet){
+  box-shadow:none !important; text-shadow:none !important;
+}
+html body :is(.btn,.ib,.chip,.pill,[data-gs],#fab,#tkr,button):not(#cc-flat):not(.cm-shake):not(.cm-busy):not(.cco-busy){
+  animation:none !important;
+}

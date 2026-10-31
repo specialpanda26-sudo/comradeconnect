@@ -20,3 +20,8 @@ html body #feed.grid>.card .bar a.act.wa{margin-left:auto}
 html body #feed.grid>.card .ccv-pl{display:flex;width:100%;max-width:100%;box-sizing:border-box;padding-right:12px}
 html body #feed.grid>.card .ccv-pl .ccv-bar{min-width:0}
 html body #feed.grid>.card .ccv-pl .ccv-t{min-width:0}
+
+/* Home category chips: the selected chip had a white background but white text, so "All" looked like an empty circle.
+   A rule with three stacked .cct classes (white glass) beat the "selected" rule. Beat it back: dark chip, light text. */
+html body #v-feed #tabs button.cct.cct.cct.on{background:var(--ink)!important;border-color:var(--ink)!important}
+html body #v-feed #tabs button.cct.cct.cct.on .cct-l{color:var(--inkfg)!important}

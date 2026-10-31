@@ -3,6 +3,8 @@ import path from 'node:path';
 import { DIR, ensureDir } from './paths.js';
 import { attachAi, aiInfo } from './ai.js';
 import { attachSpill, spillStatus } from './spill.js';
+import { stopToday } from './send.js';
+import { attachStop, setStopEnv } from './stop.js';
 
 const AUTH = path.join(DIR, 'auth');
 const S = { status: 'idle', number: '', qr: '', code: '', error: '' };
@@ -31,7 +33,7 @@ async function start() {
     const s = L.make({ auth: state, logger: L.pino({ level: 'silent' }), browser: L.Browsers.macOS('Safari'), printQRInTerminal: false, markOnlineOnConnect: false, syncFullHistory: false });
     sock = s;
     s.ev.on('creds.update', saveCreds);
-    attachAi(s); attachSpill(s);
+    attachStop(s); attachAi(s); attachSpill(s);   // STOP first, so the AI never answers it
     s.ev.on('connection.update', async (u) => {
       if (my !== gen) return;
       const { connection, lastDisconnect, qr } = u;
@@ -54,6 +56,7 @@ async function start() {
       if (connection === 'close') {
         console.error('wabot closed', lastDisconnect && lastDisconnect.error && (lastDisconnect.error.message || lastDisconnect.error));
         const c = lastDisconnect && lastDisconnect.error && lastDisconnect.error.output && lastDisconnect.error.output.statusCode;
+        if (c === 403 || c === 429) stopToday('WhatsApp closed the connection (' + c + ')');   // ban or limit signal: no promos for the rest of the day
         if (c === L.Reason.loggedOut) { wipe(); sock = null; S.status = 'idle'; S.number = ''; reset(); S.error = 'WhatsApp logged this device out. Link again.'; return; }
         const linked = !!s.authState.creds.me;
         if (linked || c === L.Reason.restartRequired) { S.status = S.status === 'connected' ? 'reconnecting' : 'connecting'; timer = setTimeout(start, 2000); }
@@ -83,6 +86,7 @@ export async function logout() {
   gen++; clearTimeout(timer); sock = null; wipe(); reset(); S.status = 'idle'; S.number = ''; S.error = '';
 }
 
+export const setEnv = (e) => setStopEnv(e);   // lets the STOP handler reach the database
 export const getSock = () => sock;
 export const status = () => ({ ...S, ai: aiInfo(), spill: spillStatus() });
 

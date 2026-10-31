@@ -1,7 +1,7 @@
 // Promo emails and SMS, only for people who ticked "Offers and updates" in the app (Me page).
 // Email goes through the same Brevo/Resend setup as the codes. SMS goes through Africa's Talking.
 // A send that fails is written down and skipped: it is never retried inside the same campaign, and it never stops the rest.
-import { json, err, sb, rows, one, post, patch, enc, str, int, randHex, isAdmin, audit, user, throttle, tooMany } from './lib.js';
+import { json, err, sb, rows, one, post, patch, enc, str, int, randHex, H, tsEqual, isAdmin, audit, user, throttle, tooMany } from './lib.js';
 import { sendMailDetailed, mailReady } from './mail.js';
 
 const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -68,6 +68,43 @@ export function promoEmail(env, o) {
 
 const page = (title, msg, form) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title></head><body style="margin:0;background:#101422;color:#fff;font:16px/1.6 Arial,sans-serif;display:grid;place-items:center;min-height:100vh;padding:20px"><div style="max-width:380px;text-align:center"><h1 style="font-size:22px">${esc(title)}</h1><p style="color:#c9cee0">${esc(msg)}</p>${form || ''}</div></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 
+// ---- WhatsApp promo. Opt-in only (wa_ok = true). Messages go through the slow queue in wabot/send.js ----
+const WA_DEFAULT = 'Comrade Connect: spill anonymously, buy and sell safely, earn rewards. Download the app: https://comradeconnect.co.ke';
+const waText = (msg, link) => `${msg}\n\nUnsubscribe: ${link}\nReply STOP to stop these messages.`;
+async function sendWhatsApp(env, b, url, ip) {
+  if (typeof env.waPromo !== 'function' || typeof env.waSend !== 'function' || typeof env.waQueue !== 'function') return err(env, 'WhatsApp is not available on this server.', 400);
+  const msg = str(b.wa, 600) || WA_DEFAULT, base = apiBase(env, url);
+  if (b.test_to) {                                              // a test goes to ONE number you type, is not counted, and is not written down
+    const to = normPhone(b.test_to);
+    if (!to) return err(env, 'Enter a Kenyan number to test');
+    let r; try { r = await env.waSend(to, waText(msg, `${base}/u/TESTTEST`)); } catch (e) { r = { ok: false, detail: 'error' }; }
+    return json(env, { ok: !!(r && r.ok), test: true, detail: (r && r.detail) || '' });
+  }
+  const campaign = str(b.campaign, 40).replace(/[^A-Za-z0-9_-]/g, '');
+  if (campaign.length < 3) return err(env, 'Give the campaign a name (3 to 40 letters or numbers). Each name is sent to a person only once.');
+  const q = await env.waQueue();
+  if (!q.linked) return err(env, 'The WhatsApp bot is not linked. Link it in the WhatsApp tab first.', 400);
+  if (q.stopped) return err(env, 'WhatsApp sending is stopped for today (' + q.stopped + '). Try again tomorrow.', 400);
+  if (q.waiting >= 300) return err(env, 'The queue still has ' + q.waiting + ' messages waiting. Wait for it to get shorter.', 400);
+  const everyone = await rows(await sb(env, 'promo_contacts?select=id,wa_phone,unsub_token&wa_ok=eq.true&order=created_at.asc&limit=50000'));
+  const done = new Set((await rows(await sb(env, `promo_sends?select=to_key&campaign=eq.${enc(campaign)}&channel=eq.whatsapp&limit=100000`))).map((x) => x.to_key));
+  const seen = new Set(), todo = [];
+  for (const c of everyone) { const k = String(c.wa_phone || ''); if (!k || done.has(k) || seen.has(k)) continue; seen.add(k); todo.push({ ...c, key: k }); }
+  const batch = todo.slice(0, Math.min(100, int(b.limit, 1, 100) || 100));
+  let queued = 0;
+  for (const c of batch) {
+    // Claim the person for this campaign BEFORE queuing. If the row already exists, someone else queued them, so we skip: this is what stops a double send.
+    const claim = await rows(await post(env, 'promo_sends', { campaign, channel: 'whatsapp', to_key: c.key, contact_id: c.id, ok: false, detail: 'queued' }, 'resolution=ignore-duplicates,return=representation'));
+    if (!claim.length) continue;
+    env.waPromo(c.key, waText(msg, `${base}/u/${c.unsub_token}`),
+      async (r) => { await patch(env, `promo_sends?campaign=eq.${enc(campaign)}&channel=eq.whatsapp&to_key=eq.${enc(c.key)}`, { ok: !!r.ok, detail: r.ok ? null : String(r.detail || '').slice(0, 200) }).catch(() => null); },
+      async () => { const w = await one(await sb(env, `promo_contacts?select=wa_ok&id=eq.${enc(c.id)}&limit=1`)); return !!(w && w.wa_ok); });
+    queued++;
+  }
+  await audit(env, 'promo.send', 'promo', campaign, { channel: 'whatsapp', queued }, ip);
+  return json(env, { ok: true, queued, remaining: todo.length - batch.length, queue: await env.waQueue() });
+}
+
 export async function promoRoutes(req, env, url, ip) {
   const path = url.pathname, m = req.method;
 
@@ -79,6 +116,8 @@ export async function promoRoutes(req, env, url, ip) {
     if (m === 'POST') {
       if (!(await throttle(env, ip, 'promounsub', t, 20, 40))) return page('Try again later', 'Too many tries. Please wait a few minutes.');
       await patch(env, `promo_contacts?unsub_token=eq.${enc(t)}`, { email_ok: false, sms_ok: false, unsubscribed_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+      const wa = await patch(env, `promo_contacts?unsub_token=eq.${enc(t)}&wa_ok=eq.true`, { wa_ok: false, wa_phone: null }).then((r) => rows(r)).catch(() => []);   // WhatsApp too (columns come from promo.sql)
+      for (const g of wa) await patch(env, `phone_links?aid=eq.${enc(g.aid)}`, { phone_enc: null }).catch(() => null);
       return page('You are unsubscribed', 'You will not get promo emails or texts from Comrade Connect any more. You can switch them back on in the app under Me > Offers and updates.');
     }
     return page('Unsubscribe?', 'Stop promo emails and texts from Comrade Connect?', `<form method="post" action="${esc(path + (um ? '' : '?t=' + t))}"><button style="margin-top:12px;border:0;border-radius:999px;padding:14px 28px;background:#fff;color:#101422;font:700 15px Arial,sans-serif;cursor:pointer">Yes, unsubscribe me</button></form>`);
@@ -88,33 +127,50 @@ export async function promoRoutes(req, env, url, ip) {
   if (path === '/api/me/promo') {
     const u = await user(req, env, m === 'POST'); if (u instanceof Response) return u;
     const cur = await one(await sb(env, `promo_contacts?select=*&aid=eq.${enc(u.aid)}&limit=1`));
-    if (m === 'GET') return json(env, { email: cur ? cur.email || '' : '', phone: cur ? cur.phone || '' : '', email_ok: !!(cur && cur.email_ok), sms_ok: !!(cur && cur.sms_ok), sms_available: smsReady(env) });
+    const lk = await one(await sb(env, `phone_links?select=phone_hash,last4,verified_at&aid=eq.${enc(u.aid)}&limit=1`));   // the verified WhatsApp number, if any
+    if (m === 'GET') return json(env, { email: cur ? cur.email || '' : '', phone: cur ? cur.phone || '' : '', email_ok: !!(cur && cur.email_ok), sms_ok: !!(cur && cur.sms_ok), sms_available: smsReady(env), wa_ok: !!(cur && cur.wa_ok), wa_linked: !!(lk && lk.verified_at), wa_last4: lk && lk.verified_at ? lk.last4 || '' : '' });
     if (m !== 'POST') return err(env, 'Not found', 404);
     if (!(await throttle(env, ip, 'promoopt', u.aid, 12, 40))) return tooMany(env);
     const b = await req.json().catch(() => ({}));
     const email = EMAIL.test(str(b.email, 120)) ? str(b.email, 120).toLowerCase() : '', phone = normPhone(b.phone);
     if (b.email_ok && !email) return err(env, 'Enter a real email address');
     if (b.sms_ok && !phone) return err(env, 'Enter a Kenyan number like 0712345678');
-    const eok = !!b.email_ok && !!email, sok = !!b.sms_ok && !!phone, now = new Date().toISOString(), any = eok || sok;
+    // WhatsApp offers need a VERIFIED number. The person types it again and it must match the one they linked (compared as a keyed hash).
+    let wphone = '';
+    if (b.wa_ok) {
+      if (!lk || !lk.verified_at) return err(env, 'Link your WhatsApp number first (tap Link my WhatsApp number).');
+      wphone = normPhone(b.wa_phone);
+      if (!wphone || !tsEqual(lk.phone_hash, await H(env, 'phone:' + wphone))) return err(env, 'Type the WhatsApp number you linked' + (lk.last4 ? ' (it ends in ' + lk.last4 + ')' : '') + '.');
+    }
+    const wok = !!wphone;
+    const eok = !!b.email_ok && !!email, sok = !!b.sms_ok && !!phone, now = new Date().toISOString(), any = eok || sok || wok;
     if (cur) {
       await patch(env, `promo_contacts?aid=eq.${enc(u.aid)}`, { email: email || cur.email || null, phone: phone || cur.phone || null, email_ok: eok, sms_ok: sok, consent_at: any ? now : cur.consent_at, consent_ip: any ? ip : cur.consent_ip, unsubscribed_at: any ? null : (cur.unsubscribed_at || now), updated_at: now });
     } else if (any) {
       const r = await post(env, 'promo_contacts', { aid: u.aid, email: email || null, phone: phone || null, email_ok: eok, sms_ok: sok, consent_at: now, consent_ip: ip, unsub_token: randHex(8) });
       if (!r.ok) return err(env, 'Could not save. Ask the admin to run supabase/promo.sql first.', 500);
     }
-    return json(env, { ok: true, email_ok: eok, sms_ok: sok });
+    if (b.wa_ok !== undefined) {   // older app versions do not send this: they leave WhatsApp as it was
+      const w = await patch(env, `promo_contacts?aid=eq.${enc(u.aid)}`, { wa_ok: wok, wa_phone: wok ? wphone : null });
+      if (wok && !w.ok) return err(env, 'Could not save. Ask the admin to run supabase/promo.sql first.', 500);
+      await patch(env, `phone_links?aid=eq.${enc(u.aid)}`, { phone_enc: wok ? wphone : null }).catch(() => null);   // the number is kept only while they are opted in
+    }
+    return json(env, { ok: true, email_ok: eok, sms_ok: sok, wa_ok: wok });
   }
 
   // ---- admin ----
   if (!path.startsWith('/api/admin/promo')) return null;
   if (!isAdmin(req, env)) return err(env, 'Not allowed', 403);
+  if (path === '/api/admin/promo/queue' && m === 'GET') return json(env, typeof env.waQueue === 'function' ? await env.waQueue() : { waiting: 0, sent: 0, failed: 0, today: 0, cap: 0, stopped: '', linked: false });
   if (path === '/api/admin/promo' && m === 'GET') {
-    const all = await rows(await sb(env, 'promo_contacts?select=email,phone,email_ok,sms_ok&limit=50000'));
+    const all = await rows(await sb(env, 'promo_contacts?select=email,phone,email_ok,sms_ok,wa_ok,wa_phone&limit=50000'));
     return json(env, { emails: new Set(all.filter((c) => c.email_ok && c.email).map((c) => c.email.toLowerCase())).size, phones: new Set(all.filter((c) => c.sms_ok && c.phone).map((c) => c.phone)).size,
+      whatsapps: new Set(all.filter((c) => c.wa_ok && c.wa_phone).map((c) => c.wa_phone)).size, wa_linked: !!(typeof env.waQueue === 'function' && (await env.waQueue()).linked),
       mail_ready: mailReady(env), sms_ready: smsReady(env), sandbox: String(env.AT_USERNAME || '').trim() === 'sandbox', sender: has(env.AT_SENDER_ID) ? String(env.AT_SENDER_ID).trim() : '', download: dlUrl(env), api: apiBase(env, url) });
   }
   if (path === '/api/admin/promo/send' && m === 'POST') {
     const b = await req.json().catch(() => ({})), channel = b.channel === 'sms' ? 'sms' : 'email';
+    if (b.channel === 'whatsapp') return sendWhatsApp(env, b, url, ip);
     const campaign = str(b.campaign, 40).replace(/[^A-Za-z0-9_-]/g, '');
     const o = { headline: str(b.headline, 100) || 'Everything campus, in one app', body: str(b.body, 1200) };
     const subject = str(b.subject, 120) || 'Comrade Connect: the campus app, now on your phone';

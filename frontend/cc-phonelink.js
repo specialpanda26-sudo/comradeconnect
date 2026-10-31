@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   if (window.__ccPhoneLink) return; window.__ccPhoneLink = 1;
-  var linked = false, busy = false, timer = null, left = 0, stage = 'number', polling = null;
+  var linked = false, busy = false, timer = null, left = 0, stage = 'number', polling = null, optional = false;
   var $ = function (id) { return document.getElementById(id); };
   var api = function () { return typeof CC_API === 'string' ? CC_API.replace(/\/$/, '') : ''; };
   var live = function () { return api() && api().indexOf('YOUR-SUBDOMAIN') < 0; };
@@ -41,7 +41,7 @@
         + '<button class="btn g" id="ccplchg" type="button" style="width:100%;margin-top:10px">Use a different number</button>';
     }
     h += '<p id="ccplmsg" role="alert" style="min-height:22px;margin:14px 0 0"></p>'
-      + '<button type="button" id="ccplout" style="margin-top:18px;background:none;border:0;color:var(--mut,rgba(255,255,255,.7));text-decoration:underline;font:inherit;cursor:pointer">Sign out</button></div>';
+      + '<button type="button" id="' + (optional ? 'ccplx' : 'ccplout') + '" style="margin-top:18px;background:none;border:0;color:var(--mut,rgba(255,255,255,.7));text-decoration:underline;font:inherit;cursor:pointer">' + (optional ? 'Not now' : 'Sign out') + '</button></div>';
     return h;
   }
 
@@ -53,7 +53,8 @@
     if (again) again.onclick = sendCode;
     if (go) go.onclick = confirmCode;
     if (chg) chg.onclick = function () { stage = 'number'; clearTimeout(timer); render(); };
-    $('ccplout').onclick = signOut;
+    if ($('ccplout')) $('ccplout').onclick = signOut;
+    if ($('ccplx')) $('ccplx').onclick = close;
     var f = $('ccplnum') || $('ccplcode'); if (f) { f.onkeydown = function (e) { if (e.key === 'Enter') (send || go).click(); }; if (stage === 'code') f.oninput = function () { f.value = f.value.replace(/\D/g, '').slice(0, 6); }; }
     if (stage === 'code') tick();
   }
@@ -101,8 +102,11 @@
     Promise.race([fetch(api() + '/api/auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }), new Promise(function (r) { setTimeout(r, 3000); })]).then(fin, fin);
   }
 
-  function show() {
+  // Only the optional screen (opened from Offers and updates) can be closed. The required one cannot.
+  function close() { clearTimeout(timer); var o = $('ccphonelink'); if (o) o.remove(); document.documentElement.style.overflow = ''; }
+  function show(opt) {
     if ($('ccphonelink') || linked) return;
+    optional = !!opt;
     var o = document.createElement('div'); o.id = 'ccphonelink';
     o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'Link your WhatsApp number');
     o.style.cssText = 'position:fixed;inset:0;z-index:2147483000;overflow:auto;background:var(--bg,#000);color:var(--fg,#fff);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
@@ -123,6 +127,7 @@
       });
     }).catch(function () {});
   }
+  window.ccPhoneLinkOpen = function () { show(true); };   // used by the WhatsApp tick box in Offers and updates
   function start() { check(); polling = setInterval(check, 30000); }   // 30s: also catches a sign-in that happens after the page loaded
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });

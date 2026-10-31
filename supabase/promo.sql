@@ -27,3 +27,17 @@ create table if not exists promo_sends (
 );
 alter table promo_contacts enable row level security;
 alter table promo_sends enable row level security;
+
+-- WhatsApp offers: only people who tick "WhatsApp me" (needs a verified number from phone-link.sql). Safe to run again.
+alter table promo_contacts add column if not exists wa_ok boolean not null default false;
+alter table promo_contacts add column if not exists wa_phone text;
+create index if not exists promo_contacts_wa_ok on promo_contacts(wa_ok) where wa_ok;
+-- replace the old channel check (email, sms) with one that also allows whatsapp
+do $$
+declare c record;
+begin
+  for c in select conname from pg_constraint where conrelid = 'promo_sends'::regclass and contype = 'c' and pg_get_constraintdef(oid) ilike '%channel%' loop
+    execute 'alter table promo_sends drop constraint ' || quote_ident(c.conname);
+  end loop;
+  alter table promo_sends add constraint promo_sends_channel_check check (channel in ('email','sms','whatsapp'));
+end $$;

@@ -62,6 +62,8 @@ async function loop() {
         const wait = nextPromoAt - Date.now();
         if (wait > 0) { await nap(wait); continue; }      // re-check: a code may have arrived while we slept
         job = promo.shift(); isPromo = true;
+        // Last look before sending: is this person still opted in? If we cannot check, we do not send.
+        if (job.guard) { let ok = false; try { ok = await job.guard(); } catch (e) {} if (!ok) { try { if (job.done) await job.done({ ok: false, detail: 'opted out' }); } catch (e) {} continue; } }
       }
       let r;
       try { r = await deliver(job.phone, job.text); } catch (e) { r = { ok: false, detail: clean(e) }; }
@@ -96,13 +98,14 @@ export function sendUrgent(phone, text) {
 }
 
 // A promo: goes to the slow lane. done({ ok, detail }) is called when it has been tried.
-export function queuePromo(phone, text, done) {
-  promo.push({ phone, text, done });
+export function queuePromo(phone, text, done, guard) {
+  promo.push({ phone, text, done, guard });
   loop();
   return promo.length;
 }
 
-export function queueStatus() {
+export async function queueStatus() {
   const d = day();
-  return { waiting: promo.length, sent: stats.sent, failed: stats.failed, today: d.n, cap: dailyCap(), stopped: d.stopped || '', sending: running };
+  let linked = false; try { const M = await import('./manager.js'); linked = M.status().status === 'connected'; } catch (e) {}
+  return { waiting: promo.length, sent: stats.sent, failed: stats.failed, today: d.n, cap: dailyCap(), stopped: d.stopped || '', sending: running, linked };
 }

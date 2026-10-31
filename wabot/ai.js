@@ -57,6 +57,7 @@ export function attachAi(sock) {
         if (!jid || jid.endsWith('@g.us') || jid === 'status@broadcast' || jid.endsWith('@newsletter') || jid.endsWith('@broadcast')) continue;
         const text = ((m.message && (m.message.conversation || (m.message.extendedTextMessage && m.message.extendedTextMessage.text))) || '').trim();
         if (m.key.fromMe) { if (text) pausedUntil[jid] = Date.now() + 30 * 60000; continue; } // you answered by hand: AI stays quiet for 30 min
+        if (m.__ccStop) continue;   // STOP / ACHA was already handled by stop.js
         if (!text || /^[.!\/]/.test(text)) continue;
         if (!aiInfo().enabled || !process.env.GEMINI_API_KEY) continue;
         if (pausedUntil[jid] && Date.now() < pausedUntil[jid]) continue;

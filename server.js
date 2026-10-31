@@ -20,7 +20,7 @@ for (const [k, v] of Object.entries(DEFAULTS)) if (env[k] === undefined || env[k
 // Bridge to the WhatsApp bot (same process). Lets the API send codes and queue promos. Fails soft: if the bot is offline these just say so.
 // The send logic (socket check, onWhatsApp check, queue, daily cap) lives in wabot/send.js. Nothing here logs a number or a message.
 env.waSend = (phone, text) => wa.sendUrgent(phone, text);
-env.waPromo = (phone, text, done) => wa.queuePromo(phone, text, done);
+env.waPromo = (phone, text, done, guard) => wa.queuePromo(phone, text, done, guard);
 env.waQueue = () => wa.queueStatus();
 
 // Refuse to start half-configured, so a missing secret is obvious in the Render logs instead of failing on a customer.
@@ -107,7 +107,7 @@ server.headersTimeout = 30000;
 
 const port = Number(process.env.PORT) || 10000;
 server.listen(port, '0.0.0.0', () => console.log('Comrade Connect API listening on ' + port));
-import('./wabot/manager.js').then((m) => m.autostart()).catch((e) => console.error('wabot', e && e.message));
+import('./wabot/manager.js').then((m) => { m.setEnv(env); m.autostart(); }).catch((e) => console.error('wabot', e && e.message));
 setInterval(cron, 15 * 60 * 1000).unref();
 setTimeout(cron, 60 * 1000).unref();
 process.on('unhandledRejection', (e) => console.error('unhandled rejection', e && e.message));

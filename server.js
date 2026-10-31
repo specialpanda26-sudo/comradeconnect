@@ -5,6 +5,7 @@
 import http from 'node:http';
 import worker, { runCron } from './backend/src/index.js';
 import { handleWa } from './wabot/routes.js';
+import * as wa from './wabot/send.js';
 
 // Defaults for every non-secret setting. Anything you set in Render's Environment tab wins (an empty value counts as "not set").
 const DEFAULTS = {
@@ -16,6 +17,11 @@ const DEFAULTS = {
 };
 const env = { ...process.env };
 for (const [k, v] of Object.entries(DEFAULTS)) if (env[k] === undefined || env[k] === '') env[k] = v;
+// Bridge to the WhatsApp bot (same process). Lets the API send codes and queue promos. Fails soft: if the bot is offline these just say so.
+// The send logic (socket check, onWhatsApp check, queue, daily cap) lives in wabot/send.js. Nothing here logs a number or a message.
+env.waSend = (phone, text) => wa.sendUrgent(phone, text);
+env.waPromo = (phone, text, done) => wa.queuePromo(phone, text, done);
+env.waQueue = () => wa.queueStatus();
 
 // Refuse to start half-configured, so a missing secret is obvious in the Render logs instead of failing on a customer.
 const missing = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'ADMIN_KEY', 'HASH_PEPPER'].filter((k) => !env[k]);

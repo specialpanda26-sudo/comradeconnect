@@ -34,6 +34,7 @@ services:
       - { key: RESEND_API_KEY, sync: false }
       - { key: AGORA_APP_ID, sync: false }            # Agora Console > your project > App ID (same value as CC_AGORA_ID in frontend/config.js)
       - { key: AGORA_APP_CERTIFICATE, sync: false }   # Agora Console > your project > Primary Certificate. Secret: server only. Needed for Go Live when the certificate is switched on
+      - { key: WA_PROMO_DAILY_CAP, value: "100" }   # most WhatsApp promo messages per day (codes are not counted). Use a spare SIM for the bot
       - { key: DEVICE_LOCK, value: "1" }
       - { key: DEVICE_MAX_ACCOUNTS, value: "3" }
       - { key: PASSKEY_RP_ID, value: comradeconnect.co.ke }

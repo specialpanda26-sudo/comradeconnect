@@ -15,6 +15,7 @@ export const DEFS = {
   points_per_ksh: { env: 'POINTS_PER_KSH', def: 10, min: 1, max: 1000, unit: 'pts', label: 'Points worth KSh 1', help: '10 means 50 points = KSh 5. Points can only be spent on Market items, and never more than your fee on that purchase.' },
   points_daily_cap: { env: 'POINTS_DAILY_CAP', def: 30, min: 0, max: 1000, unit: 'pts', label: 'Most points one account can earn per day', help: 'Limits point farming. 0 stops new points.' },
   signup_bonus: { env: 'SIGNUP_BONUS', def: 0, min: 0, max: 500, unit: 'KSh', label: 'Welcome bonus', help: 'Added to the wallet of every NEW account the moment it is created. 0 = off. Withdrawals still need a verified account.' },
+  phone_required: { env: 'PHONE_REQUIRED', def: 0, min: 0, max: 1, unit: '', label: 'Require a linked WhatsApp number (1 = yes, 0 = no)', help: '1: the app asks every signed-in account without a linked number to link one (a code is sent on WhatsApp) before it can be used. Old accounts are not blocked on the server, only the app screen asks. When on, the welcome bonus is paid after the number is verified. 0 = optional.' },
   referral_reward: { env: 'REFERRAL_REWARD', def: 20, min: 0, max: 1000, unit: 'KSh', label: 'Referral reward', help: 'Paid to the inviter after the friend completes a purchase.' },
   listing_price_min: { env: 'LISTING_PRICE_MIN', def: 1, min: 1, max: 250000, unit: 'KSh', label: 'Lowest item price', help: 'Cheapest price a seller can put on a Market item. 1 means any price.' },
   listing_price_max: { env: 'LISTING_PRICE_MAX', def: 150000, min: 1, max: 250000, unit: 'KSh', label: 'Highest item price', help: 'Most a seller can ask for one Market item. M-Pesa allows at most 250,000 per payment.' },
@@ -92,6 +93,7 @@ export const publicConfig = (S, env = {}) => ({
   fee_percent: S.platform_fee_percent, boost_plans: boostPlans(S),
   price_min: S.listing_price_min, price_max: S.listing_price_max,
   points_per_ksh: S.points_per_ksh, withdraw_min: S.withdraw_min, withdraw_max: S.withdraw_max, withdraw_fee_percent: S.withdraw_fee_percent, withdraw_fee_flat: S.withdraw_fee_flat,
+  phone_required: S.phone_required === 1,
   wholesale_fee: S.wholesale_fee, wholesale_days: S.wholesale_days, free_listing_limit: S.free_listing_limit, wholesale_photos: S.wholesale_photos,
 });
 

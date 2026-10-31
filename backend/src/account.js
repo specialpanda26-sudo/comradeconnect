@@ -11,10 +11,12 @@ import { normAnyEmail } from './recovery.js';
 import { getContent } from './sitecontent.js';
 
 // Welcome bonus: credited once per account (the ref makes a second credit impossible). Never breaks signup.
-async function welcomeBonus(env, aid) {
+// afterPhone = true only from the phone verify route. While phone_required is on, signup does NOT pay: the bonus waits for a verified number.
+export async function welcomeBonus(env, aid, afterPhone = false) {
   try {
-    const n = Math.floor(Number((await getSettings(env)).signup_bonus) || 0);
+    const S = await getSettings(env), n = Math.floor(Number(S.signup_bonus) || 0);
     if (n < 1) return;
+    if (S.phone_required === 1 && !afterPhone) return;
     if (await credit(env, aid, n, 'adjustment', 'welcome:' + aid, 'Welcome bonus')) { const C = await getContent(env), t = (s) => String(s || '').replace(/\{amount\}/g, String(n)); await notify(env, aid, 'reward', t(C.welcome_title) || 'Welcome to Comrade Connect', t(C.welcome_text) || 'KSh ' + n + ' was added to your wallet.', 'wallet', null); }
   } catch (e) { console.error('welcome bonus failed', e && e.message); }
 }

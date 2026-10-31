@@ -17,17 +17,18 @@ function call(path, body) { return window.ccCall(path, body ? { body: body } : {
 
 var css = el('style');
 css.textContent =
+'#v-market>p.sub:not(.crd-msub){display:none}' +
 '#ccg-card{max-width:680px;margin:10px auto 0;padding:0 6vw}#ccg-card .g{border:1px solid var(--line,rgba(255,255,255,.14));border-radius:20px;padding:16px;display:flex;align-items:center;gap:14px}' +
 '#ccg-card h3{margin:0;font-size:16px}#ccg-card p{margin:2px 0 0;font-size:12px;line-height:1.5;color:var(--mut,#999)}#ccg-card .t{flex:1;min-width:0}' +
 '.ccg-b{all:unset;cursor:pointer;padding:10px 16px;border-radius:12px;font:600 13px system-ui,sans-serif;border:1px solid var(--fg,#fff);color:var(--fg,#fff);text-align:center}.ccg-b.s{background:var(--fg,#fff);color:var(--bg,#101422)}.ccg-b.x{opacity:.7}' +
-'#ccg{position:fixed;inset:0;z-index:1000;background:var(--bg,#101422);color:var(--fg,#fff);overflow-y:auto;-webkit-overflow-scrolling:touch}#ccg .in{max-width:680px;margin:0 auto;padding:16px 6vw 90px}' +
-'#ccg .hd{display:flex;align-items:center;justify-content:space-between;gap:10px}#ccg h2{margin:0;font-size:22px}' +
-'#ccg .tabs{display:flex;gap:8px;margin:14px 0}#ccg .tabs .ccg-b{flex:1}' +
-'#ccg .it{border:1px solid var(--line,rgba(255,255,255,.14));border-radius:18px;padding:14px;margin-bottom:12px}#ccg .it h4{margin:0;font-size:15px;overflow-wrap:anywhere}' +
-'#ccg .it p{margin:6px 0 0;font-size:13px;line-height:1.55;color:var(--mut,#999);overflow-wrap:anywhere}#ccg .it .pr{margin-top:8px;font-size:14px;font-weight:600}' +
-'#ccg .ch{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:11px;border:1px solid var(--line,rgba(255,255,255,.3));color:var(--mut,#999);vertical-align:1px}' +
-'#ccg .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}' +
-'#ccg input,#ccg textarea,#ccg select{width:100%;box-sizing:border-box;margin:6px 0;padding:12px;border-radius:12px;border:1px solid var(--line,rgba(255,255,255,.25));background:transparent;color:inherit;font:inherit}';
+'#ccgigs{position:fixed;inset:0;z-index:1000;background:var(--bg,#101422);color:var(--fg,#fff);overflow-y:auto;-webkit-overflow-scrolling:touch}#ccgigs .in{max-width:680px;margin:0 auto;padding:16px 6vw 90px}' +
+'#ccgigs .hd{display:flex;align-items:center;justify-content:space-between;gap:10px}#ccgigs h2{margin:0;font-size:22px}' +
+'#ccgigs .tabs{display:flex;gap:8px;margin:14px 0}#ccgigs .tabs .ccg-b{flex:1}' +
+'#ccgigs .it{border:1px solid var(--line,rgba(255,255,255,.14));border-radius:18px;padding:14px;margin-bottom:12px}#ccgigs .it h4{margin:0;font-size:15px;overflow-wrap:anywhere}' +
+'#ccgigs .it p{margin:6px 0 0;font-size:13px;line-height:1.55;color:var(--mut,#999);overflow-wrap:anywhere}#ccgigs .it .pr{margin-top:8px;font-size:14px;font-weight:600}' +
+'#ccgigs .ch{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:11px;border:1px solid var(--line,rgba(255,255,255,.3));color:var(--mut,#999);vertical-align:1px}' +
+'#ccgigs .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}' +
+'#ccgigs input,#ccgigs textarea,#ccgigs select{width:100%;box-sizing:border-box;margin:6px 0;padding:12px;border-radius:12px;border:1px solid var(--line,rgba(255,255,255,.25));background:transparent;color:inherit;font:inherit}';
 document.head.appendChild(css);
 
 function mountCard() {
@@ -37,7 +38,7 @@ function mountCard() {
   var b = el('button', 'ccg-b s', 'Gigs'); b.type = 'button'; b.onclick = open; g.appendChild(t); g.appendChild(b); c.appendChild(g);
   market.insertBefore(c, market.firstChild);
 }
-function open() { if (!ov) { ov = el('div'); ov.id = 'ccg'; document.body.appendChild(ov); } ov.style.display = ''; document.body.style.overflow = 'hidden'; tab = 'browse'; msg = ''; draw(); loadAll(); }
+function open() { if (!ov) { ov = el('div'); ov.id = 'ccgigs'; document.body.appendChild(ov); } ov.style.display = ''; document.body.style.overflow = 'hidden'; tab = 'browse'; msg = ''; draw(); loadAll(); }
 function close() { if (ov) ov.style.display = 'none'; document.body.style.overflow = ''; }
 function loadAll() {
   if (!connected()) return;

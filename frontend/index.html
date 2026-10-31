@@ -32,7 +32,7 @@ function wordHit(t){const M={zero:0,sifuri:0,nought:0,naught:0,one:1,moja:1,two:
 function modLog(kind,text){try{const L=JSON.parse(localStorage.getItem('cs_modlog')||'[]');L.push({at:Date.now(),kind,aid:(typeof ME!=='undefined'&&ME.aid)||'',why:'number-words',text:String(text).slice(0,200)});localStorage.setItem('cs_modlog',JSON.stringify(L.slice(-200)))}catch(e){}}
 </script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="config.js?v=3"></script>
+<script src="config.js?v=3"></script><script src="cc-fast.js?v=1"></script>
 <script>
 /* Comrade Connect payment client. CC_API and CC_GOOGLE_ID come from config.js. */
 async function ccJson(url,opt){let r;try{r=await fetch(url,opt)}catch(e){throw new Error('Could not reach the server. Check your internet and try again.')}
@@ -88,7 +88,7 @@ window.addEventListener('online',function(){last=0;say('Back online')})})();
 <script src="cc-glass.js?v=5" defer></script><script src="cc-ui5.js?v=1" defer></script><script src="cc-float.js?v=1" defer></script>
 <script src="cc-tiles.js?v=5" defer></script><script src="cc-verified.js?v=2"></script><script src="cc-fix6.js?v=5" defer></script><script src="cc-fix5.js?v=2" defer></script><script src="cc-fix4.js?v=2" defer></script><script src="cc-fix2.js?v=1" defer></script><script src="cc-ptr.js?v=4" defer></script><script>(function(){try{if(getComputedStyle(document.documentElement).getPropertyValue("--cc-tw").trim()==="1")return}catch(e){}var s=document.createElement("script");s.src="https://cdn.tailwindcss.com/3.4.17";document.head.appendChild(s)})()</script></head>
 <body data-view="feed"><noscript><main style="padding:24px;font-family:sans-serif;color:#fff;background:#000"><h1>Comrade Connect: Kenyan university comrades</h1><p>The anonymous campus feed, safe marketplace with escrow, Hearts, roommates and study groups for Kenyan university comrades. Turn on JavaScript to use the app.</p></main></noscript>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Unbounded:wght@600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#000;--fg:#fff;--mut:rgba(255,255,255,.62);--g:rgba(255,255,255,.07);--gb:rgba(255,255,255,.22);--gh:rgba(255,255,255,.4);--sh:0 10px 30px rgba(0,0,0,.6);--line:rgba(255,255,255,.14);--ink:#fff;--inkfg:#000;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 :root[data-theme="light"]{--bg:#fff;--fg:#101422;--mut:rgba(16,20,34,.62);--g:rgba(255,255,255,.55);--gb:rgba(0,0,0,.14);--gh:rgba(255,255,255,.95);--sh:0 8px 32px rgba(0,0,0,.12);--line:rgba(0,0,0,.12);--ink:#000;--inkfg:#fff}
@@ -456,7 +456,7 @@ nav .ib{flex:none}
 #lk .lklinks{margin:18px 0 0;font-size:14px;font-weight:600}
 #lk .lklinks a{color:var(--fg,#fff);text-decoration:underline}
 </style>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&amp;display=swap" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="cc-all.css?v=b82a49c2">
 <link rel="stylesheet" href="tw.css?v=1">
 
@@ -1033,7 +1033,7 @@ q('#dcm').addEventListener('click',e=>{if(e.target.id==='dcm')q('#dcm').classLis
     <div data-s="4" hidden><p class="note">Step 4 of 4.</p><p class="tot" style="font-size:22px" id="ok"></p><button class="btn p" id="s4" style="width:100%;margin-top:14px">See it at the top</button></div>
   </section>
   <section data-v="fee" hidden>
-    <div class="flex items-center justify-between"><h2>Pay to post</h2><button class="ib" id="dx3" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="flex items-center justify-between"><h2>Pay to post</h2><button class="ib" id="dx4" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div data-f="1"><p class="note" id="fnote"></p>
       <div class="fld"><input id="fph" inputmode="numeric" maxlength="10" placeholder="07XX XXX XXX" aria-label="M-Pesa number"></div>
       <p class="note" id="fe" style="color:var(--fg)"></p>
@@ -1218,7 +1218,7 @@ $('#s4').onclick=async()=>{if(tgt){tgt.boosted=true;save();shut();await load(tru
 /* ---------- pay-to-post: a spill about money waits (hidden) until its fee is paid ---------- */
 let feeD=null;const fst=n=>$$('#dm [data-f]').forEach(x=>x.hidden=x.dataset.f!==String(n));
 function openFee(d){feeD=d;openDm('fee');fst(1);$('#fnote').textContent='Posts about money cost KSh '+d.fee+'. Pay once and your spill goes live straight away.';$('#fe').textContent='';$('#fph').value=''}
-$('#dx3').onclick=shut;
+$('#dx3').onclick=shut;$('#dx4').onclick=shut;
 $('#fgo').onclick=()=>{const v=$('#fph').value.replace(/\s/g,'');if(!/^(07|01)\d{8}$/.test(v))return $('#fe').textContent='Enter a Safaricom or Airtel number like 0712345678.';
  fst(2);const fl=ccFlow($('#fsteps'),v,feeD.fee,'boost');
  ccRun(v,feeD.fee,'spillfee',feeD.post_id,async()=>{await fl.done();fl.stop();$('#fok').textContent='Payment received. KSh '+feeD.fee+'. Your spill is live.';fst(3);if(window.ccTick)ccTick($('#fok'))},async m=>{await fl.fail(m);fl.stop();$('#fe').textContent=m;fst(1)},fl.on)};
@@ -1705,14 +1705,14 @@ b.innerHTML=`<div class="stats sm"><div class="box g"><div class="sub">Active sp
 <div class="box g"><h3>Community links</h3><p class="sub">Shown to everyone under Me, Join our community.</p>${L.map((l,i)=>`<div class="rw"><span>${IC[l.p]} ${esc(l.n||PL[l.p])}<small>${esc(l.url)}</small></span><button class="act" data-ld="${i}">Remove</button></div>`).join('')||'<p class="sub">No links yet.</p>'}
 <div class="fld" style="margin-top:10px"><select id="lp" aria-label="Platform">${Object.keys(PL).map(k=>`<option value="${k}">${PL[k]}</option>`).join('')}</select></div><div class="fld" style="margin-top:8px"><input id="ln" maxlength="40" placeholder="Label (optional)" aria-label="Label"></div><div class="fld" style="margin-top:8px"><input id="lu" placeholder="https://..." aria-label="Link URL"></div><button class="btn g" id="la" style="width:100%;margin-top:10px">Add link</button></div>
 <div class="box g"><h3>Sponsors and ads</h3><p class="sub">Cards appear at the top of the Feed and Market. Clicks and views are counted.</p>${S.map((s,i)=>`<div class="rw"><span>${esc(s.brand)}<small>${s.imp} views, ${s.clk} clicks, KSh ${(+s.fee||0).toLocaleString()}/month</small></span><span><input type="checkbox" class="sw" data-st2="${i}" ${s.on?'checked':''} aria-label="Active"> <button class="act" data-sd="${i}">Delete</button></span></div>`).join('')||'<p class="sub">No sponsors yet.</p>'}
-<div class="fld" style="margin-top:10px"><input id="sb" maxlength="40" placeholder="Brand name" aria-label="Brand"></div><div class="fld" style="margin-top:8px"><input id="sh" maxlength="100" placeholder="Headline" aria-label="Headline"></div><div class="fld" style="margin-top:8px"><input id="su" placeholder="Their link https://..." aria-label="Sponsor link"></div><div class="fld" style="margin-top:8px"><input id="sf" inputmode="numeric" placeholder="Fee per month (KSh)" aria-label="Fee"></div><button class="btn g" id="sa" style="width:100%;margin-top:10px">Add sponsor</button></div>
+<div class="fld" style="margin-top:10px"><input id="sbr" maxlength="40" placeholder="Brand name" aria-label="Brand"></div><div class="fld" style="margin-top:8px"><input id="sh" maxlength="100" placeholder="Headline" aria-label="Headline"></div><div class="fld" style="margin-top:8px"><input id="su" placeholder="Their link https://..." aria-label="Sponsor link"></div><div class="fld" style="margin-top:8px"><input id="sf" inputmode="numeric" placeholder="Fee per month (KSh)" aria-label="Fee"></div><button class="btn g" id="sa" style="width:100%;margin-top:10px">Add sponsor</button></div>
 <div class="box g"><h3>Business enquiries</h3>${Q.map((q,i)=>`<div class="rw"><span>${esc(q.b)}, ${esc(q.k)}<small>${esc(q.m||'No note')} · ${esc(q.p)}</small></span><span><a class="act" ${A('https://wa.me/'+q.p.replace(/\D/g,'').replace(/^0/,'254'))}>WhatsApp</a> <button class="act" data-qd="${i}">${q.done?'Reopen':'Done'}</button></span></div>`).join('')||'<p class="sub">Enquiries now arrive in Admin > Review > Adverts.</p>'}</div>
 `;
 }
 document.addEventListener('click',e=>{const t=e.target;let L=get(K.l,[]),S=get(K.s,[]),Q=get(K.q,[]);
 if(t.id==='la'){const u=$('#lu').value.trim();if(!okUrl(u))return toast('Enter a full link starting with https://');L.push({p:$('#lp').value,n:$('#ln').value.trim(),url:u});set(K.l,L);adm();toast('Link added');const w=$('#ccpub');if(w)w.remove();meBoxes()}
 else if(t.dataset.ld!==undefined){L.splice(+t.dataset.ld,1);set(K.l,L);adm();const w=$('#ccpub');if(w)w.remove();meBoxes()}
-else if(t.id==='sa'){const b=$('#sb').value.trim(),u=$('#su').value.trim();if(b.length<2)return toast('Add a brand name');if(!okUrl(u))return toast('Enter a full link starting with https://');S.unshift({id:'s'+Date.now(),brand:b,head:$('#sh').value.trim()||b,url:u,fee:parseInt($('#sf').value)||0,on:true,imp:0,clk:0});set(K.s,S);adm();placeAds();toast('Sponsor added')}
+else if(t.id==='sa'){const b=$('#sbr').value.trim(),u=$('#su').value.trim();if(b.length<2)return toast('Add a brand name');if(!okUrl(u))return toast('Enter a full link starting with https://');S.unshift({id:'s'+Date.now(),brand:b,head:$('#sh').value.trim()||b,url:u,fee:parseInt($('#sf').value)||0,on:true,imp:0,clk:0});set(K.s,S);adm();placeAds();toast('Sponsor added')}
 else if(t.dataset.sd!==undefined){S.splice(+t.dataset.sd,1);set(K.s,S);adm();placeAds()}
 else if(t.dataset.st2!==undefined){S[+t.dataset.st2].on=t.checked;set(K.s,S);adm();placeAds()}
 else if(t.dataset.qd!==undefined){Q[+t.dataset.qd].done=!Q[+t.dataset.qd].done;set(K.q,Q);adm()}});

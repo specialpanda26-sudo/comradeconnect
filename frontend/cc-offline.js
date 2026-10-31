@@ -84,10 +84,10 @@
           return r;
         });
         if (!hit) return net.catch(function (e) { if (navigator.onLine === false) show('offline'); throw e; });
-        var wait = new Promise(function (res) { setTimeout(function () { res(null); }, navigator.onLine === false ? 0 : 5000); });
+        var wait = new Promise(function (res) { setTimeout(function () { res(null); }, navigator.onLine === false ? 0 : 1500); });
         return Promise.race([net.catch(function () { return null; }), wait]).then(function (r) {
           if (r && (r.ok || r.status < 500)) return r;
-          show(navigator.onLine === false ? 'offline' : 'slow'); return hit;     // no data, server asleep or failing: the saved copy
+          if (navigator.onLine === false) show('offline'); return hit;     // no data, server asleep or failing: the saved copy
         });
       });
     }, function () { return prev.apply(self, args); });

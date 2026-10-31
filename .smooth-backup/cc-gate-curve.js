@@ -1,0 +1,50 @@
+/* cc-gate-curve.js v4: Get started, Login and Sign up headers.
+   Same brand row, title and subtitle spacing on every page; a deeper, symmetric bowl curve (white corners at the sides) that never touches the words.
+   The black starts as a full-screen curtain and retracts upward while the form fades in step by step. Colors are untouched. */
+(function () {
+'use strict';
+var E = 'cubic-bezier(.7,0,.2,1)';
+var D = 'M0 0H100V14C100 29 77 40 50 40C23 40 0 29 0 14Z';
+var CSS =
+'.sheet::before{display:none!important}' +
+'.app .sheet,.app.w .sheet,.app.a .sheet{transform:none!important}' +
+'.app.w .sheet,.app.s .sheet{opacity:0;visibility:hidden;pointer-events:none;transition:none!important}' +
+'.app.a .sheet{opacity:1;visibility:visible;transition:opacity .2s!important}' +
+'.app .sheet{padding-top:calc(var(--ch) + 4px)!important}' +
+'.app.a{--ch:252px!important}.app.a.su{--ch:246px!important}' +
+'@media(max-height:720px){.app.a{--ch:232px!important}.app.a.su{--ch:226px!important}}' +
+'.app .cv{z-index:2;height:var(--ch)!important;transform:translate3d(0,-101%,0);will-change:transform}' +
+'.app.w .cv,.app.s .cv{display:none!important}' +
+'@keyframes ccgDrop{0%{transform:translate3d(0,-100%,0)}62%{transform:translate3d(0,3%,0)}82%{transform:translate3d(0,-.8%,0)}100%{transform:translate3d(0,0,0)}}' +
+'.app.a .cv{transform:translate3d(0,0,0);transition:none!important;animation:ccgDrop .9s .05s cubic-bezier(.25,.8,.35,1) both}' +
+'.app .brand{left:26px!important;top:calc(env(safe-area-inset-top,0px) + 30px)!important}' +
+'.app.a .brand{transition:opacity .6s .5s,top .5s ' + E + '!important}' +
+'.app .brand .row{gap:12px}' +
+'.app .brand b{font-size:12px;letter-spacing:.22em}' +
+'.app .brand .bt{margin:36px 0 0;font-size:clamp(28px,8.6vw,35px);line-height:1.04;letter-spacing:-.035em}' +
+'.app .brand p{margin:10px 0 0;font-size:15px}' +
+'.gt{justify-content:flex-start!important;gap:12px!important;padding:calc(env(safe-area-inset-top,0px) + 30px) 26px 0!important}' +
+'@media(min-width:600px){.app .brand{left:max(26px,calc((100% - 440px)/2))!important}.gt{padding-left:max(26px,calc((100% - 440px)/2))!important}}' +
+'@media(prefers-reduced-motion:reduce){.app .cv{transition-duration:.01s!important;transition-delay:0s!important}.app.a .cv{animation-duration:.01s!important;animation-delay:0s!important}}';
+function apply(r) {
+  if (r.getElementById('ccgcv')) return;
+  var app = r.querySelector('.app'), p = r.querySelector('.cv path');
+  if (!app || !p) return;
+  var st = document.createElement('style'); st.id = 'ccgcv'; st.textContent = CSS; r.appendChild(st);
+  p.setAttribute('d', D);
+  var t = 0;
+  new MutationObserver(function (ms) {
+    ms.forEach(function (m) {
+      if (/\bw\b/.test(m.oldValue || '') && /\ba\b/.test(app.className)) {
+        app.style.setProperty('--b', '.3s');
+        clearTimeout(t); t = setTimeout(function () { app.style.setProperty('--b', '0s'); }, 1400);
+      }
+    });
+  }).observe(app, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
+}
+/* The curtain rules must be in place BEFORE the first paint. Waiting for a 300 ms timer (and a deferred script) let the white sheet with its black
+   U-shaped curve show for a moment at launch, ahead of the Comrade Connect splash. A MutationObserver runs before the browser draws. */
+function check() { var h = document.getElementById('ccgate'); if (h && h.shadowRoot) { apply(h.shadowRoot); return true; } return false; }
+if (!check()) { var mo = new MutationObserver(function () { if (check()) mo.disconnect(); }); mo.observe(document.documentElement, { childList: true, subtree: true }); }
+setInterval(check, 1500);   // safety net: also covers the gate being rebuilt later
+})();

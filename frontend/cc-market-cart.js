@@ -38,7 +38,7 @@ document.addEventListener('click',function(e){
  if(b){e.stopPropagation();e.preventDefault();var id=b.dataset.id;if(add(id,true)||has(id))openCart()}
 },true);
 new MutationObserver(badge).observe(document.body,{attributes:true,attributeFilter:['data-view']});
-setInterval(badge,1500);badge();
+setInterval(function(){if(!document.hidden)badge()},2500);badge();
 function xbtn(){return '<button type="button" class="mct-x" data-x aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'}
 function toOrders(){['dx5','dx6','dx7'].forEach(function(i){var x=document.getElementById(i);if(x)x.click()});var m=$('#tb button[data-v="market"]');if(m)m.click();setTimeout(function(){var b=$('#mseg button[data-s="orders"]');if(b)b.click()},150)}
 function draw(o){

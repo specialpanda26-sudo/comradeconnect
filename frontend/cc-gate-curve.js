@@ -46,5 +46,5 @@ function apply(r) {
    U-shaped curve show for a moment at launch, ahead of the Comrade Connect splash. A MutationObserver runs before the browser draws. */
 function check() { var h = document.getElementById('ccgate'); if (h && h.shadowRoot) { apply(h.shadowRoot); return true; } return false; }
 if (!check()) { var mo = new MutationObserver(function () { if (check()) mo.disconnect(); }); mo.observe(document.documentElement, { childList: true, subtree: true }); }
-setInterval(check, 1500);   // safety net: also covers the gate being rebuilt later
+setInterval(function () { if (!document.hidden) check(); }, 3000);   // safety net: also covers the gate being rebuilt later
 })();

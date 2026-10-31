@@ -154,5 +154,5 @@ function mount() {
   host.insertBefore(card, host.firstChild);
 }
 window.ccEvents = { create: createForm, mine: myEvents };
-setInterval(mount, 700);
+setInterval(function () { if (!document.hidden) mount(); }, 2500);
 })();

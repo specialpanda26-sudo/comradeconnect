@@ -47,5 +47,5 @@ function setup(r) {
 }
 function check() { var h = document.getElementById('ccgate'); if (h && h.shadowRoot && h.shadowRoot.querySelector('.gsl .art')) { setup(h.shadowRoot); return true; } return false; }
 if (!check()) { var mo = new MutationObserver(function () { check(); }); mo.observe(document.documentElement, { childList: true, subtree: true }); }
-setInterval(check, 500);   // also covers the gate being rebuilt later
+setInterval(function () { if (!document.hidden) check(); }, 3000);   // also covers the gate being rebuilt later
 })();

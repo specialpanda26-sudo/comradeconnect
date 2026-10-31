@@ -93,6 +93,7 @@ function syncX(ov) {                                                          //
 }
 
 function dress(ov) {
+  if (ov.id === 'ccp') return;                                                  // the dropdown picker stays a small bottom sheet, not a full screen
   var box = ov.querySelector(':scope > .bx,:scope > .box,:scope > .dsheet,:scope > .ccdl-s') || ov.querySelector('.bx,.box,.dsheet,.ccdl-s') || ov.firstElementChild;
   if (!box || box.nodeType !== 1) return;
   if (!ov.classList.contains('ccp-ov')) ov.classList.add('ccp-ov');            // only when missing: re-adding a class still counts as a change

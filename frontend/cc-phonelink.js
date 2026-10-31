@@ -34,7 +34,7 @@
         + '<input id="ccplnum" type="tel" inputmode="tel" autocomplete="tel" placeholder="0712 345 678" maxlength="20" style="' + IN + '">'
         + '<button class="btn p" id="ccplsend" type="button" style="width:100%">Send code</button>';
     } else {
-      h += '<label for="ccplcode" style="font-weight:600">Enter the 6-digit code from WhatsApp</label>'
+      h += '<label for="ccplcode" style="position:absolute;left:-9999px">6-digit code from WhatsApp</label>'
         + '<input id="ccplcode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" maxlength="6" style="' + IN + ';letter-spacing:8px;text-align:center">'
         + '<button class="btn p" id="ccplgo" type="button" style="width:100%">Confirm</button>'
         + '<button class="btn g" id="ccplagain" type="button" style="width:100%;margin-top:10px" disabled>Send a new code</button>'
@@ -80,7 +80,7 @@
     setBusy(true); say('Checking...', true);
     call('/api/me/phone/verify', { code: code }).then(function (x) {
       setBusy(false);
-      if (!x.ok) { say(x.d.error || 'Wrong code. Try again.'); if (x.status === 429 || x.status === 410 || x.status === 404) { var cc = $('ccplcode'); if (cc) cc.value = ''; } return; }
+      if (!x.ok) { var gb = $('ccplgo'); if (gb) gb.textContent = 'Confirm'; say(x.d.error || 'Wrong code. Try again.'); if (x.status === 429 || x.status === 410 || x.status === 404) { var cc = $('ccplcode'); if (cc) cc.value = ''; } return; }
       done();
     }).catch(function () { setBusy(false); say('Could not reach the server. Check your internet and try again.'); });
   }
@@ -109,7 +109,7 @@
     optional = !!opt;
     var o = document.createElement('div'); o.id = 'ccphonelink';
     o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'Link your WhatsApp number');
-    o.style.cssText = 'position:fixed;inset:0;z-index:2147483000;overflow:auto;background:var(--bg,#000);color:var(--fg,#fff);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+    o.style.cssText = 'position:fixed;inset:0;z-index:2147482990;overflow:auto;background:var(--bg,#000);color:var(--fg,#fff);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
     document.body.appendChild(o);
     document.documentElement.style.overflow = 'hidden';
     stage = 'number'; render();

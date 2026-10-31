@@ -10,6 +10,19 @@ var CHECK = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke=
 var MIN_OK = 1300, MIN_BAD = 800;   /* the blue light runs at least this long (ms) before the answer shows */
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 var list = [];
+/* One "working" look for the button while a code is being SENT: a small ring + the label (same as ccBusy in the app).
+   Checking a code is different on purpose: the page blurs and ONE dots loader runs (cc-otp-full.js + cc-otp-calm.css), the button stays plain.
+   The caller puts the normal label back when it finishes. */
+if (!document.getElementById('cc-spin-css')) {
+  var sp = document.createElement('style'); sp.id = 'cc-spin-css';
+  sp.textContent = '.ccspin{display:inline-block;width:1em;height:1em;margin-right:.55em;vertical-align:-.15em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:ccspin .7s linear infinite;flex:none}@keyframes ccspin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.ccspin{animation-duration:2s}}';
+  document.head.appendChild(sp);
+}
+window.ccRing = function (btn, label) {
+  btn.textContent = '';
+  var s = document.createElement('span'); s.className = 'ccspin'; s.setAttribute('aria-hidden', 'true');
+  btn.appendChild(s); btn.appendChild(document.createTextNode(label));
+};
 function h(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
@@ -125,7 +138,7 @@ function nextButton(root, preferDisabled) {
 }
 function visible() { for (var i = list.length - 1; i >= 0; i--) if (list[i].root.isConnected && list[i].root.getClientRects().length) return list[i]; return null; }
 
-var CONFIRM = /\/(verify\/email\/confirm|recovery-email\/confirm|auth\/reset\/confirm)(\?|#|$)/;
+var CONFIRM = /\/(verify\/email\/confirm|recovery-email\/confirm|auth\/reset\/confirm|me\/phone\/verify)(\?|#|$)/;
 var _fetch = window.fetch;
 if (_fetch) window.fetch = function (input) {
   var url = typeof input === 'string' ? input : String((input && (input.url || input.href)) || '');

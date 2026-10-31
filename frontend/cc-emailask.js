@@ -106,13 +106,13 @@
       if (step === 0) { step = 1; paint(); focusField(); return; }
       if (step === 1) {
         if (!okMail(em.value)) return setMsg('Enter a real email address, for example name@gmail.com', true);
-        go.disabled = true; go.textContent = 'Sending code...';
+        go.disabled = true; if (window.ccRing) ccRing(go, 'Sending code...'); else go.textContent = 'Sending code...';
         call('/api/me/recovery-email/start', { email: em.value.trim() }).then(function (d) { sentTo = d.sent_to || em.value.trim(); step = 2; paint(); startCool(); focusField(); },
           function (e) { setMsg(e.message, true); go.textContent = 'Send code'; }).then(function () { go.disabled = false; });
       } else {
         var c = String(cd.value).replace(/\D/g, '');
         if (c.length !== 6) return setMsg('The code has 6 digits.', true);
-        go.disabled = true; go.textContent = 'Checking code...';
+        go.disabled = true; go.textContent = 'Verifying code...';
         call('/api/me/recovery-email/confirm', { code: c }).then(function () { step = 3; clearInterval(ct); paint(); say('Email saved. You can now reset your password by email.'); },
           function (e) { setMsg(e.message, true); go.textContent = 'Verify code'; }).then(function () { go.disabled = false; });
       }

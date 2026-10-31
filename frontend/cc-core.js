@@ -371,7 +371,7 @@ function promptForgot(prefill, back) {
     if (step === 1 && !okMail($('ccfg-m').value)) return msg('Enter a real email address, for example name@gmail.com', true);
     if (step === 2 && String($('ccfg-c').value).replace(/\D/g, '').length !== 6) return msg('The code has 6 digits.', true);
     if (step === 3 && $('ccfg-p').value.length < 8) return msg('The new password needs at least 8 characters.', true);
-    ccBusy(b, true, step === 1 ? 'Sending code...' : step === 2 ? 'Checking code...' : 'Changing password...');
+    ccBusy(b, true, step === 1 ? 'Sending code...' : step === 2 ? 'Verifying code...' : 'Changing password...');
     try {
       if (step === 1) {
         await rawPost('/api/auth/reset/start', { email: $('ccfg-m').value });

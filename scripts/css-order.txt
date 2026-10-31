@@ -40,3 +40,4 @@ cc-tapfix.css
 cc-pickfix.css
 cc-sharefix.css
 cc-wa.css
+cc-otp-calm.css

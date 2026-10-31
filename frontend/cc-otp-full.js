@@ -1,7 +1,7 @@
 /* cc-otp-full.js v2: ONE full-screen overlay for every verification: dots + message, then tick + message. */
 (function () {
   var ov = null, fx = '', fxMsg = '', last = '', tmr = 0;
-  var CODE = /\/api\/(verify\/email\/confirm|recovery-email\/confirm|auth\/reset\/confirm)(\?|#|$)/;
+  var CODE = /\/api\/(verify\/email\/confirm|recovery-email\/confirm|auth\/reset\/confirm|me\/phone\/verify)(\?|#|$)/;
   var PASS = /\/api\/passkey\/(register|login)\/verify(\?|#|$)/;
   var ID = /\/api\/verify\/submit(\?|#|$)/;
   function make() {

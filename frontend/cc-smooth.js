@@ -8,8 +8,6 @@
   st.textContent =
     'html{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}' +
     'a,button,[role="button"],.btn,.ib,.chip,.pill,#tb button,label,summary,select{touch-action:manipulation}' +
-    'body{overscroll-behavior-y:none}' +
-    '.sheet,.modal,[class*="sheet"],[class*="panel"]{overscroll-behavior:contain}' +
     '@media (hover:none) and (prefers-reduced-motion:no-preference){' +
       'button,.btn,.ib,#tb button{transition:transform .12s ease,opacity .12s ease}' +
       'button:active,.btn:active,.ib:active,#tb button:active{transform:scale(.96);opacity:.88}}' +

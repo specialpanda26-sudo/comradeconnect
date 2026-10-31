@@ -43,6 +43,27 @@ function apply() {
     b.appendChild(x);
     document.documentElement.classList.add('cc-has-banner');
   } else { if (b) b.remove(); document.documentElement.classList.remove('cc-has-banner'); }
+  // "Get the app" card for people on the website (never inside the app, never in an installed web app)
+  var ga = q('#cc-getapp-card'), gaGone = 0; try { gaGone = +localStorage.getItem('cc_getapp_card') || 0; } catch (e) {}
+  var inApp = !!(window.ccApp && window.ccApp.native) || !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+  var installed = false; try { installed = !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches); } catch (e) {}
+  if (C.getapp_on && !inApp && !installed && Date.now() - gaGone > 3 * 864e5) {
+    if (!ga) {
+      ga = document.createElement('div'); ga.id = 'cc-getapp-card'; ga.setAttribute('role', 'status');
+      ga.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:900;display:flex;align-items:center;gap:10px;max-width:460px;margin:0 auto;padding:10px 10px 10px 14px;border-radius:18px;background:#101422;color:#fff;border:1px solid rgba(255,255,255,.25);box-shadow:0 8px 28px rgba(0,0,0,.35);font:600 13px Poppins,system-ui,sans-serif';
+      var gt = document.createElement('span'); gt.style.cssText = 'flex:1;line-height:1.35'; ga.appendChild(gt);
+      var gb = document.createElement('button'); gb.type = 'button'; gb.textContent = 'Get the app';
+      gb.style.cssText = 'all:unset;cursor:pointer;padding:9px 14px;border-radius:999px;background:#fff;color:#101422;font:700 13px Poppins,system-ui,sans-serif';
+      gb.onclick = function () { if (window.ccGetApp) window.ccGetApp(); };
+      ga.appendChild(gb);
+      var gx = document.createElement('button'); gx.type = 'button'; gx.setAttribute('aria-label', 'Close'); gx.textContent = '\u00d7';
+      gx.style.cssText = 'all:unset;cursor:pointer;font-size:20px;line-height:1;padding:4px 8px;opacity:.8';
+      gx.onclick = function () { try { localStorage.setItem('cc_getapp_card', String(Date.now())); } catch (e) {} ga.remove(); };
+      ga.appendChild(gx);
+      setTimeout(function () { if (!q('#cc-getapp-card')) document.body.appendChild(ga); }, 6000);
+    }
+    var gtx = ga.firstChild; if (gtx) gtx.textContent = C.getapp_text || 'Get the free app: faster, with phone alerts.';
+  } else if (ga) ga.remove();
   // maintenance cover
   var m = q('#cc-maint');
   var bypass = !!(window.ccStaff && window.ccStaff.ok);   // a signed-in admin (checked with the server) sees the real site

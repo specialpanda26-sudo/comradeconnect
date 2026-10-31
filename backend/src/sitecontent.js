@@ -38,6 +38,15 @@ export const FIELDS = {
   social_website: { kind: 'link', group: 'Links and contact', label: 'Website link' },
   contact_email: { kind: 'email', group: 'Links and contact', label: 'Contact email' },
 
+  welcome_title: { kind: 'text', max: 60, group: 'Welcome bonus message', label: 'Title', help: 'Shown to a new account that gets the welcome bonus. Built-in: Welcome to Comrade Connect' },
+  welcome_text: { kind: 'text', max: 160, group: 'Welcome bonus message', label: 'Message', multi: true, help: 'Type {amount} where the KSh amount should go. Built-in: KSh {amount} was added to your wallet.' },
+
+  min_app_build: { kind: 'text', max: 6, group: 'App updates', label: 'Oldest app build allowed', help: 'The last number of the app version: version 1.0.57 is build 57. Phones with an older build see "Update required" and cannot use the app until they update. Empty = nobody is forced. Only enter a build that is already released, and only phones that already have this update can be forced.' },
+  update_text: { kind: 'text', max: 200, group: 'App updates', label: 'Words on the update-required screen', multi: true, help: 'Built-in: This version is too old and no longer works. Please update to keep using Comrade Connect.' },
+
+  getapp_on: { kind: 'flag', group: 'Get the app (website only)', label: 'Show a "Get the app" card to website visitors', help: 'A small card above the menu bar. It is never shown inside the app. Closing it hides it for 3 days.' },
+  getapp_text: { kind: 'text', max: 120, group: 'Get the app (website only)', label: 'Card words', help: 'Built-in: Get the free app: faster, with phone alerts.' },
+
   lock_image: { kind: 'link', max: 500, group: 'App look', label: 'Lock screen picture', help: 'Photo behind the lock screen. Tap Upload and choose a picture from your phone. Empty = plain dark colour.' },
   lock_greeting: { kind: 'text', max: 40, group: 'App look', label: 'Lock screen greeting', help: 'Built-in: Welcome back!' },
 

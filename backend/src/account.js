@@ -8,13 +8,14 @@ import { notify, notifyAdmins } from './notifications.js';
 import { passwordProblem } from './passwords.js';
 import { deviceGate, deviceClaim, deviceBindIfFree } from './device.js';
 import { normAnyEmail } from './recovery.js';
+import { getContent } from './sitecontent.js';
 
 // Welcome bonus: credited once per account (the ref makes a second credit impossible). Never breaks signup.
 async function welcomeBonus(env, aid) {
   try {
     const n = Math.floor(Number((await getSettings(env)).signup_bonus) || 0);
     if (n < 1) return;
-    if (await credit(env, aid, n, 'adjustment', 'welcome:' + aid, 'Welcome bonus')) await notify(env, aid, 'reward', 'Welcome to Comrade Connect', 'KSh ' + n + ' was added to your wallet.', 'wallet', null);
+    if (await credit(env, aid, n, 'adjustment', 'welcome:' + aid, 'Welcome bonus')) { const C = await getContent(env), t = (s) => String(s || '').replace(/\{amount\}/g, String(n)); await notify(env, aid, 'reward', t(C.welcome_title) || 'Welcome to Comrade Connect', t(C.welcome_text) || 'KSh ' + n + ' was added to your wallet.', 'wallet', null); }
   } catch (e) { console.error('welcome bonus failed', e && e.message); }
 }
 

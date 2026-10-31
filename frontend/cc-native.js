@@ -84,7 +84,7 @@
   // New version of the app? Ask the person: "Update now" or "Cancel". The website inside the app cannot change by itself, so every change you push
   // builds a new APK (GitHub Releases); the app checks for it when it opens, when you come back to it, and when the internet returns.
   var REPO = 'specialpanda26-sudo/comradeconnect-releases';
-  var updBusy = false, updOpen = false, updLast = 0;
+  var updBusy = false, updOpen = false, updLast = 0, curOv = null;
   var checkUpdate = function (force) {
     if (updBusy || updOpen || !P.App || !P.App.getInfo || navigator.onLine === false) return;
     if (force !== true && Date.now() - updLast < 20 * 60 * 1000) return;                 // at most every 20 minutes on its own
@@ -105,25 +105,48 @@
       });
     }).catch(function () {}).then(function () { updBusy = false; });
   };
-  var showUpdate = function (n, notes, url) {
-    if (updOpen) return; updOpen = true;
+  var showUpdate = function (n, notes, url, must, words) {
+    if (updOpen && !must) return; if (curOv) { try { curOv.remove(); } catch (e) {} } updOpen = true;
     var esc = function (t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
     notes = notes.replace(/Install comrade-connect\.apk on your (Android )?phone\.?/i, '').replace(/[#*_`>]/g, '').trim().slice(0, 300);
     var ov = document.createElement('div'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Update available');
     ov.style.cssText = 'position:fixed;inset:0;z-index:10200;display:grid;place-items:center;padding:22px;background:rgba(16,20,34,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:Poppins,system-ui,sans-serif';
     ov.innerHTML = '<div style="width:100%;max-width:340px;border-radius:24px;padding:24px 22px 18px;background:var(--bg,#101422);color:var(--fg,#fff);border:1px solid var(--gb,rgba(255,255,255,.28));text-align:center">'
-      + '<h2 style="margin:0 0 8px;font-size:21px;font-weight:700">Update available</h2>'
-      + '<p style="margin:0;font-size:14px;line-height:1.55;color:var(--mut,var(--mut))">A new version of Comrade Connect is ready.' + (notes ? '<br><span style="display:block;margin-top:10px;color:var(--fg,#fff)">What is new: ' + esc(notes) + '</span>' : '') + '</p>'
+      + '<h2 style="margin:0 0 8px;font-size:21px;font-weight:700">' + (must ? 'Update required' : 'Update available') + '</h2>'
+      + '<p style="margin:0;font-size:14px;line-height:1.55;color:var(--mut,var(--mut))">' + (must ? esc(words || 'This version is too old and no longer works. Please update to keep using Comrade Connect.') : 'A new version of Comrade Connect is ready.') + (notes ? '<br><span style="display:block;margin-top:10px;color:var(--fg,#fff)">What is new: ' + esc(notes) + '</span>' : '') + '</p>'
       + '<button type="button" data-u style="width:100%;margin-top:18px;border:0;border-radius:999px;padding:14px;background:var(--fg,#fff);color:var(--bg,#101422);font:600 15px Poppins,system-ui,sans-serif;cursor:pointer">Update now</button>'
-      + '<button type="button" data-x style="width:100%;margin-top:8px;border:0;background:none;color:var(--mut,var(--mut));padding:12px;font:500 14px Poppins,system-ui,sans-serif;cursor:pointer">Cancel</button>'
+      + (must ? '' : '<button type="button" data-x style="width:100%;margin-top:8px;border:0;background:none;color:var(--mut,var(--mut));padding:12px;font:500 14px Poppins,system-ui,sans-serif;cursor:pointer">Cancel</button>')
       + '<p style="margin:6px 0 0;font-size:11px;color:var(--mut,var(--mut))">Your account and saved data stay as they are. When the download finishes, open it and tap Install.</p></div>';
     var close = function () { updOpen = false; ov.remove(); };
-    ov.querySelector('[data-u]').onclick = function () { close(); try { P.Browser.open({ url: url }); } catch (e) { location.href = url; } };
-    ov.querySelector('[data-x]').onclick = function () { try { localStorage.setItem('cc_upd_until_' + n, String(Date.now() + 864e5)); } catch (e) {} close(); };
-    document.body.appendChild(ov);
+    ov.querySelector('[data-u]').onclick = function () { if (!must) close(); try { P.Browser.open({ url: url }); } catch (e) { location.href = url; } };
+    if (ov.querySelector('[data-x]')) ov.querySelector('[data-x]').onclick = function () { try { localStorage.setItem('cc_upd_until_' + n, String(Date.now() + 864e5)); } catch (e) {} close(); };
+    curOv = ov; document.body.appendChild(ov);
   };
   window.ccApp.showUpdate = function (n, notes, url) { showUpdate(n, String(notes || ''), url); };   // the notification tab uses this
   window.ccApp.checkUpdate = function () { checkUpdate(true); };                          // "Check for updates" buttons can call this
+  // Forced update: the admin sets "Oldest app build allowed" in Site editor > App updates. An older app gets a screen it cannot close.
+  var mustUpdate = function () {
+    if (!P.App || !P.App.getInfo || navigator.onLine === false || typeof CC_API === 'undefined') return;
+    P.App.getInfo().then(function (i) {
+      var cur = parseInt(String((i && i.version) || '').split('.').pop(), 10) || 0;
+      if (!cur) return;
+      return fetch(CC_API + '/api/site-content', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+        var C = (d && d.content) || {}, min = parseInt(C.min_app_build, 10) || 0;
+        if (!min || cur >= min) return;
+        var go = function (url) { showUpdate(cur, '', url, true, C.update_text || ''); }, pend = null;
+        try { pend = JSON.parse(localStorage.getItem('cc_upd_pending') || 'null'); } catch (e) {}
+        if (pend && pend.url) return go(pend.url);
+        return fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=15', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (list) {
+          var rel = (Array.isArray(list) ? list : []).filter(function (x) { return /^app-\d+/.test(x.tag_name || '') && !x.draft; })[0] || null;
+          var a = rel && (rel.assets || []).filter(function (x) { return /\.apk$/i.test(x.name); })[0];
+          go(a ? a.browser_download_url : 'https://comradeconnect.co.ke');
+        });
+      });
+    }).catch(function () {});
+  };
+  window.addEventListener('load', function () { setTimeout(mustUpdate, 2500); });
+  window.addEventListener('online', function () { setTimeout(mustUpdate, 1200); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(mustUpdate, 900); });
   window.addEventListener('load', function () { setTimeout(checkUpdate, 4000); });
   window.addEventListener('online', function () { setTimeout(checkUpdate, 1500); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(checkUpdate, 1200); });

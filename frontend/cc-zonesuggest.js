@@ -31,7 +31,7 @@
     + '#cczs .ls{overflow:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:10px;margin-top:8px;min-height:90px;padding-bottom:4px}'
     + '#cczs .it{display:grid;grid-template-columns:30px 1fr auto;gap:2px 10px;align-items:center;padding:12px 14px;border-radius:16px;border:1px solid var(--line,rgba(255,255,255,.14));background:var(--g,rgba(255,255,255,.05))}'
     + '#cczs .rk{grid-row:1/4;align-self:start;margin-top:2px;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font:700 13px Poppins,system-ui,sans-serif;border:1px solid var(--line,rgba(255,255,255,.2))}'
-    + '#cczs .nm{font-weight:700;font-size:15px;overflow-wrap:anywhere}#cczs .mt{font-size:12px;opacity:.7;grid-column:2/4}'
+    + '#cczs .nm{font-weight:700;font-size:15px;overflow-wrap:anywhere}#cczs .zmt{font-size:12px;opacity:.7;grid-column:2/4}'
     + '#cczs .bar{grid-column:2/4;height:6px;border-radius:6px;background:var(--line,rgba(255,255,255,.12));overflow:hidden;margin:6px 0 2px}#cczs .bar i{display:block;height:100%;border-radius:6px;background:currentColor;opacity:.85}'
     + '#cczs .tg{grid-column:2/4;display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}#cczs .tg b{font-weight:500;font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.18));opacity:.85}'
     + '#cczs .sc{font:700 15px Poppins,system-ui,sans-serif;text-align:right}#cczs .sc small{display:block;font:500 10px Poppins,system-ui,sans-serif;opacity:.6}'
@@ -111,7 +111,7 @@
         it.appendChild(el('div', 'rk', String(i + 1)));
         it.appendChild(el('div', 'nm', z.name || 'Unnamed busy area'));
         var sc = el('div', 'sc', String(z.score)); sc.appendChild(el('small', '', 'student signal')); it.appendChild(sc);
-        it.appendChild(el('div', 'mt', (z.distance_m != null ? fmt(z.distance_m) + (z.direction ? ' ' + z.direction : '') + (d.center && d.center.me ? ' from you' : ' from campus') : 'Distance not known') + (z.existing ? ' \u00b7 already a zone' : '')));
+        it.appendChild(el('div', 'zmt', (z.distance_m != null ? fmt(z.distance_m) + (z.direction ? ' ' + z.direction : '') + (d.center && d.center.me ? ' from you' : ' from campus') : 'Distance not known') + (z.existing ? ' \u00b7 already a zone' : '')));
         var bar = el('div', 'bar'), fill = el('i'); fill.style.width = Math.max(4, Math.min(100, z.score)) + '%'; bar.appendChild(fill); it.appendChild(bar);
         var e = z.evidence || {}, tg = el('div', 'tg'), add = function (n, one, many) { if (n > 0) tg.appendChild(el('b', '', n + ' ' + (n === 1 ? one : many))); };
         add(e.vacancies, 'vacancy post', 'vacancy posts'); add(e.hostel_reviews, 'hostel review', 'hostel reviews'); add(e.rooms, 'room post', 'room posts'); add(e.wifi, 'Wi-Fi spot', 'Wi-Fi spots'); add(e.services, 'service', 'services'); add(e.buildings, 'mapped home', 'mapped homes');

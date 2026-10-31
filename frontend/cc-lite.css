@@ -1,0 +1,7 @@
+html body :is(.g,.box,.card,.bx,.savebar,.ccwb,.btn,.ib,[data-gs],button.p,input,textarea,select):not(#cc-lite):not(nav):not(.dsheet):not(.sheet){
+  -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+}
+html body :is(.g,.box,.card,.bx):not(#cc-lite):not(nav):not(.dsheet):not(.sheet){
+  background-color:color-mix(in srgb,var(--bg,#101422) 45%,transparent) !important;
+}
+#tb,#fab,#tkr{will-change:transform}

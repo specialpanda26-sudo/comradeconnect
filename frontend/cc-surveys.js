@@ -18,7 +18,7 @@ var needSignIn = function (why) { say(why || 'Sign in first'); try { if (window.
 var feeOf = function (a) { return Math.floor(a * S.rules.feePercent / 100 + 1e-9); };
 
 var css = document.createElement('style');
-css.textContent = '.sy-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}.sy-top .btn{flex:none}'
+css.textContent = '.sy-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}.sy-top>div:last-child{display:flex;gap:10px;width:100%;margin-top:6px}.sy-top .btn{flex:1 1 0;min-width:0;padding-left:12px;padding-right:12px;white-space:nowrap}'
   + '.sy-card{margin-top:12px}.sy-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}'
   + '.sy-t{margin:0;font-size:17px;font-weight:600;line-height:1.35;overflow-wrap:anywhere}.sy-by{margin:6px 0 0;font-size:12px;opacity:.7}'
   + '.sy-pay{flex:none;font-weight:800;font-size:13px;padding:5px 11px;border-radius:999px;background:rgba(127,127,127,.2);white-space:nowrap}'
@@ -44,7 +44,7 @@ function until(d) {
 function paint() {
   if (!on()) return;
   var h = '<div class="sy-top"><div><h3 style="margin:0">Paid surveys at ' + esc(campusName()) + '</h3><p class="sub" style="margin:4px 0 0">Answer honestly and earn KSh into your wallet.</p></div>'
-    + '<div style="display:flex;gap:8px"><button class="btn g" data-sy="mine">My surveys</button><button class="btn p" data-sy="add">Make a survey</button></div></div>';
+    + '<div><button class="btn g" data-sy="mine">My surveys</button><button class="btn p" data-sy="add">Make a survey</button></div></div>';
   if (S.busy && !S.list.length) h += '<p class="sub" style="margin-top:14px">Loading...</p>';
   else if (S.err && !S.list.length) h += '<p class="sub" style="margin-top:14px">' + esc(S.err) + '</p><button class="btn g" data-sy="retry">Try again</button>';
   else if (!S.ready) h += '<article class="box g" style="margin-top:14px"><h3>Surveys are coming soon</h3><p class="sub" style="margin-top:6px">This feature is not switched on yet. Check back soon.</p></article>';

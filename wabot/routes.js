@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import * as M from './manager.js';
-import { setAi, getKnowledge, setKnowledge } from './ai.js';
+import { setAi, getKnowledge, setKnowledge, complaints, closeComplaint } from './ai.js';
 import { spillStart, spillMore, spillStop } from './spill.js';
 
 const fails = new Map();

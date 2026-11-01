@@ -25,6 +25,7 @@ const wipe = () => { try { fs.rmSync(AUTH, { recursive: true, force: true }); } 
 const reset = () => { S.qr = ''; S.code = ''; };
 
 async function start() {
+  watchdog();
   const my = ++gen; clearTimeout(timer);
   try {
     const L = await loadLibs(); ensureDir();

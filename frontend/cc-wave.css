@@ -1,0 +1,16 @@
+html body #cctwl{background:var(--bg,#101422);color:var(--fg,#fff);font-family:inherit}
+html body #cctwl:before{background:linear-gradient(180deg,color-mix(in srgb,var(--ink,#A8DCE7) 20%,transparent),transparent 42%)}
+html body #cctwl .cd{width:min(380px,100%);padding:0 4px;text-align:left;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none;animation:none}
+html body #cctwl .cwh{display:block;width:60px;height:60px;margin:0 0 16px;overflow:visible}
+html body #cctwl .cww{transform-origin:32px 54px;transform-box:view-box;animation:cwwave .7s ease-in-out 6 alternate}
+@keyframes cwwave{from{transform:rotate(-14deg)}to{transform:rotate(16deg)}}
+html body #cctwl .k{color:var(--mut,rgba(255,255,255,.62));font-size:11.5px;letter-spacing:.08em}
+html body #cctwl h2{font-family:var(--disp,inherit);color:var(--fg,#fff);font-size:26px;line-height:1.2;margin:0 0 10px}
+html body #cctwl p{color:var(--mut,rgba(255,255,255,.7));font-size:14px;line-height:1.6}
+html body #cctwl .ch{justify-content:flex-start;margin:16px 0 4px}
+html body #cctwl .ch span{background:var(--soft,rgba(255,255,255,.08));color:var(--fg,#fff);border:1px solid var(--line,rgba(255,255,255,.12));font-weight:600}
+html body #cctwl .bt{margin-top:24px}
+html body #cctwl .bt button.cwp{background:var(--ink,#A8DCE7) !important;background-image:none !important;color:var(--inkfg,#101422) !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+html body #cctwl .bt button.cwg{background:none !important;background-image:none !important;color:var(--mut,rgba(255,255,255,.7)) !important;border:0 !important;box-shadow:none !important;font-weight:600}
+html body #cctwl .x{background:var(--soft,rgba(255,255,255,.08)) !important;color:var(--fg,#fff) !important}
+@media (prefers-reduced-motion:reduce){html body #cctwl .cww{animation:none}}

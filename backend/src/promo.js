@@ -155,7 +155,6 @@ export async function promoRoutes(req, env, url, ip) {
       if (wok && !w.ok) return err(env, 'Could not save. Ask the admin to run supabase/promo.sql first.', 500);
       await patch(env, `phone_links?aid=eq.${enc(u.aid)}`, { phone_enc: wok ? wphone : null }).catch(() => null);   // the number is kept only while they are opted in
     }
-    return json(env, { ok: true, email_ok: eok, sms_ok: sok, wa_ok: wok });
   }
 
   // ---- admin ----

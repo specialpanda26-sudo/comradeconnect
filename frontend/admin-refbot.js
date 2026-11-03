@@ -81,14 +81,14 @@ if (!window.__rbBound) {
     else if ((b = t('rb_cp')) && last) { const txt = (last.accounts || []).filter((a) => a.ok).map((a) => a.username).join('\n'); try { await navigator.clipboard.writeText(txt); toast('Copied ' + txt.split('\n').filter(Boolean).length + ' usernames'); } catch (x) { toast('Could not copy'); } }
     else if ((b = t('rb_rep')) && last) { const bx = $('#rb_repbox'); bx.textContent = last.report || 'No report was written.'; bx.style.display = bx.style.display === 'none' ? '' : 'none'; }
     else if ((b = t('rb_shot'))) {
-      const all = (last && last.shots) || [], names = ['page.png', 'filled.png', 'welcome.png'].concat(all.filter((x) => /^popup-/.test(x)).sort().slice(0, 6), ['home.png']).filter((x) => all.indexOf(x) > -1).concat(all.filter((x) => /^fail-/.test(x)).slice(0, 1));
+      const all = (last && last.shots) || [], names = ['page.png', 'filled.png', 'welcome.png'].concat(all.filter((x) => /^popup-/.test(x)).sort().slice(0, 6), ['home.png', 'me.png']).filter((x) => all.indexOf(x) > -1).concat(all.filter((x) => /^fail-/.test(x)).slice(0, 1));
       if (!names.length) return toast('No screenshot yet');
       $('#rb_img').innerHTML = '';
       for (const name of names) {
         try {
           const d = await api('/api/admin/wa/refbot/shot', { name }), im = document.createElement('img'), cp = document.createElement('p');
           im.alt = name; im.src = d.data; im.style.cssText = 'max-width:100%;border-radius:12px;margin-top:12px';
-          cp.className = 'sub'; cp.textContent = name === 'page.png' ? 'What the bot saw when it opened the link.' : name === 'filled.png' ? 'The form after the bot filled it, before pressing Create Account.' : name === 'welcome.png' ? 'The welcome card after sign-up.' : /^popup-STUCK/.test(name) ? 'A popup the bot could NOT close.' : /^popup-/.test(name) ? 'A popup the bot saw after sign-up, before closing it.' : name === 'home.png' ? 'The main page after the popups were closed.' : 'The first failed attempt.';
+          cp.className = 'sub'; cp.textContent = name === 'page.png' ? 'What the bot saw when it opened the link.' : name === 'filled.png' ? 'The form after the bot filled it, before pressing Create Account.' : name === 'welcome.png' ? 'The welcome card after sign-up.' : /^popup-STUCK/.test(name) ? 'A popup the bot could NOT close.' : /^popup-/.test(name) ? 'A popup the bot saw after sign-up, before closing it.' : name === 'home.png' ? 'The main page after the popups were closed.' : name === 'me.png' ? 'The ME tab scrolled down, where the bot looks for Logout.' : 'The first failed attempt.';
           $('#rb_img').append(im, cp);
         } catch (x) { toast(x.message); }
       }

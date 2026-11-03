@@ -356,6 +356,12 @@ async function openMeAndScroll(page) {
   }
   return !!spot;
 }
+async function tap(loc) {
+  await loc.evaluate((e) => e.scrollIntoView({ block: 'center' })).catch(() => {});
+  await sleep(250);
+  if (await loc.click({ timeout: 3000 }).then(() => true).catch(() => false)) return true;
+  return loc.evaluate((e) => { e.click(); return true; }).catch(() => false);
+}
 // Logs the account out: looks for a Logout button, opens menus if it is hidden, confirms if asked. Falls back to clearing the session.
 async function logout(page, n) {
   const outRx = /log ?out|sign ?out/i;
@@ -367,6 +373,7 @@ async function logout(page, n) {
     const pc = await closePopups(page, n || 99, 'prelogout');   // a popup may be covering the tab bar
     late.push(...pc.pressed); late.ran = true; late.stuck = pc.stuck;
     await openMeAndScroll(page);
+    if (n === 1) await page.screenshot({ path: OUT + '/me.png' }).catch(() => {});
     btn = find();
     if (await vis(btn)) await btn.scrollIntoViewIfNeeded().catch(() => {});
   }
@@ -388,16 +395,17 @@ async function logout(page, n) {
   }
   let how = 'no Logout button found';
   if (await vis(btn)) {
-    await btn.click({ timeout: 3000 }).catch(() => {});
+    await tap(btn);
     await sleep(700);
     const sure = page.getByRole('dialog').getByRole('button', { name: /^\s*(yes|confirm|ok|log ?out|sign ?out)\s*$/i }).first();
     if (await vis(sure)) await sure.click({ timeout: 3000 }).catch(() => {});
     // a bottom sheet that asks "log out?" with Logout / Cancel (not a real dialog): press its Logout button, never Cancel or X
     const asked = page.getByText(/log ?out\s*\?|sign ?out\s*\?|are you sure/i).first();
     if (await vis(asked)) {
+      if (n === 1) await page.screenshot({ path: OUT + '/popup-logout-sheet.png' }).catch(() => {});
       const yes = page.getByRole('button', { name: /^\s*(log ?out|sign ?out|yes|confirm|ok)\s*$/i }).last();
-      if (await vis(yes)) await yes.click({ timeout: 3000 }).catch(() => {});
-      else await page.getByText(/^\s*(log ?out|sign ?out)\s*$/i).last().click({ timeout: 3000 }).catch(() => {});
+      if (await vis(yes)) await tap(yes);
+      else await tap(page.getByText(/^\s*(log ?out|sign ?out)\s*$/i).last());
       await sleep(600);
     }
     const out = (await page.locator('input[type=password]').first().waitFor({ state: 'visible', timeout: 7000 }).then(() => true).catch(() => false))
@@ -406,7 +414,7 @@ async function logout(page, n) {
     how = 'pressed Logout but the login page did not appear';
   }
   await page.context().clearCookies();                                                      // fallback so the next account still starts clean
-  await page.evaluate(() => { try { localStorage.clear(); sessionStorage.clear(); } catch (e) {} }).catch(() => {});
+  await page.evaluate(async () => { try { localStorage.clear(); sessionStorage.clear(); } catch (e) {} try { for (const d of (await indexedDB.databases())) indexedDB.deleteDatabase(d.name); } catch (e) {} }).catch(() => {});
   return { ok: false, how, late };
 }
 

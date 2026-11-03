@@ -236,6 +236,25 @@ async function reopenLink(page) {
   } catch (e) { return false; }
 }
 
+// Picks a country (the site rejects the form with "Please select your country" otherwise). United Kingdom if offered, else the first real option.
+async function chooseCountry(page, roles) {
+  try {
+    if (roles.country) {
+      const sel = page.locator(SEL).nth(roles.country.i);
+      const opts = await sel.locator('option').evaluateAll((o) => o.map((x) => ({ v: x.value, t: x.textContent.trim() })));
+      const want = opts.find((o) => o.v && /united kingdom/i.test(o.t)) || opts.find((o) => o.v && !/select|choose/i.test(o.t));
+      if (want) { await sel.selectOption(want.v, { timeout: 3000 }); return want.t; }
+    }
+    const cb = page.getByRole('combobox').or(page.getByRole('button', { name: /country|united kingdom/i })).first();   // a custom dropdown instead of a real select
+    if (await cb.isVisible().catch(() => false)) {
+      await cb.click({ timeout: 2000 });
+      const opt = page.getByRole('option', { name: /united kingdom/i }).or(page.getByText(/^\s*united kingdom\s*$/i)).first();
+      if (await opt.isVisible().catch(() => false)) { await opt.click({ timeout: 2000 }); return 'United Kingdom'; }
+    }
+  } catch (e) {}
+  return '';
+}
+
 // ---- diagnose: turns what the bot saw into a plain-English problem and a fix ----
 const RULES = [
   { code: 'rate_limit', test: (x) => x.status === 429 || /too many|rate.?limit|slow down|try again (later|in)|temporarily/.test(x.text),
@@ -250,6 +269,9 @@ const RULES = [
   { code: 'server_error', test: (x) => x.status >= 500,
     why: 'The site crashed while creating the account (a bug in the sign-up code or the database).',
     fix: 'Open the server logs (Render or your host) for that moment. The message saved in accounts.csv is the clue.' },
+  { code: 'country', test: (x) => /select your country|choose your country|country is required|select a country/.test(x.text),
+    why: 'The site says no country was selected.',
+    fix: 'Send me a screenshot of the Country box opened. If it is a custom dropdown I will match how it opens.' },
   { code: 'duplicate', test: (x) => x.status === 409 || /already|taken|exists|in use|duplicate/.test(x.text),
     why: 'The site says the username, email or phone is already used.',
     fix: 'Run again (the bot makes new random values each time). If it keeps happening, the site may treat all test emails or phone numbers as the same person.' },
@@ -344,8 +366,13 @@ async function visit(browser, n, dry, shared) {
     }
     phase = 'fill';
     const at = (f) => page.locator(SEL).nth(f.i);
+    await chooseCountry(page, roles);                      // choose the country first: the site sets the phone code from it
+    await sleep(500);
     for (const [role, val] of [['name', p.name], ['username', p.user], ['email', p.email], ['phone', p.phone], ['password', PASS], ['confirm', PASS]]) {
-      if (roles[role]) await at(roles[role]).fill(val);
+      if (!roles[role]) continue;
+      let v = val;
+      if (role === 'phone') { const cur = await at(roles.phone).inputValue().catch(() => ''); v = ((cur.match(/^\+\d{1,4}/) || [''])[0]) + p.phone; }   // keep the +44 the site already typed
+      await at(roles[role]).fill(v);
     }
     rec.terms = await tickTerms(page, roles);              // tick the terms box, then press Create Account
     await sleep(600);

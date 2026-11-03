@@ -21,7 +21,7 @@ SECTIONS.refbot = () => {
     + '<p class="sub" id="rb_hint"></p></div>'
     + '<div class="card"><h3>Live log</h3><pre id="rb_log" class="sub" style="white-space:pre-wrap;max-height:300px;overflow:auto;margin:0;font:12px/1.55 ui-monospace,Menlo,monospace">Nothing yet.</pre></div>'
     + '<div class="card" id="rb_res" style="display:none"><h3>Result</h3><p class="sub" id="rb_sum"></p><div id="rb_tbl" style="overflow-x:auto"></div>'
-    + '<div class="row"><button id="rb_csv">Download list (CSV)</button><button id="rb_cp">Copy usernames</button><button id="rb_rep">Show full report</button><button id="rb_shot">Show page screenshot</button></div>'
+    + '<div class="row"><button id="rb_csv">Download list (CSV)</button><button id="rb_cp">Copy usernames</button><button id="rb_rep">Show full report</button><button id="rb_shot">Show screenshots</button></div>'
     + '<pre id="rb_repbox" class="sub" style="display:none;white-space:pre-wrap;max-height:320px;overflow:auto;font:12px/1.55 ui-monospace,Menlo,monospace"></pre><div id="rb_img"></div>'
     + '<p class="sub">"Created" only means the site accepted the sign-up. Now log in as the sponsor on that site and check the referral list shows the new <b>sim_</b> people and that the bonus was credited once for each.</p></div>'];
 };
@@ -74,9 +74,17 @@ if (!window.__rbBound) {
     else if ((b = t('rb_cp')) && last) { const txt = (last.accounts || []).filter((a) => a.ok).map((a) => a.username).join('\n'); try { await navigator.clipboard.writeText(txt); toast('Copied ' + txt.split('\n').filter(Boolean).length + ' usernames'); } catch (x) { toast('Could not copy'); } }
     else if ((b = t('rb_rep')) && last) { const bx = $('#rb_repbox'); bx.textContent = last.report || 'No report was written.'; bx.style.display = bx.style.display === 'none' ? '' : 'none'; }
     else if ((b = t('rb_shot'))) {
-      const name = (last && last.shots || []).indexOf('page.png') > -1 ? 'page.png' : (last && last.shots || [])[0];
-      if (!name) return toast('No screenshot yet');
-      try { const d = await api('/api/admin/wa/refbot/shot', { name }); $('#rb_img').innerHTML = '<img alt="Page the bot saw" style="max-width:100%;border-radius:12px;margin-top:12px"><p class="sub">What the bot saw on the first visit.</p>'; $('#rb_img img').src = d.data; } catch (x) { toast(x.message); }
+      const all = (last && last.shots) || [], names = ['page.png', 'filled.png'].filter((x) => all.indexOf(x) > -1).concat(all.filter((x) => /^fail-/.test(x)).slice(0, 1));
+      if (!names.length) return toast('No screenshot yet');
+      $('#rb_img').innerHTML = '';
+      for (const name of names) {
+        try {
+          const d = await api('/api/admin/wa/refbot/shot', { name }), im = document.createElement('img'), cp = document.createElement('p');
+          im.alt = name; im.src = d.data; im.style.cssText = 'max-width:100%;border-radius:12px;margin-top:12px';
+          cp.className = 'sub'; cp.textContent = name === 'page.png' ? 'What the bot saw when it opened the link.' : name === 'filled.png' ? 'The form after the bot filled it, before pressing Create Account.' : 'The first failed attempt.';
+          $('#rb_img').append(im, cp);
+        } catch (x) { toast(x.message); }
+      }
     }
   });
 }

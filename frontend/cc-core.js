@@ -94,7 +94,7 @@ function registerFlow() {
       + '<div class="fld" style="margin-top:10px"><input id="ccw-u" name="username" placeholder="Username (3 to 20 letters, numbers or _)" maxlength="20" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Username"></div>'
       + '<div class="fld"><input id="ccw-p" name="password" type="password" placeholder="Password (at least 8 characters)" maxlength="100" autocomplete="new-password" aria-label="Password"></div>'
       + '<div class="fld"><input id="ccw-p2" name="confirm_password" type="password" placeholder="Type the password again" maxlength="100" autocomplete="new-password" aria-label="Confirm password"></div>'
-      + '<p class="sub" id="ccw-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
+      + '<p class="sub" id="ccw-e" role="alert" style="color:var(--bad,#FFFFFF);min-height:18px"></p>'
       + '<button type="submit" class="btn p" id="ccw-go" style="width:100%">Create account</button></form>'
       + '<button class="btn g" id="ccw-x" style="width:100%;margin-top:6px">Cancel</button>');
     const $q = (s) => m.querySelector(s), err = (t) => { $q('#ccw-e').textContent = t || ''; };
@@ -931,7 +931,7 @@ $('#wd').onclick = async () => {
     + '<p class="sub" style="margin:2px 0 6px">Amount to withdraw from your wallet</p>'
     + '<div class="fld"><input id="ccwr" type="number" inputmode="numeric" placeholder="Or type the amount you want to receive" aria-label="Amount you want to receive"></div>'
     + '<p class="sub" id="ccw-b" style="min-height:18px"></p>'
-    + '<p class="sub" id="ccw-e" style="color:var(--bad,#FFFFFF);min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
+    + '<p class="sub" id="ccw-e" role="alert" style="color:var(--bad,#FFFFFF);min-height:18px"></p><div class="two"><button class="btn g" id="ccw-x">Cancel</button><button class="btn p" id="ccw-go">Request</button></div>');
   m.querySelector('#ccw-x').onclick = () => m.close();
   m.querySelector('#ccwp').value = '';
   { const rr = m.querySelector('#ccw-r'), need = Math.max(CFG.min, wNeedFor(PAYOUT_NET_MIN));

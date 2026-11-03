@@ -44,8 +44,8 @@ if (!link && !tty) { console.log('\nUsage: node scripts/referral-bot.mjs "<refer
 if (!link) link = (await ask('\nPaste your referral link: ')).replace(/^["']|["']$/g, '');
 if (!/^https?:\/\//i.test(link)) { console.log('\nThat is not a link (it must start with https://).\n'); process.exit(1); }
 let N = parseInt(numArg, 10);
-if (!N && !flag('dry') && tty) N = parseInt(await ask('How many accounts should the bot create? (1-200): '), 10);
-N = Math.max(1, Math.min(200, N || 5));
+if (!N && !flag('dry') && tty) N = parseInt(await ask('How many accounts should the bot create? (1-100000): '), 10);
+N = Math.max(1, Math.min(100000, N || 5));
 
 const host = new URL(link).hostname;
 const local = /^(localhost|127\.|192\.168\.|10\.)/.test(host);

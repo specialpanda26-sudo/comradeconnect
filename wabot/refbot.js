@@ -8,9 +8,24 @@ import path from 'node:path';
 import dns from 'node:dns/promises';
 import net from 'node:net';
 import { fileURLToPath } from 'node:url';
+import { sb, rows, post } from '../backend/src/lib.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const MAX_ACCOUNTS = 100;
+const DEFAULT_MAX = 100, HARD_MAX = 100000;
+let maxCache = { at: 0, v: DEFAULT_MAX };
+async function getMax(env) {
+  if (Date.now() - maxCache.at < 5000) return maxCache.v;
+  let v = DEFAULT_MAX;
+  try { const r = await rows(await sb(env, 'settings?select=value&key=eq.refbot_max')); const n = parseInt(r[0] && r[0].value, 10); if (n >= 1 && n <= HARD_MAX) v = n; } catch (e) {}
+  maxCache = { at: Date.now(), v }; return v;
+}
+async function setMax(env, raw) {
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1 || n > HARD_MAX) throw new Error('Enter a whole number from 1 to ' + HARD_MAX + '.');
+  const res = await post(env, 'settings', { key: 'refbot_max', value: n, updated_at: new Date().toISOString() }, 'resolution=merge-duplicates,return=representation');
+  if (!res.ok) throw new Error('Could not save the limit. Check the settings table exists in Supabase.');
+  maxCache = { at: Date.now(), v: n }; return n;
+}
 let run = null;                                         // the current or last run (one at a time)
 
 const clean = (s) => String(s).replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/\r/g, '');
@@ -41,9 +56,10 @@ function browserInstalled() { try { const { chromium } = createRequire(import.me
 function scriptPath(env) { return env.REFBOT_SCRIPT || path.join(ROOT, 'scripts', 'referral-bot.mjs'); }
 
 function view(withResult) {
-  if (!run) return { state: 'idle', ready: playwrightInstalled(), browser: browserInstalled(), hasScript: fs.existsSync(scriptPath(process.env)), ai: !!(process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY) };
+  const mx = maxCache.v;
+  if (!run) return { max: mx, state: 'idle', ready: playwrightInstalled(), browser: browserInstalled(), hasScript: fs.existsSync(scriptPath(process.env)), ai: !!(process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY) };
   const r = run;
-  const out = { state: r.state, ready: true, hasScript: true, ai: !!(process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY), link: r.link, dry: r.dry, count: r.count, created: r.created, failed: r.failed, startedAt: r.startedAt, endedAt: r.endedAt, log: r.log.slice(-120), hint: r.hint || '' };
+  const out = { max: mx, state: r.state, ready: true, hasScript: true, ai: !!(process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY), link: r.link, dry: r.dry, count: r.count, created: r.created, failed: r.failed, startedAt: r.startedAt, endedAt: r.endedAt, log: r.log.slice(-120), hint: r.hint || '' };
   if (withResult || r.state !== 'running') { out.accounts = r.accounts; out.report = r.report; out.shots = r.shots; }
   return out;
 }
@@ -63,7 +79,7 @@ async function start(body, env) {
   if (!body.dry && body.confirm !== true) throw new Error('Tick the box to confirm this is your own site and the accounts will be real.');
   const link = await checkLink(body.link, env);
   const dry = !!body.dry;
-  const count = Math.max(1, Math.min(MAX_ACCOUNTS, parseInt(body.count, 10) || 5));
+  const count = Math.max(1, Math.min(await getMax(env), parseInt(body.count, 10) || 5));
   const delay = Math.max(500, Math.min(30000, parseInt(body.delay, 10) || 1500));
   const domain = String(body.domain || '').trim().toLowerCase();
   if (domain && !/^[a-z0-9][a-z0-9.-]{1,60}\.[a-z]{2,}$/.test(domain)) throw new Error('The email domain looks wrong. Use something like mydomain.com');
@@ -93,7 +109,7 @@ async function start(body, env) {
   const child = spawn(process.execPath, args, { cwd: dir, env: cenv, stdio: ['ignore', 'pipe', 'pipe'] });
   r.child = child;
   child.stdout.on('data', push); child.stderr.on('data', push);
-  const killer = setTimeout(() => { if (r.state === 'running') { r.timedOut = true; try { child.kill('SIGKILL'); } catch (e) {} } }, Math.min(7200e3, (dry ? 150 : 180 + count * 70) * 1000));
+  const killer = setTimeout(() => { if (r.state === 'running') { r.timedOut = true; try { child.kill('SIGKILL'); } catch (e) {} } }, Math.min(172800e3, (dry ? 150 : 180 + count * 70) * 1000));
   child.on('error', (e) => { push('Could not start the bot: ' + e.message); });
   child.on('close', (code) => {
     clearTimeout(killer);
@@ -122,7 +138,8 @@ function shot(name) {
 
 // p = path after /api/admin/wa/refbot/
 export async function handle(p, method, body, env) {
-  if (p === 'status' && method === 'GET') return view();
+  if (p === 'status' && method === 'GET') { await getMax(env); return view(); }
+  if (p === 'limit' && method === 'POST') { await setMax(env, body && body.max); return view(); }
   if (p === 'start' && method === 'POST') return start(body || {}, env);
   if (p === 'stop' && method === 'POST') return stop();
   if (p === 'shot' && method === 'POST') return shot(body && body.name);

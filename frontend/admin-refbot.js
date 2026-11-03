@@ -12,7 +12,8 @@ SECTIONS.refbot = () => {
   return ['<div class="card" id="rb_box"><h3>Referral tester</h3>'
     + '<p class="sub">Paste a real referral link from the site you want to test. The bot opens it, checks the Sponsor box fills itself, creates random accounts (made-up Kenyan-style names, listed in the log), presses Continue, closes the Telegram popup, logs out, types the link again, and repeats.</p>'
     + '<label class="fl" for="rb_link">Referral link<small>Must start with https://</small></label><input id="rb_link" inputmode="url" autocomplete="off" placeholder="https://yoursite.com/?ref=sponsor">'
-    + '<label class="fl" for="rb_n">How many accounts<small>1 to 100</small></label><input id="rb_n" inputmode="numeric" maxlength="3" value="5" autocomplete="off">'
+    + '<label class="fl" for="rb_n">How many accounts<small id="rb_nmax">1 to 100</small></label><input id="rb_n" inputmode="numeric" maxlength="6" value="5" autocomplete="off">'
+    + '<label class="fl" for="rb_max">Most accounts the bot may create<small>Your limit for one test. Any whole number from 1 to 100000</small></label><div class="row"><input id="rb_max" inputmode="numeric" maxlength="6" autocomplete="off" value="100"><button id="rb_maxsave">Save limit</button></div>'
     + '<label class="fl" for="rb_dom">Email domain (optional)<small>Use a domain you own if the site refuses example.com</small></label><input id="rb_dom" autocomplete="off" placeholder="mydomain.com">'
     + '<label class="fl" for="rb_pass">Test password (optional)<small>8 to 40 characters. Leave empty and the bot chooses one</small></label><input id="rb_pass" autocomplete="off" placeholder="leave empty">'
     + '<label class="fl" for="rb_gap">Seconds between accounts (optional)<small>Raise it if the site starts refusing sign-ups</small></label><input id="rb_gap" inputmode="numeric" maxlength="2" placeholder="2">'
@@ -31,6 +32,7 @@ SECTIONS.refbot = () => {
 function paint(d) {
   if (!$('#rb_box')) return;
   last = d;
+  if (d.max) { $('#rb_nmax').textContent = '1 to ' + d.max; const m = $('#rb_max'); if (m && document.activeElement !== m && !m.dataset.t) m.value = d.max; }
   const run = d.state === 'running';
   $('#rb_st').textContent = (STATE[d.state] || d.state) + (d.state !== 'idle' && d.link ? '  (' + (d.dry ? 'page check' : d.created + ' created, ' + d.failed + ' failed of ' + d.count) + ')' : '');
   $('#rb_stop').style.display = run ? '' : 'none'; $('#rb_go').disabled = $('#rb_dry').disabled = run;
@@ -65,11 +67,13 @@ const dl = (name, text, type) => { const a = document.createElement('a'); a.href
 const cell = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
 if (!window.__rbBound) {
   window.__rbBound = true;
+  document.addEventListener('input', (e) => { if (e.target && e.target.id === 'rb_max') e.target.dataset.t = '1'; });
   document.addEventListener('click', async (e) => {
     const t = (id) => e.target.closest('#' + id);
     const form = () => ({ link: $('#rb_link').value, count: $('#rb_n').value, domain: $('#rb_dom').value, pass: $('#rb_pass').value.trim(), delay: Math.round((parseFloat($('#rb_gap').value) || 0) * 1000) || '', confirm: $('#rb_ok').checked });
     let b;
-    if ((b = t('rb_go'))) go(b, form());
+    if ((b = t('rb_maxsave'))) { b.disabled = true; $('#rb_err').textContent = ''; try { const d = await api('/api/admin/wa/refbot/limit', { max: $('#rb_max').value.trim() }); $('#rb_max').dataset.t = ''; paint(d); toast('Limit saved: ' + d.max); } catch (x) { $('#rb_err').textContent = x.message; } b.disabled = false; }
+    else if ((b = t('rb_go'))) go(b, form());
     else if ((b = t('rb_dry'))) go(b, { ...form(), dry: true });
     else if ((b = t('rb_stop'))) { try { paint(await api('/api/admin/wa/refbot/stop', {})); } catch (x) { $('#rb_err').textContent = x.message; } }
     else if ((b = t('rb_csv')) && last) dl('referral-test-' + new Date().toISOString().slice(0, 10) + '.csv', ['n,username,password,created,sponsor_box,welcome_seen,popup,logged_out,link_retyped,problem,note'].concat((last.accounts || []).map((a) => [a.n, a.username, a.password, a.ok, a.sponsor, a.welcome, a.popup, a.loggedOut, a.relinked, a.problem, a.ok ? a.warn : a.why].map(cell).join(','))).join('\n'), 'text/csv');

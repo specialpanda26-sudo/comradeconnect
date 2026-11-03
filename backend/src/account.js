@@ -83,7 +83,8 @@ export async function accountRoutes(req, env, url, ip) {
 
   // Create an account. The token proves this device owns the aid; the recovery code is shown once and stored hashed.
   if (path === '/api/auth/register' && m === 'POST') {
-    if (!(await throttle(env, ip, 'register', ip, 20, 20))) return tooMany(env);
+    const regMax = Math.max(1, Number(env.REGISTER_DAILY_PER_IP) || 20);   // default 20 per IP per day; raise REGISTER_DAILY_PER_IP on the server while testing, then remove it
+    if (!(await throttle(env, ip, 'register', ip, regMax, regMax))) return tooMany(env);
     const b = await body();
     let aid = str(b.aid, 64);
     if (!/^[A-Za-z0-9_-]{6,64}$/.test(aid)) aid = 'u_' + randHex(8);

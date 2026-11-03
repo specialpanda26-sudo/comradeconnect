@@ -282,22 +282,25 @@ async function dismissOnce(page, level) {
   return null;
 }
 // Closes popup after popup until none is left (several in a row is normal after sign-up). Saves a screenshot of each one.
-async function closePopups(page, n, tag = 'after') {
+async function closePopups(page, n, tag = 'after', grace = 0) {
   const pressed = [], shots = [];
   let stuck = false, lastSig = '', level = 0, quiet = 0, k = 0;
+  const say2 = (m) => console.log('        [popup] ' + m);
+  // the first popup can take several seconds to show up after Continue: wait for it instead of deciding there is none
+  for (let waited = 0; grace && waited < grace; waited += 600) { if (await detectOverlay(page)) break; await sleep(600); }
   for (let round = 0; round < 14; round++) {
     const o = await detectOverlay(page);
-    if (!o) { if (++quiet >= 2) break; await sleep(900); continue; }        // look twice: the next popup can arrive a moment late
+    if (!o) { if (++quiet >= (k > 0 ? 5 : 2)) break; await sleep(1200); continue; }        // after closing one, wait ~6s: the next popup often arrives a few seconds late        // look twice: the next popup can arrive a moment late
     quiet = 0;
-    if (o.sig === lastSig) level++; else { level = 0; k++; lastSig = o.sig; if (n <= 3) { const f = `${OUT}/popup-a${n}-${tag}-${k}.png`; await page.screenshot({ path: f }).catch(() => {}); shots.push(f); } }
+    if (o.sig === lastSig) level++; else { level = 0; k++; lastSig = o.sig; say2('#' + k + ' (' + tag + ') says: "' + o.sig.slice(0, 80) + '"'); if (n <= 3) { const f = `${OUT}/popup-a${n}-${tag}-${k}.png`; await page.screenshot({ path: f }).catch(() => {}); shots.push(f); } }
     if (level > 3) { stuck = true; const f = `${OUT}/popup-STUCK-a${n}-${tag}.png`; await page.screenshot({ path: f }).catch(() => {}); shots.push(f); break; }
     let did;
     if (o.telegram && level === 0) { const b = await dismissBarrier(page); did = b.pressed.join('+') || null; }
     if (!did) did = await dismissOnce(page, level);
-    if (did) pressed.push(did);
-    await sleep(700);
+    if (did) { pressed.push(did); say2('pressed ' + did); }
+    await sleep(900);
   }
-  if (!stuck && await detectOverlay(page)) stuck = true;
+  if (!stuck) { await sleep(1200); const last = await detectOverlay(page); if (last) { stuck = true; say2('still on screen at the end: "' + last.sig.slice(0, 80) + '"'); } }
   return { pressed, stuck, shots, count: k };
 }
 
@@ -331,8 +334,10 @@ async function logout(page, n) {
   const find = () => page.getByRole('button', { name: outRx }).or(page.getByRole('link', { name: outRx })).or(page.getByRole('menuitem', { name: outRx })).or(page.getByText(/^\s*(log ?out|sign ?out)\s*$/i)).first();
   const vis = (l) => l.isVisible().catch(() => false);
   let btn = find();
+  const late = [];                                           // popups that only showed up (or were only closed) at logout time
   if (!(await vis(btn))) {                                   // Logout lives only under ME, at the very bottom
-    await closePopups(page, n || 99, 'prelogout');           // a popup may be covering the tab bar
+    const pc = await closePopups(page, n || 99, 'prelogout');   // a popup may be covering the tab bar
+    late.push(...pc.pressed); late.ran = true; late.stuck = pc.stuck;
     await openMeAndScroll(page);
     btn = find();
     if (await vis(btn)) await btn.scrollIntoViewIfNeeded().catch(() => {});
@@ -369,12 +374,12 @@ async function logout(page, n) {
     }
     const out = (await page.locator('input[type=password]').first().waitFor({ state: 'visible', timeout: 7000 }).then(() => true).catch(() => false))
       || (await vis(page.getByRole('button', { name: /log ?in|sign ?in|create account/i }).first()));
-    if (out) return { ok: true, how: 'Logout button' };
+    if (out) return { ok: true, how: 'Logout button', late };
     how = 'pressed Logout but the login page did not appear';
   }
   await page.context().clearCookies();                                                      // fallback so the next account still starts clean
   await page.evaluate(() => { try { localStorage.clear(); sessionStorage.clear(); } catch (e) {} }).catch(() => {});
-  return { ok: false, how };
+  return { ok: false, how, late };
 }
 
 // After logging out: type the referral link into the browser again and check the Sponsor box fills itself again.
@@ -657,7 +662,7 @@ async function visit(browser, n, dry, shared) {
           if (n === 1) await page.screenshot({ path: `${OUT}/welcome.png`, fullPage: true });
           rec.continued = await pressContinue(page);
         }
-        const b = await closePopups(page, n, 'after');
+        const b = await closePopups(page, n, 'after', 6000);
         rec.popup = b.pressed.join('+') || 'none'; ev.popupStuck = b.stuck;
         if (ev.popupStuck && AI) { const w = await brain.agent(page, { goal: 'popup', person: testData(p), cacheKey: 'popup', verify: async () => !(await detectOverlay(page)) }); if (w.ok) { ev.popupStuck = false; rec.popup += '+AI'; } }
         const lo = await logout(page, n);
@@ -665,6 +670,8 @@ async function visit(browser, n, dry, shared) {
           const w = await brain.agent(page, { goal: 'logout', person: testData(p), cacheKey: 'logout', verify: async () => (await page.locator('input[type=password]').first().isVisible().catch(() => false)) || (await page.getByRole('button', { name: /log ?in|sign ?in|create account/i }).first().isVisible().catch(() => false)) });
           if (w.ok) { lo.ok = true; lo.how = 'AI brain'; }
         }
+        if (lo.late && lo.late.length) rec.popup = (rec.popup && rec.popup !== 'none' ? rec.popup + '+' : '') + lo.late.join('+') + '(late)';   // a popup the first pass missed, closed just before logout
+        if (lo.late && lo.late.ran && !lo.late.stuck) ev.popupStuck = false;                                                                  // the second look found nothing left on screen
         rec.loggedOut = lo.ok; ev.logoutHow = lo.how;
         rec.relinked = await reopenLink(page);                 // retype the referral link after logging out
       } catch (e) { ev.afterError = String(e && e.message).split('\n')[0].slice(0, 90); }

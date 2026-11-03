@@ -237,6 +237,14 @@ async function logout(page) {
     await sleep(700);
     const sure = page.getByRole('dialog').getByRole('button', { name: /^\s*(yes|confirm|ok|log ?out|sign ?out)\s*$/i }).first();
     if (await vis(sure)) await sure.click({ timeout: 3000 }).catch(() => {});
+    // a bottom sheet that asks "log out?" with Logout / Cancel (not a real dialog): press its Logout button, never Cancel or X
+    const asked = page.getByText(/log ?out\s*\?|sign ?out\s*\?|are you sure/i).first();
+    if (await vis(asked)) {
+      const yes = page.getByRole('button', { name: /^\s*(log ?out|sign ?out|yes|confirm|ok)\s*$/i }).last();
+      if (await vis(yes)) await yes.click({ timeout: 3000 }).catch(() => {});
+      else await page.getByText(/^\s*(log ?out|sign ?out)\s*$/i).last().click({ timeout: 3000 }).catch(() => {});
+      await sleep(600);
+    }
     const out = (await page.locator('input[type=password]').first().waitFor({ state: 'visible', timeout: 7000 }).then(() => true).catch(() => false))
       || (await vis(page.getByRole('button', { name: /log ?in|sign ?in|create account/i }).first()));
     if (out) return { ok: true, how: 'Logout button' };

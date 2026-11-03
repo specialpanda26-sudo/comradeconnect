@@ -37,10 +37,11 @@ async function checkLink(raw, env) {
 }
 
 function playwrightInstalled() { try { createRequire(import.meta.url).resolve('playwright'); return true; } catch (e) { return false; } }
+function browserInstalled() { try { const { chromium } = createRequire(import.meta.url)('playwright'); return fs.existsSync(chromium.executablePath()); } catch (e) { return false; } }
 function scriptPath(env) { return env.REFBOT_SCRIPT || path.join(ROOT, 'scripts', 'referral-bot.mjs'); }
 
 function view(withResult) {
-  if (!run) return { state: 'idle', ready: playwrightInstalled(), hasScript: fs.existsSync(scriptPath(process.env)), ai: !!process.env.GEMINI_API_KEY };
+  if (!run) return { state: 'idle', ready: playwrightInstalled(), browser: browserInstalled(), hasScript: fs.existsSync(scriptPath(process.env)), ai: !!process.env.GEMINI_API_KEY };
   const r = run;
   const out = { state: r.state, ready: true, hasScript: true, ai: !!process.env.GEMINI_API_KEY, link: r.link, dry: r.dry, count: r.count, created: r.created, failed: r.failed, startedAt: r.startedAt, endedAt: r.endedAt, log: r.log.slice(-120), hint: r.hint || '' };
   if (withResult || r.state !== 'running') { out.accounts = r.accounts; out.report = r.report; out.shots = r.shots; }
@@ -59,7 +60,7 @@ function readResult(r) {
 
 async function start(body, env) {
   if (run && run.state === 'running') throw new Error('A test is already running. Stop it first or wait for it to finish.');
-  if (body.confirm !== true) throw new Error('Tick the box to confirm this is your own site and the accounts will be real.');
+  if (!body.dry && body.confirm !== true) throw new Error('Tick the box to confirm this is your own site and the accounts will be real.');
   const link = await checkLink(body.link, env);
   const dry = !!body.dry;
   const count = Math.max(1, Math.min(MAX_ACCOUNTS, parseInt(body.count, 10) || 5));
@@ -72,6 +73,7 @@ async function start(body, env) {
   if (!fs.existsSync(script)) throw new Error('scripts/referral-bot.mjs is not in the repo. Add it, push, and let Render redeploy.');
   if (!playwrightInstalled()) throw new Error('Playwright is not installed on the server yet. Add it to package.json and the Render build command (see the setup steps).');
 
+  if (run && run.dir) { try { fs.rmSync(run.dir, { recursive: true, force: true }); } catch (e) {} }
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'refbot-'));
   const args = [script, link, ...(dry ? ['--dry'] : [String(count), '--yes', '--delay=' + delay]), ...(domain ? ['--domain=' + domain] : []), ...(pass ? ['--pass=' + pass] : [])];
   const cenv = { PATH: process.env.PATH, HOME: process.env.HOME || dir, TMPDIR: os.tmpdir(), NODE_ENV: 'production' };
@@ -91,13 +93,15 @@ async function start(body, env) {
   const child = spawn(process.execPath, args, { cwd: dir, env: cenv, stdio: ['ignore', 'pipe', 'pipe'] });
   r.child = child;
   child.stdout.on('data', push); child.stderr.on('data', push);
-  const killer = setTimeout(() => { if (r.state === 'running') { r.timedOut = true; try { child.kill('SIGKILL'); } catch (e) {} } }, Math.min(3600e3, (dry ? 150 : 180 + count * 70) * 1000));
+  const killer = setTimeout(() => { if (r.state === 'running') { r.timedOut = true; try { child.kill('SIGKILL'); } catch (e) {} } }, Math.min(7200e3, (dry ? 150 : 180 + count * 70) * 1000));
   child.on('error', (e) => { push('Could not start the bot: ' + e.message); });
   child.on('close', (code) => {
     clearTimeout(killer);
     readResult(r);
     r.endedAt = Date.now(); r.child = null;
-    r.state = r.stopped ? 'stopped' : r.timedOut ? 'timeout' : (code === 0 || (code === 1 && (r.accounts.length || dry))) ? 'done' : 'failed';
+    const okN = r.accounts.filter((a) => a.ok).length;
+    if (!dry && r.accounts.length) { r.created = okN; r.failed = r.accounts.length - okN; }
+    r.state = r.stopped ? 'stopped' : r.timedOut ? 'timeout' : (code === 0 || (code === 1 && (r.accounts.length || dry))) ? ((dry || okN) ? 'done' : 'nocreate') : 'failed';
     if (r.state === 'failed' && !r.hint && !r.log.length) r.hint = 'The bot stopped without saying why.';
   });
   return view();

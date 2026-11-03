@@ -5,7 +5,7 @@
 'use strict';
 LABEL.refbot = 'Referral tester';
 let timer = null, last = null;
-const STATE = { idle: 'Ready', running: 'Running...', done: 'Finished', failed: 'The bot could not finish', stopped: 'Stopped', timeout: 'Stopped: it took too long' };
+const STATE = { idle: 'Ready', running: 'Running...', done: 'Finished', failed: 'The bot could not finish', stopped: 'Stopped', timeout: 'Stopped: it took too long', nocreate: 'Finished: no account was created' };
 
 SECTIONS.refbot = () => {
   setTimeout(init, 0);
@@ -14,6 +14,8 @@ SECTIONS.refbot = () => {
     + '<label class="fl" for="rb_link">Referral link<small>Must start with https://</small></label><input id="rb_link" inputmode="url" autocomplete="off" placeholder="https://yoursite.com/?ref=sponsor">'
     + '<label class="fl" for="rb_n">How many accounts<small>1 to 100</small></label><input id="rb_n" inputmode="numeric" maxlength="3" value="5" autocomplete="off">'
     + '<label class="fl" for="rb_dom">Email domain (optional)<small>Use a domain you own if the site refuses example.com</small></label><input id="rb_dom" autocomplete="off" placeholder="mydomain.com">'
+    + '<label class="fl" for="rb_pass">Test password (optional)<small>8 to 40 characters. Leave empty and the bot chooses one</small></label><input id="rb_pass" autocomplete="off" placeholder="leave empty">'
+    + '<label class="fl" for="rb_gap">Seconds between accounts (optional)<small>Raise it if the site starts refusing sign-ups</small></label><input id="rb_gap" inputmode="numeric" maxlength="2" placeholder="2">'
     + '<label class="fl"><input type="checkbox" id="rb_ok"> This is my own site. I understand every account is real and may get the signup bonus.</label>'
     + '<div class="row"><button id="rb_dry">Check the page first</button><button class="p" id="rb_go">Start test</button><button id="rb_stop" style="display:none">Stop</button></div>'
     + '<p class="err" id="rb_err"></p><p class="sub"><b id="rb_st">Checking...</b></p>'
@@ -34,7 +36,7 @@ function paint(d) {
   $('#rb_stop').style.display = run ? '' : 'none'; $('#rb_go').disabled = $('#rb_dry').disabled = run;
   const bar = $('#rb_bar'); bar.style.display = run && !d.dry ? '' : 'none';
   $('#rb_fill').style.width = Math.min(100, Math.round(((d.created + d.failed) / Math.max(1, d.count)) * 100)) + '%';
-  const miss = d.hasScript === false ? 'scripts/referral-bot.mjs is not in the repo yet.' : d.ready === false ? 'Playwright is not installed on the server yet (see setup steps).' : '';
+  const miss = d.hasScript === false ? 'scripts/referral-bot.mjs is not in the repo yet.' : d.ready === false ? 'Playwright is not installed on the server yet (see setup steps).' : d.browser === false ? 'The Chromium browser is not installed on the server. The Render build command must also run the Playwright install.' : '';
   $('#rb_hint').textContent = d.hint || miss || (d.ai ? 'AI brain is on: the bot asks Gemini for help when it gets stuck.' : 'AI brain is off: add GEMINI_API_KEY on the server to turn it on.');
   const lg = $('#rb_log'); if (d.log && d.log.length) { const atEnd = lg.scrollTop + lg.clientHeight >= lg.scrollHeight - 30; lg.textContent = d.log.join('\n'); if (atEnd) lg.scrollTop = lg.scrollHeight; }
   const res = $('#rb_res'), acc = d.accounts || [];
@@ -65,7 +67,7 @@ if (!window.__rbBound) {
   window.__rbBound = true;
   document.addEventListener('click', async (e) => {
     const t = (id) => e.target.closest('#' + id);
-    const form = () => ({ link: $('#rb_link').value, count: $('#rb_n').value, domain: $('#rb_dom').value, confirm: $('#rb_ok').checked });
+    const form = () => ({ link: $('#rb_link').value, count: $('#rb_n').value, domain: $('#rb_dom').value, pass: $('#rb_pass').value.trim(), delay: Math.round((parseFloat($('#rb_gap').value) || 0) * 1000) || '', confirm: $('#rb_ok').checked });
     let b;
     if ((b = t('rb_go'))) go(b, form());
     else if ((b = t('rb_dry'))) go(b, { ...form(), dry: true });

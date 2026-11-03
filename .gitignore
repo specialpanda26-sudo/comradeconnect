@@ -26,3 +26,6 @@ spill-data.json
 sessions/
 wa-session/
 comradeconnect.env
+.npm-cache/
+.npmrc
+referral-bot-out/

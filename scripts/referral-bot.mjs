@@ -529,8 +529,8 @@ async function waitEnabled(btn) {
 // "Busy" = the button shows only dots / a spinner, or says aria-busy: the site is still processing the sign-up.
 const isBusy = (btn) => btn.evaluate((e) => {
   const t = (e.innerText || e.value || '').trim();
-  return e.getAttribute('aria-busy') === 'true' || /^[\s.\u2026\u00b7\u2022]+$/.test(t) || !!e.querySelector('[class*=spin i],[class*=load i]') || /\b(loading|busy|pending)\b/i.test(e.className || '');
-}).catch(() => false);
+  return e.getAttribute('aria-busy') === 'true' || /^[\s.\u2026\u00b7\u2022]+$/.test(t) || !!e.querySelector('[class*=spin i],[class*=loading i]') || /\b(loading|busy|pending)\b/i.test(e.className || '');
+}, undefined, { timeout: 1500 }).catch(() => false);   // short timeout: if the button is gone (page changed) it is not busy
 // After pressing: wait up to `ms` for the site to answer (a request finishing, the page moving, or the button leaving its busy state).
 // Returns 'answered' or 'hung' (still busy and nothing came back).
 async function waitAnswer(page, btn, start, ms, got) {

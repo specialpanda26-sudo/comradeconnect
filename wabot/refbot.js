@@ -71,7 +71,7 @@ function readResult(r) {
     r.accounts = list.filter(Boolean).map((a) => ({ n: a.n, username: a.username, password: a.password, ok: !!a.ok, sponsor: a.sponsor_filled ? 'filled' : 'empty', welcome: !!a.welcome, popup: a.popup || '', loggedOut: !!a.loggedOut, relinked: !!a.relinked, problem: a.problem || '', why: a.why || '', warn: a.warn || '', api: a.api || '' }));
   } catch (e) { r.accounts = []; }
   try { r.report = fs.readFileSync(path.join(d, 'report.txt'), 'utf8').slice(0, 20000); } catch (e) { r.report = ''; }
-  try { r.shots = fs.readdirSync(d).filter((f) => /^(page|filled|welcome|fail-\d+)\.png$/.test(f)).slice(0, 30); } catch (e) { r.shots = []; }
+  try { r.shots = fs.readdirSync(d).filter((f) => /^(page|filled|welcome|home|popup-[\w-]+|fail-\d+)\.png$/.test(f)).slice(0, 30); } catch (e) { r.shots = []; }
 }
 
 async function start(body, env) {
@@ -129,7 +129,7 @@ function stop() {
 }
 
 function shot(name) {
-  if (!run || !/^(page|filled|welcome|fail-\d+)\.png$/.test(String(name))) throw new Error('No such screenshot.');
+  if (!run || !/^(page|filled|welcome|home|popup-[\w-]+|fail-\d+)\.png$/.test(String(name))) throw new Error('No such screenshot.');
   const f = path.join(run.dir, 'referral-bot-out', name);
   const st = fs.statSync(f);
   if (st.size > 3e6) throw new Error('That screenshot is too large to show here.');

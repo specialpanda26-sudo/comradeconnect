@@ -249,13 +249,14 @@ async function detectOverlay(page) {
       const cs = getComputedStyle(e);
       if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0 || cs.pointerEvents === 'none') continue;
       const isDialog = e.matches('[role=dialog],[role=alertdialog],[aria-modal=true],dialog[open]');
-      const floating = (cs.position === 'fixed' || cs.position === 'absolute') && (parseInt(cs.zIndex, 10) >= 10 || isDialog);
+      const hasX = cs.position === 'fixed' && [...e.querySelectorAll('button,[role=button],a')].some((b) => /^\s*(later|maybe later|not now|skip|no,? thanks|remind me later|got it|close|dismiss)\s*$/i.test((b.innerText || b.getAttribute('aria-label') || '').trim()));
+      const floating = (cs.position === 'fixed' || cs.position === 'absolute') && (parseInt(cs.zIndex, 10) >= 10 || isDialog || hasX);
       if (!floating && !isDialog) continue;
       const r = e.getBoundingClientRect();
-      if (r.width < 120 || r.height < 60) continue;
-      const covers = r.width >= vw * 0.55 && r.height >= vh * 0.25;
+      if (r.width < 120 || r.height < (hasX ? 40 : 60)) continue;
+      const covers = r.width >= vw * 0.55 && (r.height >= vh * 0.25 || hasX);
       if (!isDialog && !covers) continue;
-      if (!isDialog && r.height < vh * 0.14) continue;                 // thin fixed bars (header, bottom tabs) are not popups
+      if (!isDialog && !hasX && r.height < vh * 0.14) continue;                 // thin fixed bars (header, bottom tabs) are not popups
       if (navLike(e)) continue;                                        // a wrapper that holds the tab bar is the app, not a popup
       const txt = (e.innerText || '').replace(/\s+/g, ' ').trim();
       if (!txt && !e.querySelector('button,[role=button],svg,img')) continue;
@@ -285,9 +286,9 @@ async function dismissOnce(page, level) {
         return t && G.test(t) && !N.test(t);
       });
       // prefer real buttons, and ones that sit above the bottom tab bar
-      const pts = els.map((e) => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, t: (e.innerText || e.getAttribute('aria-label') || '').trim(), btn: /^(BUTTON|A)$/.test(e.tagName) || e.getAttribute('role') === 'button' }; })
-        .filter((k) => k.x > 0 && k.x < vw && k.y > 0 && k.y < vh * 0.93)
-        .sort((a, b) => (b.btn - a.btn) || (/^(later|not now|skip|maybe later)/i.test(b.t) - /^(later|not now|skip|maybe later)/i.test(a.t)));
+      const pts = els.map((e) => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, t: (e.innerText || e.getAttribute('aria-label') || '').trim(), btn: /^(BUTTON|A)$/.test(e.tagName) || e.getAttribute('role') === 'button', fx: (() => { for (let p = e; p && p !== document.body; p = p.parentElement) if (getComputedStyle(p).position === 'fixed') return true; return false; })() }; })
+        .filter((k) => k.x > 0 && k.x < vw && k.y > 0 && (k.y < vh * 0.93 || k.fx))
+        .sort((a, b) => (b.fx - a.fx) || (b.btn - a.btn) || (/^(later|not now|skip|maybe later)/i.test(b.t) - /^(later|not now|skip|maybe later)/i.test(a.t)));
       return pts[0] || null;
     }, { good: GOOD.source, never: NEVER.source }).catch(() => null);
     if (hit) { await page.mouse.click(hit.x, hit.y); return hit.t.slice(0, 12) || 'button'; }
@@ -723,6 +724,7 @@ async function visit(browser, n, dry, shared) {
         }
         const b = await closePopups(page, n, 'after', 6000);
         rec.popup = b.pressed.join('+') || 'none'; ev.popupStuck = b.stuck;
+        if (n === 1) await page.screenshot({ path: OUT + '/home.png' }).catch(() => {});
         if (ev.popupStuck && AI) { const w = await brain.agent(page, { goal: 'popup', person: testData(p), cacheKey: 'popup', verify: async () => !(await detectOverlay(page)) }); if (w.ok) { ev.popupStuck = false; rec.popup += '+AI'; } }
         const lo = await logout(page, n);
         if (!lo.ok && AI) {

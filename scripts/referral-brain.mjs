@@ -221,7 +221,7 @@ const GOALS = {
   form: () => 'Reach the sign-up (Create Account) form so its Password field is visible. Close cookie banners, popups and language prompts. If an account is logged in, log out. If there is a Sign up / Register / Create account button or tab, open it.',
   fix_submit: () => 'The form was submitted but the site refused it (see the problem). Fix the form fields (country, phone, ticks, etc.) using the placeholders so Create Account can be pressed again. Do NOT press Create Account yourself.',
   terms: () => 'Tick the checkbox (or switch) that accepts the Terms / Privacy Policy. It may be a custom square instead of a normal checkbox. Do not open the Terms link and touch nothing else.',
-  popup: () => 'Close the popup or banner covering the page. Prefer Later / Not now / Close / X. Do not accept offers, join channels or enter any data.',
+  popup: () => 'Close the popup or banner covering the page. If it is the Telegram bonus panel (Join our channel and get 5 USD), press its X or its Later button, never Join. Prefer Later / Not now / Close / X. Do not accept offers, join channels or enter any data.',
   logout: () => 'Log the current account out so the sign-up or login page shows again. Look in menus, profile or settings icons if no Logout button is visible. Confirm a logout dialog if one appears.',
   welcome: () => 'The account was just created. Press Continue (or the main forward button) on the welcome screen, close any popup (Later / X), and stop when the normal logged-in page shows.',
 };

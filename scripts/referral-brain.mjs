@@ -14,8 +14,8 @@ const GMODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const GBASE = (process.env.GROQ_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 let gDead = false, gemDead = false;
 let MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-let tried = false;
-const FALLBACKS = (process.env.GEMINI_FALLBACK || 'gemini-2.5-flash-lite').split(',').map((x) => x.trim()).filter(Boolean);   // used when the main model keeps timing out or says 503
+const tried404 = new Set();   // models whose 404 we already tried to repair
+const FALLBACKS = (process.env.GEMINI_FALLBACK || 'gemini-3.5-flash-lite').split(',').map((x) => x.trim()).filter(Boolean);   // used when the main model keeps timing out or says 503
 const BASE = (process.env.GEMINI_BASE || 'https://generativelanguage.googleapis.com/v1beta').replace(/\/$/, '');
 const cfg = { budget: 60, country: 'Kenya', log: () => {} };
 const cache = { read: new Map(), recipe: new Map(), explain: new Map() };
@@ -113,7 +113,12 @@ async function askJSON(system, text, image) {
         const body = await r.text().catch(() => '');
         if (r.status === 400 && gen.thinkingConfig && /think/i.test(body)) { delete gen.thinkingConfig; calls--; continue; }
         let msg = body.replace(/\s+/g, ' '); try { msg = JSON.parse(body).error.message || msg; } catch (e) {}
-        if (r.status === 404 && !tried) { tried = true; const m = await findModel(); if (m && m !== MODEL) { cfg.log('model ' + MODEL + ' is gone, switching to ' + m); MODEL = m; calls--; continue; } }
+        if (r.status === 404 && !tried404.has(m)) {
+          tried404.add(m);
+          if (m !== MODEL) { const i = FALLBACKS.indexOf(m); if (i >= 0) FALLBACKS.splice(i, 1); cfg.log('fallback model ' + m + ' is gone, dropping it'); calls--; continue; }
+          const nm = await findModel();                      // not "m": that would hide the model that just failed
+          if (nm && nm !== m) { cfg.log('model ' + m + ' is gone, switching to ' + nm); MODEL = nm; calls--; continue; }
+        }
         if ([401, 403, 404].includes(r.status)) { gemDead = true; if (!GKEY || gDead) dead = true; }
         cfg.log('AI error ' + r.status + ': ' + msg.slice(0, 300) + (dead ? '  (AI is off for this run: set GEMINI_MODEL or GEMINI_API_KEY on the server)' : ''));
         return null;

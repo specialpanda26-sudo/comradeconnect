@@ -526,6 +526,22 @@ async function waitEnabled(btn) {
   for (let i = 0; i < 10; i++) { if (!(await btn.isDisabled().catch(() => false))) return true; await sleep(500); }
   return false;
 }
+// "Busy" = the button shows only dots / a spinner, or says aria-busy: the site is still processing the sign-up.
+const isBusy = (btn) => btn.evaluate((e) => {
+  const t = (e.innerText || e.value || '').trim();
+  return e.getAttribute('aria-busy') === 'true' || /^[\s.\u2026\u00b7\u2022]+$/.test(t) || !!e.querySelector('[class*=spin i],[class*=load i]') || /\b(loading|busy|pending)\b/i.test(e.className || '');
+}).catch(() => false);
+// After pressing: wait up to `ms` for the site to answer (a request finishing, the page moving, or the button leaving its busy state).
+// Returns 'answered' or 'hung' (still busy and nothing came back).
+async function waitAnswer(page, btn, start, ms, got) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    if (got() || page.url() !== start) return 'answered';
+    if (!(await isBusy(btn))) return 'answered';
+    await sleep(500);
+  }
+  return got() ? 'answered' : 'hung';
+}
 // Presses Create Account. If something invisible covers it, press it from inside the page instead.
 async function pressCreate(page, btn) {
   await btn.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
@@ -608,6 +624,7 @@ function diagnose(e) {
   if (e.crash) return { code: 'bot_error', why: `The bot stumbled while filling the form (${e.crash}).`, fix: 'Run once with --headed and watch where it stops, then send me that message.' };
   const x = { status: e.post && e.post.status, text: (((e.post && e.post.body) || '') + ' ' + (e.err || '')).toLowerCase(), captcha: e.captcha, post: e.post };
   for (const r of RULES) if (r.test(x)) return { code: r.code, why: r.why, fix: r.fix };
+  if (e.hung) return { code: 'site_slow', why: `Create Account was pressed and the button stayed in its loading state (...) for ${e.waited || 30} seconds with no answer from the site.`, fix: 'The site (or its server) is too slow or not answering the sign-up. Check the server logs / whether the site was waking up, then run again.' };
   if (e.failedReq) return { code: 'network', why: `The sign-up request never reached the server (${e.failedReq}).`, fix: 'The site may be down or overloaded, or the browser blocked the request (CORS / firewall). Check the site is online and the server logs.' };
   if (e.clickFailed) return { code: 'click_blocked', why: 'Something covers the Create Account button (a popup or cookie banner), so it could not be pressed.', fix: 'Look at fail-N.png and tell me what is covering it.' };
   if (e.btnDisabled) return { code: 'button_disabled', why: 'Create Account stayed greyed out: the site thinks a field is invalid or something is not accepted.', fix: 'Look at filled.png for a red field or an unticked box. Often the mobile number format or the username rules.' };
@@ -701,6 +718,12 @@ async function visit(browser, n, dry, shared) {
     const start = page.url();
     post = null; failedReq = null;
     if (!ev.btnDisabled) ev.clickFailed = !(await (attempt === 2 && !AI ? enterSubmit(page) : pressCreate(page, btn)));
+    ev.hung = false;
+    if (!ev.btnDisabled && !ev.clickFailed && await isBusy(btn)) {   // site is still processing: give it up to 30 s before judging
+      const t0 = Date.now();
+      ev.hung = (await waitAnswer(page, btn, start, 30000, () => !!post || !!failedReq)) === 'hung';
+      ev.waited = Math.round((Date.now() - t0) / 1000);
+    }
     ev.moved = await page.waitForFunction((u) => location.href !== u || !document.querySelector('input[type=password]'), start, { timeout: 12000 }).then(() => true).catch(() => false);
     await sleep(500);
     ev.err = await page.evaluate(() => [...document.querySelectorAll('[role=alert],[class*=error i],[class*=toast i],[class*=alert i],[class*=invalid i]')].map((e) => e.innerText.trim()).filter(Boolean).join(' | ').slice(0, 160)).catch(() => '');
@@ -711,7 +734,7 @@ async function visit(browser, n, dry, shared) {
     rec.api = post ? `POST ${post.url} ${post.status}` : '';
     rec.raw = ((post && (post.status >= 400 || soft) && post.body) || ev.err || '').replace(/\s+/g, ' ').slice(0, 140);
     rec.ok = post ? (post.status < 400 && !soft) : ev.moved && !ev.btnDisabled;
-    if (rec.ok || attempt === 2) break;
+    if (rec.ok || attempt === 2 || ev.hung) break;          // a hang is reported as the first failure: never press the stuck button again
     if (!AI) continue;                                     // second try without the AI: submit with the Enter key
     const d0 = diagnose(ev);
     if (!FIXABLE.has(d0.code)) break;

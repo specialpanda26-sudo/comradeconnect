@@ -40,9 +40,9 @@ function playwrightInstalled() { try { createRequire(import.meta.url).resolve('p
 function scriptPath(env) { return env.REFBOT_SCRIPT || path.join(ROOT, 'scripts', 'referral-bot.mjs'); }
 
 function view(withResult) {
-  if (!run) return { state: 'idle', ready: playwrightInstalled(), hasScript: fs.existsSync(scriptPath(process.env)) };
+  if (!run) return { state: 'idle', ready: playwrightInstalled(), hasScript: fs.existsSync(scriptPath(process.env)), ai: !!process.env.GEMINI_API_KEY };
   const r = run;
-  const out = { state: r.state, ready: true, hasScript: true, link: r.link, dry: r.dry, count: r.count, created: r.created, failed: r.failed, startedAt: r.startedAt, endedAt: r.endedAt, log: r.log.slice(-120), hint: r.hint || '' };
+  const out = { state: r.state, ready: true, hasScript: true, ai: !!process.env.GEMINI_API_KEY, link: r.link, dry: r.dry, count: r.count, created: r.created, failed: r.failed, startedAt: r.startedAt, endedAt: r.endedAt, log: r.log.slice(-120), hint: r.hint || '' };
   if (withResult || r.state !== 'running') { out.accounts = r.accounts; out.report = r.report; out.shots = r.shots; }
   return out;
 }
@@ -76,6 +76,7 @@ async function start(body, env) {
   const args = [script, link, ...(dry ? ['--dry'] : [String(count), '--yes', '--delay=' + delay]), ...(domain ? ['--domain=' + domain] : []), ...(pass ? ['--pass=' + pass] : [])];
   const cenv = { PATH: process.env.PATH, HOME: process.env.HOME || dir, TMPDIR: os.tmpdir(), NODE_ENV: 'production' };
   if (process.env.PLAYWRIGHT_BROWSERS_PATH) cenv.PLAYWRIGHT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH;
+  for (const k of ['GEMINI_API_KEY', 'GEMINI_MODEL']) if (process.env[k]) cenv[k] = process.env[k];   // the AI brain (scripts/referral-brain.mjs) uses the site's own Gemini key
   const r = run = { id: Date.now(), state: 'running', link, dry, count: dry ? 1 : count, created: 0, failed: 0, startedAt: Date.now(), endedAt: 0, log: [], dir, accounts: [], report: '', shots: [], hint: '', child: null };
   const push = (chunk) => {
     for (const raw of clean(chunk).split('\n')) {
@@ -90,7 +91,7 @@ async function start(body, env) {
   const child = spawn(process.execPath, args, { cwd: dir, env: cenv, stdio: ['ignore', 'pipe', 'pipe'] });
   r.child = child;
   child.stdout.on('data', push); child.stderr.on('data', push);
-  const killer = setTimeout(() => { if (r.state === 'running') { r.timedOut = true; try { child.kill('SIGKILL'); } catch (e) {} } }, Math.min(3600e3, (dry ? 120 : 150 + count * 45) * 1000));
+  const killer = setTimeout(() => { if (r.state === 'running') { r.timedOut = true; try { child.kill('SIGKILL'); } catch (e) {} } }, Math.min(3600e3, (dry ? 150 : 180 + count * 70) * 1000));
   child.on('error', (e) => { push('Could not start the bot: ' + e.message); });
   child.on('close', (code) => {
     clearTimeout(killer);

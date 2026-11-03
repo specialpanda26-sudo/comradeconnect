@@ -30,6 +30,9 @@ const PAR = Math.max(1, Math.min(5, parseInt(opt('parallel', '1'), 10) || 1));
 const DOMAIN = opt('domain', 'example.com');
 const FRESH = flag('fresh');
 const COUNTRY = opt('country', 'Kenya');
+const brain = await import('./referral-brain.mjs').catch(() => null);          // the AI brain: optional, the bot still works without it
+const AI = !flag('no-ai') && !!brain && brain.ready();
+if (brain) brain.configure({ budget: parseInt(opt('ai-budget', '60'), 10) || 60, country: COUNTRY, log: (m) => console.log('        [ai] ' + m) });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ask = async (q) => { const rl = readline.createInterface({ input: process.stdin, output: process.stdout }); const a = (await rl.question(q)).trim(); rl.close(); return a; };
 const tty = !!process.stdin.isTTY;
@@ -102,6 +105,21 @@ function assign(fields) {
 }
 
 // ---------- page helpers ----------
+// Opens a link. net::ERR_ABORTED usually means the site redirected itself while loading, so that counts as loaded.
+async function gotoRetry(page, url) {
+  let last;
+  for (let t = 0; t < 3; t++) {
+    try { await page.goto(url, { waitUntil: t === 2 ? 'commit' : 'domcontentloaded', timeout: 30000 }); return; }
+    catch (e) {
+      last = e; const m = String(e && e.message);
+      if (/has been closed|browser has been/i.test(m)) throw e;
+      let same = false; try { same = new URL(page.url()).hostname === new URL(url).hostname; } catch (x) {}
+      if (same && /ERR_ABORTED/.test(m)) return;
+      await sleep(1500 * (t + 1));
+    }
+  }
+  throw last;
+}
 async function openForm(page) {
   await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
   const pw = page.locator('input[type=password]').first();
@@ -229,7 +247,7 @@ async function logout(page) {
 // After logging out: type the referral link into the browser again and check the Sponsor box fills itself again.
 async function reopenLink(page) {
   try {
-    await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await gotoRetry(page, link);
     await openForm(page);
     await sleep(1200);
     const f = assign(await describe(page));
@@ -257,6 +275,46 @@ async function chooseCountry(page, roles) {
   } catch (e) {}
   return '';
 }
+
+// Is the country box showing the wanted country? (true when the page has no country box at all, or an open list is still showing)
+async function countryOk(page) {
+  return page.evaluate((want) => {
+    const shown = (e) => { const r = e.getBoundingClientRect(), c = getComputedStyle(e); return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none'; };
+    const sels = [...document.querySelectorAll('select')].filter(shown).filter((x) => x.options.length > 30 || /countr|nation/i.test((x.name || '') + (x.id || '') + (x.getAttribute('aria-label') || '')));
+    if (sels.length) return sels.some((x) => ((x.selectedOptions[0] && x.selectedOptions[0].textContent) || '').toLowerCase().includes(want));
+    const lab = [...document.querySelectorAll('label,span,div,p')].find((e) => e.children.length === 0 && /^\s*country\s*\*?\s*$/i.test(e.textContent) && shown(e));
+    if (!lab) return true;
+    let box = lab.parentElement;
+    for (let i = 0; i < 3 && box && box.innerText.trim().length <= lab.textContent.trim().length + 2; i++) box = box.parentElement;
+    if (!box) return true;
+    if ([...box.querySelectorAll('[role=listbox],[role=option],ul,li')].some(shown)) return false;
+    const v = [...box.querySelectorAll('input,select')].map((x) => x.value || '').join(' ');
+    return (box.innerText + ' ' + v).toLowerCase().includes(want);
+  }, COUNTRY.toLowerCase()).catch(() => true);
+}
+// A real <select> that ignored selectOption: focus it and type the country name like a person would.
+async function typeCountry(page, roles) {
+  if (!roles.country) return;
+  const sel = page.locator(SEL).nth(roles.country.i);
+  await sel.focus({ timeout: 2000 }).catch(() => {});
+  await page.keyboard.type(COUNTRY.slice(0, 8), { delay: 60 }).catch(() => {});
+  await page.keyboard.press('Enter').catch(() => {});
+  await sleep(300);
+}
+const testData = (p) => ({ $name: p.name, $username: p.user, $email: p.email, $phone: p.phone, $password: PASS, $country: COUNTRY });
+const FORM_KEYS = ['email', 'password', 'username'];
+// The bot's own rules first. If they miss a box, the AI reads the page and fills the gaps. If there is still no form, the AI tries to open it.
+async function readRoles(page, p, tryOpen) {
+  let roles = assign(await describe(page)), ai = null;
+  const merge = (a) => { if (a && a.roles) for (const [k, f] of Object.entries(a.roles)) if (!roles[k]) roles[k] = f; };
+  if (AI && (!FORM_KEYS.every((r) => roles[r]) || !roles.sponsor)) { ai = await brain.readPage(page, SEL); merge(ai); }
+  if (AI && tryOpen && !FORM_KEYS.every((r) => roles[r])) {
+    const w = await brain.agent(page, { goal: 'form', person: testData(p), verify: () => page.locator('input[type=password]').first().isVisible().catch(() => false) });
+    if (w.acted) { await sleep(800); roles = assign(await describe(page)); ai = await brain.readPage(page, SEL); merge(ai); }
+  }
+  return { roles, ai };
+}
+const FIXABLE = new Set(['country', 'phone', 'terms', 'validation', 'button_disabled', 'no_response', 'click_blocked', 'password', 'unknown']);
 
 // ---- diagnose: turns what the bot saw into a plain-English problem and a fix ----
 const RULES = [
@@ -304,6 +362,7 @@ const RULES = [
     fix: 'Read the status and message saved in accounts.csv.' },
 ];
 function diagnose(e) {
+  if (e.browserDied) return { code: 'browser_crash', why: 'The browser crashed or was closed while working (on a small server this usually means it ran out of memory).', fix: 'Create fewer accounts per run (10 or less), keep --parallel at 1, or give the server more memory. The bot starts a new browser by itself and carries on.' };
   if (e.loadError) return { code: 'unreachable', why: `The bot could not open the link (${e.loadError}).`, fix: 'Open the same link in your own browser. Check the site is online, the link is spelled right, and your internet works.' };
   if (e.stillLoggedIn) return { code: 'still_logged_in', why: 'The previous account was still logged in, so the sign-up page did not show.', fix: 'The logout did not work. Send me a screenshot of the logged-in page showing where Logout is, or run with --fresh.' };
   if (e.noForm) return { code: 'no_form', why: 'The Create Account form did not show up, or the bot could not recognise its fields.', fix: 'Look at referral-bot-out/page.png. If it shows a login page, a popup, a cookie banner or an "enter" button, tell me and I will add that step.' };
@@ -322,12 +381,13 @@ function diagnose(e) {
 
 // ---------- one visit = one new account ----------
 async function visit(browser, n, dry, shared) {
-  const ctx = shared || await browser.newContext({ viewport: { width: 390, height: 1000 } });   // shared = same browser session for every account (logs out in between); otherwise a brand-new visitor
-  const page = await ctx.newPage();
+  let ctx = shared, page;                              // shared = same browser session for every account (logs out in between); otherwise a brand-new visitor
   const p = person();
-  const rec = { n, username: p.user, email: p.email, phone: p.phone, password: PASS, sponsor: '', sponsor_filled: false, terms: false, welcome: false, continued: false, popup: '', loggedOut: false, relinked: false, ok: false, problem: '', why: '', fix: '', raw: '', warn: '', api: '' };
+  const rec = { n, username: p.user, email: p.email, phone: p.phone, password: PASS, sponsor: '', sponsor_filled: false, terms: false, welcome: false, continued: false, popup: '', loggedOut: false, relinked: false, ok: false, problem: '', why: '', fix: '', raw: '', warn: '', api: '', ai: '' };
   const ev = { pageErrors: [] };
   let post = null, failedReq = null, phase = 'load';
+  try { ctx = ctx || await browser.newContext({ viewport: { width: 390, height: 1000 } }); page = await ctx.newPage(); }
+  catch (e) { const d = diagnose({ browserDied: true }); Object.assign(rec, { problem: d.code, why: d.why, fix: d.fix, crashed: true }); if (!shared && ctx) await ctx.close().catch(() => {}); return rec; }
   page.on('response', async (r) => {
     const q = r.request();
     if (!post && q.method() === 'POST' && ['fetch', 'xhr'].includes(q.resourceType())) {
@@ -337,11 +397,11 @@ async function visit(browser, n, dry, shared) {
   page.on('requestfailed', (q) => { if (q.method() === 'POST') failedReq = `${new URL(q.url()).pathname}: ${(q.failure() || {}).errorText || 'failed'}`; });
   page.on('pageerror', (e) => { if (ev.pageErrors.length < 3) ev.pageErrors.push(String(e.message).split('\n')[0].slice(0, 90)); });
   try {
-    await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await gotoRetry(page, link);
     phase = 'form';
     await openForm(page);
     await sleep(1200);                                   // let the sponsor field auto-fill itself from the link
-    const roles = assign(await describe(page));
+    const { roles, ai: aiRead } = await readRoles(page, p, !dry);
     rec.sponsor = roles.sponsor ? roles.sponsor.value : '';
     rec.sponsor_filled = !!rec.sponsor;
     ev.captcha = await hasCaptcha(page);
@@ -358,6 +418,9 @@ async function visit(browser, n, dry, shared) {
       if (!rec.sponsor) early.push('The Sponsor box is empty, so the link is not filling it: referrals could not be credited.');
       if (ev.captcha) early.push('A captcha is on the page: the bot will not be able to finish sign-ups.');
       console.log(early.length ? '\nPossible problems spotted before running:\n  - ' + early.join('\n  - ') : '\nNo problems spotted. The bot should be able to create accounts here.');
+      if (aiRead && (aiRead.summary || aiRead.blockers.length)) console.log('\nWhat the AI brain sees: ' + (aiRead.summary || '') + (aiRead.blockers.length ? '\n  It spotted: ' + aiRead.blockers.join('; ') : ''));
+      if (AI && !aiRead) console.log('\nAI brain is on but was not needed: the bot read the form by itself.');
+      if (!AI) console.log('\nAI brain is off (' + (flag('no-ai') ? '--no-ai' : !brain ? 'scripts/referral-brain.mjs is missing' : 'no GEMINI_API_KEY') + ').');
       console.log(`\nScreenshot saved: ${OUT}/page.png\n`);
       return rec;
     }
@@ -371,6 +434,10 @@ async function visit(browser, n, dry, shared) {
     const at = (f) => page.locator(SEL).nth(f.i);
     await chooseCountry(page, roles);                      // choose the country first: the site sets the phone code from it
     await sleep(500);
+    if (!(await countryOk(page))) {
+      await typeCountry(page, roles);                      // a stubborn real dropdown: type the name
+      if (AI && !(await countryOk(page))) await brain.agent(page, { goal: 'country', person: testData(p), cacheKey: 'country', noSubmit: true, verify: () => countryOk(page) });   // a custom dropdown: the AI works it out
+    }
     for (const [role, val] of [['name', p.name], ['username', p.user], ['email', p.email], ['phone', p.phone], ['password', PASS], ['confirm', PASS]]) {
       if (!roles[role]) continue;
       let v = val;
@@ -378,10 +445,12 @@ async function visit(browser, n, dry, shared) {
       await at(roles[role]).fill(v);
     }
     rec.terms = await tickTerms(page, roles);              // tick the terms box, then press Create Account
+    if (!rec.terms && AI) rec.terms = (await brain.agent(page, { goal: 'terms', person: testData(p), cacheKey: 'terms', noSubmit: true, maxSteps: 1 })).acted;   // a custom-styled box
     await sleep(600);
     if (n === 1) await page.screenshot({ path: `${OUT}/filled.png`, fullPage: true });
 
     phase = 'submit';
+    for (let attempt = 1; attempt <= 2; attempt++) {
     const btn = page.getByRole('button', { name: /create account|sign ?up|register/i }).last();
     if (!(await btn.count())) { ev.noButton = true; throw new Error('no button'); }
     ev.btnDisabled = await btn.isDisabled().catch(() => false);
@@ -397,6 +466,13 @@ async function visit(browser, n, dry, shared) {
     rec.api = post ? `POST ${post.url} ${post.status}` : '';
     rec.raw = ((post && (post.status >= 400 || soft) && post.body) || ev.err || '').replace(/\s+/g, ' ').slice(0, 140);
     rec.ok = post ? (post.status < 400 && !soft) : ev.moved && !ev.btnDisabled;
+    if (rec.ok || attempt === 2 || !AI) break;
+    const d0 = diagnose(ev);
+    if (!FIXABLE.has(d0.code)) break;
+    const w = await brain.agent(page, { goal: 'fix_submit', person: testData(p), noSubmit: true, maxSteps: 2, error: (rec.raw || d0.why).slice(0, 200) });
+    if (!w.acted) break;
+    ev.fixedByAI = true; await sleep(500);
+    }
 
     if (rec.ok) {                                          // account created: welcome card > Continue > close popup > log out
       phase = 'after';
@@ -410,18 +486,25 @@ async function visit(browser, n, dry, shared) {
         }
         const b = await dismissBarrier(page);
         rec.popup = b.pressed.join('+') || 'none'; ev.popupStuck = b.stuck;
+        if (ev.popupStuck && AI) { const w = await brain.agent(page, { goal: 'popup', person: testData(p), cacheKey: 'popup', verify: async () => !(await page.getByText(/telegram|join our channel|get 5 usd/i).first().isVisible().catch(() => false)) }); if (w.ok) { ev.popupStuck = false; rec.popup += '+AI'; } }
         const lo = await logout(page);
+        if (!lo.ok && AI) {
+          const w = await brain.agent(page, { goal: 'logout', person: testData(p), cacheKey: 'logout', verify: async () => (await page.locator('input[type=password]').first().isVisible().catch(() => false)) || (await page.getByRole('button', { name: /log ?in|sign ?in|create account/i }).first().isVisible().catch(() => false)) });
+          if (w.ok) { lo.ok = true; lo.how = 'AI brain'; }
+        }
         rec.loggedOut = lo.ok; ev.logoutHow = lo.how;
         rec.relinked = await reopenLink(page);                 // retype the referral link after logging out
       } catch (e) { ev.afterError = String(e && e.message).split('\n')[0].slice(0, 90); }
     }
   } catch (e) {
     const msg = String(e && e.message).split('\n')[0];
+    if (/has been closed|browser has been|Target closed|Browser closed/i.test(msg)) { ev.browserDied = true; rec.crashed = true; }
     if (phase === 'load') ev.loadError = msg.replace(/^page\.goto: /, '').slice(0, 90);
     else if (!ev.noForm && !ev.noButton) ev.crash = msg.slice(0, 90);
   }
   if (!dry) {
     if (!rec.ok) { const d = diagnose(ev); rec.problem = d.code; rec.why = d.why; rec.fix = d.fix; }
+    if (!rec.ok && AI && !ev.browserDied && !ev.loadError) rec.ai = (await brain.explain(page, { code: rec.problem, why: rec.why, raw: rec.raw, api: rec.api, pageErrors: ev.pageErrors }).catch(() => null)) || '';
     if (!ev.loadError && !ev.noForm) {
       const warn = [];
       if (!rec.sponsor_filled) warn.push('sponsor box was empty (the link did not auto-fill it, so the referral cannot be credited)');
@@ -440,15 +523,34 @@ async function visit(browser, n, dry, shared) {
 }
 
 // ---------- run ----------
-const browser = await chromium.launch({ headless: !flag('headed') });
+const LAUNCH = { headless: !flag('headed'), args: flag('headed') ? [] : ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-extensions', '--disable-background-networking', '--mute-audio'] };   // small-server friendly
+let browser = await chromium.launch(LAUNCH), relaunching = null;
+async function reviveBrowser() {                       // if Chromium died (usually out of memory on a small server), start a new one
+  if (browser.isConnected()) return;
+  relaunching = relaunching || (async () => { console.log('        browser crashed (probably out of memory): starting a new one'); try { browser = await chromium.launch(LAUNCH); } finally { relaunching = null; } })();
+  await relaunching;
+}
 if (flag('dry')) { await visit(browser, 1, true); await browser.close(); process.exit(0); }
 
 console.log(`\nReferral bot: ${N} random accounts through\n  ${link}\n(password for every test account: ${PASS})\n`);
 const results = [], seen = new Set(); let next = 0; const t0 = Date.now();
 await Promise.all(Array.from({ length: PAR }, async () => {
-  const ctx = FRESH ? null : await browser.newContext({ viewport: { width: 390, height: 1000 } });   // one browser session per worker: create > log out > create ...
+  let ctx = null, used = 0;
+  const newCtx = async () => {                         // one browser session per worker: create > log out > create ... renewed every 10 accounts to keep memory low
+    if (ctx) await ctx.close().catch(() => {});
+    ctx = null; used = 0;
+    await reviveBrowser();
+    if (!FRESH) ctx = await browser.newContext({ viewport: { width: 390, height: 1000 } });
+  };
+  await newCtx().catch(() => {});
   while (next < N) {
-    const n = ++next, r = await visit(browser, n, false, ctx);
+    const n = ++next;
+    if (!FRESH && (!ctx || used >= 10)) await newCtx().catch(() => {});
+    used++;
+    let r;
+    try { r = await visit(browser, n, false, ctx); }
+    catch (e) { const m = String(e && e.message).split('\n')[0].slice(0, 90); r = { n, username: 'sim_unknown', email: '', phone: '', password: PASS, sponsor: '', sponsor_filled: false, terms: false, welcome: false, continued: false, popup: '', loggedOut: false, relinked: false, ok: false, problem: 'bot_error', why: `The bot hit an unexpected error (${m}).`, fix: 'Send me that message.', raw: '', warn: '', api: '', ai: '', crashed: /closed/i.test(m) }; }
+    if (r.crashed) await newCtx().catch(() => {});
     results[n - 1] = r;
     console.log(`  #${String(n).padStart(3)}  ${r.ok ? 'ACCOUNT CREATED' : 'FAILED'}  ${r.username}${r.api ? '  (' + r.api + ')' : ''}`);
     if (r.ok) {
@@ -457,6 +559,7 @@ await Promise.all(Array.from({ length: PAR }, async () => {
     } else {
       console.log(`        ${r.why}`);
       if (!seen.has(r.problem)) { seen.add(r.problem); console.log('        what to check: ' + r.fix); }
+      if (r.ai) console.log('        AI brain: ' + r.ai);
     }
     fs.appendFileSync(OUT + '/log.txt', new Date().toISOString() + '  #' + n + '  ' + (r.ok ? 'SUCCESS' : 'FAILED') + '  ' + r.username + '  ' + (r.password || '') + '  ' + (r.ok ? (r.relinked ? 'link reopened' : 'link NOT reopened') : r.why) + '\n');
     if (DELAY) await sleep(DELAY);
@@ -470,7 +573,7 @@ const good = results.filter((r) => r.ok), bad = results.filter((r) => !r.ok);
 const filled = results.filter((r) => r.sponsor_filled), ticked = results.filter((r) => r.terms);
 const loaded = results.filter((r) => !['unreachable', 'no_form', 'still_logged_in'].includes(r.problem)).length;
 const csvCell = (v) => '"' + String(v).replace(/"/g, '""') + '"';
-fs.writeFileSync(`${OUT}/accounts.csv`, ['n,username,email,phone,password,sponsor,terms_ticked,ok,welcome_seen,popup,logged_out,problem,api,site_message,why,warning', ...results.map((r) => [r.n, r.username, r.email, r.phone, r.password, r.sponsor, r.terms, r.ok, r.welcome, r.popup, r.loggedOut, r.problem, r.api, r.raw, r.why, r.warn].map(csvCell).join(','))].join('\n'));
+fs.writeFileSync(`${OUT}/accounts.csv`, ['n,username,email,phone,password,sponsor,terms_ticked,ok,welcome_seen,popup,logged_out,problem,api,site_message,why,warning,ai_note', ...results.map((r) => [r.n, r.username, r.email, r.phone, r.password, r.sponsor, r.terms, r.ok, r.welcome, r.popup, r.loggedOut, r.problem, r.api, r.raw, r.why, r.warn, r.ai].map(csvCell).join(','))].join('\n'));
 fs.writeFileSync(`${OUT}/accounts.json`, JSON.stringify(results, null, 2));
 
 const L = [], say = (s = '') => { L.push(s); console.log(s); };
@@ -478,6 +581,7 @@ say(`\n========== REFERRAL BOT REPORT ==========`);
 say(`Link:     ${link}`);
 say(`Date:     ${new Date().toLocaleString()}   (took ${((Date.now() - t0) / 1000).toFixed(1)}s)`);
 say(`Accounts: ${good.length} created, ${bad.length} failed, out of ${N}`);
+if (brain) say(`AI brain: ${AI ? 'on, ' + brain.stats().calls + ' AI calls (' + brain.stats().model + ')' : 'off'}`);
 say(`Sponsor box auto-filled from the link: ${filled.length} of ${N}`);
 say(`Terms box ticked:                      ${ticked.length} of ${N}`);
 say(`Welcome card seen after sign-up:       ${good.filter((r) => r.welcome).length} of ${good.length}`);
@@ -496,6 +600,7 @@ if (bad.length) {
     say(`\n * ${list.length} account${list.length > 1 ? 's' : ''}: ${list[0].why}`);
     say(`   What to check: ${list[0].fix}`);
     const msg = list.find((r) => r.raw); if (msg) say(`   The site said: "${msg.raw}"`);
+    const aiN = list.find((r) => r.ai); if (aiN) say(`   AI brain: ${aiN.ai}`);
     say(`   e.g. ${list.slice(0, 3).map((r) => '#' + r.n).join(', ')}`);
   }
   const firstBad = results.findIndex((r) => !r.ok), top = Object.entries(groups).sort((a, b) => b[1].length - a[1].length)[0][0];

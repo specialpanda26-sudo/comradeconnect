@@ -35,7 +35,7 @@ function paint(d) {
   const bar = $('#rb_bar'); bar.style.display = run && !d.dry ? '' : 'none';
   $('#rb_fill').style.width = Math.min(100, Math.round(((d.created + d.failed) / Math.max(1, d.count)) * 100)) + '%';
   const miss = d.hasScript === false ? 'scripts/referral-bot.mjs is not in the repo yet.' : d.ready === false ? 'Playwright is not installed on the server yet (see setup steps).' : '';
-  $('#rb_hint').textContent = d.hint || miss;
+  $('#rb_hint').textContent = d.hint || miss || (d.ai ? 'AI brain is on: the bot asks Gemini for help when it gets stuck.' : 'AI brain is off: add GEMINI_API_KEY on the server to turn it on.');
   const lg = $('#rb_log'); if (d.log && d.log.length) { const atEnd = lg.scrollTop + lg.clientHeight >= lg.scrollHeight - 30; lg.textContent = d.log.join('\n'); if (atEnd) lg.scrollTop = lg.scrollHeight; }
   const res = $('#rb_res'), acc = d.accounts || [];
   if (!run && (acc.length || d.report)) {

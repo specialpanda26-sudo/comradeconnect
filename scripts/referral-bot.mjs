@@ -499,6 +499,36 @@ async function findSubmit(page) {
   }
   return byName;
 }
+// Types like a person (real key presses, then Tab) so the site's own checks notice the value. Falls back to fill().
+async function typeInto(loc, v) {
+  v = String(v);
+  try {
+    await loc.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
+    await loc.click({ timeout: 4000 });
+    await loc.fill('');
+    await loc.pressSequentially(v, { delay: 30 });
+    const got = await loc.inputValue().catch(() => '');
+    if (got !== v && got.replace(/\D/g, '') !== v.replace(/\D/g, '')) await loc.fill(v);
+    await loc.press('Tab').catch(() => {});             // leaving the field is what makes most forms check it
+  } catch (e) { await loc.fill(v).catch(() => {}); }
+}
+// Some sites keep Create Account greyed for a moment (sponsor lookup, checks): wait up to 5 seconds for it.
+async function waitEnabled(btn) {
+  for (let i = 0; i < 10; i++) { if (!(await btn.isDisabled().catch(() => false))) return true; await sleep(500); }
+  return false;
+}
+// Presses Create Account. If something invisible covers it, press it from inside the page instead.
+async function pressCreate(page, btn) {
+  await btn.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
+  if (await btn.click({ timeout: 6000 }).then(() => true).catch(() => false)) return true;
+  await page.keyboard.press('Escape').catch(() => {});
+  return btn.evaluate((e) => { e.click(); return true; }).catch(() => false);
+}
+async function enterSubmit(page) {
+  const pw = page.locator('input[type=password]').last();
+  await pw.focus().catch(() => {});
+  return pw.press('Enter').then(() => true).catch(() => false);
+}
 const testData = (p) => ({ $name: p.name, $username: p.user, $email: p.email, $phone: p.phone, $password: PASS, $country: COUNTRY });
 const FORM_KEYS = ['email', 'password', 'username'];
 // The bot's own rules first. If they miss a box, the AI reads the page and fills the gaps. If there is still no form, the AI tries to open it.
@@ -573,7 +603,7 @@ function diagnose(e) {
   if (e.clickFailed) return { code: 'click_blocked', why: 'Something covers the Create Account button (a popup or cookie banner), so it could not be pressed.', fix: 'Look at fail-N.png and tell me what is covering it.' };
   if (e.btnDisabled) return { code: 'button_disabled', why: 'Create Account stayed greyed out: the site thinks a field is invalid or something is not accepted.', fix: 'Look at filled.png for a red field or an unticked box. Often the mobile number format or the username rules.' };
   if (e.pageErrors && e.pageErrors.length) return { code: 'page_error', why: `The page itself threw a JavaScript error (${e.pageErrors[0]}).`, fix: 'That is a bug in the site front-end. Send me that message.' };
-  if (!e.moved) return { code: 'no_response', why: 'Pressing Create Account did nothing: no request was sent and no message appeared.', fix: 'The form\'s own checks blocked it silently. Look at fail-N.png for a red field.' };
+  if (!e.moved) return { code: 'no_response', why: (e.err ? 'Pressing Create Account sent nothing; the form says: "' + e.err + '".' : 'Pressing Create Account did nothing: no request was sent and no message appeared.'), fix: 'The form\'s own checks blocked it silently. Look at fail-N.png for a red field.' };
   return { code: 'unknown', why: 'The account did not seem to be created, but the bot cannot tell why.', fix: 'Run with --headed and watch, then send me what you see.' };
 }
 // ---- end diagnose ----
@@ -646,7 +676,7 @@ async function visit(browser, n, dry, shared) {
       if (!roles[role]) continue;
       let v = val;
       if (role === 'phone') { const cur = await at(roles.phone).inputValue().catch(() => ''); let pre = (cur.match(/^\+\d{1,4}/) || [''])[0]; if (/kenya/i.test(COUNTRY) && pre && pre !== '+254') pre = '+254'; v = pre + p.phone; }   // keep the dial code the site typed (+254 for Kenya)
-      await at(roles[role]).fill(v);
+      await typeInto(at(roles[role]), v);
     }
     ev.langChanged = (await langGuard(page, lang0)) || ev.langChanged;
     rec.terms = await tickTerms(page, roles);              // tick the terms box, then press Create Account
@@ -658,20 +688,22 @@ async function visit(browser, n, dry, shared) {
     for (let attempt = 1; attempt <= 2; attempt++) {
     const btn = await findSubmit(page);
     if (!(await btn.count())) { ev.noButton = true; throw new Error('no button'); }
-    ev.btnDisabled = await btn.isDisabled().catch(() => false);
+    ev.btnDisabled = !(await waitEnabled(btn));
     const start = page.url();
     post = null; failedReq = null;
-    if (!ev.btnDisabled) ev.clickFailed = !(await btn.click({ timeout: 8000 }).then(() => true).catch(() => false));
+    if (!ev.btnDisabled) ev.clickFailed = !(await (attempt === 2 && !AI ? enterSubmit(page) : pressCreate(page, btn)));
     ev.moved = await page.waitForFunction((u) => location.href !== u || !document.querySelector('input[type=password]'), start, { timeout: 12000 }).then(() => true).catch(() => false);
     await sleep(500);
     ev.err = await page.evaluate(() => [...document.querySelectorAll('[role=alert],[class*=error i],[class*=toast i],[class*=alert i],[class*=invalid i]')].map((e) => e.innerText.trim()).filter(Boolean).join(' | ').slice(0, 160)).catch(() => '');
+    if (!ev.err) ev.err = await page.evaluate(() => { const seen = new Set(), out = []; for (const e of document.querySelectorAll('body *')) { if (e.children.length) continue; const t = (e.innerText || '').trim(); if (!t || t.length > 90 || seen.has(t)) continue; const r = e.getBoundingClientRect(); if (r.width < 1 || r.height < 1) continue; if (/\b(required|invalid|too short|must be|min \d|do(es)? not match|already (in use|taken|exists|registered)|not available|incorrect|try again|failed)\b/i.test(t)) { seen.add(t); out.push(t); } } return out.join(' | ').slice(0, 160); }).catch(() => '');
     const soft = !!post && post.status < 400 && /"(success|ok)"\s*:\s*false|"status"\s*:\s*"(error|fail)|"error"\s*:\s*["{]/i.test(post.body);   // answered 200 but says it failed
     ev.post = post ? (soft ? { ...post, status: 400 } : post) : null;
     ev.failedReq = failedReq;
     rec.api = post ? `POST ${post.url} ${post.status}` : '';
     rec.raw = ((post && (post.status >= 400 || soft) && post.body) || ev.err || '').replace(/\s+/g, ' ').slice(0, 140);
     rec.ok = post ? (post.status < 400 && !soft) : ev.moved && !ev.btnDisabled;
-    if (rec.ok || attempt === 2 || !AI) break;
+    if (rec.ok || attempt === 2) break;
+    if (!AI) continue;                                     // second try without the AI: submit with the Enter key
     const d0 = diagnose(ev);
     if (!FIXABLE.has(d0.code)) break;
     const w = await brain.agent(page, { goal: 'fix_submit', person: testData(p), noSubmit: true, maxSteps: 2, error: (rec.raw || d0.why).slice(0, 200) });

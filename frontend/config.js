@@ -1,7 +1,7 @@
-/* Site settings: the ONLY file you edit after deploying the backend.
-   CC_API: the public address of your API on Render (no slash at the end), e.g. https://api.comradeconnect.co.ke
+/* Site settings. The frontend and API are served by the same Render Web Service.
+   CC_API is the public URL of this service (no trailing slash).
    CC_GOOGLE_ID: the OAuth Web client ID from Google Cloud (public value, not a secret). Empty = Google button hidden. */
-const CC_API = 'https://comradeconnectback.onrender.com';
+const CC_API = 'https://comradeconnect-j9e9.onrender.com';
 const CC_GOOGLE_ID = '628050649968-umh0eflaigqqet517sj7te2oa9h0bsmq.apps.googleusercontent.com';
-const CC_NATIVE_GOOGLE = true;   // native "Choose an account" bottom sheet (Credential Manager). It falls back to the secure browser tab by itself if the sheet cannot open
+const CC_NATIVE_GOOGLE = true;
 const CC_AGORA_ID = '1c6f32877ba24f478465733e633a5b4d';

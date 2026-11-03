@@ -209,12 +209,134 @@ async function dismissBarrier(page) {
   }
   return { pressed, stuck: await vis(barrier) };
 }
+// ---------- generic popup loop ----------
+// Finds any popup sitting on top of the page (dialog, modal, dimmed overlay, bottom sheet, Telegram panel), whatever it says.
+// The bottom tab bar (HOME / EARN / TEAM / WALLET / ME) is never counted as a popup.
+async function detectOverlay(page) {
+  const tg = await page.getByText(/telegram|join our channel|get 5 usd/i).first().isVisible().catch(() => false);
+  const o = await page.evaluate(() => {
+    const vw = innerWidth, vh = innerHeight, seen = [];
+    const navLike = (e) => { const t = (e.innerText || '').toUpperCase(); return /\bHOME\b/.test(t) && /\bWALLET\b/.test(t) && /\bTEAM\b/.test(t); };
+    for (const e of document.querySelectorAll('body *')) {
+      if (/^(SCRIPT|STYLE|NOSCRIPT|HEAD)$/.test(e.tagName)) continue;
+      const cs = getComputedStyle(e);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0 || cs.pointerEvents === 'none') continue;
+      const isDialog = e.matches('[role=dialog],[role=alertdialog],[aria-modal=true],dialog[open]');
+      const floating = (cs.position === 'fixed' || cs.position === 'absolute') && (parseInt(cs.zIndex, 10) >= 10 || isDialog);
+      if (!floating && !isDialog) continue;
+      const r = e.getBoundingClientRect();
+      if (r.width < 120 || r.height < 60) continue;
+      const covers = r.width >= vw * 0.55 && r.height >= vh * 0.25;
+      if (!isDialog && !covers) continue;
+      if (!isDialog && r.height < vh * 0.14) continue;                 // thin fixed bars (header, bottom tabs) are not popups
+      if (navLike(e)) continue;                                        // a wrapper that holds the tab bar is the app, not a popup
+      const txt = (e.innerText || '').replace(/\s+/g, ' ').trim();
+      if (!txt && !e.querySelector('button,[role=button],svg,img')) continue;
+      seen.push({ txt: txt.slice(0, 120), area: r.width * r.height });
+    }
+    if (!seen.length) return null;
+    seen.sort((a, b) => a.area - b.area);                              // smallest = the card itself, not the whole-screen backdrop
+    return { sig: seen[0].txt || 'popup', count: seen.length };
+  }).catch(() => null);
+  if (o) return { sig: o.sig, telegram: tg };
+  if (tg) return { sig: 'telegram', telegram: true };
+  return null;
+}
+// One try at closing the popup. "level" goes up each time the same popup is still there, so the bot never repeats a move that did not work.
+async function dismissOnce(page, level) {
+  const GOOD = /^\s*(later|maybe later|remind me later|not now|skip|no,? thanks|no thanks|dismiss|close|got it|okay|ok|done|cancel|continue|x|×|✕|✖)\s*$/i;
+  const NEVER = /log ?out|sign ?out|delete|remove|pay|buy|join|claim|open telegram|allow|enable|subscribe|install/i;
+  if (level === 0) {
+    const hit = await page.evaluate(({ good, never }) => {
+      const G = new RegExp(good, 'i'), N = new RegExp(never, 'i');
+      const vw = innerWidth, vh = innerHeight;
+      const els = [...document.querySelectorAll('button,[role=button],a,[onclick],div,span')].filter((e) => {
+        const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+        if (r.width < 8 || r.height < 8 || cs.visibility === 'hidden' || cs.display === 'none') return false;
+        if (e.children.length > 2) return false;
+        const t = (e.innerText || e.getAttribute('aria-label') || '').trim();
+        return t && G.test(t) && !N.test(t);
+      });
+      // prefer real buttons, and ones that sit above the bottom tab bar
+      const pts = els.map((e) => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, t: (e.innerText || e.getAttribute('aria-label') || '').trim(), btn: /^(BUTTON|A)$/.test(e.tagName) || e.getAttribute('role') === 'button' }; })
+        .filter((k) => k.x > 0 && k.x < vw && k.y > 0 && k.y < vh * 0.93)
+        .sort((a, b) => (b.btn - a.btn) || (/^(later|not now|skip|maybe later)/i.test(b.t) - /^(later|not now|skip|maybe later)/i.test(a.t)));
+      return pts[0] || null;
+    }, { good: GOOD.source, never: NEVER.source }).catch(() => null);
+    if (hit) { await page.mouse.click(hit.x, hit.y); return hit.t.slice(0, 12) || 'button'; }
+    level = 1;
+  }
+  if (level === 1) {                                                    // an X drawn as an icon: small button/svg in a top-right corner
+    const spot = await page.evaluate(() => {
+      const vw = innerWidth, vh = innerHeight;
+      const c = [...document.querySelectorAll('button,[role=button],a,svg,[aria-label*=close i]')].map((e) => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height, t: (e.textContent || '').trim() }; })
+        .filter((k) => k.w >= 10 && k.w < 64 && k.h < 64 && k.t.length <= 2 && k.y < vh * 0.6 && k.x > vw * 0.5)
+        .sort((a, b) => (b.x - a.x) || (a.y - b.y));
+      return c[0] || null;
+    }).catch(() => null);
+    if (spot) { await page.mouse.click(spot.x, spot.y); return 'X'; }
+    level = 2;
+  }
+  if (level === 2) { await page.keyboard.press('Escape'); return 'Esc'; }
+  if (level === 3) { await page.mouse.click(6, 6); return 'backdrop'; }          // tap the dimmed area outside the card
+  return null;
+}
+// Closes popup after popup until none is left (several in a row is normal after sign-up). Saves a screenshot of each one.
+async function closePopups(page, n, tag = 'after') {
+  const pressed = [], shots = [];
+  let stuck = false, lastSig = '', level = 0, quiet = 0, k = 0;
+  for (let round = 0; round < 14; round++) {
+    const o = await detectOverlay(page);
+    if (!o) { if (++quiet >= 2) break; await sleep(900); continue; }        // look twice: the next popup can arrive a moment late
+    quiet = 0;
+    if (o.sig === lastSig) level++; else { level = 0; k++; lastSig = o.sig; if (n <= 3) { const f = `${OUT}/popup-a${n}-${tag}-${k}.png`; await page.screenshot({ path: f }).catch(() => {}); shots.push(f); } }
+    if (level > 3) { stuck = true; const f = `${OUT}/popup-STUCK-a${n}-${tag}.png`; await page.screenshot({ path: f }).catch(() => {}); shots.push(f); break; }
+    let did;
+    if (o.telegram && level === 0) { const b = await dismissBarrier(page); did = b.pressed.join('+') || null; }
+    if (!did) did = await dismissOnce(page, level);
+    if (did) pressed.push(did);
+    await sleep(700);
+  }
+  if (!stuck && await detectOverlay(page)) stuck = true;
+  return { pressed, stuck, shots, count: k };
+}
+
+// Taps the ME tab in the bottom bar (HOME / EARN / TEAM / WALLET / ME), then scrolls to the very bottom: Logout is only there.
+async function openMeAndScroll(page) {
+  const spot = await page.evaluate(() => {
+    const vw = innerWidth, vh = innerHeight;
+    const c = [...document.querySelectorAll('a,button,[role=tab],[role=button],div,span,li')].filter((e) => {
+      const t = (e.innerText || '').trim();
+      if (!/^me$/i.test(t)) return false;
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && r.top > vh * 0.7;                  // it is in the bottom bar
+    }).map((e) => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, a: r.width * r.height }; })
+      .sort((a, b) => b.a - a.a);
+    return c[0] || null;
+  }).catch(() => null);
+  if (spot) { await page.mouse.click(spot.x, spot.y); await sleep(900); }
+  for (let i = 0; i < 4; i++) {
+    await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+      for (const e of document.querySelectorAll('*')) { if (e.scrollHeight > e.clientHeight + 40 && /auto|scroll/.test(getComputedStyle(e).overflowY)) e.scrollTop = e.scrollHeight; }
+    }).catch(() => {});
+    await page.mouse.wheel(0, 4000).catch(() => {});
+    await sleep(350);
+  }
+  return !!spot;
+}
 // Logs the account out: looks for a Logout button, opens menus if it is hidden, confirms if asked. Falls back to clearing the session.
-async function logout(page) {
+async function logout(page, n) {
   const outRx = /log ?out|sign ?out/i;
   const find = () => page.getByRole('button', { name: outRx }).or(page.getByRole('link', { name: outRx })).or(page.getByRole('menuitem', { name: outRx })).or(page.getByText(/^\s*(log ?out|sign ?out)\s*$/i)).first();
   const vis = (l) => l.isVisible().catch(() => false);
   let btn = find();
+  if (!(await vis(btn))) {                                   // Logout lives only under ME, at the very bottom
+    await closePopups(page, n || 99, 'prelogout');           // a popup may be covering the tab bar
+    await openMeAndScroll(page);
+    btn = find();
+    if (await vis(btn)) await btn.scrollIntoViewIfNeeded().catch(() => {});
+  }
   if (!(await vis(btn))) {
     const openers = [
       page.getByRole('button', { name: /menu|profile|account|settings|more|user/i }),
@@ -535,10 +657,10 @@ async function visit(browser, n, dry, shared) {
           if (n === 1) await page.screenshot({ path: `${OUT}/welcome.png`, fullPage: true });
           rec.continued = await pressContinue(page);
         }
-        const b = await dismissBarrier(page);
+        const b = await closePopups(page, n, 'after');
         rec.popup = b.pressed.join('+') || 'none'; ev.popupStuck = b.stuck;
-        if (ev.popupStuck && AI) { const w = await brain.agent(page, { goal: 'popup', person: testData(p), cacheKey: 'popup', verify: async () => !(await page.getByText(/telegram|join our channel|get 5 usd/i).first().isVisible().catch(() => false)) }); if (w.ok) { ev.popupStuck = false; rec.popup += '+AI'; } }
-        const lo = await logout(page);
+        if (ev.popupStuck && AI) { const w = await brain.agent(page, { goal: 'popup', person: testData(p), cacheKey: 'popup', verify: async () => !(await detectOverlay(page)) }); if (w.ok) { ev.popupStuck = false; rec.popup += '+AI'; } }
+        const lo = await logout(page, n);
         if (!lo.ok && AI) {
           const w = await brain.agent(page, { goal: 'logout', person: testData(p), cacheKey: 'logout', verify: async () => (await page.locator('input[type=password]').first().isVisible().catch(() => false)) || (await page.getByRole('button', { name: /log ?in|sign ?in|create account/i }).first().isVisible().catch(() => false)) });
           if (w.ok) { lo.ok = true; lo.how = 'AI brain'; }

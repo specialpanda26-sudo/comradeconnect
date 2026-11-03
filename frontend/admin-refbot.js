@@ -18,6 +18,7 @@ SECTIONS.refbot = () => {
     + '<label class="fl" for="rb_pass">Test password (optional)<small>8 to 40 characters. Leave empty and the bot chooses one</small></label><input id="rb_pass" autocomplete="off" placeholder="leave empty">'
     + '<label class="fl" for="rb_gap">Seconds between accounts (optional)<small>Raise it if the site starts refusing sign-ups</small></label><input id="rb_gap" inputmode="numeric" maxlength="2" placeholder="2">'
     + '<label class="fl"><input type="checkbox" id="rb_vibe"> Playful names (real first names + 2 digits, e.g. david22@gmail.com; no prefix word)</label>'
+    + '<label class="fl"><input type="checkbox" id="rb_noai"> Turn the AI helper off for this test (the bot then uses only its own rules)</label>'
     + '<label class="fl"><input type="checkbox" id="rb_ok"> This is my own site. I understand every account is real and may get the signup bonus.</label>'
     + '<div class="row"><button id="rb_dry">Check the page first</button><button class="p" id="rb_go">Start test</button><button id="rb_stop" style="display:none">Stop</button></div>'
     + '<p class="err" id="rb_err"></p><p class="sub"><b id="rb_st">Checking...</b></p>'
@@ -71,7 +72,7 @@ if (!window.__rbBound) {
   document.addEventListener('input', (e) => { if (e.target && e.target.id === 'rb_max') e.target.dataset.t = '1'; });
   document.addEventListener('click', async (e) => {
     const t = (id) => e.target.closest('#' + id);
-    const form = () => ({ link: $('#rb_link').value, count: $('#rb_n').value, domain: $('#rb_dom').value, pass: $('#rb_pass').value.trim(), delay: Math.round((parseFloat($('#rb_gap').value) || 0) * 1000) || '', confirm: $('#rb_ok').checked, vibe: $('#rb_vibe').checked });
+    const form = () => ({ link: $('#rb_link').value, count: $('#rb_n').value, domain: $('#rb_dom').value, pass: $('#rb_pass').value.trim(), delay: Math.round((parseFloat($('#rb_gap').value) || 0) * 1000) || '', confirm: $('#rb_ok').checked, vibe: $('#rb_vibe').checked, noai: $('#rb_noai').checked });
     let b;
     if ((b = t('rb_maxsave'))) { b.disabled = true; $('#rb_err').textContent = ''; try { const d = await api('/api/admin/wa/refbot/limit', { max: $('#rb_max').value.trim() }); $('#rb_max').dataset.t = ''; paint(d); toast('Limit saved: ' + d.max); } catch (x) { $('#rb_err').textContent = x.message; } b.disabled = false; }
     else if ((b = t('rb_go'))) go(b, form());

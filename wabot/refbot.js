@@ -91,7 +91,7 @@ async function start(body, env) {
 
   if (run && run.dir) { try { fs.rmSync(run.dir, { recursive: true, force: true }); } catch (e) {} }
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'refbot-'));
-  const args = [script, link, ...(dry ? ['--dry'] : [String(count), '--yes', '--delay=' + delay]), ...(domain ? ['--domain=' + domain] : []), ...(pass ? ['--pass=' + pass] : []), ...(body.vibe ? ['--vibe=play'] : [])];
+  const args = [script, link, ...(dry ? ['--dry'] : [String(count), '--yes', '--delay=' + delay]), ...(domain ? ['--domain=' + domain] : []), ...(pass ? ['--pass=' + pass] : []), ...(body.vibe ? ['--vibe=play'] : []), ...(body.noai ? ['--no-ai'] : [])];
   const cenv = { PATH: process.env.PATH, HOME: process.env.HOME || dir, TMPDIR: os.tmpdir(), NODE_ENV: 'production' };
   if (process.env.PLAYWRIGHT_BROWSERS_PATH) cenv.PLAYWRIGHT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH;
   for (const k of ['GEMINI_API_KEY', 'GEMINI_MODEL', 'GEMINI_FALLBACK', 'GROQ_API_KEY', 'GROQ_MODEL', 'REFBOT_EMAIL_BASE']) if (process.env[k]) cenv[k] = process.env[k];   // the AI brain (scripts/referral-brain.mjs) uses the site's own Gemini key

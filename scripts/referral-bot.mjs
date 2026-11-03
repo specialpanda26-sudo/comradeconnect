@@ -74,9 +74,8 @@ const PASS = opt('pass', 'Sim' + rnd(5) + '#7');
 const EMAIL_BASE = (() => { const b = String(opt('email-base', process.env.REFBOT_EMAIL_BASE || '')).trim().toLowerCase(); return /^[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(b) ? b : ''; })();
 // Username prefix: empty by default (usernames look like karanjadave). To mark test accounts again, run with --prefix=sim_
 const USER_PREFIX = String(opt('prefix', '')).replace(/[^a-z0-9_]/gi, '').toLowerCase();
-// --vibe=play switches the email/username part to playful words + numbers (monday22, vibesqueen09 ...) instead of Kenyan-style names. Off by default.
+// --vibe=play: email/username is just one real first name (from the FIRST list below) plus 2 digits, nothing in front, no plus sign: david22@gmail.com. Off by default.
 const VIBE = String(opt('vibe', '')).toLowerCase() === 'play';
-const WORDS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'vibes', 'mood', 'energy', 'wave', 'squad', 'queen', 'king', 'legend', 'icon', 'star', 'goat', 'sunny', 'cloud', 'spark', 'glow', 'chill', 'baddie', 'drip'];
 const usedIds = new Set();
 function person() {
   let first, last, user, local;
@@ -84,8 +83,8 @@ function person() {
     first = pick(FIRST); last = pick(LAST);
     const f = first.toLowerCase(), l = last.toLowerCase();
     if (VIBE) {
-      local = pick(WORDS) + digits(2);
-      user = USER_PREFIX + pick(WORDS) + digits(2);
+      local = f + digits(2);
+      user = USER_PREFIX + f + digits(2);
     } else {
       local = pick([f + l + digits(2), f + l + digits(2), f + l.slice(0, 4) + digits(2), l + f + digits(2), f[0] + l + digits(2), f + '.' + l + digits(2)]);   // davidkaranja36, davidkara67, karanjadave12 ...
       user = USER_PREFIX + pick([l + f, l + f.slice(0, 3) + digits(2), f + l.slice(0, 3) + digits(2), l + f[0] + digits(2)]);                                       // karanjadave, karanjadav48 ...
@@ -93,7 +92,7 @@ function person() {
     if (!usedIds.has(local) && !usedIds.has(user)) break;
   }
   usedIds.add(local); usedIds.add(user);
-  const email = EMAIL_BASE ? EMAIL_BASE.replace('@', '+' + local.replace(/[^a-z0-9]/g, '') + '@') : local + '@' + DOMAIN;
+  const email = (!VIBE && EMAIL_BASE) ? EMAIL_BASE.replace('@', '+' + local.replace(/[^a-z0-9]/g, '') + '@') : local + '@' + DOMAIN;   // --vibe=play never uses the +prefix, even if REFBOT_EMAIL_BASE is set
   return { name: first + ' ' + last, user, email, phone: '7' + digits(/kenya/i.test(COUNTRY) ? 8 : 9) };   // usernames are random Kenyan-style names (or playful words with --vibe=play); the list of created accounts is printed at the end of every run
 }
 

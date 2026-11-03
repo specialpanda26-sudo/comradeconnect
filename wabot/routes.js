@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import * as M from './manager.js';
 import { setAi, getKnowledge, setKnowledge, complaints, closeComplaint } from './ai.js';
 import { spillStart, spillMore, spillStop } from './spill.js';
+import * as R from './refbot.js';
 
 const fails = new Map();
 const h = (v) => crypto.createHash('sha256').update(String(v)).digest();
@@ -24,6 +25,7 @@ export async function handleWa(method, pathname, body, key, ip, env) {
     if (p === 'spill/start' && method === 'POST') { await spillStart(M.getSock(), body); return ok(M.status()); }
     if (p === 'spill/more' && method === 'POST') { await spillMore(M.getSock()); return ok(M.status()); }
     if (p === 'spill/stop' && method === 'POST') { spillStop(); return ok(M.status()); }
+    if (p.startsWith('refbot/')) return ok(await R.handle(p.slice(7), method, body, env));
     return { status: 404, data: { error: 'Not found' } };
   } catch (e) { return { status: 400, data: { error: String((e && e.message) || 'Failed') } }; }
 }

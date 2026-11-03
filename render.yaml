@@ -6,7 +6,7 @@ services:
     runtime: node
     plan: starter            # free plan sleeps after 15 min idle and the first request waits ~50 s; starter ($7/mo) stays awake
     region: frankfurt
-    buildCommand: "npm install --omit=dev"
+    buildCommand: "npm install --omit=dev && PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium"
     startCommand: node server.js
     healthCheckPath: /healthz
     disk:
@@ -15,6 +15,7 @@ services:
       sizeGB: 1
     envVars:
       - { key: NODE_VERSION, value: "22" }
+      - { key: PLAYWRIGHT_BROWSERS_PATH, value: "0" }
       - { key: ALLOWED_ORIGINS, value: "https://comradeconnect.co.ke,https://www.comradeconnect.co.ke,https://localhost" }
       - { key: SUPABASE_URL, sync: false }
       - { key: SUPABASE_SERVICE_KEY, sync: false }

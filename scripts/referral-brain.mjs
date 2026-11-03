@@ -111,7 +111,8 @@ async function askJSON(system, text, image) {
       if (r.status === 429 || r.status >= 500) { cfg.log(`AI is busy (${r.status}), waiting a bit`); await sleep(3000 * (t + 1)); continue; }
       if (!r.ok) {
         const body = await r.text().catch(() => '');
-        if (r.status === 400 && gen.thinkingConfig && /think/i.test(body)) { delete gen.thinkingConfig; calls--; continue; }
+        if (r.status === 400 && gen.thinkingConfig) {   // newer models reject thinkingBudget with a vague 'invalid argument': drop it and retry
+           delete gen.thinkingConfig; calls--; continue; }
         let msg = body.replace(/\s+/g, ' '); try { msg = JSON.parse(body).error.message || msg; } catch (e) {}
         if (r.status === 404 && !tried404.has(m)) {
           tried404.add(m);

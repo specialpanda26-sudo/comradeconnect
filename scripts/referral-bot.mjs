@@ -527,17 +527,18 @@ async function waitEnabled(btn) {
   return false;
 }
 // "Busy" = the button shows only dots / a spinner, or says aria-busy: the site is still processing the sign-up.
-const isBusy = (btn) => btn.evaluate((e) => {
+const isBusy = (h) => !h ? Promise.resolve(false) : h.evaluate((e) => {
+  if (!e.isConnected) return false;                       // button removed from the page = the page moved on
   const t = (e.innerText || e.value || '').trim();
   return e.getAttribute('aria-busy') === 'true' || /^[\s.\u2026\u00b7\u2022]+$/.test(t) || !!e.querySelector('[class*=spin i],[class*=loading i]') || /\b(loading|busy|pending)\b/i.test(e.className || '');
-}, undefined, { timeout: 1500 }).catch(() => false);   // short timeout: if the button is gone (page changed) it is not busy
+}).catch(() => false);
 // After pressing: wait up to `ms` for the site to answer (a request finishing, the page moving, or the button leaving its busy state).
 // Returns 'answered' or 'hung' (still busy and nothing came back).
-async function waitAnswer(page, btn, start, ms, got) {
+async function waitAnswer(page, h, start, ms, got) {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) {
     if (got() || page.url() !== start) return 'answered';
-    if (!(await isBusy(btn))) return 'answered';
+    if (!(await isBusy(h))) return 'answered';
     await sleep(500);
   }
   return got() ? 'answered' : 'hung';
@@ -716,12 +717,13 @@ async function visit(browser, n, dry, shared) {
     if (!(await btn.count())) { ev.noButton = true; throw new Error('no button'); }
     ev.btnDisabled = !(await waitEnabled(btn));
     const start = page.url();
+    const hbtn = await btn.elementHandle({ timeout: 1500 }).catch(() => null);   // fixed handle: the button text changes to "..." after the click
     post = null; failedReq = null;
     if (!ev.btnDisabled) ev.clickFailed = !(await (attempt === 2 && !AI ? enterSubmit(page) : pressCreate(page, btn)));
     ev.hung = false;
-    if (!ev.btnDisabled && !ev.clickFailed && await isBusy(btn)) {   // site is still processing: give it up to 30 s before judging
+    if (!ev.btnDisabled && !ev.clickFailed && await isBusy(hbtn)) {   // site is still processing: give it up to 30 s before judging
       const t0 = Date.now();
-      ev.hung = (await waitAnswer(page, btn, start, 30000, () => !!post || !!failedReq)) === 'hung';
+      ev.hung = (await waitAnswer(page, hbtn, start, 30000, () => !!post || !!failedReq)) === 'hung';
       ev.waited = Math.round((Date.now() - t0) / 1000);
     }
     ev.moved = await page.waitForFunction((u) => location.href !== u || !document.querySelector('input[type=password]'), start, { timeout: 12000 }).then(() => true).catch(() => false);

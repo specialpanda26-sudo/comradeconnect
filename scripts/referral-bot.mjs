@@ -96,6 +96,19 @@ function person() {
   return { name: first + ' ' + last, user, email, phone: '7' + digits(/kenya/i.test(COUNTRY) ? 8 : 9) };   // usernames are random Kenyan-style names (or playful words with --vibe=play); the list of created accounts is printed at the end of every run
 }
 
+// A new username in the same style, used when the site says the first one is taken.
+function freshUsername(name) {
+  const parts = String(name).toLowerCase().replace(/[^a-z ]/g, '').split(' ');
+  const f = parts[0] || 'user', l = parts[1] || 'ke';
+  let u = '';
+  for (let i = 0; i < 30; i++) {
+    u = USER_PREFIX + (VIBE ? f + digits(2) : pick([l + f.slice(0, 3) + digits(2), f + l.slice(0, 3) + digits(3), l + f[0] + digits(2), f + digits(3)]));
+    if (!usedIds.has(u)) break;
+  }
+  usedIds.add(u);
+  return u.slice(0, 20);
+}
+
 // ---------- reading the form ----------
 const SEL = 'input, select, textarea';
 async function describe(page) {
@@ -534,14 +547,15 @@ const isBusy = (h) => !h ? Promise.resolve(false) : h.evaluate((e) => {
 }).catch(() => false);
 // After pressing: wait up to `ms` for the site to answer (a request finishing, the page moving, or the button leaving its busy state).
 // Returns 'answered' or 'hung' (still busy and nothing came back).
-async function waitAnswer(page, h, start, ms, got) {
+async function waitAnswer(page, h, start, ms, got, sent) {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) {
     if (got() || page.url() !== start) return 'answered';
     if (!(await isBusy(h))) return 'answered';
+    if (!sent() && Date.now() - t0 > 8000) return 'unsent';     // nothing left the browser: the script on the page is stuck, waiting longer is pointless
     await sleep(500);
   }
-  return got() ? 'answered' : 'hung';
+  return got() ? 'answered' : (sent() ? 'hung' : 'unsent');
 }
 // Presses Create Account. If something invisible covers it, press it from inside the page instead.
 async function pressCreate(page, btn) {
@@ -625,7 +639,8 @@ function diagnose(e) {
   if (e.crash) return { code: 'bot_error', why: `The bot stumbled while filling the form (${e.crash}).`, fix: 'Run once with --headed and watch where it stops, then send me that message.' };
   const x = { status: e.post && e.post.status, text: (((e.post && e.post.body) || '') + ' ' + (e.err || '')).toLowerCase(), captcha: e.captcha, post: e.post };
   for (const r of RULES) if (r.test(x)) return { code: r.code, why: r.why, fix: r.fix };
-  if (e.hung) return { code: 'site_slow', why: `Create Account was pressed and the button stayed in its loading state (...) for ${e.waited || 30} seconds with no answer from the site.`, fix: 'The site (or its server) is too slow or not answering the sign-up. Check the server logs / whether the site was waking up, then run again.' };
+  if (e.hung && e.hungKind === 'unsent') return { code: 'page_stuck', why: 'Create Account went to its loading state (...) but the page never sent a sign-up request (waited ' + (e.waited || 8) + ' seconds). The script on the page is stuck before it reaches the server.', fix: 'This is a front-end problem, not a slow server. Look at fail-N.png and the browser console of the site: a check before sign-up (device check, sponsor lookup, captcha) is probably not finishing.' };
+  if (e.hung) return { code: 'site_slow', why: 'The sign-up request was sent' + (e.sentUrl ? ' to ' + e.sentUrl : '') + ' but no answer came back for ' + (e.waited || 30) + ' seconds, and Create Account stayed in its loading state (...).', fix: 'The server (or its database) is too slow or not answering the sign-up. Check the Render logs for that moment, then run again.' };
   if (e.failedReq) return { code: 'network', why: `The sign-up request never reached the server (${e.failedReq}).`, fix: 'The site may be down or overloaded, or the browser blocked the request (CORS / firewall). Check the site is online and the server logs.' };
   if (e.clickFailed) return { code: 'click_blocked', why: 'Something covers the Create Account button (a popup or cookie banner), so it could not be pressed.', fix: 'Look at fail-N.png and tell me what is covering it.' };
   if (e.btnDisabled) return { code: 'button_disabled', why: 'Create Account stayed greyed out: the site thinks a field is invalid or something is not accepted.', fix: 'Look at filled.png for a red field or an unticked box. Often the mobile number format or the username rules.' };
@@ -641,7 +656,7 @@ async function visit(browser, n, dry, shared) {
   const p = person();
   const rec = { n, username: p.user, email: p.email, phone: p.phone, password: PASS, sponsor: '', sponsor_filled: false, terms: false, welcome: false, continued: false, popup: '', loggedOut: false, relinked: false, ok: false, problem: '', why: '', fix: '', raw: '', warn: '', api: '', ai: '' };
   const ev = { pageErrors: [] };
-  let post = null, failedReq = null, phase = 'load';
+  let post = null, failedReq = null, sentReq = '', phase = 'load';
   try { ctx = ctx || await browser.newContext({ viewport: { width: 390, height: 1000 } }); page = await ctx.newPage(); }
   catch (e) { const d = diagnose({ browserDied: true }); Object.assign(rec, { problem: d.code, why: d.why, fix: d.fix, crashed: true }); if (!shared && ctx) await ctx.close().catch(() => {}); return rec; }
   page.on('response', async (r) => {
@@ -650,6 +665,7 @@ async function visit(browser, n, dry, shared) {
       post = { url: new URL(r.url()).pathname, status: r.status(), body: (await r.text().catch(() => '')).slice(0, 300) };
     }
   });
+  page.on('request', (q) => { if (q.method() === 'POST' && ['fetch', 'xhr'].includes(q.resourceType())) sentReq = new URL(q.url()).pathname; });
   page.on('requestfailed', (q) => { if (q.method() === 'POST') failedReq = `${new URL(q.url()).pathname}: ${(q.failure() || {}).errorText || 'failed'}`; });
   page.on('pageerror', (e) => { if (ev.pageErrors.length < 3) ev.pageErrors.push(String(e.message).split('\n')[0].slice(0, 90)); });
   try {
@@ -712,18 +728,20 @@ async function visit(browser, n, dry, shared) {
     if (n === 1) await page.screenshot({ path: `${OUT}/filled.png`, fullPage: true });
 
     phase = 'submit';
+    let uTries = 0;
     for (let attempt = 1; attempt <= 2; attempt++) {
     const btn = await findSubmit(page);
     if (!(await btn.count())) { ev.noButton = true; throw new Error('no button'); }
     ev.btnDisabled = !(await waitEnabled(btn));
     const start = page.url();
     const hbtn = await btn.elementHandle({ timeout: 1500 }).catch(() => null);   // fixed handle: the button text changes to "..." after the click
-    post = null; failedReq = null;
+    post = null; failedReq = null; sentReq = '';
     if (!ev.btnDisabled) ev.clickFailed = !(await (attempt === 2 && !AI ? enterSubmit(page) : pressCreate(page, btn)));
     ev.hung = false;
     if (!ev.btnDisabled && !ev.clickFailed && await isBusy(hbtn)) {   // site is still processing: give it up to 30 s before judging
       const t0 = Date.now();
-      ev.hung = (await waitAnswer(page, hbtn, start, 30000, () => !!post || !!failedReq)) === 'hung';
+      const wr = await waitAnswer(page, hbtn, start, 30000, () => !!post || !!failedReq, () => !!sentReq);
+      ev.hung = wr !== 'answered'; ev.hungKind = wr; ev.sentUrl = sentReq;
       ev.waited = Math.round((Date.now() - t0) / 1000);
     }
     ev.moved = await page.waitForFunction((u) => location.href !== u || !document.querySelector('input[type=password]'), start, { timeout: 12000 }).then(() => true).catch(() => false);
@@ -736,6 +754,12 @@ async function visit(browser, n, dry, shared) {
     rec.api = post ? `POST ${post.url} ${post.status}` : '';
     rec.raw = ((post && (post.status >= 400 || soft) && post.body) || ev.err || '').replace(/\s+/g, ' ').slice(0, 140);
     rec.ok = post ? (post.status < 400 && !soft) : ev.moved && !ev.btnDisabled;
+    if (!rec.ok && !ev.hung && uTries < 4 && roles.username && /(user ?name|handle)[^|]{0,60}(taken|already|exists|in use)|already taken|username.{0,20}(unavailable|not available)/i.test(((post && post.body) || '') + ' ' + (ev.err || ''))) {
+      uTries++; rec.oldUsernames = (rec.oldUsernames || []).concat(p.user);      // the username is taken: type a new one and press again
+      p.user = freshUsername(p.name); rec.username = p.user;
+      await typeInto(at(roles.username), p.user); await sleep(1200);
+      attempt--; continue;
+    }
     if (rec.ok || attempt === 2 || ev.hung) break;          // a hang is reported as the first failure: never press the stuck button again
     if (!AI) continue;                                     // second try without the AI: submit with the Enter key
     const d0 = diagnose(ev);

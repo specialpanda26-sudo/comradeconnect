@@ -8,6 +8,7 @@
 const KEY = process.env.GEMINI_API_KEY || '';
 let MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 let tried = false;
+const FALLBACKS = (process.env.GEMINI_FALLBACK || 'gemini-2.5-flash-lite').split(',').map((x) => x.trim()).filter(Boolean);   // used when the main model keeps timing out or says 503
 const BASE = (process.env.GEMINI_BASE || 'https://generativelanguage.googleapis.com/v1beta').replace(/\/$/, '');
 const cfg = { budget: 60, country: 'Kenya', log: () => {} };
 const cache = { read: new Map(), recipe: new Map(), explain: new Map() };
@@ -46,15 +47,18 @@ async function askJSON(system, text, image) {
     if (/flash/i.test(MODEL)) gen.thinkingConfig = { thinkingBudget: 0 };
     const parts = [{ text }];
     if (image) parts.push({ inlineData: { mimeType: image.mime, data: image.b64 } });
-    for (let t = 0; t < 3; t++) {
+    for (let t = 0; t < 5; t++) {
       if (calls >= cfg.budget) return null;
       calls++;
+      const pool = [MODEL, ...FALLBACKS.filter((x) => x !== MODEL)];
+      const m = t >= 2 ? pool[(t - 1) % pool.length] : MODEL;           // after two failures on the main model, try the lighter one, then alternate
+      if (m !== MODEL && t >= 2) cfg.log('switching to ' + m + ' because ' + MODEL + ' is overloaded');
       let r;
       try {
-        r = await fetch(`${BASE}/models/${MODEL}:generateContent`, {
+        r = await fetch(`${BASE}/models/${m}:generateContent`, {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY },
           body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts }], generationConfig: gen }),
-          signal: AbortSignal.timeout(30000),
+          signal: AbortSignal.timeout(45000),
         });
       } catch (e) { cfg.log('AI request failed (' + e.message + '), trying again'); await sleep(2000 * (t + 1)); continue; }
       lastEnd = Date.now();

@@ -61,12 +61,32 @@ fs.mkdirSync(OUT, { recursive: true });
 const rnd = (n) => Math.random().toString(36).slice(2, 2 + n);
 const digits = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 10)).join('');
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
-const FIRST = ['James', 'Mary', 'Ali', 'Grace', 'Peter', 'Amina', 'Daniel', 'Faith', 'Brian', 'Zawadi', 'Kevin', 'Linet', 'Samuel', 'Naomi'];
-const LAST = ['Otieno', 'Smith', 'Kamau', 'Hassan', 'Wanjiru', 'Brown', 'Mwangi', 'Omar', 'Achieng', 'Jones', 'Njoroge', 'Patel'];
+// Made-up Kenyan-style names (common first names and family names, mixed at random). No well-known people on purpose.
+const FIRST = ['David', 'Brian', 'Kevin', 'Peter', 'John', 'Samuel', 'Joseph', 'Dennis', 'Collins', 'Felix', 'Victor', 'Eric', 'Allan', 'Dan', 'Martin', 'Moses', 'Isaac', 'Kelvin', 'Steve', 'Duncan', 'Ian', 'Alex',
+  'Mercy', 'Faith', 'Grace', 'Esther', 'Lucy', 'Winnie', 'Purity', 'Cynthia', 'Mary', 'Beatrice', 'Naomi', 'Linet', 'Brenda', 'Joyce', 'Sharon', 'Ruth', 'Caroline', 'Irene', 'Lilian', 'Judy',
+  'Wanjiku', 'Njeri', 'Wambui', 'Akinyi', 'Atieno', 'Mwende', 'Zawadi', 'Amina', 'Fatuma', 'Halima', 'Hassan', 'Juma', 'Kiprono', 'Barasa', 'Otieno', 'Mutua', 'Kamau', 'Maina'];
+const LAST = ['Karanja', 'Kamau', 'Mwangi', 'Njoroge', 'Kariuki', 'Githinji', 'Maina', 'Kimani', 'Wanjiru', 'Gathoni', 'Macharia', 'Ndungu', 'Waweru', 'Mugo', 'Kinyua', 'Muriuki',
+  'Otieno', 'Odhiambo', 'Ochieng', 'Omondi', 'Onyango', 'Owino', 'Achieng', 'Adhiambo', 'Okoth', 'Juma', 'Wekesa', 'Barasa', 'Simiyu', 'Wafula', 'Nyongesa', 'Mukhwana',
+  'Koech', 'Rotich', 'Kiprop', 'Kosgei', 'Chebet', 'Cheruiyot', 'Mutua', 'Musyoka', 'Kioko', 'Mwikali', 'Ndunda', 'Muthoni', 'Hassan', 'Mohamed', 'Abdi', 'Said', 'Nyaga', 'Gitau'];
 const PASS = opt('pass', 'Sim' + rnd(5) + '#7');
+// Optional: your own Gmail, e.g. --email-base=you@gmail.com. Every test email then becomes you+davidkaranja36@gmail.com:
+// it looks like a normal Gmail address in your backend, but all mail lands in YOUR inbox, so it can never belong to a stranger.
+const EMAIL_BASE = (() => { const b = String(opt('email-base', process.env.REFBOT_EMAIL_BASE || '')).trim().toLowerCase(); return /^[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(b) ? b : ''; })();
+// Username prefix: empty by default (usernames look like karanjadave). To mark test accounts again, run with --prefix=sim_
+const USER_PREFIX = String(opt('prefix', '')).replace(/[^a-z0-9_]/gi, '').toLowerCase();
+const usedIds = new Set();
 function person() {
-  const first = pick(FIRST), last = pick(LAST), user = ('sim_' + first + rnd(5)).toLowerCase();
-  return { name: first + ' ' + last, user, email: user + '@' + DOMAIN, phone: '7' + digits(/kenya/i.test(COUNTRY) ? 8 : 9) };   // every test username starts with sim_
+  let first, last, user, local;
+  for (let i = 0; i < 60; i++) {
+    first = pick(FIRST); last = pick(LAST);
+    const f = first.toLowerCase(), l = last.toLowerCase();
+    local = pick([f + l + digits(2), f + l + digits(2), f + l.slice(0, 4) + digits(2), l + f + digits(2), f[0] + l + digits(2), f + '.' + l + digits(2)]);   // davidkaranja36, davidkara67, karanjadave12 ...
+    user = USER_PREFIX + pick([l + f, l + f.slice(0, 3) + digits(2), f + l.slice(0, 3) + digits(2), l + f[0] + digits(2)]);                                       // karanjadave, karanjadav48 ...
+    if (!usedIds.has(local) && !usedIds.has(user)) break;
+  }
+  usedIds.add(local); usedIds.add(user);
+  const email = EMAIL_BASE ? EMAIL_BASE.replace('@', '+' + local.replace(/[^a-z0-9]/g, '') + '@') : local + '@' + DOMAIN;
+  return { name: first + ' ' + last, user, email, phone: '7' + digits(/kenya/i.test(COUNTRY) ? 8 : 9) };   // usernames are random Kenyan-style names; the list of created accounts is printed at the end of every run
 }
 
 // ---------- reading the form ----------
@@ -771,7 +791,7 @@ say(`Logged out before the next account:    ${good.filter((r) => r.loggedOut).le
 say('Link typed again after logout (sponsor refilled): ' + good.filter((r) => r.relinked).length + ' of ' + good.length);
 if (good.length) {
   say(`\nACCOUNTS CREATED (compare with the Users list in your admin panel):`);
-  good.forEach((r, i) => say(`  ${String(i + 1).padStart(3)}. ${r.username}`));
+  good.forEach((r, i) => say(`  ${String(i + 1).padStart(3)}. ${r.username}   ${r.email}`));
 }
 if (bad.length) {
   say(`\nWHAT WENT WRONG`);
@@ -791,7 +811,7 @@ if (bad.length) {
 if (good.some((r) => !r.loggedOut)) say(`\nWARNING: the bot could not log out ${good.filter((r) => !r.loggedOut).length} account(s) (it cleared the session instead). Send me a screenshot of the page you land on after Continue, showing where Logout is.`);
 if (loaded && filled.length < loaded) say(`\nWARNING: the sponsor box was empty for ${loaded - filled.length} account(s). If the link does not fill it, the referral cannot be credited. Check the link is the live one and still contains the sponsor code.`);
 if (loaded && ticked.length < loaded) say(`\nWARNING: the terms box could not be ticked for ${loaded - ticked.length} account(s). See filled.png.`);
-say(`\nNOTE: "created" only means the site accepted the sign-up. The real referral test is next: log in as the sponsor and check the referral list shows ${good.length} new people (all usernames start with sim_).`);
+say(`\nNOTE: "created" only means the site accepted the sign-up. The real referral test is next: log in as the sponsor and check the referral list shows ${good.length} new people (they are listed above).`);
 say(`\nFiles: ${OUT}/report.txt  ${OUT}/accounts.csv  (screenshots of failures: ${OUT}/fail-N.png)\n`);
 fs.writeFileSync(`${OUT}/report.txt`, L.join('\n'));
 process.exit(bad.length === 0 && filled.length === N && ticked.length === N ? 0 : 1);

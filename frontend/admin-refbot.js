@@ -1,5 +1,5 @@
 /* Admin: Referral tester (Bot > Referral tester). Give it a referral link and a number: the server opens the link in a real
-   browser, creates that many random sim_ accounts, logs each one out, retypes the link, and reports what worked and what failed.
+   browser, creates that many random test accounts, logs each one out, retypes the link, and reports what worked and what failed.
    Loaded after admin-wabot.js. Uses api, render, SECTIONS, LABEL, esc, toast, $ from admin.html. */
 (function () {
 'use strict';
@@ -10,7 +10,7 @@ const STATE = { idle: 'Ready', running: 'Running...', done: 'Finished', failed: 
 SECTIONS.refbot = () => {
   setTimeout(init, 0);
   return ['<div class="card" id="rb_box"><h3>Referral tester</h3>'
-    + '<p class="sub">Paste a real referral link from the site you want to test. The bot opens it, checks the Sponsor box fills itself, creates random accounts (usernames start with <b>sim_</b>), presses Continue, closes the Telegram popup, logs out, types the link again, and repeats.</p>'
+    + '<p class="sub">Paste a real referral link from the site you want to test. The bot opens it, checks the Sponsor box fills itself, creates random accounts (made-up Kenyan-style names, listed in the log), presses Continue, closes the Telegram popup, logs out, types the link again, and repeats.</p>'
     + '<label class="fl" for="rb_link">Referral link<small>Must start with https://</small></label><input id="rb_link" inputmode="url" autocomplete="off" placeholder="https://yoursite.com/?ref=sponsor">'
     + '<label class="fl" for="rb_n">How many accounts<small>1 to 100</small></label><input id="rb_n" inputmode="numeric" maxlength="3" value="5" autocomplete="off">'
     + '<label class="fl" for="rb_dom">Email domain (optional)<small>Use a domain you own if the site refuses example.com</small></label><input id="rb_dom" autocomplete="off" placeholder="mydomain.com">'
@@ -25,7 +25,7 @@ SECTIONS.refbot = () => {
     + '<div class="card" id="rb_res" style="display:none"><h3>Result</h3><p class="sub" id="rb_sum"></p><div id="rb_tbl" style="overflow-x:auto"></div>'
     + '<div class="row"><button id="rb_csv">Download list (CSV)</button><button id="rb_cp">Copy usernames</button><button id="rb_rep">Show full report</button><button id="rb_shot">Show screenshots</button></div>'
     + '<pre id="rb_repbox" class="sub" style="display:none;white-space:pre-wrap;max-height:320px;overflow:auto;font:12px/1.55 ui-monospace,Menlo,monospace"></pre><div id="rb_img"></div>'
-    + '<p class="sub">"Created" only means the site accepted the sign-up. Now log in as the sponsor on that site and check the referral list shows the new <b>sim_</b> people and that the bonus was credited once for each.</p></div>'];
+    + '<p class="sub">"Created" only means the site accepted the sign-up. Now log in as the sponsor on that site and check the referral list shows the new test people and that the bonus was credited once for each.</p></div>'];
 };
 
 function paint(d) {

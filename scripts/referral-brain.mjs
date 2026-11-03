@@ -6,7 +6,8 @@
 // Uses GEMINI_API_KEY (and GEMINI_MODEL, default gemini-2.5-flash) from the environment, the same key the site already has.
 
 const KEY = process.env.GEMINI_API_KEY || '';
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+let MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+let tried = false;
 const BASE = (process.env.GEMINI_BASE || 'https://generativelanguage.googleapis.com/v1beta').replace(/\/$/, '');
 const cfg = { budget: 60, country: 'Kenya', log: () => {} };
 const cache = { read: new Map(), recipe: new Map(), explain: new Map() };
@@ -25,6 +26,17 @@ function parseJSON(t) {
   if (a >= 0 && b > a) { try { return JSON.parse(s.slice(a, b + 1)); } catch (e) {} }
   return null;
 }
+// When Google retires the model, ask which Flash model this key can use now and switch to the newest.
+async function findModel() {
+  try {
+    const r = await fetch(BASE + '/models?pageSize=200', { headers: { 'x-goog-api-key': KEY }, signal: AbortSignal.timeout(15000) });
+    if (!r.ok) return '';
+    const d = await r.json();
+    const num = (m) => parseFloat(String(m.name || '').replace(/^models\/gemini-/, ''));
+    const list = (d.models || []).filter((m) => (m.supportedGenerationMethods || []).includes('generateContent') && /^models\/gemini-[\d.]+-flash$/.test(m.name || '')).sort((a, b) => num(b) - num(a));
+    return list[0] ? list[0].name.replace(/^models\//, '') : '';
+  } catch (e) { return ''; }
+}
 async function askJSON(system, text, image) {
   if (!KEY || dead || calls >= cfg.budget) return null;
   const run = async () => {
@@ -34,7 +46,7 @@ async function askJSON(system, text, image) {
     if (/flash/i.test(MODEL)) gen.thinkingConfig = { thinkingBudget: 0 };
     const parts = [{ text }];
     if (image) parts.push({ inlineData: { mimeType: image.mime, data: image.b64 } });
-    for (let t = 0; t < 4; t++) {
+    for (let t = 0; t < 3; t++) {
       if (calls >= cfg.budget) return null;
       calls++;
       let r;
@@ -46,11 +58,14 @@ async function askJSON(system, text, image) {
         });
       } catch (e) { cfg.log('AI request failed (' + e.message + '), trying again'); await sleep(2000 * (t + 1)); continue; }
       lastEnd = Date.now();
-      if (r.status === 429 || r.status >= 500) { cfg.log(`AI is busy (${r.status}), waiting a bit`); await sleep(5000 * (t + 1)); continue; }
+      if (r.status === 429 || r.status >= 500) { cfg.log(`AI is busy (${r.status}), waiting a bit`); await sleep(3000 * (t + 1)); continue; }
       if (!r.ok) {
         const body = await r.text().catch(() => '');
         if (r.status === 400 && gen.thinkingConfig && /think/i.test(body)) { delete gen.thinkingConfig; calls--; continue; }
-        cfg.log('AI error ' + r.status + ': ' + body.replace(/\s+/g, ' ').slice(0, 120));
+        let msg = body.replace(/\s+/g, ' '); try { msg = JSON.parse(body).error.message || msg; } catch (e) {}
+        if (r.status === 404 && !tried) { tried = true; const m = await findModel(); if (m && m !== MODEL) { cfg.log('model ' + MODEL + ' is gone, switching to ' + m); MODEL = m; calls--; continue; } }
+        if ([401, 403, 404].includes(r.status)) dead = true;
+        cfg.log('AI error ' + r.status + ': ' + msg.slice(0, 300) + (dead ? '  (AI is off for this run: set GEMINI_MODEL or GEMINI_API_KEY on the server)' : ''));
         return null;
       }
       const d = await r.json().catch(() => null);

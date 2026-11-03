@@ -82,17 +82,20 @@ async function describe(page) {
     return {
       i, tag: el.tagName.toLowerCase(), type: (el.type || '').toLowerCase(), name: el.name || '', id: el.id || '',
       ph: el.placeholder || '', aria: el.getAttribute('aria-label') || '', label, value: el.value || '',
+      cls: String(el.className || ''), nopt: el.tagName === 'SELECT' ? el.options.length : 0, opts: el.tagName === 'SELECT' ? [...el.options].slice(0, 12).map((o) => o.textContent.trim()) : [],
       visible: r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none',
     };
   }));
 }
+const LANGS = /^(en|es|ko|tl|vi|pt|ru|fr|de|it|ar|sw|zh|ja|hi|tr|id|nl|pl|th|uk|bn|ur|fil|english|spanish|french|german|portuguese|russian|korean|swahili|arabic|chinese|japanese|hindi|turkish|vietnamese|tagalog|filipino|indonesian)([-_][a-z]{2,4})?$/i;
+const isLang = (f) => f.tag === 'select' && (/lang|locale|i18n|translate/i.test([f.name, f.id, f.aria, f.cls, f.label].join(' ')) || (!!f.opts && f.opts.length >= 2 && f.nopt <= 14 && f.opts.filter((o) => LANGS.test(o)).length >= Math.ceil(f.opts.length * 0.6)));
 function assign(fields) {
   const roles = {}, used = new Set();
   const text = (f) => [f.label, f.name, f.id, f.ph, f.aria].join(' ').toLowerCase();
   const pool = fields.filter((f) => f.visible || f.type === 'checkbox');
   const take = (role, test) => { const f = pool.find((x) => !used.has(x.i) && test(x)); if (f) { roles[role] = f; used.add(f.i); } };
   take('terms', (f) => f.type === 'checkbox');
-  take('country', (f) => f.tag === 'select');
+  take('country', (f) => f.tag === 'select' && !isLang(f));
   take('sponsor', (f) => /sponsor|referr|invit|upline|\bref\b/.test(text(f)));
   take('confirm', (f) => f.type === 'password' && /confirm|repeat|again|retype/.test(text(f)));
   take('password', (f) => f.type === 'password');
@@ -266,10 +269,11 @@ async function chooseCountry(page, roles) {
       const want = opts.find((o) => o.v && exact.test(o.t)) || opts.find((o) => o.v && rx.test(o.t)) || opts.find((o) => o.v && !/select|choose/i.test(o.t));
       if (want) { await sel.selectOption(want.v, { timeout: 3000 }); return want.t; }
     }
-    const cb = page.getByRole('combobox').or(page.getByRole('button', { name: /country/i })).first();   // a custom dropdown instead of a real select
+    const cb = page.getByLabel(/country/i).or(page.getByRole('combobox', { name: /country/i })).or(page.getByRole('button', { name: /country/i })).or(page.getByText(/^\s*country\s*\*?\s*$/i).locator('xpath=following::*[self::input or self::button or self::select or @role="combobox"][1]')).first();   // a custom dropdown instead of a real select
     if (await cb.isVisible().catch(() => false)) {
       await cb.click({ timeout: 2000 });
       const opt = page.getByRole('option', { name: rx }).or(page.getByText(exact)).first();
+      if (!(await opt.isVisible().catch(() => false))) { await page.keyboard.type(name.slice(0, 6), { delay: 50 }).catch(() => {}); await sleep(400); }
       if (await opt.isVisible().catch(() => false)) { await opt.click({ timeout: 2000 }); return name; }
     }
   } catch (e) {}
@@ -294,12 +298,44 @@ async function countryOk(page) {
 }
 // A real <select> that ignored selectOption: focus it and type the country name like a person would.
 async function typeCountry(page, roles) {
-  if (!roles.country) return;
+  if (!roles.country || isLang(roles.country)) return;
   const sel = page.locator(SEL).nth(roles.country.i);
   await sel.focus({ timeout: 2000 }).catch(() => {});
   await page.keyboard.type(COUNTRY.slice(0, 8), { delay: 60 }).catch(() => {});
   await page.keyboard.press('Enter').catch(() => {});
   await sleep(300);
+}
+async function langState(page) {
+  return page.evaluate(() => ({
+    html: document.documentElement.lang || '',
+    sels: [...document.querySelectorAll('select')].map((s, i) => { const o = [...s.options], code = /^[a-z]{2}([-_][a-z]{2,4})?$/i; return { i, v: s.value, lang: /lang|locale|i18n|translate/i.test((s.name || '') + ' ' + (s.id || '') + ' ' + s.className) || (o.length >= 2 && o.length <= 14 && o.filter((x) => code.test(x.textContent.trim()) || code.test(x.value)).length >= o.length * 0.6) }; }).filter((x) => x.lang),
+  })).catch(() => ({ html: '', sels: [] }));
+}
+// If anything changed the site language while the form was being filled, put it back and say so.
+async function langGuard(page, before) {
+  const now = await langState(page); let changed = false;
+  for (const b of before.sels) { const c = now.sels.find((x) => x.i === b.i); if (c && c.v !== b.v) { changed = true; await page.locator('select').nth(b.i).selectOption(b.v, { timeout: 3000 }).catch(() => {}); } }
+  if (!changed && before.html && now.html && before.html.slice(0, 2) !== now.html.slice(0, 2)) changed = true;
+  if (changed) await sleep(700);
+  return changed;
+}
+// The Create Account button: by name first, then by its place in the form (so another site language cannot hide it).
+async function findSubmit(page) {
+  const byName = page.getByRole('button', { name: /create account|sign ?up|register|join/i }).last();
+  if (await byName.count()) return byName;
+  const form = page.locator('form').filter({ has: page.locator('input[type=password]') }).first();
+  const scope = (await form.count()) ? form : page;
+  const subs = scope.locator('button[type=submit], input[type=submit]');
+  if (await subs.count()) return subs.last();
+  const bad = /show|hide|eye|lang|google|facebook|telegram|apple|terms|privacy|close|back|log ?in|sign ?in/i;
+  const all = scope.locator('button, input[type=button], [role=button]'), n = await all.count();
+  for (let i = n - 1; i >= 0; i--) {
+    const b = all.nth(i);
+    if (!(await b.isVisible().catch(() => false))) continue;
+    const t = ((await b.innerText().catch(() => '')) + ' ' + ((await b.getAttribute('aria-label').catch(() => '')) || '')).trim();
+    if (!bad.test(t)) return b;
+  }
+  return byName;
 }
 const testData = (p) => ({ $name: p.name, $username: p.user, $email: p.email, $phone: p.phone, $password: PASS, $country: COUNTRY });
 const FORM_KEYS = ['email', 'password', 'username'];
@@ -341,7 +377,7 @@ const RULES = [
     fix: 'Open the same link in your own browser: the Sponsor box should show the sponsor name with a green tick. Check the sponsor account is active.' },
   { code: 'phone', test: (x) => /phone|mobile|msisdn/.test(x.text),
     why: 'The mobile number was refused (wrong format for the chosen country).',
-    fix: 'The bot uses a UK-style number after +44. If your site only accepts real operator ranges or another country, tell me the country and I will match it.' },
+    fix: 'The bot uses a number for the country it picks (default Kenya, +254). If your site only accepts real operator ranges, tell me the format and I will match it.' },
   { code: 'email', test: (x) => /e-?mail|disposable|domain/.test(x.text),
     why: 'The email was refused (the bot uses @' + DOMAIN + ').',
     fix: 'Some sites block example.com or demand a real inbox. Run with --domain=yourdomain.com (a domain you own).' },
@@ -365,6 +401,7 @@ function diagnose(e) {
   if (e.browserDied) return { code: 'browser_crash', why: 'The browser crashed or was closed while working (on a small server this usually means it ran out of memory).', fix: 'Create fewer accounts per run (10 or less), keep --parallel at 1, or give the server more memory. The bot starts a new browser by itself and carries on.' };
   if (e.loadError) return { code: 'unreachable', why: `The bot could not open the link (${e.loadError}).`, fix: 'Open the same link in your own browser. Check the site is online, the link is spelled right, and your internet works.' };
   if (e.stillLoggedIn) return { code: 'still_logged_in', why: 'The previous account was still logged in, so the sign-up page did not show.', fix: 'The logout did not work. Send me a screenshot of the logged-in page showing where Logout is, or run with --fresh.' };
+  if (e.langChanged && (e.noButton || e.noForm || e.crash)) return { code: 'language_changed', why: 'The site language changed while the bot filled the form (a language dropdown was touched), so the buttons had other names.', fix: 'The bot now ignores language dropdowns and puts the language back. If you still see this, open fail-N.png and tell me what language the page is in.' };
   if (e.noForm) return { code: 'no_form', why: 'The Create Account form did not show up, or the bot could not recognise its fields.', fix: 'Look at referral-bot-out/page.png. If it shows a login page, a popup, a cookie banner or an "enter" button, tell me and I will add that step.' };
   if (e.noButton) return { code: 'no_button', why: 'The bot could not find the Create Account button.', fix: 'Look at filled.png / fail-N.png. If the button has another name, tell me what it says.' };
   if (e.crash) return { code: 'bot_error', why: `The bot stumbled while filling the form (${e.crash}).`, fix: 'Run once with --headed and watch where it stops, then send me that message.' };
@@ -412,6 +449,9 @@ async function visit(browser, n, dry, shared) {
       console.log('\nFields the bot found on the page:');
       for (const [role, f] of Object.entries(roles)) console.log(`  ${role.padEnd(9)} ${(f.label || f.ph || f.name || f.id || f.type).replace(/\s+/g, ' ').slice(0, 28).padEnd(28)} type=${f.type}${f.value ? '  value="' + f.value + '"' : ''}`);
       const missing = ['name', 'username', 'email', 'phone', 'password', 'confirm', 'sponsor', 'terms'].filter((r) => !roles[r]);
+      const langSel = (await describe(page)).filter(isLang);
+      if (langSel.length) console.log('\nLanguage dropdown (ignored, the bot never touches it): ' + langSel.map((f) => f.opts.join(' ')).join(' / '));
+      console.log('Country box: ' + (roles.country ? (roles.country.label || roles.country.name || 'dropdown') + ' (' + roles.country.nopt + ' options)' : 'not a normal dropdown, the bot will try a custom dropdown (or the AI)'));
       console.log(`\nSponsor box: ${rec.sponsor ? '"' + rec.sponsor + '" (auto-filled from the link)' : 'EMPTY'}${who ? '   ' + who : ''}`);
       const early = [];
       if (missing.length) early.push('Fields not found: ' + missing.join(', ') + ' (bot may not be able to fill the form)');
@@ -432,18 +472,21 @@ async function visit(browser, n, dry, shared) {
     }
     phase = 'fill';
     const at = (f) => page.locator(SEL).nth(f.i);
+    const lang0 = await langState(page);
     await chooseCountry(page, roles);                      // choose the country first: the site sets the phone code from it
     await sleep(500);
     if (!(await countryOk(page))) {
       await typeCountry(page, roles);                      // a stubborn real dropdown: type the name
       if (AI && !(await countryOk(page))) await brain.agent(page, { goal: 'country', person: testData(p), cacheKey: 'country', noSubmit: true, verify: () => countryOk(page) });   // a custom dropdown: the AI works it out
     }
+    ev.langChanged = await langGuard(page, lang0);
     for (const [role, val] of [['name', p.name], ['username', p.user], ['email', p.email], ['phone', p.phone], ['password', PASS], ['confirm', PASS]]) {
       if (!roles[role]) continue;
       let v = val;
       if (role === 'phone') { const cur = await at(roles.phone).inputValue().catch(() => ''); let pre = (cur.match(/^\+\d{1,4}/) || [''])[0]; if (/kenya/i.test(COUNTRY) && pre && pre !== '+254') pre = '+254'; v = pre + p.phone; }   // keep the dial code the site typed (+254 for Kenya)
       await at(roles[role]).fill(v);
     }
+    ev.langChanged = (await langGuard(page, lang0)) || ev.langChanged;
     rec.terms = await tickTerms(page, roles);              // tick the terms box, then press Create Account
     if (!rec.terms && AI) rec.terms = (await brain.agent(page, { goal: 'terms', person: testData(p), cacheKey: 'terms', noSubmit: true, maxSteps: 1 })).acted;   // a custom-styled box
     await sleep(600);
@@ -451,7 +494,7 @@ async function visit(browser, n, dry, shared) {
 
     phase = 'submit';
     for (let attempt = 1; attempt <= 2; attempt++) {
-    const btn = page.getByRole('button', { name: /create account|sign ?up|register/i }).last();
+    const btn = await findSubmit(page);
     if (!(await btn.count())) { ev.noButton = true; throw new Error('no button'); }
     ev.btnDisabled = await btn.isDisabled().catch(() => false);
     const start = page.url();
@@ -552,6 +595,7 @@ await Promise.all(Array.from({ length: PAR }, async () => {
     catch (e) { const m = String(e && e.message).split('\n')[0].slice(0, 90); r = { n, username: 'sim_unknown', email: '', phone: '', password: PASS, sponsor: '', sponsor_filled: false, terms: false, welcome: false, continued: false, popup: '', loggedOut: false, relinked: false, ok: false, problem: 'bot_error', why: `The bot hit an unexpected error (${m}).`, fix: 'Send me that message.', raw: '', warn: '', api: '', ai: '', crashed: /closed/i.test(m) }; }
     if (r.crashed) await newCtx().catch(() => {});
     results[n - 1] = r;
+    try { fs.writeFileSync(OUT + '/accounts.json', JSON.stringify(results)); } catch (e) {}
     console.log(`  #${String(n).padStart(3)}  ${r.ok ? 'ACCOUNT CREATED' : 'FAILED'}  ${r.username}${r.api ? '  (' + r.api + ')' : ''}`);
     if (r.ok) {
       const steps = [r.welcome ? 'welcome card seen' : 'no welcome card', r.continued ? 'Continue pressed' : '', r.popup && r.popup !== 'none' ? 'popup closed with ' + r.popup : 'no popup', r.loggedOut ? 'logged out' : 'NOT logged out', r.relinked ? 'link typed again, sponsor refilled' : 'link NOT reopened with sponsor'].filter(Boolean).join(' > ');

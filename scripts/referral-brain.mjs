@@ -4,8 +4,15 @@
 // Safety: the AI can only click / type / select on numbered elements of the current page. It types only the bot's test data
 // ($name $username $email $phone $password $country), never navigates away, and the bot refuses any button about money or accounts.
 // Uses GEMINI_API_KEY (and GEMINI_MODEL, default gemini-2.5-flash) from the environment, the same key the site already has.
+// Optional GROQ_API_KEY (free, console.groq.com; GROQ_MODEL, default llama-3.3-70b-versatile): used FIRST for the text-only decisions
+// (what to press next, reading the form), because it is fast and the Gemini free tier is often overloaded. Gemini stays as the backup
+// and is the one that looks at screenshots. With only one of the two keys set, that one does everything it can.
 
 const KEY = process.env.GEMINI_API_KEY || '';
+const GKEY = process.env.GROQ_API_KEY || '';
+const GMODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GBASE = (process.env.GROQ_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
+let gDead = false, gemDead = false;
 let MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 let tried = false;
 const FALLBACKS = (process.env.GEMINI_FALLBACK || 'gemini-2.5-flash-lite').split(',').map((x) => x.trim()).filter(Boolean);   // used when the main model keeps timing out or says 503
@@ -16,8 +23,8 @@ let calls = 0, fails = 0, dead = false, lastEnd = 0, chain = Promise.resolve();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export const configure = (o) => Object.assign(cfg, o);
-export const ready = () => !!KEY && !dead;
-export const stats = () => ({ calls, budget: cfg.budget, model: MODEL });
+export const ready = () => (!!KEY || !!GKEY) && !dead;
+export const stats = () => ({ calls, budget: cfg.budget, model: (GKEY ? GMODEL + ' + ' : '') + (KEY ? MODEL : '') });
 
 // ---------- talking to Gemini (one call at a time, spaced out, retried when the free tier says "slow down") ----------
 function parseJSON(t) {
@@ -38,11 +45,50 @@ async function findModel() {
     return list[0] ? list[0].name.replace(/^models\//, '') : '';
   } catch (e) { return ''; }
 }
+// Groq (OpenAI-style API). Text only. Returns the parsed JSON, or null so the caller can fall back to Gemini.
+async function askGroq(system, text) {
+  if (!GKEY || gDead || calls >= cfg.budget) return null;
+  for (let t = 0; t < 2; t++) {
+    calls++;
+    let r;
+    try {
+      r = await fetch(GBASE + '/chat/completions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + GKEY },
+        body: JSON.stringify({ model: GMODEL, temperature: 0.1, max_tokens: 1500, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: system + '\nAnswer with one JSON object only.' }, { role: 'user', content: text }] }),
+        signal: AbortSignal.timeout(25000),
+      });
+    } catch (e) { cfg.log('Groq did not answer (' + e.message + ')'); return null; }
+    if (r.status === 429 || r.status >= 500) {
+      const ra = parseFloat(r.headers.get('retry-after') || '0');
+      if (t === 0 && ra > 0 && ra <= 8) { cfg.log(`Groq says slow down, waiting ${Math.ceil(ra)}s`); await sleep(ra * 1000 + 300); continue; }
+      cfg.log(`Groq is busy (${r.status}), using Gemini for this one`); return null;
+    }
+    if (!r.ok) {
+      const body = await r.text().catch(() => '');
+      let msg = body.replace(/\s+/g, ' '); try { msg = JSON.parse(body).error.message || msg; } catch (e) {}
+      if ([401, 403, 404].includes(r.status)) { gDead = true; msg += '  (Groq is off for this run: check GROQ_API_KEY / GROQ_MODEL on the server)'; }
+      cfg.log('Groq error ' + r.status + ': ' + msg.slice(0, 250));
+      return null;
+    }
+    const d = await r.json().catch(() => null);
+    const j = parseJSON(d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content);
+    if (j) return j;
+    cfg.log('Groq answer was not understood, using Gemini for this one');
+    return null;
+  }
+  return null;
+}
 async function askJSON(system, text, image) {
-  if (!KEY || dead || calls >= cfg.budget) return null;
+  if ((!KEY && !GKEY) || dead || calls >= cfg.budget) return null;
   const run = async () => {
     const wait = 3200 - (Date.now() - lastEnd);
     if (wait > 0) await sleep(wait);
+    if (GKEY && !gDead && (!image || !KEY || gemDead)) {         // text-only (or no Gemini): Groq first
+      const g = await askGroq(system, text);
+      lastEnd = Date.now();
+      if (g) return g;
+    }
+    if (!KEY || gemDead) return null;
     const gen = { temperature: 0.1, maxOutputTokens: 2048, responseMimeType: 'application/json' };
     if (/flash/i.test(MODEL)) gen.thinkingConfig = { thinkingBudget: 0 };
     const parts = [{ text }];
@@ -68,7 +114,7 @@ async function askJSON(system, text, image) {
         if (r.status === 400 && gen.thinkingConfig && /think/i.test(body)) { delete gen.thinkingConfig; calls--; continue; }
         let msg = body.replace(/\s+/g, ' '); try { msg = JSON.parse(body).error.message || msg; } catch (e) {}
         if (r.status === 404 && !tried) { tried = true; const m = await findModel(); if (m && m !== MODEL) { cfg.log('model ' + MODEL + ' is gone, switching to ' + m); MODEL = m; calls--; continue; } }
-        if ([401, 403, 404].includes(r.status)) dead = true;
+        if ([401, 403, 404].includes(r.status)) { gemDead = true; if (!GKEY || gDead) dead = true; }
         cfg.log('AI error ' + r.status + ': ' + msg.slice(0, 300) + (dead ? '  (AI is off for this run: set GEMINI_MODEL or GEMINI_API_KEY on the server)' : ''));
         return null;
       }

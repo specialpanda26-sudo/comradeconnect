@@ -29,6 +29,7 @@ const DELAY = Math.max(0, parseInt(opt('delay', '1500'), 10) || 0);
 const PAR = Math.max(1, Math.min(5, parseInt(opt('parallel', '1'), 10) || 1));
 const DOMAIN = opt('domain', 'example.com');
 const FRESH = flag('fresh');
+const COUNTRY = opt('country', 'Kenya');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ask = async (q) => { const rl = readline.createInterface({ input: process.stdin, output: process.stdout }); const a = (await rl.question(q)).trim(); rl.close(); return a; };
 const tty = !!process.stdin.isTTY;
@@ -62,7 +63,7 @@ const LAST = ['Otieno', 'Smith', 'Kamau', 'Hassan', 'Wanjiru', 'Brown', 'Mwangi'
 const PASS = opt('pass', 'Sim' + rnd(5) + '#7');
 function person() {
   const first = pick(FIRST), last = pick(LAST), user = ('sim_' + first + rnd(5)).toLowerCase();
-  return { name: first + ' ' + last, user, email: user + '@' + DOMAIN, phone: '7' + digits(9) };   // every test username starts with sim_
+  return { name: first + ' ' + last, user, email: user + '@' + DOMAIN, phone: '7' + digits(/kenya/i.test(COUNTRY) ? 8 : 9) };   // every test username starts with sim_
 }
 
 // ---------- reading the form ----------
@@ -238,18 +239,20 @@ async function reopenLink(page) {
 
 // Picks a country (the site rejects the form with "Please select your country" otherwise). United Kingdom if offered, else the first real option.
 async function chooseCountry(page, roles) {
+  const name = COUNTRY.replace(/[^a-z ]/gi, '').trim() || 'Kenya';
+  const rx = new RegExp(name, 'i'), exact = new RegExp('^\\s*' + name + '\\s*$', 'i');
   try {
     if (roles.country) {
       const sel = page.locator(SEL).nth(roles.country.i);
       const opts = await sel.locator('option').evaluateAll((o) => o.map((x) => ({ v: x.value, t: x.textContent.trim() })));
-      const want = opts.find((o) => o.v && /united kingdom/i.test(o.t)) || opts.find((o) => o.v && !/select|choose/i.test(o.t));
+      const want = opts.find((o) => o.v && exact.test(o.t)) || opts.find((o) => o.v && rx.test(o.t)) || opts.find((o) => o.v && !/select|choose/i.test(o.t));
       if (want) { await sel.selectOption(want.v, { timeout: 3000 }); return want.t; }
     }
-    const cb = page.getByRole('combobox').or(page.getByRole('button', { name: /country|united kingdom/i })).first();   // a custom dropdown instead of a real select
+    const cb = page.getByRole('combobox').or(page.getByRole('button', { name: /country/i })).first();   // a custom dropdown instead of a real select
     if (await cb.isVisible().catch(() => false)) {
       await cb.click({ timeout: 2000 });
-      const opt = page.getByRole('option', { name: /united kingdom/i }).or(page.getByText(/^\s*united kingdom\s*$/i)).first();
-      if (await opt.isVisible().catch(() => false)) { await opt.click({ timeout: 2000 }); return 'United Kingdom'; }
+      const opt = page.getByRole('option', { name: rx }).or(page.getByText(exact)).first();
+      if (await opt.isVisible().catch(() => false)) { await opt.click({ timeout: 2000 }); return name; }
     }
   } catch (e) {}
   return '';
@@ -371,7 +374,7 @@ async function visit(browser, n, dry, shared) {
     for (const [role, val] of [['name', p.name], ['username', p.user], ['email', p.email], ['phone', p.phone], ['password', PASS], ['confirm', PASS]]) {
       if (!roles[role]) continue;
       let v = val;
-      if (role === 'phone') { const cur = await at(roles.phone).inputValue().catch(() => ''); v = ((cur.match(/^\+\d{1,4}/) || [''])[0]) + p.phone; }   // keep the +44 the site already typed
+      if (role === 'phone') { const cur = await at(roles.phone).inputValue().catch(() => ''); let pre = (cur.match(/^\+\d{1,4}/) || [''])[0]; if (/kenya/i.test(COUNTRY) && pre && pre !== '+254') pre = '+254'; v = pre + p.phone; }   // keep the dial code the site typed (+254 for Kenya)
       await at(roles[role]).fill(v);
     }
     rec.terms = await tickTerms(page, roles);              // tick the terms box, then press Create Account

@@ -1,0 +1,128 @@
+name: Build Referral Tester APK
+
+# The Referral Tester as its own Android app (separate from the Comrade Connect app).
+# It packs frontend/refbot.html into an app, so the page and the app never drift apart.
+# Run by hand: GitHub > Actions > Build Referral Tester APK > Run workflow.
+# The finished app appears under Releases (tag refbot-N). It is NOT marked "latest",
+# so the website's Download button keeps giving the Comrade Connect app.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'refbot-app/**'
+      - 'frontend/refbot.html'
+      - 'frontend/config.js'
+      - '.github/workflows/refbot-apk.yml'
+
+concurrency:
+  group: refbot-apk
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: refbot-app
+    env:
+      KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build number
+        working-directory: .
+        run: echo "BUILD_N=$(( ($(date +%s) - 1700000000) / 60 + 1000 ))" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Check signing secrets are all set or all empty
+        working-directory: .
+        run: |
+          n=0; for v in "$KS_B64" "$KS_PASS" "$KS_ALIAS" "$KEY_PASS"; do [ -n "$v" ] && n=$((n+1)); done
+          if [ "$n" -ne 0 ] && [ "$n" -ne 4 ]; then echo "Only $n of the 4 signing secrets are set. Set all 4 or remove them."; exit 1; fi
+
+      - name: Pack the Referral Tester page into the app
+        run: |
+          API=$(grep -m1 "^const CC_API" ../frontend/config.js | grep -o "https://[^']*")
+          test -n "$API" || { echo "Could not read CC_API from frontend/config.js"; exit 1; }
+          mkdir -p www
+          sed -e "s#<script src=\"config.js\"></script>#<script>const CC_API='$API';</script>#" -e '/rel="manifest"/d' ../frontend/refbot.html > www/index.html
+          grep -q "const CC_API='https://" www/index.html || { echo "Server address was not added to the page"; exit 1; }
+          echo "Server address in app: $API"
+
+      - name: Install Capacitor
+        run: npm install --no-audit --no-fund
+
+      - name: Create the Android project
+        run: npx cap add android
+
+      - name: Version and icons
+        run: |
+          pip install --quiet pillow
+          sed -i "s/versionCode [0-9]*/versionCode ${{ env.BUILD_N }}/; s/versionName \"[^\"]*\"/versionName \"1.0.${{ env.BUILD_N }}\"/" android/app/build.gradle
+          python3 - <<'PY'
+          from PIL import Image
+          import pathlib
+          res = pathlib.Path('android/app/src/main/res')
+          src = Image.open('../frontend/icon-512.png').convert('RGBA')
+          for d, px in (('mdpi', 48), ('hdpi', 72), ('xhdpi', 96), ('xxhdpi', 144), ('xxxhdpi', 192)):
+              f = res / ('mipmap-' + d); f.mkdir(parents=True, exist_ok=True)
+              im = src.resize((px, px), Image.LANCZOS)
+              for n in ('ic_launcher.png', 'ic_launcher_round.png', 'ic_launcher_foreground.png'):
+                  im.save(f / n)
+          import shutil
+          shutil.rmtree(res / 'mipmap-anydpi-v26', ignore_errors=True)
+          print('icons ready')
+          PY
+
+      - name: Build and sign
+        run: |
+          cd android
+          chmod +x gradlew
+          if [ -n "$KS_B64" ]; then
+            ./gradlew assembleRelease --no-daemon
+            BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            "$BT/zipalign" -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+            "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-pass "pass:$KS_PASS" --ks-key-alias "$KS_ALIAS" --key-pass "pass:$KEY_PASS" --out ../ref-tester.apk "$RUNNER_TEMP/aligned.apk"
+            "$BT/apksigner" verify ../ref-tester.apk
+            echo "Signed with your own key. New versions install over old ones." >> "$GITHUB_STEP_SUMMARY"
+          else
+            ./gradlew assembleDebug --no-daemon
+            cp app/build/outputs/apk/debug/app-debug.apk ../ref-tester.apk
+            echo "No signing key set, so this APK uses a temporary key. Uninstall the old Ref Tester before installing the next build." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Check the APK
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/aapt" dump badging ref-tester.apk | grep -E "^package:|sdkVersion" | tee -a "$GITHUB_STEP_SUMMARY"
+          test "$(stat -c%s ref-tester.apk)" -gt 500000 || { echo "APK is too small, something went wrong"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ref-tester-apk
+          path: refbot-app/ref-tester.apk
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: refbot-${{ env.BUILD_N }}
+          name: Ref Tester app ${{ env.BUILD_N }}
+          body: "Install ref-tester.apk on your Android phone. Referral Tester as its own app."
+          make_latest: false
+          files: refbot-app/ref-tester.apk

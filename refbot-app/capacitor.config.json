@@ -1,0 +1,13 @@
+{
+  "appId": "ke.co.comradeconnect.refbot",
+  "appName": "Ref Tester",
+  "webDir": "www",
+  "backgroundColor": "#101422",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#101422"
+  }
+}

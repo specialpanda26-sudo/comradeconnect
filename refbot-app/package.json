@@ -1,0 +1,11 @@
+{
+  "name": "refbot-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Referral Tester as its own Android app. Same tester as the admin panel, no admin panel visit needed.",
+  "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0"
+  }
+}

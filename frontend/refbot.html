@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Referral Tester | Comrade Connect</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#101422">
+<link rel="manifest" href="refbot.webmanifest">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#101422;--card:#1a1f33;--soft:rgba(255,255,255,.08);--line:rgba(255,255,255,.12);--tx:#fff;--mu:rgba(255,255,255,.64);--pa:#06b6d4;--er:#ff6b6b}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{padding:max(14px,env(safe-area-inset-top)) 14px max(24px,env(safe-area-inset-bottom))}
+.wrap{max-width:720px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+header b{font-size:17px}
+header small{color:var(--mu);display:block;font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px}
+h3{margin:0 0 6px;font-size:17px}
+.sub{color:var(--mu);font-size:13px;margin:6px 0}
+.err{color:var(--er);font-size:13px;min-height:1em;margin:8px 0 0}
+label.fl{display:block;margin:14px 0 6px;font-weight:600;font-size:14px}
+label.fl small{display:block;color:var(--mu);font-weight:400;font-size:12px}
+input[type=text],input[type=password],input:not([type]),input[inputmode]{width:100%;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px 14px;color:inherit;font:inherit}
+input[type=checkbox]{margin-right:8px;transform:scale(1.15)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.row input{flex:1;min-width:120px}
+button{background:var(--soft);color:var(--tx);border:1px solid var(--line);border-radius:999px;padding:11px 18px;font:600 14px system-ui,sans-serif;cursor:pointer}
+button.p{background:var(--pa);border-color:var(--pa);color:#06202a}
+button:disabled{opacity:.5}
+.ib{padding:8px 14px;font-size:13px}
+.tbl{min-width:520px;font-size:13px}
+.tbl .r{display:grid;gap:8px;padding:8px 0;border-top:1px solid var(--line);align-items:center}
+.tbl .r.h{font-weight:700;color:var(--mu);border-top:0}
+.tbl .r span{overflow-wrap:anywhere}
+pre{margin:0;white-space:pre-wrap;overflow:auto;font:12px/1.55 ui-monospace,Menlo,monospace}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#000;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:9}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.login{max-width:420px;margin:14vh auto 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><b>Referral Tester</b><small>Comrade Connect, separate app</small></div><button class="ib" id="out" style="display:none">Sign out</button></header>
+<div id="app"></div>
+</div>
+<div id="toast" role="status"></div>
+<script src="config.js"></script>
+<script>
+(function () {
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2800); };
+/* The admin key is remembered on this phone (localStorage) so you sign in once and the app opens straight to the tester. */
+const store = { get: (k) => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }, del: (k) => { try { localStorage.removeItem(k); } catch (e) {} } };
+const KEY = 'cc_refbot_key';
+const base = () => (typeof CC_API !== 'undefined' && CC_API.indexOf('YOUR-SUBDOMAIN') < 0 ? CC_API : (store.get('cc_admin_api') || '')).replace(/\/$/, '');
+
+async function api(path, body) {
+  const b = base(); if (!b) throw new Error('The server address is not set (config.js)');
+  let r;
+  try { r = await fetch(b + path, { method: body ? 'POST' : 'GET', headers: Object.assign({ 'X-Admin-Key': store.get(KEY) }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined }); }
+  catch (e) { throw new Error('Could not reach the server. Check your internet and try again.'); }
+  if (r.status === 403 && path !== '/api/admin/login') { store.del(KEY); stop(); login('Signed out. Enter the admin key again.'); throw new Error('Signed out. Enter the admin key again.'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'Something went wrong (' + r.status + ')');
+  return d;
+}
+
+/* ---------- sign in ---------- */
+function login(msg) {
+  $('#out').style.display = 'none';
+  const needUrl = typeof CC_API === 'undefined' || CC_API.indexOf('YOUR-SUBDOMAIN') > -1;
+  $('#app').innerHTML = '<div class="login"><div class="card"><h3>Sign in</h3><p class="sub">Enter your ADMIN_KEY once. This phone remembers it, so you do not need the admin panel again. Use Sign out to forget it.</p>'
+    + (needUrl ? '<input id="u" placeholder="Server URL, https://..." value="' + esc(store.get('cc_admin_api')) + '" autocomplete="off">' : '')
+    + '<div style="height:10px"></div><input id="k" type="password" placeholder="Admin key" autocomplete="off"><p class="err" id="e">' + esc(msg || '') + '</p><div class="row"><button class="p" id="go" style="width:100%">Sign in</button></div></div></div>';
+  const go = async () => {
+    const k = $('#k').value.trim(); if (!k) return;
+    if (needUrl) store.set('cc_admin_api', ($('#u').value || '').trim());
+    store.set(KEY, k); $('#go').disabled = true;
+    try { await api('/api/admin/login', {}); show(); }
+    catch (e) { store.del(KEY); login(e.message); }
+  };
+  $('#go').onclick = go; $('#k').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+}
+
+/* ---------- referral tester (same logic as the admin panel's Bot > Referral tester) ---------- */
+let timer = null, last = null;
+const STATE = { idle: 'Ready', running: 'Running...', done: 'Finished', failed: 'The bot could not finish', stopped: 'Stopped', timeout: 'Stopped: it took too long', nocreate: 'Finished: no account was created' };
+function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+function show() {
+  $('#out').style.display = '';
+  $('#app').innerHTML = ['<div class="card" id="rb_box"><h3>Referral tester</h3>'
+    + '<p class="sub">Paste a real referral link from the site you want to test. The bot opens it, checks the Sponsor box fills itself, creates random accounts (made-up Kenyan-style names, listed in the log), presses Continue, closes the Telegram popup, logs out, types the link again, and repeats.</p>'
+    + '<label class="fl" for="rb_link">Referral link<small>Must start with https://</small></label><input id="rb_link" inputmode="url" autocomplete="off" placeholder="https://yoursite.com/?ref=sponsor">'
+    + '<label class="fl" for="rb_n">How many accounts<small id="rb_nmax">1 to 100</small></label><input id="rb_n" inputmode="numeric" maxlength="6" value="5" autocomplete="off">'
+    + '<label class="fl" for="rb_max">Most accounts the bot may create<small>Your limit for one test. Any whole number from 1 to 100000</small></label><div class="row" style="margin-top:0"><input id="rb_max" inputmode="numeric" maxlength="6" autocomplete="off" value="100"><button id="rb_maxsave">Save limit</button></div>'
+    + '<label class="fl" for="rb_dom">Email domain (optional)<small>Use a domain you own if the site refuses example.com</small></label><input id="rb_dom" autocomplete="off" placeholder="mydomain.com">'
+    + '<label class="fl" for="rb_pass">Test password (optional)<small>8 to 40 characters. Leave empty and the bot chooses one</small></label><input id="rb_pass" autocomplete="off" placeholder="leave empty">'
+    + '<label class="fl" for="rb_gap">Seconds between accounts (optional)<small>Raise it if the site starts refusing sign-ups</small></label><input id="rb_gap" inputmode="numeric" maxlength="2" placeholder="2">'
+    + '<label class="fl"><input type="checkbox" id="rb_vibe">Playful names (real first names + 2 digits, e.g. david22@gmail.com; no prefix word)</label>'
+    + '<label class="fl"><input type="checkbox" id="rb_noai">Turn the AI helper off for this test (the bot then uses only its own rules)</label>'
+    + '<label class="fl"><input type="checkbox" id="rb_ok">This is my own site. I understand every account is real and may get the signup bonus.</label>'
+    + '<div class="row"><button id="rb_dry">Check the page first</button><button class="p" id="rb_go">Start test</button><button id="rb_stop" style="display:none">Stop</button></div>'
+    + '<p class="err" id="rb_err"></p><p class="sub"><b id="rb_st">Checking...</b></p>'
+    + '<div id="rb_bar" style="height:8px;border-radius:99px;background:var(--soft);overflow:hidden;display:none"><div id="rb_fill" style="height:100%;width:0;background:var(--pa);transition:width .4s"></div></div>'
+    + '<p class="sub" id="rb_hint"></p></div>'
+    + '<div class="card"><h3>Live log</h3><pre id="rb_log" class="sub" style="max-height:300px">Nothing yet.</pre></div>'
+    + '<div class="card" id="rb_res" style="display:none"><h3>Result</h3><p class="sub" id="rb_sum"></p><div id="rb_tbl" style="overflow-x:auto"></div>'
+    + '<div class="row"><button id="rb_csv">Download list (CSV)</button><button id="rb_cp">Copy usernames</button><button id="rb_rep">Show full report</button><button id="rb_shot">Show screenshots</button></div>'
+    + '<pre id="rb_repbox" class="sub" style="display:none;max-height:320px;margin-top:12px"></pre><div id="rb_img"></div>'
+    + '<p class="sub">"Created" only means the site accepted the sign-up. Now log in as the sponsor on that site and check the referral list shows the new test people and that the bonus was credited once for each.</p></div>'].join('');
+  stop(); poll(); timer = setInterval(poll, 2000);
+}
+
+function paint(d) {
+  if (!$('#rb_box')) return;
+  last = d;
+  if (d.max) { $('#rb_nmax').textContent = '1 to ' + d.max; const m = $('#rb_max'); if (m && document.activeElement !== m && !m.dataset.t) m.value = d.max; }
+  if (d.link && !$('#rb_link').value && !$('#rb_link').dataset.t) $('#rb_link').value = d.link;
+  const run = d.state === 'running';
+  $('#rb_st').textContent = (STATE[d.state] || d.state) + (d.state !== 'idle' && d.link ? '  (' + (d.dry ? 'page check' : d.created + ' created, ' + d.failed + ' failed of ' + d.count) + ')' : '');
+  $('#rb_stop').style.display = run ? '' : 'none'; $('#rb_go').disabled = $('#rb_dry').disabled = run;
+  const bar = $('#rb_bar'); bar.style.display = run && !d.dry ? '' : 'none';
+  $('#rb_fill').style.width = Math.min(100, Math.round(((d.created + d.failed) / Math.max(1, d.count)) * 100)) + '%';
+  const miss = d.hasScript === false ? 'scripts/referral-bot.mjs is not in the repo yet.' : d.ready === false ? 'Playwright is not installed on the server yet (see setup steps).' : d.browser === false ? 'The Chromium browser is not installed on the server. The Render build command must also run the Playwright install.' : '';
+  $('#rb_hint').textContent = d.hint || miss || (d.ai ? 'AI brain is on: the bot asks Gemini for help when it gets stuck.' : 'AI brain is off: add GEMINI_API_KEY on the server to turn it on.');
+  const lg = $('#rb_log'); if (d.log && d.log.length) { const atEnd = lg.scrollTop + lg.clientHeight >= lg.scrollHeight - 30; lg.textContent = d.log.join('\n'); if (atEnd) lg.scrollTop = lg.scrollHeight; }
+  const res = $('#rb_res'), acc = d.accounts || [];
+  if (!run && (acc.length || d.report)) {
+    res.style.display = '';
+    const good = acc.filter((a) => a.ok).length;
+    $('#rb_sum').textContent = d.dry ? 'Page check finished. Open the screenshot and the report to see what the bot found.' : good + ' of ' + acc.length + ' accounts created. ' + acc.filter((a) => a.relinked).length + ' times the link was typed again with the Sponsor box refilled.';
+    const g = 'grid-template-columns:.4fr 1.6fr 1fr 1fr 1.6fr';
+    $('#rb_tbl').innerHTML = acc.length ? '<div class="tbl"><div class="r h" style="' + g + '"><span>#</span><span>Username</span><span>Created</span><span>Logged out</span><span>Note</span></div>'
+      + acc.map((a) => '<div class="r" style="' + g + '"><span>' + a.n + '</span><span>' + esc(a.username) + '</span><span>' + (a.ok ? 'Yes' : 'No') + '</span><span>' + (a.ok ? (a.loggedOut ? 'Yes' : 'No') : '-') + '</span><span>' + esc(a.ok ? a.warn : a.why) + '</span></div>').join('') + '</div>' : '';
+  } else if (run) res.style.display = 'none';
+}
+async function poll() {
+  if (!$('#rb_box')) { stop(); return; }
+  try { paint(await api('/api/admin/wa/refbot/status')); } catch (e) { if ($('#rb_st')) $('#rb_st').textContent = 'Could not reach the server. ' + e.message; }
+}
+async function go(btn, body) {
+  $('#rb_err').textContent = ''; btn.disabled = true;
+  try { paint(await api('/api/admin/wa/refbot/start', body)); } catch (x) { $('#rb_err').textContent = x.message; btn.disabled = false; }
+}
+const dl = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
+const cell = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+
+document.addEventListener('input', (e) => { if (e.target && e.target.id === 'rb_max') e.target.dataset.t = '1'; if (e.target && e.target.id === 'rb_link') e.target.dataset.t = '1'; });
+document.addEventListener('click', async (e) => {
+  const t = (id) => e.target.closest('#' + id);
+  const form = () => ({ link: $('#rb_link').value, count: $('#rb_n').value, domain: $('#rb_dom').value, pass: $('#rb_pass').value.trim(), delay: Math.round((parseFloat($('#rb_gap').value) || 0) * 1000) || '', confirm: $('#rb_ok').checked, vibe: $('#rb_vibe').checked, noai: $('#rb_noai').checked });
+  let b;
+  if (t('out')) { store.del(KEY); stop(); last = null; return login(); }
+  if (!$('#rb_box')) return;
+  if ((b = t('rb_maxsave'))) { b.disabled = true; $('#rb_err').textContent = ''; try { const d = await api('/api/admin/wa/refbot/limit', { max: $('#rb_max').value.trim() }); $('#rb_max').dataset.t = ''; paint(d); toast('Limit saved: ' + d.max); } catch (x) { $('#rb_err').textContent = x.message; } b.disabled = false; }
+  else if ((b = t('rb_go'))) go(b, form());
+  else if ((b = t('rb_dry'))) go(b, { ...form(), dry: true });
+  else if ((b = t('rb_stop'))) { try { paint(await api('/api/admin/wa/refbot/stop', {})); } catch (x) { $('#rb_err').textContent = x.message; } }
+  else if ((b = t('rb_csv')) && last) dl('referral-test-' + new Date().toISOString().slice(0, 10) + '.csv', ['n,username,password,created,sponsor_box,welcome_seen,popup,logged_out,link_retyped,problem,note'].concat((last.accounts || []).map((a) => [a.n, a.username, a.password, a.ok, a.sponsor, a.welcome, a.popup, a.loggedOut, a.relinked, a.problem, a.ok ? a.warn : a.why].map(cell).join(','))).join('\n'), 'text/csv');
+  else if ((b = t('rb_cp')) && last) { const txt = (last.accounts || []).filter((a) => a.ok).map((a) => a.username).join('\n'); try { await navigator.clipboard.writeText(txt); toast('Copied ' + txt.split('\n').filter(Boolean).length + ' usernames'); } catch (x) { toast('Could not copy'); } }
+  else if ((b = t('rb_rep')) && last) { const bx = $('#rb_repbox'); bx.textContent = last.report || 'No report was written.'; bx.style.display = bx.style.display === 'none' ? '' : 'none'; }
+  else if ((b = t('rb_shot'))) {
+    const all = (last && last.shots) || [], names = ['page.png', 'filled.png', 'welcome.png'].concat(all.filter((x) => /^popup-/.test(x)).sort().slice(0, 6), ['home.png', 'me.png']).filter((x) => all.indexOf(x) > -1).concat(all.filter((x) => /^fail-/.test(x)).slice(0, 1));
+    if (!names.length) return toast('No screenshot yet');
+    $('#rb_img').innerHTML = '';
+    for (const name of names) {
+      try {
+        const d = await api('/api/admin/wa/refbot/shot', { name }), im = document.createElement('img'), cp = document.createElement('p');
+        im.alt = name; im.src = d.data; im.style.cssText = 'max-width:100%;border-radius:12px;margin-top:12px';
+        cp.className = 'sub'; cp.textContent = name === 'page.png' ? 'What the bot saw when it opened the link.' : name === 'filled.png' ? 'The form after the bot filled it, before pressing Create Account.' : name === 'welcome.png' ? 'The welcome card after sign-up.' : /^popup-STUCK/.test(name) ? 'A popup the bot could NOT close.' : /^popup-/.test(name) ? 'A popup the bot saw after sign-up, before closing it.' : name === 'home.png' ? 'The main page after the popups were closed.' : name === 'me.png' ? 'The ME tab scrolled down, where the bot looks for Logout.' : 'The first failed attempt.';
+        $('#rb_img').append(im, cp);
+      } catch (x) { toast(x.message); }
+    }
+  }
+});
+
+if (store.get(KEY)) { api('/api/admin/login', {}).then(show).catch((e) => { if (!$('#rb_box') && !$('.login')) login(e.message); }); }
+else login();
+})();
+</script>
+</body>
+</html>

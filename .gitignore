@@ -29,3 +29,6 @@ comradeconnect.env
 .npm-cache/
 .npmrc
 referral-bot-out/
+
+# referral bot memory (names already used)
+scripts/.referral-bot-memory.json*

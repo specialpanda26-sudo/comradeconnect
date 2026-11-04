@@ -13,10 +13,13 @@
 // Options: --headed  --dry  --yes  --delay=1500 (ms between accounts)  --parallel=2 (max 5)
 //          --pass=MyPass#1  --domain=yourdomain.com (email domain for the test accounts, default example.com)
 //          --fresh (a brand-new browser profile for every account instead of logging out between accounts)
+//          --memory=file (where the bot remembers every name/username/email/phone it ever used; default scripts/.referral-bot-memory.json)
+//          --seed=file (teach the memory from an old accounts.json / accounts.csv / log.txt; repeatable)  --reset-memory (forget everything)  --no-memory
 // Output:  referral-bot-out/  (report.txt, accounts.csv, accounts.json, page.png, filled.png, fail-N.png)
 
 import fs from 'node:fs';
 import readline from 'node:readline/promises';
+import { fileURLToPath } from 'node:url';
 
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -76,37 +79,90 @@ const EMAIL_BASE = (() => { const b = String(opt('email-base', process.env.REFBO
 const USER_PREFIX = String(opt('prefix', '')).replace(/[^a-z0-9_]/gi, '').toLowerCase();
 // --vibe=play: email/username is just one real first name (from the FIRST list below) plus 2 digits, nothing in front, no plus sign: david22@gmail.com. Off by default.
 const VIBE = String(opt('vibe', '')).toLowerCase() === 'play';
-const usedIds = new Set();
+
+// ---------- the memory: every name, username, email and phone used in ANY earlier run ----------
+// Saved to a file next to this script (not in the run folder), so Termux runs and admin-panel runs share it and nothing is picked twice.
+const MEM_FILE = opt('memory', process.env.REFBOT_MEMORY || fileURLToPath(new URL('./.referral-bot-memory.json', import.meta.url)));
+const NO_MEM = flag('no-memory');
+const mem = { names: new Set(), users: new Set(), emails: new Set(), phones: new Set() };
+const MEM_KEYS = Object.keys(mem);
+const norm = (v) => String(v || '').trim().toLowerCase();
+let memWarned = false;
+function memLoad() {                                   // merge what other runs saved meanwhile
+  if (NO_MEM) return;
+  try { const j = JSON.parse(fs.readFileSync(MEM_FILE, 'utf8')); for (const k of MEM_KEYS) for (const v of j[k] || []) mem[k].add(v); } catch (e) {}
+}
+function memSave() {
+  if (NO_MEM) return;
+  try {
+    const tmp = MEM_FILE + '.' + process.pid + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(Object.fromEntries(MEM_KEYS.map((k) => [k, [...mem[k]]]))));
+    fs.renameSync(tmp, MEM_FILE);
+  } catch (e) { if (!memWarned) { memWarned = true; console.log('  ! Could not save the bot memory to ' + MEM_FILE + ' (' + String(e.message).slice(0, 80) + '). Names will only be remembered during this run.'); } }
+}
+function memRemember(x) {                              // x: { name, user, email, phone }
+  if (x.name) mem.names.add(norm(x.name));
+  if (x.user) mem.users.add(norm(x.user));
+  if (x.email) mem.emails.add(norm(x.email));
+  if (x.phone) mem.phones.add(String(x.phone).trim());
+}
+function memSeed(file) {                               // learn from an old accounts.json / accounts.csv / log.txt
+  let txt = '', n = 0; try { txt = fs.readFileSync(file, 'utf8'); } catch (e) { return 0; }
+  const before = mem.users.size + mem.emails.size;
+  try { const j = JSON.parse(txt); if (Array.isArray(j)) { for (const r of j) if (r) { memRemember({ name: r.name, user: r.username, email: r.email, phone: r.phone }); for (const o of r.oldUsernames || []) mem.users.add(norm(o)); } n = 1; } } catch (e) {}
+  if (!n) for (const line of txt.split('\n')) {
+    let m = line.match(/#\s*\d+\s+(?:SUCCESS|FAILED)\s+(\S+)/);               // log.txt line
+    if (m) mem.users.add(norm(m[1]));
+    else if (/^\d+,"/.test(line)) { const c = [...line.matchAll(/"((?:[^"]|"")*)"/g)].map((x) => x[1]); if (c[0] != null) { memRemember({ user: c[0], email: c[1], phone: c[2] }); } }   // accounts.csv line (n,username,email,phone...)
+    else if (/^\d+,[^,]+,/.test(line)) { const c = line.split(','); memRemember({ user: c[1], email: c[2], phone: c[3] }); }
+    for (const e of line.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) || []) mem.emails.add(norm(e));
+  }
+  return mem.users.size + mem.emails.size - before;
+}
+if (flag('reset-memory') && !NO_MEM) { try { fs.rmSync(MEM_FILE, { force: true }); console.log('Bot memory wiped (' + MEM_FILE + ').'); } catch (e) {} }
+memLoad();
+if (!NO_MEM) {
+  for (const f of [OUT + '/accounts.json', OUT + '/accounts.csv', OUT + '/log.txt', ...args.filter((a) => a.startsWith('--seed=')).map((a) => a.slice(7))]) memSeed(f);
+  memSave();
+  console.log(`Bot memory: ${mem.users.size} usernames, ${mem.emails.size} emails, ${mem.names.size} names, ${mem.phones.size} phones already used, they will not be picked again (${MEM_FILE}).`);
+} else console.log('Bot memory is OFF (--no-memory): names may repeat across runs.');
+
 function person() {
-  let first, last, user, local;
-  for (let i = 0; i < 60; i++) {
+  memLoad();                                           // pick up anything another run saved a second ago
+  let first, last, user, local, name, phone, email;
+  for (let i = 0; i < 400; i++) {
     first = pick(FIRST); last = pick(LAST);
     const f = first.toLowerCase(), l = last.toLowerCase();
+    const extra = i >= 300 ? digits(3) : '';           // only if the name pool is nearly used up: still never repeat
     if (VIBE) {
-      local = f + digits(2);
-      user = USER_PREFIX + f + digits(2);
+      local = f + digits(2) + extra;
+      user = USER_PREFIX + f + digits(2) + extra;
     } else {
-      local = pick([f + l + digits(2), f + l + digits(2), f + l.slice(0, 4) + digits(2), l + f + digits(2), f[0] + l + digits(2), f + '.' + l + digits(2)]);   // davidkaranja36, davidkara67, karanjadave12 ...
-      user = USER_PREFIX + pick([l + f, l + f.slice(0, 3) + digits(2), f + l.slice(0, 3) + digits(2), l + f[0] + digits(2)]);                                       // karanjadave, karanjadav48 ...
+      local = pick([f + l + digits(2), f + l + digits(2), f + l.slice(0, 4) + digits(2), l + f + digits(2), f[0] + l + digits(2), f + '.' + l + digits(2)]) + extra;   // davidkaranja36, davidkara67, karanjadave12 ...
+      user = USER_PREFIX + pick([l + f, l + f.slice(0, 3) + digits(2), f + l.slice(0, 3) + digits(2), l + f[0] + digits(2)]) + extra;                                       // karanjadave, karanjadav48 ...
     }
-    if (!usedIds.has(local) && !usedIds.has(user)) break;
+    user = user.slice(0, 20);
+    name = first + ' ' + (i >= 150 ? pick('ABCDEFGHJKLMNPRSTW'.split('')) + '. ' : '') + last;                                                                              // the middle initial only appears once every plain first+last pair is used
+    email = (!VIBE && EMAIL_BASE) ? EMAIL_BASE.replace('@', '+' + local.replace(/[^a-z0-9]/g, '') + '@') : local + '@' + DOMAIN;   // --vibe=play never uses the +prefix, even if REFBOT_EMAIL_BASE is set
+    phone = '7' + digits(/kenya/i.test(COUNTRY) ? 8 : 9);
+    if (!mem.names.has(norm(name)) && !mem.users.has(norm(user)) && !mem.emails.has(norm(email)) && !mem.phones.has(phone)) break;
   }
-  usedIds.add(local); usedIds.add(user);
-  const email = (!VIBE && EMAIL_BASE) ? EMAIL_BASE.replace('@', '+' + local.replace(/[^a-z0-9]/g, '') + '@') : local + '@' + DOMAIN;   // --vibe=play never uses the +prefix, even if REFBOT_EMAIL_BASE is set
-  return { name: first + ' ' + last, user, email, phone: '7' + digits(/kenya/i.test(COUNTRY) ? 8 : 9) };   // usernames are random Kenyan-style names (or playful words with --vibe=play); the list of created accounts is printed at the end of every run
+  memRemember({ name, user, email, phone }); memSave();   // reserved BEFORE the site is touched: even a failed attempt is never repeated
+  return { name, user, email, phone };   // usernames are random Kenyan-style names (or playful words with --vibe=play); the list of created accounts is printed at the end of every run
 }
 
 // A new username in the same style, used when the site says the first one is taken.
 function freshUsername(name) {
-  const parts = String(name).toLowerCase().replace(/[^a-z ]/g, '').split(' ');
-  const f = parts[0] || 'user', l = parts[1] || 'ke';
+  memLoad();
+  const parts = String(name).toLowerCase().replace(/[^a-z ]/g, '').split(' ').filter((x) => x.length > 1);
+  const f = parts[0] || 'user', l = parts[parts.length - 1] || 'ke';
   let u = '';
-  for (let i = 0; i < 30; i++) {
-    u = USER_PREFIX + (VIBE ? f + digits(2) : pick([l + f.slice(0, 3) + digits(2), f + l.slice(0, 3) + digits(3), l + f[0] + digits(2), f + digits(3)]));
-    if (!usedIds.has(u)) break;
+  for (let i = 0; i < 80; i++) {
+    u = (USER_PREFIX + (VIBE ? f + digits(i < 40 ? 2 : 4) : pick([l + f.slice(0, 3) + digits(2), f + l.slice(0, 3) + digits(3), l + f[0] + digits(2), f + digits(i < 40 ? 3 : 5)]))).slice(0, 20);
+    if (!mem.users.has(u)) break;
   }
-  usedIds.add(u);
-  return u.slice(0, 20);
+  mem.users.add(u); memSave();                         // the taken one stays remembered too
+  return u;
 }
 
 // ---------- reading the form ----------
@@ -880,6 +936,7 @@ say(`\n========== REFERRAL BOT REPORT ==========`);
 say(`Link:     ${link}`);
 say(`Date:     ${new Date().toLocaleString()}   (took ${((Date.now() - t0) / 1000).toFixed(1)}s)`);
 say(`Accounts: ${good.length} created, ${bad.length} failed, out of ${N}`);
+say(NO_MEM ? 'Memory:   off (--no-memory)' : `Memory:   ${mem.users.size} usernames and ${mem.emails.size} emails remembered for future runs (${MEM_FILE})`);
 if (brain) say(`AI brain: ${AI ? 'on, ' + brain.stats().calls + ' AI calls (' + brain.stats().model + ')' : 'off'}`);
 say(`Sponsor box auto-filled from the link: ${filled.length} of ${N}`);
 say(`Terms box ticked:                      ${ticked.length} of ${N}`);

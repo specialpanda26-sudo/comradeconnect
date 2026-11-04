@@ -94,7 +94,7 @@ async function start(body, env) {
   const args = [script, link, ...(dry ? ['--dry'] : [String(count), '--yes', '--delay=' + delay]), ...(domain ? ['--domain=' + domain] : []), ...(pass ? ['--pass=' + pass] : []), ...(body.vibe ? ['--vibe=play'] : []), ...(body.noai ? ['--no-ai'] : [])];
   const cenv = { PATH: process.env.PATH, HOME: process.env.HOME || dir, TMPDIR: os.tmpdir(), NODE_ENV: 'production' };
   if (process.env.PLAYWRIGHT_BROWSERS_PATH) cenv.PLAYWRIGHT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH;
-  for (const k of ['GEMINI_API_KEY', 'GEMINI_MODEL', 'GEMINI_FALLBACK', 'GROQ_API_KEY', 'GROQ_MODEL', 'REFBOT_EMAIL_BASE']) if (process.env[k]) cenv[k] = process.env[k];   // the AI brain (scripts/referral-brain.mjs) uses the site's own Gemini key
+  for (const k of ['GEMINI_API_KEY', 'GEMINI_MODEL', 'GEMINI_FALLBACK', 'GROQ_API_KEY', 'GROQ_MODEL', 'REFBOT_EMAIL_BASE', 'REFBOT_MEMORY']) if (process.env[k]) cenv[k] = process.env[k];   // the AI brain (scripts/referral-brain.mjs) uses the site's own Gemini key
   const r = run = { id: Date.now(), state: 'running', link, dry, count: dry ? 1 : count, created: 0, failed: 0, startedAt: Date.now(), endedAt: 0, log: [], dir, accounts: [], report: '', shots: [], hint: '', child: null };
   const push = (chunk) => {
     for (const raw of clean(chunk).split('\n')) {

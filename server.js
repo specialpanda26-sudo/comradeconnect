@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import worker, { runCron } from './backend/src/index.js';
 import { handleWa } from './wabot/routes.js';
+import { handleRefbotAi } from './wabot/refbot-ai-proxy.js';
 
 const DEFAULTS = {
   ALLOWED_ORIGINS: 'https://comradeconnect-1.onrender.com,https://comradeconnect.co.ke,https://www.comradeconnect.co.ke,https://localhost',
@@ -195,6 +196,9 @@ const server = http.createServer(async (req, res) => {
       }
       return send(res, 200, await cron());
     }
+
+    // Key proxy for the referral bot's AI brain (the real Gemini key never leaves this server).
+    if (await handleRefbotAi(req, res, url, env)) return;
 
     // Admin WhatsApp bot + referral tester live outside the Worker code, so route them here.
     if (url.pathname.startsWith('/api/admin/wa/')) {

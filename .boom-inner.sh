@@ -1,6 +1,3 @@
-#!/bin/bash
-# boom-inner.sh - runs inside Debian (proot-distro), invoked by the "boom" script.
-# Args: $1=repo URL  $2=repo folder name
 set -u
 say() { echo "boom: $*"; }
 REPO_URL="$1"
@@ -66,22 +63,49 @@ if pgrep -f referral-bot >/dev/null 2>&1; then
   say "the bot is already running, reattaching to the live log..."
   screen -r refbot
 else
-  LINK_SHOW="${REFBOT_LINK:-https://adselect.net/register?ref=ogollatech}"
+  LAST_LINK_FILE=~/.boom-last-link
+  DEFAULT_LINK="https://adselect.net/register?ref=ogollatech"
+  [ -f "$LAST_LINK_FILE" ] && DEFAULT_LINK="$(cat "$LAST_LINK_FILE")"
+
+  if [ -n "${REFBOT_LINK:-}" ]; then
+    RUN_LINK="$REFBOT_LINK"
+  elif [ -n "${REFBOT_AUTO_YES:-}" ]; then
+    RUN_LINK="$DEFAULT_LINK"
+  else
+    printf "boom: which referral link are we testing? [%s] " "$DEFAULT_LINK"
+    read -r RUN_LINK
+    [ -n "$RUN_LINK" ] || RUN_LINK="$DEFAULT_LINK"
+  fi
+  echo "$RUN_LINK" > "$LAST_LINK_FILE" 2>/dev/null
+
+  if [ -n "${REFBOT_SECS:-}" ]; then
+    RUN_SECS="$REFBOT_SECS"
+  elif [ -n "${REFBOT_AUTO_YES:-}" ]; then
+    RUN_SECS=90
+  else
+    printf "boom: how many seconds should each account take to create? [90] "
+    read -r RUN_SECS
+    [ -n "$RUN_SECS" ] || RUN_SECS=90
+  fi
+  case "$RUN_SECS" in
+    ""|*[!0-9]*) RUN_SECS=90 ;;
+  esac
+
   if [ -z "${REFBOT_AUTO_YES:-}" ]; then
     echo
     echo "boom: this will open:"
-    echo "  $LINK_SHOW"
-    echo "boom: and create up to 100 real test accounts there under that referral link."
+    echo "  $RUN_LINK"
+    echo "boom: and create up to 100 real test accounts there, $RUN_SECS seconds apart."
     echo "boom: only do this on a site you own or have permission to test."
     printf "boom: continue? [y/N] "
     read -r ans
     case "$ans" in
       y|Y|yes|YES) ;;
-      *) echo "boom: cancelled. (set REFBOT_AUTO_YES=1 in your shell to skip this prompt next time)"; exit 0 ;;
+      *) echo "boom: cancelled. (set REFBOT_AUTO_YES=1 in your shell to skip prompts next time)"; exit 0 ;;
     esac
   fi
-  say "starting the bot (100 accounts, 90 seconds apart)..."
-  screen -dmS refbot bash -lc "cd $PWD && bash ref-test.sh 100 90"
+  say "starting the bot (100 accounts, $RUN_SECS seconds apart)..."
+  screen -dmS refbot bash -lc "cd $PWD && REFBOT_LINK='$RUN_LINK' bash ref-test.sh 100 $RUN_SECS"
   sleep 2
   screen -r refbot
 fi

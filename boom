@@ -13,7 +13,13 @@ set -u
 say() { echo "boom: $*"; }
 die() { echo "boom: $*" >&2; exit 1; }
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+SOURCE="${BASH_SOURCE[0]:-$0}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  case "$SOURCE" in /*) ;; *) SOURCE="$DIR/$SOURCE" ;; esac
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 REPO_URL="$(git -C "$SCRIPT_DIR" config --get remote.origin.url 2>/dev/null)"
 [ -n "$REPO_URL" ] || REPO_URL="https://github.com/specialpanda26-sudo/comradeconnect.git"
 REPO_NAME="$(basename "$REPO_URL" .git)"
@@ -22,6 +28,12 @@ if [ -d /data/data/com.termux ] || [ -n "${TERMUX_VERSION:-}" ] || command -v pr
   :
 else
   die "run this from the Termux app itself (not from inside Debian). If you are inside a 'proot-distro login' session, type 'exit' first, then run: bash boom"
+fi
+
+BIN_DIR="${PREFIX:-/data/data/com.termux/files/usr}/bin"
+if [ -d "$BIN_DIR" ] && [ ! -e "$BIN_DIR/boom" ]; then
+  ln -sf "$SCRIPT_DIR/boom" "$BIN_DIR/boom" 2>/dev/null \
+    && say "installed: from now on just type 'boom' (no 'bash', from anywhere)."
 fi
 
 if ! command -v proot-distro >/dev/null 2>&1; then

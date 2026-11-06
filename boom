@@ -42,7 +42,7 @@ if ! command -v proot-distro >/dev/null 2>&1; then
   pkg install -y proot-distro || die "could not install proot-distro. Check your internet and try again."
 fi
 
-if ! proot-distro list --installed 2>/dev/null | grep -qi '^debian'; then
+if ! proot-distro login debian -- true >/dev/null 2>&1; then
   say "installing Debian (one-time, this can take a few minutes)..."
   proot-distro install debian || die "could not install Debian. Check your internet and try again."
 fi

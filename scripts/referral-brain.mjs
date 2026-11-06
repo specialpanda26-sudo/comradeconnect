@@ -19,7 +19,7 @@ const withNotes = (sys) => { const n = siteNotes(); return n ? sys + '\n\nNotes 
 
 const KEY = process.env.GEMINI_API_KEY || '';
 const GKEY = process.env.GROQ_API_KEY || '';
-const GMODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GMODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
 const GBASE = (process.env.GROQ_BASE || 'https://api.groq.com/openai/v1').replace(/\/$/, '');
 let gDead = false, gemDead = false;
 let MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';

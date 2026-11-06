@@ -28,13 +28,15 @@ catch { console.log('\nPlaywright is not installed. Run these two commands, then
 const args = process.argv.slice(2);
 const flag = (n) => args.includes('--' + n);
 const opt = (n, d) => { const a = args.find((x) => x.startsWith('--' + n + '=')); return a ? a.slice(n.length + 3) : d; };
-const DELAY = Math.max(0, parseInt(opt('delay', '1500'), 10) || 0);
+let DELAY = Math.max(0, parseInt(opt('delay', '1500'), 10) || 0);
 const PAR = Math.max(1, Math.min(5, parseInt(opt('parallel', '1'), 10) || 1));
 const DOMAIN = opt('domain', 'example.com');
 const FRESH = flag('fresh');
 const COUNTRY = opt('country', 'Kenya');
 const brain = await import('./referral-brain.mjs').catch(() => null);          // the AI brain: optional, the bot still works without it
 const AI = !flag('no-ai') && !!brain && brain.ready();
+const extra = await import('./referral-extra.mjs').catch(() => null);          // own-referral-link capture, more links, levels: optional extras
+const CAPTURE = !flag('no-capture') && !!extra;
 if (brain) brain.configure({ budget: parseInt(opt('ai-budget', '60'), 10) || 60, country: COUNTRY, log: (m) => console.log('        [ai] ' + m) });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ask = async (q) => { const rl = readline.createInterface({ input: process.stdin, output: process.stdout }); const a = (await rl.question(q)).trim(); rl.close(); return a; };
@@ -44,11 +46,30 @@ const tty = !!process.stdin.isTTY;
 let link = args.find((a) => /^https?:\/\//i.test(a));
 const numArg = args.find((a) => /^\d+$/.test(a));
 if (!link && !tty) { console.log('\nUsage: node scripts/referral-bot.mjs "<referral link>" [count] [--dry] [--headed] [--yes]\n'); process.exit(1); }
+// several referral links, how many levels deep and the pace: asked here when the bot asks for the link itself
+const ALL_LINKS = [];
+const addLinks = (s) => { for (const x of String(s || '').split(/[\s,;]+/)) if (/^https?:\/\//i.test(x) && !ALL_LINKS.includes(x)) ALL_LINKS.push(x.replace(/^["']|["']$/g, '')); };
+args.forEach(addLinks);
+let PROMPTED = false;
+if (!ALL_LINKS.length && tty && !flag('dry') && !flag('single')) {
+  PROMPTED = true;
+  let k = parseInt(await ask('\nHow many referral links do you want to test? [1]: '), 10); k = Math.max(1, Math.min(10, k || 1));
+  for (let i = 1; i <= k; i++) addLinks(await ask(k > 1 ? `Paste referral link ${i} of ${k}: ` : 'Paste your referral link: '));
+  link = ALL_LINKS[0];
+}
 if (!link) link = (await ask('\nPaste your referral link: ')).replace(/^["']|["']$/g, '');
+addLinks(link); if (ALL_LINKS.length) link = ALL_LINKS[0];
 if (!/^https?:\/\//i.test(link)) { console.log('\nThat is not a link (it must start with https://).\n'); process.exit(1); }
 let N = parseInt(numArg, 10);
 if (!N && !flag('dry') && tty) N = parseInt(await ask('How many accounts should the bot create? (1-100000): '), 10);
 N = Math.max(1, Math.min(100000, N || 5));
+let LEVELS = parseInt(opt('levels', process.env.REFBOT_LEVELS || ''), 10);
+if (!LEVELS && PROMPTED && !flag('yes')) LEVELS = parseInt(await ask("How many levels deep? 1 = only these links, 2 = also sign up through each new account's own referral link [1]: "), 10);
+LEVELS = Math.max(1, Math.min(4, LEVELS || 1));
+const PER_REF = Math.max(1, Math.min(20, parseInt(opt('per-ref', process.env.REFBOT_PER_REF || '1'), 10) || 1));       // accounts per referral link on levels 2 and up
+const L_MAX = Math.max(1, Math.min(500, parseInt(opt('level-max', '30'), 10) || 30));                                  // most accounts on each level from 2 up
+if (PROMPTED && !args.some((a) => a.startsWith('--delay='))) { const s = parseFloat(await ask('Seconds between accounts? [' + DELAY / 1000 + ']: ')); if (s >= 0) DELAY = Math.round(s * 1000); }
+
 
 const host = new URL(link).hostname;
 const local = /^(localhost|127\.|192\.168\.|10\.)/.test(host);
@@ -57,6 +78,10 @@ if (!flag('dry') && !local && !flag('yes')) {
   if (!tty || (await ask(`Type YES to create ${N} real accounts there: `)).toUpperCase() !== 'YES') { console.log('Cancelled. (Use --yes to skip this question.)\n'); process.exit(1); }
 }
 
+if (!flag('dry') && !local && !flag('yes') && (ALL_LINKS.length > 1 || LEVELS > 1)) {
+  console.log(`\nAlso planned: ${ALL_LINKS.length > 1 ? (ALL_LINKS.length - 1) + ' more link(s) x ' + N + ' accounts' : ''}${ALL_LINKS.length > 1 && LEVELS > 1 ? ', and ' : ''}${LEVELS > 1 ? 'up to ' + L_MAX + ' accounts on each of ' + (LEVELS - 1) + ' deeper level(s), one account every ' + DELAY / 1000 + 's' : ''}.`);
+  if (!tty || (await ask('Type YES to continue: ')).toUpperCase() !== 'YES') { console.log('Cancelled. (Use --yes to skip this question.)\n'); process.exit(1); }
+}
 const OUT = 'referral-bot-out';
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -706,6 +731,8 @@ function diagnose(e) {
 }
 // ---- end diagnose ----
 
+const siteOf = () => { try { return new URL(link); } catch (e) { return null; } };
+const capCtx = (rec, p, page, n) => ({ username: rec.username, email: rec.email, phone: rec.phone, password: rec.password, template: link, siteOrigin: (siteOf() || {}).origin || '', siteHost: (siteOf() || {}).host || '', log: (m) => console.log('        [link] ' + m), brain, AI, person: testData(p), goto: gotoRetry, logout: async () => !!(await logout(page, n)).ok });
 // ---------- one visit = one new account ----------
 async function visit(browser, n, dry, shared) {
   let ctx = shared, page;                              // shared = same browser session for every account (logs out in between); otherwise a brand-new visitor
@@ -732,6 +759,7 @@ async function visit(browser, n, dry, shared) {
     const { roles, ai: aiRead } = await readRoles(page, p, !dry);
     rec.sponsor = roles.sponsor ? roles.sponsor.value : '';
     rec.sponsor_filled = !!rec.sponsor;
+    rec.expect = extra ? extra.refCode(link) : ''; rec.sponsor_match = !rec.expect || rec.sponsor.toLowerCase() === rec.expect.toLowerCase();   // what the link says the sponsor is vs what the box shows
     ev.captcha = await hasCaptcha(page);
     const who = await sponsorConfirmText(page);
     if (n === 1) await page.screenshot({ path: `${OUT}/page.png`, fullPage: true });
@@ -839,6 +867,7 @@ async function visit(browser, n, dry, shared) {
         rec.popup = b.pressed.join('+') || 'none'; ev.popupStuck = b.stuck;
         if (n === 1) await page.screenshot({ path: OUT + '/home.png' }).catch(() => {});
         if (ev.popupStuck && AI) { const w = await brain.agent(page, { goal: 'popup', person: testData(p), cacheKey: 'popup', verify: async () => !(await detectOverlay(page)) }); if (w.ok) { ev.popupStuck = false; rec.popup += '+AI'; } }
+        if (CAPTURE) { try { Object.assign(rec, await extra.capture(page, capCtx(rec, p, page, n))); } catch (e) {} }   // read this account's own referral link before logging out
         const lo = await logout(page, n);
         if (!lo.ok && AI) {
           const w = await brain.agent(page, { goal: 'logout', person: testData(p), cacheKey: 'logout', verify: async () => (await page.locator('input[type=password]').first().isVisible().catch(() => false)) || (await page.getByRole('button', { name: /log ?in|sign ?in|create account/i }).first().isVisible().catch(() => false)) });
@@ -847,6 +876,8 @@ async function visit(browser, n, dry, shared) {
         if (lo.late && lo.late.length) rec.popup = (rec.popup && rec.popup !== 'none' ? rec.popup + '+' : '') + lo.late.join('+') + '(late)';   // a popup the first pass missed, closed just before logout
         if (lo.late && lo.late.ran && !lo.late.stuck) ev.popupStuck = false;                                                                  // the second look found nothing left on screen
         rec.loggedOut = lo.ok; ev.logoutHow = lo.how;
+        if (CAPTURE && !rec.ref_link && rec.loggedOut) { try { const g = await extra.relogCapture(page, capCtx(rec, p, page, n)); if (g.ref_link) { rec.ref_link = g.ref_link; rec.ref_source = g.ref_source; } rec.relog = g.relog; if (g.relog === 'ok') rec.loggedOut = g.loggedOut; } catch (e) {} }   // not found: log in again and look there
+        if (CAPTURE && !rec.ref_link) { rec.ref_link = extra.guessLink(link, rec.username); rec.ref_source = rec.ref_link ? 'guess' : ''; }
         rec.relinked = await reopenLink(page);                 // retype the referral link after logging out
       } catch (e) { ev.afterError = String(e && e.message).split('\n')[0].slice(0, 90); }
     }
@@ -866,6 +897,7 @@ async function visit(browser, n, dry, shared) {
       if (rec.ok && !rec.welcome) warn.push('welcome card was not seen after sign-up');
       if (rec.ok && ev.popupStuck) warn.push('a popup could not be closed');
       if (rec.ok && !rec.relinked) warn.push('after logout, the referral link did not show the form with the Sponsor box filled');
+      if (rec.ok && CAPTURE && rec.ref_source === 'guess') warn.push('own referral link not found on the site, using a best guess: ' + rec.ref_link);
       if (rec.ok && !rec.loggedOut) warn.push(`could not log out (${ev.logoutHow || ev.afterError || 'unknown'})`);
       rec.warn = warn.join(' | ');
     }
@@ -921,6 +953,42 @@ await Promise.all(Array.from({ length: PAR }, async () => {
   }
   if (ctx) await ctx.close();
 }));
+
+// ---------- more links and deeper levels (one account at a time, at your pace) ----------
+const link0 = link;
+results.forEach((r) => { if (r) { r.level = 1; r.via = link0; r.parent = extra ? extra.refCode(link0) : ''; } });
+if (extra && (ALL_LINKS.length > 1 || LEVELS > 1)) {
+  let xctx = null, xused = 0;
+  const xnew = async () => { if (xctx) await xctx.close().catch(() => {}); xctx = null; xused = 0; await reviveBrowser(); if (!FRESH) xctx = await browser.newContext({ viewport: { width: 390, height: 1000 } }); };
+  await xnew().catch(() => {});
+  const one = async (lnk, level, parent) => {
+    const n = results.length + 1;
+    if (!FRESH && (!xctx || xused >= 10)) await xnew().catch(() => {});
+    xused++; link = lnk;
+    let r;
+    try { r = await visit(browser, n, false, xctx); }
+    catch (e) { r = { n, username: 'sim_unknown', email: '', phone: '', password: PASS, ok: false, problem: 'bot_error', why: String(e && e.message).split('\n')[0].slice(0, 90), fix: '' }; }
+    link = link0;
+    if (r.crashed) await xnew().catch(() => {});
+    Object.assign(r, { level, via: lnk, parent });
+    results[n - 1] = r;
+    try { fs.writeFileSync(OUT + '/accounts.json', JSON.stringify(results)); } catch (e) {}
+    console.log(`  #${String(n).padStart(3)}  L${level}  ${r.ok ? 'ACCOUNT CREATED' : 'FAILED'}  ${r.username}  (through ${parent || lnk})${r.ok && r.ref_link ? '\n        own referral link: ' + r.ref_link + '  [' + r.ref_source + ']' : ''}${r.ok && r.sponsor ? '\n        sponsor box showed: ' + r.sponsor : ''}${r.ok ? '' : '\n        ' + (r.why || '')}`);
+    fs.appendFileSync(OUT + '/log.txt', new Date().toISOString() + '  #' + n + '  ' + (r.ok ? 'SUCCESS' : 'FAILED') + '  ' + r.username + '  ' + (r.password || '') + '  L' + level + '  ' + (r.ref_link || '') + '\n');
+    if (DELAY) await sleep(DELAY);
+    return r;
+  };
+  for (const lnk of ALL_LINKS.slice(1)) for (let i = 0; i < N; i++) await one(lnk, 1, extra.refCode(lnk));
+  for (let lv = 2; lv <= LEVELS; lv++) {
+    const parents = results.filter((r) => r && r.ok && r.ref_link && r.level === lv - 1);
+    if (!parents.length) { console.log(`\nLevel ${lv}: no account has a referral link, so there is nothing to sign up through.`); break; }
+    console.log(`\nLevel ${lv}: signing up through the own referral links of ${parents.length} level-${lv - 1} account(s)...`);
+    let made = 0;
+    outer: for (const par of parents) for (let k = 0; k < PER_REF; k++) { if (made >= L_MAX) break outer; await one(par.ref_link, lv, par.username); made++; }
+  }
+  if (xctx) await xctx.close().catch(() => {});
+  N = results.length;                                    // the report below counts every account of every link and level
+}
 await browser.close();
 
 // ---------- report ----------
@@ -966,6 +1034,20 @@ if (bad.length) {
 if (good.some((r) => !r.loggedOut)) say(`\nWARNING: the bot could not log out ${good.filter((r) => !r.loggedOut).length} account(s) (it cleared the session instead). Send me a screenshot of the page you land on after Continue, showing where Logout is.`);
 if (loaded && filled.length < loaded) say(`\nWARNING: the sponsor box was empty for ${loaded - filled.length} account(s). If the link does not fill it, the referral cannot be credited. Check the link is the live one and still contains the sponsor code.`);
 if (loaded && ticked.length < loaded) say(`\nWARNING: the terms box could not be ticked for ${loaded - ticked.length} account(s). See filled.png.`);
+if (CAPTURE || ALL_LINKS.length > 1 || LEVELS > 1) {
+  const okAll = results.filter((r) => r && r.ok), seenOnSite = okAll.filter((r) => r.ref_link && r.ref_source !== 'guess'), guessed = okAll.filter((r) => r.ref_source === 'guess');
+  say(`\nOWN REFERRAL LINKS: read from the site for ${seenOnSite.length} of ${okAll.length} accounts` + (guessed.length ? `, ${guessed.length} are best guesses (the bot did not see them on the site)` : ''));
+  const byLevel = {};
+  for (const r of okAll) (byLevel[r.level || 1] = byLevel[r.level || 1] || []).push(r);
+  for (const [lv, list] of Object.entries(byLevel)) {
+    say(`\n  LEVEL ${lv}: ${list.length} account(s)`);
+    list.forEach((r) => say(`    ${r.username}  password ${r.password}  through ${r.parent || r.via}${r.ref_link ? '\n       own link: ' + r.ref_link + '  [' + r.ref_source + ']' : '\n       own link: not found'}${Number(lv) > 1 ? '\n       sponsor box showed: "' + (r.sponsor || 'EMPTY') + '"' + (r.sponsor_match === false ? '  (link code was ' + r.expect + ')' : '') : ''}`));
+  }
+  const cols = ['n', 'level', 'through_code', 'via_link', 'username', 'email', 'phone', 'password', 'ok', 'own_referral_link', 'link_source', 'sponsor_box_showed', 'problem'];
+  fs.writeFileSync(`${OUT}/accounts-full.csv`, [cols.join(','), ...results.filter(Boolean).map((r) => [r.n, r.level || 1, r.parent || '', r.via || link, r.username, r.email, r.phone, r.password, r.ok ? 'yes' : 'no', r.ref_link || '', r.ref_source || '', r.sponsor || '', r.problem || ''].map(csvCell).join(','))].join('\n'));
+  fs.writeFileSync(`${OUT}/ref-links.txt`, okAll.map((r) => `${r.username}  ${r.password}  ${r.ref_link || '(no link)'}`).join('\n'));
+  say(`\n  Saved: ${OUT}/accounts-full.csv  (every account, password and own referral link)   ${OUT}/ref-links.txt`);
+}
 say(`\nNOTE: "created" only means the site accepted the sign-up. The real referral test is next: log in as the sponsor and check the referral list shows ${good.length} new people (they are listed above).`);
 say(`\nFiles: ${OUT}/report.txt  ${OUT}/accounts.csv  (screenshots of failures: ${OUT}/fail-N.png)\n`);
 fs.writeFileSync(`${OUT}/report.txt`, L.join('\n'));

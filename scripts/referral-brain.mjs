@@ -239,6 +239,8 @@ const GOALS = {
   terms: () => 'Tick the checkbox (or switch) that accepts the Terms / Privacy Policy. It may be a custom square instead of a normal checkbox. Do not open the Terms link and touch nothing else.',
   popup: () => 'Close the popup or banner covering the page. If it is the Telegram bonus panel (Join our channel and get 5 USD), press its X or its Later button, never Join. Prefer Later / Not now / Close / X. Do not accept offers, join channels or enter any data.',
   logout: () => 'Log the current account out so the sign-up or login page shows again. Look in menus, profile or settings icons if no Logout button is visible. Confirm a logout dialog if one appears.',
+  ref_link: () => "Find the page that shows THIS account's own referral link or referral code. Look for Invite, Referral, Refer a friend, Team, Share, Promote, Earn or Affiliate in the menus, in the Me / Profile tab or on the dashboard. Open it and stop when the link or code is visible on screen. Do not copy, send or share anything and do not touch anything about money.",
+  login: () => 'Log this account in: open the Log in / Sign in page if it is not showing, type $username into the username (or email) box and $password into the password box, then press the Log in button. Stop when the logged-in page shows.',
   welcome: () => 'The account was just created. Press Continue (or the main forward button) on the welcome screen, close any popup (Later / X), and stop when the normal logged-in page shows.',
 };
 const BLOCK = /\b(delete|remove|withdraw|deposit|payout|pay|checkout|buy|purchase|upgrade|subscribe|transfer|send money|top.?up|cash ?out|change password|deactivate|close account)\b/i;

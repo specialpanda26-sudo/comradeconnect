@@ -11,55 +11,55 @@
 <script>try{var t=localStorage.getItem('cc_theme');if(t!=='dark'&&t!=='light')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body>
-<header><div class="wrap">
+<div class="wrap">
+<div class="top">
 <a class="logo" href="welcome.html"><img src="icon-192.png" alt="">Comrade Connect</a>
-<a class="btn" href="index.html">Open the app</a>
-</div></header>
-
-<section class="hero wrap">
-<h1>Campus life, <span>all in one place.</span></h1>
-<p>Spill anonymously, buy and sell safely with escrow, find roommates and study groups. Built by comrades, for comrades.</p>
-<a class="pill" href="index.html">
-<div>What<b>Market, Hearts, Events</b></div>
-<div>Where<b>Your campus</b></div>
-<div>Who<b>Comrades like you</b></div>
-<span class="btn">Explore</span>
+<a class="ib" href="index.html" aria-label="Open the app"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></a>
+</div>
+<p class="hi">Hi, comrade</p>
+<h1>Explore <span>campus life</span></h1>
+<div class="search">
+<a class="f" href="index.html"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Search market, events, roommates</a>
+<a class="ib" href="index.html" aria-label="Filters"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></a>
+</div>
+<div class="chips">
+<a class="chip on" href="index.html"><i>M</i>Market</a>
+<a class="chip" href="index.html"><i>H</i>Hearts</a>
+<a class="chip" href="index.html"><i>E</i>Events</a>
+<a class="chip" href="index.html"><i>R</i>Roommates</a>
+<a class="chip" href="index.html"><i>S</i>Study</a>
+<a class="chip" href="index.html"><i>L</i>Live</a>
+</div>
+<a class="ticket" href="index.html">
+<div class="r"><span>Event ticket</span><span>Scan at the door</span></div>
+<div class="m"><span>Buy</span><span class="l"><s></s></span><span>Enter</span></div>
+<div class="r2"><span>Pay with M-Pesa</span><span>QR in your wallet</span></div>
 </a>
-</section>
-
-<nav class="cats">
-<a href="index.html">Market</a><a href="index.html">Hearts</a><a href="index.html">Events</a><a href="index.html">Roommates</a><a href="index.html">Study groups</a><a href="index.html">Past papers</a><a href="index.html">Mbogi Talk</a><a href="index.html">Live</a>
-</nav>
-
-<main class="wrap">
 <h2 class="rv">Popular on campus</h2>
 <div class="grid rv">
-<a class="tile" href="index.html"><i>Market</i><div><b>Buy and sell safely</b><small>Escrow holds the money until you get the item</small></div></a>
-<a class="tile" href="index.html"><i>Spill</i><div><b>Say it anonymously</b><small>Nobody will know it was you</small></div></a>
-<a class="tile" href="index.html"><i>Hearts</i><div><b>Meet comrades</b><small>18+ and verified</small></div></a>
-<a class="tile" href="index.html"><i>Events</i><div><b>Parties and tickets</b><small>Create your event, sell tickets, scan at the door</small></div></a>
-<a class="tile" href="index.html"><i>Roommates</i><div><b>Find your people</b><small>Hostels and shared rooms near campus</small></div></a>
-<a class="tile" href="index.html"><i>Study</i><div><b>Groups and past papers</b><small>Share notes, pass together</small></div></a>
-<a class="tile" href="index.html"><i>Mbogi</i><div><b>Talk and go live</b><small>Join rooms and watch streams</small></div></a>
-<a class="tile" href="index.html"><i>Wallet</i><div><b>Pay with M-Pesa</b><small>Deposit, spend and withdraw</small></div></a>
+<a class="card" href="index.html"><div class="p">Market<u></u></div><div class="b"><div><b>Buy and sell safely</b><small>Escrow holds the money until you get the item</small></div><span class="btn">Open</span></div></a>
+<a class="card" href="index.html"><div class="p">Spill<u></u></div><div class="b"><div><b>Say it anonymously</b><small>Nobody will know it was you</small></div><span class="btn">Open</span></div></a>
+<a class="card" href="index.html"><div class="p">Hearts<u></u></div><div class="b"><div><b>Meet comrades</b><small>18+ and verified</small></div><span class="btn">Open</span></div></a>
+<a class="card" href="index.html"><div class="p">Events<u></u></div><div class="b"><div><b>Parties and tickets</b><small>Create, sell, scan at the door</small></div><span class="btn">Open</span></div></a>
+<a class="card" href="index.html"><div class="p">Rooms<u></u></div><div class="b"><div><b>Find roommates</b><small>Hostels and shared rooms near campus</small></div><span class="btn">Open</span></div></a>
+<a class="card" href="index.html"><div class="p">Study<u></u></div><div class="b"><div><b>Groups and past papers</b><small>Share notes, pass together</small></div><span class="btn">Open</span></div></a>
 </div>
-
 <h2 class="rv">How it works</h2>
 <div class="steps rv">
-<div class="step"><em>1</em><b>Pick your university</b><p>Your feed, market and events follow your campus.</p></div>
-<div class="step"><em>2</em><b>Create your account</b><p>Choose a username and password. Use face or fingerprint if you like.</p></div>
-<div class="step"><em>3</em><b>Start connecting</b><p>Spill, shop, study, date and party, all in one app.</p></div>
+<div class="step"><i>1</i><div><b>Pick your university</b><p>Your feed and market follow your campus.</p></div></div>
+<div class="step"><i>2</i><div><b>Create your account</b><p>Username and password, or face and fingerprint.</p></div></div>
+<div class="step"><i>3</i><div><b>Start connecting</b><p>Spill, shop, study and party.</p></div></div>
 </div>
-
-<div class="band rv">
+<div class="cta rv">
 <h2>Ready to join your campus?</h2>
 <p>Free to join. Takes under a minute.</p>
 <a class="btn" href="index.html">Get started</a>
 </div>
-</main>
-
 <footer>Built by Ogolla Tech. Founder and CEO Henry O. Odhiambo. Developers Christian N. and Peter M.</footer>
+</div>
+<nav class="tabs"><a class="on" href="welcome.html">Home</a><a href="index.html">Market</a><a href="index.html">Events</a><a href="index.html">Me</a></nav>
 <script>
+try{localStorage.setItem('cc_seen_welcome','1')}catch(e){}
 var io=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.classList.add('on');io.unobserve(x.target)}})},{threshold:.12});
 document.querySelectorAll('.rv').forEach(function(n){io.observe(n)});
 </script>

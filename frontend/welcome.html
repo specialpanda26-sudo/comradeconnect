@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comrade Connect | Campus life for Kenyan comrades</title>
+<meta name="description" content="Anonymous campus feed, safe marketplace with escrow, Hearts, roommates and study groups for Kenyan university comrades.">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Unbounded:wght@600;800&display=swap">
+<link rel="stylesheet" href="welcome.css">
+<script>try{var t=localStorage.getItem('cc_theme');if(t!=='dark'&&t!=='light')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<header><div class="wrap">
+<a class="logo" href="welcome.html"><img src="icon-192.png" alt="">Comrade Connect</a>
+<a class="btn" href="index.html">Open the app</a>
+</div></header>
+
+<section class="hero wrap">
+<h1>Campus life, <span>all in one place.</span></h1>
+<p>Spill anonymously, buy and sell safely with escrow, find roommates and study groups. Built by comrades, for comrades.</p>
+<a class="pill" href="index.html">
+<div>What<b>Market, Hearts, Events</b></div>
+<div>Where<b>Your campus</b></div>
+<div>Who<b>Comrades like you</b></div>
+<span class="btn">Explore</span>
+</a>
+</section>
+
+<nav class="cats">
+<a href="index.html">Market</a><a href="index.html">Hearts</a><a href="index.html">Events</a><a href="index.html">Roommates</a><a href="index.html">Study groups</a><a href="index.html">Past papers</a><a href="index.html">Mbogi Talk</a><a href="index.html">Live</a>
+</nav>
+
+<main class="wrap">
+<h2 class="rv">Popular on campus</h2>
+<div class="grid rv">
+<a class="tile" href="index.html"><i>Market</i><div><b>Buy and sell safely</b><small>Escrow holds the money until you get the item</small></div></a>
+<a class="tile" href="index.html"><i>Spill</i><div><b>Say it anonymously</b><small>Nobody will know it was you</small></div></a>
+<a class="tile" href="index.html"><i>Hearts</i><div><b>Meet comrades</b><small>18+ and verified</small></div></a>
+<a class="tile" href="index.html"><i>Events</i><div><b>Parties and tickets</b><small>Create your event, sell tickets, scan at the door</small></div></a>
+<a class="tile" href="index.html"><i>Roommates</i><div><b>Find your people</b><small>Hostels and shared rooms near campus</small></div></a>
+<a class="tile" href="index.html"><i>Study</i><div><b>Groups and past papers</b><small>Share notes, pass together</small></div></a>
+<a class="tile" href="index.html"><i>Mbogi</i><div><b>Talk and go live</b><small>Join rooms and watch streams</small></div></a>
+<a class="tile" href="index.html"><i>Wallet</i><div><b>Pay with M-Pesa</b><small>Deposit, spend and withdraw</small></div></a>
+</div>
+
+<h2 class="rv">How it works</h2>
+<div class="steps rv">
+<div class="step"><em>1</em><b>Pick your university</b><p>Your feed, market and events follow your campus.</p></div>
+<div class="step"><em>2</em><b>Create your account</b><p>Choose a username and password. Use face or fingerprint if you like.</p></div>
+<div class="step"><em>3</em><b>Start connecting</b><p>Spill, shop, study, date and party, all in one app.</p></div>
+</div>
+
+<div class="band rv">
+<h2>Ready to join your campus?</h2>
+<p>Free to join. Takes under a minute.</p>
+<a class="btn" href="index.html">Get started</a>
+</div>
+</main>
+
+<footer>Built by Ogolla Tech. Founder and CEO Henry O. Odhiambo. Developers Christian N. and Peter M.</footer>
+<script>
+var io=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.classList.add('on');io.unobserve(x.target)}})},{threshold:.12});
+document.querySelectorAll('.rv').forEach(function(n){io.observe(n)});
+</script>
+</body>
+</html>

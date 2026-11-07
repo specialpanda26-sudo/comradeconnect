@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DIR, ensureDir } from './paths.js';
 import { attachAi, aiInfo } from './ai.js';
+import { attachGroupAi } from './groupai.js';
 import { attachSpill, spillStatus } from './spill.js';
 import { stopToday } from './send.js';
 import { attachStop, setStopEnv } from './stop.js';
@@ -34,7 +35,7 @@ async function start() {
     const s = L.make({ auth: state, logger: L.pino({ level: 'silent' }), browser: L.Browsers.macOS('Safari'), printQRInTerminal: false, markOnlineOnConnect: false, syncFullHistory: false });
     sock = s;
     s.ev.on('creds.update', saveCreds);
-    attachStop(s); attachAi(s); attachSpill(s);   // STOP first, so the AI never answers it
+    attachStop(s); attachAi(s); attachSpill(s); attachGroupAi(s);   // STOP first, so the AI never answers it
     s.ev.on('connection.update', async (u) => {
       if (my !== gen) return;
       const { connection, lastDisconnect, qr } = u;

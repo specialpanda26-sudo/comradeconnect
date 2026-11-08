@@ -39,7 +39,7 @@ if [ ! -d ~/.cache/ms-playwright ] || ! find ~/.cache/ms-playwright -maxdepth 1 
     || { echo "boom: Chromium install failed, see /tmp/boom-chromium.log"; exit 1; }
 fi
 
-if [ ! -f ref-test.sh ] || grep -q 'adselect.net/register' ref-test.sh || ! grep -q 'awk -v s=' ref-test.sh; then
+if [ ! -f ref-test.sh ] || grep -q 'adselect.net/register' ref-test.sh || ! grep -q 'awk -v s=' ref-test.sh || ! grep -q 'REFBOT_FLAGS' ref-test.sh; then
   cat > ref-test.sh << 'RTEOF'
 #!/bin/bash
 # usage: bash ref-test.sh [accounts] [seconds between accounts]
@@ -52,7 +52,7 @@ SECS="${2:-90}"
 [ -d referral-bot-out ] && mv referral-bot-out "referral-bot-out-$(date +%d%H%M%S)"
 mkdir -p referral-bot-out
 echo "=== $COUNT account(s), $SECS seconds apart, started $(date) ===" | tee referral-bot-out/run.log
-node scripts/referral-bot.mjs "$LINK" "$COUNT" --yes --delay=$(awk -v s="$SECS" 'BEGIN{printf "%d", s*1000+0.5}') 2>&1 | tee -a referral-bot-out/run.log
+node scripts/referral-bot.mjs "$LINK" "$COUNT" --yes --delay=$(awk -v s="$SECS" 'BEGIN{printf "%d", s*1000+0.5}') $REFBOT_FLAGS 2>&1 | tee -a referral-bot-out/run.log
 echo "=== FINISHED $(date) ===" | tee -a referral-bot-out/run.log
 cat referral-bot-out/report.txt >> referral-bot-out/run.log 2>/dev/null
 RTEOF
@@ -110,11 +110,26 @@ else
     ""|*[!0-9.,]*|*[.,]*[.,]*|[.,]) RUN_SECS=90 ;;
   esac
 
+  RUN_FLAGS="${REFBOT_FLAGS:-}"
+  if [ -z "${REFBOT_FLAGS:-}" ] && [ -z "${REFBOT_AUTO_YES:-}" ]; then
+    printf "boom: AI helper on or off? (off is faster) [on] "
+    read -r ans_ai
+    case "$ans_ai" in off|OFF|Off|n|N|no) RUN_FLAGS="$RUN_FLAGS --no-ai" ;; esac
+    printf "boom: fast mode? (skips the welcome card, popups and logout checks after sign-up) [off] "
+    read -r ans_fast
+    case "$ans_fast" in on|ON|On|y|Y|yes) RUN_FLAGS="$RUN_FLAGS --fast" ;; esac
+    printf "boom: how many accounts at once? 1 to 5 [1] "
+    read -r ans_par
+    case "$ans_par" in [2-5]) RUN_FLAGS="$RUN_FLAGS --parallel=$ans_par" ;; esac
+  fi
+  case "$RUN_FLAGS" in *[!a-z0-9\ =-]*) RUN_FLAGS="" ;; esac
+
   if [ -z "${REFBOT_AUTO_YES:-}" ]; then
     echo
     echo "boom: this will open:"
     echo "  $RUN_LINK"
     echo "boom: and create up to 100 real test accounts there, $RUN_SECS seconds apart."
+    echo "boom: options:${RUN_FLAGS:- none}"
     echo "boom: only do this on a site you own or have permission to test."
     printf "boom: continue? [y/N] "
     read -r ans
@@ -124,7 +139,7 @@ else
     esac
   fi
   say "starting the bot (100 accounts, $RUN_SECS seconds apart)..."
-  screen -dmS refbot bash -lc "cd $PWD && REFBOT_LINK='$RUN_LINK' bash ref-test.sh 100 $RUN_SECS"
+  screen -dmS refbot bash -lc "cd $PWD && REFBOT_LINK='$RUN_LINK' REFBOT_FLAGS='$RUN_FLAGS' bash ref-test.sh 100 $RUN_SECS"
   sleep 2
   screen -r refbot
 fi

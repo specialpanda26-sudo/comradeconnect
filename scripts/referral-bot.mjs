@@ -35,6 +35,7 @@ const FRESH = flag('fresh');
 const COUNTRY = opt('country', 'Kenya');
 const brain = await import('./referral-brain.mjs').catch(() => null);          // the AI brain: optional, the bot still works without it
 const AI = !flag('no-ai') && !!brain && brain.ready();
+const FAST = flag('fast');   // --fast: skip the checks after sign-up (welcome card, popups, logout, reopening the link) and type quicker
 const extra = await import('./referral-extra.mjs').catch(() => null);          // own-referral-link capture, more links, levels: optional extras
 const CAPTURE = !flag('no-capture') && !!extra;
 if (brain) brain.configure({ budget: parseInt(opt('ai-budget', '60'), 10) || 60, country: COUNTRY, log: (m) => console.log('        [ai] ' + m) });
@@ -641,7 +642,7 @@ async function typeInto(loc, v) {
     await loc.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
     await loc.click({ timeout: 4000 });
     await loc.fill('');
-    await loc.pressSequentially(v, { delay: 30 });
+    await loc.pressSequentially(v, { delay: FAST ? 4 : 30 });
     const got = await loc.inputValue().catch(() => '');
     if (got !== v && got.replace(/\D/g, '') !== v.replace(/\D/g, '')) await loc.fill(v);
     await loc.press('Tab').catch(() => {});             // leaving the field is what makes most forms check it
@@ -891,7 +892,7 @@ async function visit(browser, n, dry, shared) {
     ev.fixedByAI = true; await sleep(500);
     }
 
-    if (rec.ok) {                                          // account created: welcome card > Continue > close popup > log out
+    if (rec.ok && !FAST) {                                          // account created: welcome card > Continue > close popup > log out
       phase = 'after';
       try {
         const w = await readWelcome(page);
@@ -932,11 +933,11 @@ async function visit(browser, n, dry, shared) {
       const warn = [];
       if (!rec.sponsor_filled) warn.push('sponsor box was empty (the link did not auto-fill it, so the referral cannot be credited)');
       if (!rec.terms) warn.push('terms box could not be ticked');
-      if (rec.ok && !rec.welcome) warn.push('welcome card was not seen after sign-up');
-      if (rec.ok && ev.popupStuck) warn.push('a popup could not be closed');
-      if (rec.ok && !rec.relinked) warn.push('after logout, the referral link did not show the form with the Sponsor box filled');
-      if (rec.ok && CAPTURE && rec.ref_source === 'guess') warn.push('own referral link not found on the site, using a best guess: ' + rec.ref_link);
-      if (rec.ok && !rec.loggedOut) warn.push(`could not log out (${ev.logoutHow || ev.afterError || 'unknown'})`);
+      if (rec.ok && !FAST && !rec.welcome) warn.push('welcome card was not seen after sign-up');
+      if (rec.ok && !FAST && ev.popupStuck) warn.push('a popup could not be closed');
+      if (rec.ok && !FAST && !rec.relinked) warn.push('after logout, the referral link did not show the form with the Sponsor box filled');
+      if (rec.ok && !FAST && CAPTURE && rec.ref_source === 'guess') warn.push('own referral link not found on the site, using a best guess: ' + rec.ref_link);
+      if (rec.ok && !FAST && !rec.loggedOut) warn.push(`could not log out (${ev.logoutHow || ev.afterError || 'unknown'})`);
       rec.warn = warn.join(' | ');
     }
     if (!rec.ok) await page.screenshot({ path: `${OUT}/fail-${n}.png`, fullPage: true }).catch(() => {});

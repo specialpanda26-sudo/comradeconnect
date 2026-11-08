@@ -80,7 +80,8 @@ async function start(body, env) {
   const link = await checkLink(body.link, env);
   const dry = !!body.dry;
   const count = Math.max(1, Math.min(await getMax(env), parseInt(body.count, 10) || 5));
-  const delay = Math.max(500, Math.min(30000, parseInt(body.delay, 10) || 1500));
+  const dv = parseInt(body.delay, 10);
+  const delay = Number.isFinite(dv) ? Math.max(0, Math.min(600000, dv)) : 1500;   // 0 to 10 minutes; empty box = 1.5 s
   const domain = String(body.domain || '').trim().toLowerCase();
   if (domain && !/^[a-z0-9][a-z0-9.-]{1,60}\.[a-z]{2,}$/.test(domain)) throw new Error('The email domain looks wrong. Use something like mydomain.com');
   const pass = String(body.pass || '').trim();

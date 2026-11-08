@@ -39,7 +39,7 @@ if [ ! -d ~/.cache/ms-playwright ] || ! find ~/.cache/ms-playwright -maxdepth 1 
     || { echo "boom: Chromium install failed, see /tmp/boom-chromium.log"; exit 1; }
 fi
 
-if [ ! -f ref-test.sh ] || grep -q 'adselect.net/register' ref-test.sh; then
+if [ ! -f ref-test.sh ] || grep -q 'adselect.net/register' ref-test.sh || ! grep -q 'awk -v s=' ref-test.sh; then
   cat > ref-test.sh << 'RTEOF'
 #!/bin/bash
 # usage: bash ref-test.sh [accounts] [seconds between accounts]
@@ -52,7 +52,7 @@ SECS="${2:-90}"
 [ -d referral-bot-out ] && mv referral-bot-out "referral-bot-out-$(date +%d%H%M%S)"
 mkdir -p referral-bot-out
 echo "=== $COUNT account(s), $SECS seconds apart, started $(date) ===" | tee referral-bot-out/run.log
-node scripts/referral-bot.mjs "$LINK" "$COUNT" --yes --delay=$((SECS*1000)) 2>&1 | tee -a referral-bot-out/run.log
+node scripts/referral-bot.mjs "$LINK" "$COUNT" --yes --delay=$(awk -v s="$SECS" 'BEGIN{printf "%d", s*1000+0.5}') 2>&1 | tee -a referral-bot-out/run.log
 echo "=== FINISHED $(date) ===" | tee -a referral-bot-out/run.log
 cat referral-bot-out/report.txt >> referral-bot-out/run.log 2>/dev/null
 RTEOF
@@ -104,10 +104,10 @@ else
   else
     printf "boom: how many seconds should each account take to create? [90] "
     read -r RUN_SECS
-    [ -n "$RUN_SECS" ] || RUN_SECS=90
+    [ -n "$RUN_SECS" ] || RUN_SECS=90; RUN_SECS="${RUN_SECS//,/.}"
   fi
   case "$RUN_SECS" in
-    ""|*[!0-9]*) RUN_SECS=90 ;;
+    ""|*[!0-9.,]*|*[.,]*[.,]*|[.,]) RUN_SECS=90 ;;
   esac
 
   if [ -z "${REFBOT_AUTO_YES:-}" ]; then

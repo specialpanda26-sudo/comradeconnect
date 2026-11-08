@@ -39,12 +39,13 @@ if [ ! -d ~/.cache/ms-playwright ] || ! find ~/.cache/ms-playwright -maxdepth 1 
     || { echo "boom: Chromium install failed, see /tmp/boom-chromium.log"; exit 1; }
 fi
 
-if [ ! -f ref-test.sh ]; then
+if [ ! -f ref-test.sh ] || grep -q 'adselect.net/register' ref-test.sh; then
   cat > ref-test.sh << 'RTEOF'
 #!/bin/bash
 # usage: bash ref-test.sh [accounts] [seconds between accounts]
 # run from inside the repo folder (the boom script already cd's here first)
-LINK="${REFBOT_LINK:-https://adselect.net/register?ref=ogollatech}"
+LINK="${REFBOT_LINK:-}"
+[ -n "$LINK" ] || { echo "ref-test: no link given. Run it like:  REFBOT_LINK='https://...' bash ref-test.sh 1 90"; exit 1; }
 COUNT="${1:-1}"
 SECS="${2:-90}"
 [ "$COUNT" -gt 100 ] && COUNT=100
@@ -64,18 +65,36 @@ if pgrep -f referral-bot >/dev/null 2>&1; then
   screen -r refbot
 else
   LAST_LINK_FILE=~/.boom-last-link
-  DEFAULT_LINK="https://adselect.net/register?ref=ogollatech"
-  [ -f "$LAST_LINK_FILE" ] && DEFAULT_LINK="$(cat "$LAST_LINK_FILE")"
+  LAST_SHOWN=""
+  [ -f "$LAST_LINK_FILE" ] && LAST_SHOWN="$(cat "$LAST_LINK_FILE")"
 
   if [ -n "${REFBOT_LINK:-}" ]; then
-    RUN_LINK="$REFBOT_LINK"
-  elif [ -n "${REFBOT_AUTO_YES:-}" ]; then
-    RUN_LINK="$DEFAULT_LINK"
+    RUN_LINK="$REFBOT_LINK"                 # a link you set yourself before running boom is always honoured
   else
-    printf "boom: which referral link are we testing? [%s] " "$DEFAULT_LINK"
-    read -r RUN_LINK
-    [ -n "$RUN_LINK" ] || RUN_LINK="$DEFAULT_LINK"
+    # No silent default, ever: you must paste a real link. A blank or wrong answer asks again; it is never guessed.
+    RUN_LINK=""
+    while :; do
+      if [ -n "$LAST_SHOWN" ]; then
+        printf "boom: which referral link are we testing? (last time: %s)\nboom: paste the link - " "$LAST_SHOWN"
+      else
+        printf "boom: which referral link are we testing? "
+      fi
+      read -r RUN_LINK || { echo; echo "boom: no keyboard input here, so no link was given. Set it first, e.g.  REFBOT_LINK='https://...' boom"; exit 1; }
+      RUN_LINK="$(printf '%s' "$RUN_LINK" | tr -d '\r' | sed "s/^[[:space:]\"']*//; s/[[:space:]\"']*\$//")"
+      case "$RUN_LINK" in
+        http://*|https://*) break ;;
+        "") echo "boom: you have to paste a link - it will not be guessed." ;;
+        *)  echo "boom: that does not look like a link (it must start with https://) - paste it again." ;;
+      esac
+    done
   fi
+  case "$RUN_LINK" in
+    http://*|https://*) ;;
+    *) echo "boom: REFBOT_LINK must start with https:// - nothing was started."; exit 1 ;;
+  esac
+  case "$RUN_LINK" in
+    *\'*|*\ *) echo "boom: the link must not contain a space or a ' character - nothing was started."; exit 1 ;;
+  esac
   echo "$RUN_LINK" > "$LAST_LINK_FILE" 2>/dev/null
 
   if [ -n "${REFBOT_SECS:-}" ]; then

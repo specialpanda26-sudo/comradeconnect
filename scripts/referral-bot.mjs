@@ -244,14 +244,35 @@ async function gotoRetry(page, url) {
   }
   throw last;
 }
+// True when a real sign-up form (2+ password boxes, or 1 password + 3 other boxes) is showing AND a finger could tap it,
+// i.e. no gate / landing overlay sits on top. A login form on its own does not count.
+async function formReady(page) {
+  return page.evaluate(() => {
+    const vis = (e) => { const r = e.getBoundingClientRect(), c = getComputedStyle(e); return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none'; };
+    const free = (e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && (t === e || e.contains(t) || (t.closest('label') || { contains: () => false }).contains(e)); };
+    const ok = (e) => vis(e) && free(e);
+    const pw = [...document.querySelectorAll('input[type=password]')].filter(ok).length;
+    const other = [...document.querySelectorAll('input:not([type=password]):not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]):not([type=submit]):not([type=button])')].filter(ok).length;
+    return pw >= 2 || (pw >= 1 && other >= 3);
+  }).catch(() => false);
+}
+const WAY_IN = /^\s*(create (my |an |a )?account|sign ?up( now| free)?|register( now)?|join( now| free| us)?|get started|start( now)?|enter( site)?|i agree|agree|accept( all)?)[\s\u2192\u203a\u00bb>.!]*$/i;
 async function openForm(page) {
   await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
-  const pw = page.locator('input[type=password]').first();
-  if (await pw.isVisible().catch(() => false)) return;
-  const go = page.getByRole('link', { name: /create account|sign ?up|register|join/i })
-    .or(page.getByRole('button', { name: /create account|sign ?up|register|join/i })).first();
-  if (await go.count()) { await go.click().catch(() => {}); }
-  await page.waitForSelector('input[type=password]', { state: 'visible', timeout: 6000 }).catch(() => {});
+  for (let step = 0; step < 5; step++) {
+    if (await formReady(page)) return true;
+    const go = page.getByRole('button', { name: WAY_IN }).or(page.getByRole('link', { name: WAY_IN })).or(page.getByText(WAY_IN)).first();
+    if (await go.isVisible().catch(() => false)) {
+      if (await go.evaluate((e) => { const f = e.closest('form'); return !!(f && f.querySelector('input[type=password]')); }).catch(() => false)) return true;   // the form is already open
+      await go.click({ timeout: 3000 }).catch(() => go.click({ timeout: 2000, force: true }).catch(() => {}));       // a gate or landing page: press its way in
+      await sleep(900);
+      if (!(await formReady(page))) await go.evaluate((e) => e.click()).catch(() => {});                              // real taps are blocked: click it from inside the page
+      await sleep(600); continue;
+    }
+    if (await detectOverlay(page)) { await dismissOnce(page, Math.min(step, 2)); await sleep(900); continue; }       // a cookie / age gate / popup with no way-in button: close it
+    await sleep(1000);
+  }
+  return formReady(page);
 }
 async function sponsorConfirmText(page) {
   return page.evaluate(() => {
@@ -792,6 +813,7 @@ async function visit(browser, n, dry, shared) {
       if (missing.length) early.push('Fields not found: ' + missing.join(', ') + ' (bot may not be able to fill the form)');
       if (!rec.sponsor) early.push('The Sponsor box is empty, so the link is not filling it: referrals could not be credited.');
       if (ev.captcha) early.push('A captcha is on the page: the bot will not be able to finish sign-ups.');
+      if (!(await formReady(page))) early.push('The sign-up form is not reachable: a gate, popup or login page is in the way and the bot could not get past it (see page.png).');
       console.log(early.length ? '\nPossible problems spotted before running:\n  - ' + early.join('\n  - ') : '\nNo problems spotted. The bot should be able to create accounts here.');
       if (aiRead && (aiRead.summary || aiRead.blockers.length)) console.log('\nWhat the AI brain sees: ' + (aiRead.summary || '') + (aiRead.blockers.length ? '\n  It spotted: ' + aiRead.blockers.join('; ') : ''));
       if (AI && !aiRead) console.log('\nAI brain is on but was not needed: the bot read the form by itself.');

@@ -222,7 +222,7 @@ function assign(fields) {
   take('password', (f) => f.type === 'password');
   if (!roles.confirm) take('confirm', (f) => f.type === 'password');
   take('email', (f) => f.type === 'email' || /e-?mail/.test(text(f)));
-  take('phone', (f) => f.type === 'tel' || /mobile|phone/.test(text(f)));
+  take('phone', (f) => f.type === 'tel' || /mobile|phone|m-?pesa|msisdn|whatsapp/.test(text(f)));
   take('username', (f) => /user\s*-?name/.test(text(f)));
   take('name', (f) => /name/.test(text(f)));
   return roles;
@@ -683,7 +683,7 @@ async function enterSubmit(page) {
   return pw.press('Enter').then(() => true).catch(() => false);
 }
 const testData = (p) => ({ $name: p.name, $username: p.user, $email: p.email, $phone: p.phone, $password: PASS, $country: COUNTRY });
-const FORM_KEYS = ['email', 'password', 'username'];
+const FORM_KEYS = ['email', 'password'];
 // The bot's own rules first. If they miss a box, the AI reads the page and fills the gaps. If there is still no form, the AI tries to open it.
 async function readRoles(page, p, tryOpen) {
   let roles = assign(await describe(page)), ai = null;
@@ -804,7 +804,7 @@ async function visit(browser, n, dry, shared) {
     if (dry) {
       console.log('\nFields the bot found on the page:');
       for (const [role, f] of Object.entries(roles)) console.log(`  ${role.padEnd(9)} ${(f.label || f.ph || f.name || f.id || f.type).replace(/\s+/g, ' ').slice(0, 28).padEnd(28)} type=${f.type}${f.value ? '  value="' + f.value + '"' : ''}`);
-      const missing = ['name', 'username', 'email', 'phone', 'password', 'confirm', 'sponsor', 'terms'].filter((r) => !roles[r]);
+      const missing = ['name', 'email', 'phone', 'password'].filter((r) => !roles[r]);
       const langSel = (await describe(page)).filter(isLang);
       if (langSel.length) console.log('\nLanguage dropdown (ignored, the bot never touches it): ' + langSel.map((f) => f.opts.join(' ')).join(' / '));
       console.log('Country box: ' + (roles.country ? (roles.country.label || roles.country.name || 'dropdown') + ' (' + roles.country.nopt + ' options)' : 'not a normal dropdown, the bot will try a custom dropdown (or the AI)'));
@@ -822,7 +822,7 @@ async function visit(browser, n, dry, shared) {
       return rec;
     }
 
-    if (!['email', 'password', 'username'].every((r) => roles[r])) {
+    if (!['email', 'password'].every((r) => roles[r])) {
       ev.noForm = true;
       ev.stillLoggedIn = n > 1 && !!shared && await page.getByRole('button', { name: /log ?out|sign ?out/i }).or(page.getByText(/balance|dashboard|welcome back/i)).first().isVisible().catch(() => false);
       throw new Error('form not recognised');
@@ -840,7 +840,7 @@ async function visit(browser, n, dry, shared) {
     for (const [role, val] of [['name', p.name], ['username', p.user], ['email', p.email], ['phone', p.phone], ['password', PASS], ['confirm', PASS]]) {
       if (!roles[role]) continue;
       let v = val;
-      if (role === 'phone') { const cur = await at(roles.phone).inputValue().catch(() => ''); let pre = (cur.match(/^\+\d{1,4}/) || [''])[0]; if (/kenya/i.test(COUNTRY) && pre && pre !== '+254') pre = '+254'; v = pre + p.phone; }   // keep the dial code the site typed (+254 for Kenya)
+      if (role === 'phone') { const cur = await at(roles.phone).inputValue().catch(() => ''); let pre = (cur.match(/^\+\d{1,4}/) || [''])[0]; if (/kenya/i.test(COUNTRY) && pre && pre !== '+254') pre = '+254'; if (!pre && /kenya/i.test(COUNTRY) && /07x|2547x/i.test(roles.phone.ph || '')) pre = '0'; v = pre + p.phone; }   // keep the dial code the site typed (+254 for Kenya)
       await typeInto(at(roles[role]), v);
     }
     ev.langChanged = (await langGuard(page, lang0)) || ev.langChanged;

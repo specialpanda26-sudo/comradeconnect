@@ -1,5 +1,6 @@
 import { sb, rows, one } from './lib.js';
 import { sendPush } from './push.js';
+import { takeAutoSlot } from "./autoalerts.js";
 
 const KE = 3 * 3600e3, ke = (t = Date.now()) => new Date(t + KE);
 
@@ -17,6 +18,7 @@ export async function rainAlert(env) {
   const p = Number(d && d.daily && d.daily.precipitation_probability_max && d.daily.precipitation_probability_max[0]) || 0;
   const mm = Number(d && d.daily && d.daily.precipitation_sum && d.daily.precipitation_sum[0]) || 0;
   if (p < 60 && mm < 5) return 0;
+  if (!(await takeAutoSlot(env))) return 0;
   const subs = await rows(await sb(env, 'push_subs?select=aid&limit=5000'));
   const aids = [...new Set(subs.map((x) => x.aid).filter(Boolean))].slice(0, 2000);
   const payload = { title: 'Rain expected today', body: place + ': about ' + p + '% chance of rain. Carry an umbrella.', view: 'feed', tag: 'weather', cat: 'updates', kind: 'weather', rep: 'weather' };

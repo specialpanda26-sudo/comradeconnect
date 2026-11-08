@@ -259,6 +259,17 @@ async function sponsorConfirmText(page) {
     return e ? e.textContent.trim() : '';
   }).catch(() => '');
 }
+
+// Some sites show the referral code as plain confirmation text instead of an editable Sponsor box
+// (e.g. "You were invited with code AC854879"), with nothing for the bot to type into. This looks for
+// that banner so the bot can tell the referral really is being recognised, even with no fillable field.
+async function staticSponsorText(page) {
+  return page.evaluate(() => {
+    const re = /\b(invited|referred)\b.{0,25}\bcode\b|\breferral code\b|\b(sponsor(?:ed)?|referred) by\b/i;
+    const e = [...document.querySelectorAll('body *')].find((x) => !/^(SCRIPT|STYLE|NOSCRIPT)$/.test(x.tagName) && x.children.length === 0 && x.getClientRects().length > 0 && re.test(x.textContent));
+    return e ? e.textContent.trim() : '';
+  }).catch(() => '');
+}
 async function hasCaptcha(page) {
   return page.evaluate(() => !!document.querySelector('iframe[src*=recaptcha],iframe[src*=hcaptcha],iframe[src*=turnstile],.g-recaptcha,.h-captcha,.cf-turnstile,[class*=captcha i],[id*=captcha i]')).catch(() => false);
 }
@@ -759,7 +770,12 @@ async function visit(browser, n, dry, shared) {
     const { roles, ai: aiRead } = await readRoles(page, p, !dry);
     rec.sponsor = roles.sponsor ? roles.sponsor.value : '';
     rec.sponsor_filled = !!rec.sponsor;
-    rec.expect = extra ? extra.refCode(link) : ''; rec.sponsor_match = !rec.expect || rec.sponsor.toLowerCase() === rec.expect.toLowerCase();   // what the link says the sponsor is vs what the box shows
+    rec.sponsor_mode = rec.sponsor_filled ? 'field' : '';
+    if (!rec.sponsor_filled) {
+      const banner = await staticSponsorText(page);
+      if (banner) { rec.sponsor = banner; rec.sponsor_filled = true; rec.sponsor_mode = 'static'; }
+    }
+    rec.expect = extra ? extra.refCode(link) : ''; rec.sponsor_match = !rec.expect || rec.sponsor.toLowerCase().includes(rec.expect.toLowerCase());   // what the link says the sponsor is vs what the box (or banner) shows
     ev.captcha = await hasCaptcha(page);
     const who = await sponsorConfirmText(page);
     if (n === 1) await page.screenshot({ path: `${OUT}/page.png`, fullPage: true });

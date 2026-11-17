@@ -167,15 +167,20 @@
   };
   window.ccApp.googleLogin = function () {
     if (typeof CC_NATIVE_GOOGLE === 'undefined' || CC_NATIVE_GOOGLE !== true) return browserGoogle();
-    return nativeGoogle().catch(function (e) {
-      if (e && (e.code === 'CANCELLED' || e.cancelled || /^cancel/i.test(String(e.message || '')))) throw Object.assign(new Error('cancelled'), { cancelled: true });
-      /* cc-native-why */ var why = String((e && (e.message || e.code)) || 'unknown');
-      window.ccApp.lastGoogleError = why;
-      try { localStorage.setItem('cc_g_why', why + ' @ ' + new Date().toISOString()); } catch (x) {}
-      try { console.warn('Google sheet unavailable:', why); } catch (x) {}
-      try { if (window.ccTools && ccTools.toast) ccTools.toast('Google sheet unavailable: ' + why.slice(0, 120)); else if (typeof toast === 'function') toast('Google sheet unavailable: ' + why.slice(0, 120)); } catch (x) {}
-      return browserGoogle();
-    });
+    /* cc-no-browser: inside the app the phone's own Google account sheet is the only way. No browser page, ever. */
+    var attempt = function (n) {
+      return nativeGoogle().catch(function (e) {
+        if (e && (e.code === 'CANCELLED' || e.cancelled || /^cancel/i.test(String(e.message || '')))) throw Object.assign(new Error('cancelled'), { cancelled: true });
+        var why = String((e && (e.message || e.code)) || 'unknown');
+        window.ccApp.lastGoogleError = why;
+        try { localStorage.setItem('cc_g_why', why + ' @ ' + new Date().toISOString()); } catch (x) {}
+        if (n < 1 && !/UNIMPLEMENTED|unavailable/i.test(why)) return new Promise(function (r) { setTimeout(r, 700); }).then(function () { return attempt(n + 1); });
+        if (/UNIMPLEMENTED|unavailable/i.test(why)) throw new Error('This app version cannot show the Google account list. Please install the newest app.');
+        if (/NO_ACCOUNT|NoCredential/i.test(why)) throw new Error('Google account list could not open. Add a Google account in your phone Settings, then try again. (' + why.slice(0, 90) + ')');
+        throw new Error('Google account list could not open: ' + why.slice(0, 140));
+      });
+    };
+    return attempt(0);
   };
 
   // Open any link in the secure tab (card page, update download, etc). Resolves true if the tab opened.
